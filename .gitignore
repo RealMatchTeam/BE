@@ -1,0 +1,39 @@
+# 특정 파일 제외
+src/main/resources/application-*.yml
+
+### Gradle ###
+.gradle/
+build/
+postgres_data/
+
+### Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.utils
+pom.xml.v
+release.properties
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### VS Code ###
+.vscode/
+
+### Eclipse ###
+.settings/
+.project
+.classpath
+.factorypath
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Log files ###
+*.log
+logs/
