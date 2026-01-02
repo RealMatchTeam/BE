@@ -1,0 +1,11 @@
+#!/bin/bash
+
+commit_msg_file=$1
+commit_msg=$(cat $commit_msg_file)
+
+pattern="^(feat|fix|docs|style|refactor|test|chore)(\(.*\))?: .+"
+
+if [[ ! $commit_msg =~ $pattern ]]; then
+  echo "[에러] 커밋 메시지 컨벤션을 지켜주세요! (예: feat(#1): 로그인 구현)"
+  exit 1
+fi
