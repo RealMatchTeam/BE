@@ -30,7 +30,7 @@ services:
       dockerfile: Docker/Dockerfile
     container_name: spring_app
     ports:
-      - "8080:8080"
+      - "6000:6000"
     depends_on:
       - db
       - redis
