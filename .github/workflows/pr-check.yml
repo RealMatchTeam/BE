@@ -15,9 +15,6 @@ jobs:
           POSTGRES_DB: myapp_db
           POSTGRES_USER: admin
           POSTGRES_PASSWORD: secret
-          JWT_SECRET: test-jwt-secret
-          JWT_ACCESS_EXPIRE_MS: 600000
-          JWT_REFRESH_EXPIRE_MS: 1209600000
         ports:
           - 5432:5432
         options: >-
@@ -46,7 +43,7 @@ jobs:
     - name: Make application.properties
       run: |
         mkdir -p ./src/main/resources
-        echo "${{ secrets.APPLICATION_YML }}" > ./src/main/resources/application.yml
+        echo "${{ secrets.APPLICATION_TEST_YML }}" > ./src/main/resources/application.yml
       shell: bash
 
     - name: Check code formatting
@@ -55,6 +52,10 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew build -x test
+      env:
+        JWT_SECRET: test-jwt-secret
+        JWT_ACCESS_EXPIRE_MS: 600000
+        JWT_REFRESH_EXPIRE_MS: 1209600000
 
     - name: Run tests
       run: ./gradlew test
