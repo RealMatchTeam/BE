@@ -1,9 +1,7 @@
 package com.example.RealMatch.global.config;
 
-import com.example.RealMatch.global.config.jwt.JwtAuthenticationFilter;
-import com.example.RealMatch.global.presentation.advice.CustomAccessDeniedHandler;
-import com.example.RealMatch.global.presentation.advice.CustomAuthEntryPoint;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +13,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.example.RealMatch.global.config.jwt.JwtAuthenticationFilter;
+import com.example.RealMatch.global.presentation.advice.CustomAccessDeniedHandler;
+import com.example.RealMatch.global.presentation.advice.CustomAuthEntryPoint;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -24,7 +26,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private static final String[] PERMIT_ALL_URL_ARRAY = {
-            "/api/v1/*",
+            "/api/v1/test",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"
     };
 
@@ -34,10 +36,11 @@ public class SecurityConfig {
 
     @Value("${cors.allowed-origin}")
     private String allowedOrigin;
-    @Value("${swagger.server-url}") String prodSwaggerUrl;
+    @Value("${swagger.server-url}")
+    String prodSwaggerUrl;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthEntryPoint customAuthEntryPoint, CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthEntryPoint customAuthEntryPoint, CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
@@ -57,16 +60,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(){
+    public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin,"http://localhost:8080",prodSwaggerUrl));
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", prodSwaggerUrl));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);  // 쿠키/인증정보 포함 요청
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**",configuration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
