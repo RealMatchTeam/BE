@@ -2,6 +2,7 @@ package com.example.RealMatch.global.presentation;
 
 import com.example.RealMatch.global.presentation.code.BaseErrorCode;
 import com.example.RealMatch.global.presentation.code.BaseSuccessCode;
+import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -11,7 +12,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @JsonPropertyOrder({"isSuccess", "code", "message", "result"})
-public class ApiResponse<T> {
+public class CustomResponse<T> {
 
     @JsonProperty("isSuccess")
     private final Boolean isSuccess;
@@ -25,11 +26,16 @@ public class ApiResponse<T> {
     @JsonProperty("result")
     private T result;
 
-    public static <T> ApiResponse<T> onSuccess(BaseSuccessCode code, T result) {
-        return new ApiResponse<>(true, code.getCode(), code.getMessage(), result);
+    // 200 OK
+    public static <T> CustomResponse<T> ok(T result) {
+        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, result);
     }
 
-    public static <T> ApiResponse<T> onFailure(BaseErrorCode code, T result) {
-        return new ApiResponse<>(false, code.getCode(), code.getMessage(), result);
+    public static <T> CustomResponse<T> onSuccess(BaseSuccessCode code, T result) {
+        return new CustomResponse<>(true, code.getCode(), code.getMessage(), result);
+    }
+
+    public static <T> CustomResponse<T> onFailure(BaseErrorCode code, T result) {
+        return new CustomResponse<>(false, code.getCode(), code.getMessage(), result);
     }
 }
