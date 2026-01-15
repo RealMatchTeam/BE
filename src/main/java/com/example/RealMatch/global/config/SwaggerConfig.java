@@ -17,14 +17,14 @@ import io.swagger.v3.oas.models.servers.Server;
 public class SwaggerConfig {
 
     @Value("${swagger.server-url}")
-    String swaggerUrl;
+    private String swaggerUrl;
 
     @Bean
     public OpenAPI localOpenAPI() {
         Info info = new Info()
                 .title("🔗 RealMatch API")
                 .version("1.0.0")
-                .description("ZzicGo API 명세서입니다.");
+                .description("RealMatch API 명세서입니다.");
 
         String jwtSchemeName = "JWT Authentication";
 
