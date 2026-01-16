@@ -8,6 +8,29 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test
+          MYSQL_ROOT_PASSWORD: test_root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptest_root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+
+    env:
+      SPRING_PROFILES_ACTIVE: test
+      JWT_SECRET: pPmJ9ViYt8f6HAh2q5s36QmEUeyEFRcquPaNpnIGUK8er5DjfTKa4xbDsTFXQ7HRVfTLR2DIYs7s9iGdJ+Yb7Q==
+      JWT_ACCESS_EXPIRE_MS: 600000
+      JWT_REFRESH_EXPIRE_MS: 1209600000
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -18,6 +41,9 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: gradle
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
@@ -33,12 +59,38 @@ jobs:
       run: ./gradlew test
       continue-on-error: true
 
-    - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: |
-          build/test-results/**/*.xml
+    - name: Test application startup
+      run: |
+        ./gradlew bootRun > bootrun.log 2>&1 &
+        APP_PID=$!
+        echo "Started bootRun with PID: $APP_PID"
+
+        # 최대 60초 대기하면서 애플리케이션 시작 확인
+        for i in {1..60}; do
+          # 로그에서 시작 완료 메시지 확인
+          if grep -q "Started RealMatchApplication" bootrun.log; then
+            echo "✅ Application started successfully after ${i}s"
+            kill $APP_PID 2>/dev/null || true
+            exit 0
+          fi
+
+          # 프로세스가 죽었는지 확인
+          if ! kill -0 $APP_PID 2>/dev/null; then
+            echo "❌ Application process terminated unexpectedly"
+            echo "=== bootRun log ==="
+            cat bootrun.log
+            exit 1
+          fi
+
+          sleep 1
+        done
+
+        echo "❌ Application failed to start within 60 seconds"
+        echo "=== bootRun log ==="
+        cat bootrun.log
+        kill $APP_PID 2>/dev/null || true
+        exit 1
+      timeout-minutes: 2
 
     - name: Upload build artifacts
       if: failure()

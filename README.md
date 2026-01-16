@@ -7,6 +7,11 @@
 git config core.hooksPath .githooks
 ```
 
+아래 명령어를 이용해서 코드 스타일을 준수했는지 확인해주세요
+```bash
+./gradlew checkstyleMain checkstyleTest
+```
+
 아래 명령어를 통해 쉽게 도커 컨테이너에서 사용할 수 있습니다.
 
 ```bash

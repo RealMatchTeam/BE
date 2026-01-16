@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class RealMatchApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(RealMatchApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(RealMatchApplication.class, args);
+    }
 
 }
