@@ -36,8 +36,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/spot-backend:prod
-            ${{ secrets.DOCKERHUB_USERNAME }}/spot-backend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/realmatch-backend:prod
+            ${{ secrets.DOCKERHUB_USERNAME }}/realmatch-backend:${{ github.sha }}
 
       - name: Deploy
         uses: appleboy/ssh-action@v1.0.3
@@ -46,7 +46,17 @@ jobs:
           username: ubuntu
           key: ${{ secrets.PROD_SERVER_SSH_KEY }}
           script: |
-            cd /home/ubuntu/spot
+            cd /home/ubuntu/realmatch
             git pull origin main
+
             docker compose pull
             docker compose up -d
+      
+            echo "Waiting for app to start..."
+            sleep 10
+      
+            if ! docker compose ps | grep "Up"; then
+              echo "❌ Container is not running"
+              docker compose logs
+              exit 1
+            fi

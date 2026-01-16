@@ -26,12 +26,12 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private static final String[] PERMIT_ALL_URL_ARRAY = {
-            "/api/v1/test",
+            "/api/test",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"
     };
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
-            "/api/v1/test-auth"
+            "/api/test-auth"
     };
 
     @Value("${cors.allowed-origin}")

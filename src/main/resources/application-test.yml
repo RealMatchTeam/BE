@@ -9,13 +9,13 @@ server:
 
 spring:
   application:
-    name: Spot
+    name: Realmatch
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/myapp_db
-    username: admin
-    password: secret
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:mysql://localhost:3306/test_db
+    username: test_user
+    password: test
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
