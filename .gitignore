@@ -1,8 +1,12 @@
 # 특정 파일 제외
-src/main/resources/application-*.yml
+#src/main/resources/application-*.yml
 src/main/resources/application.yml
 src/test/resources/application.yml
 src/test/resources/application-*.yml
+
+# 환경 변수
+.env
+.env.*
 
 ### Gradle ###
 .gradle/

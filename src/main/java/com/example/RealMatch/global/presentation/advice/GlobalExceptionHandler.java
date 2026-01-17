@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
-import com.example.RealMatch.global.presentation.ApiResponse;
+import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
 import jakarta.validation.ConstraintViolationException;
@@ -16,62 +16,62 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<?>> handleIllegalArgument(IllegalArgumentException e) {
+    public ResponseEntity<CustomResponse<?>> handleIllegalArgument(IllegalArgumentException e) {
 
         log.warn("[IllegalArgumentException] {}", e.getMessage());
 
         return ResponseEntity
                 .status(GeneralErrorCode.BAD_REQUEST.getStatus())
-                .body(ApiResponse.onFailure(GeneralErrorCode.BAD_REQUEST, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.BAD_REQUEST, null));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<?>> handleConstraintViolation(ConstraintViolationException e) {
+    public ResponseEntity<CustomResponse<?>> handleConstraintViolation(ConstraintViolationException e) {
 
         log.warn("[ConstraintViolationException] {}", e.getMessage());
 
         return ResponseEntity
                 .status(GeneralErrorCode.INVALID_PAGE.getStatus())
-                .body(ApiResponse.onFailure(GeneralErrorCode.INVALID_PAGE, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.INVALID_PAGE, null));
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
-    public ResponseEntity<ApiResponse<?>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
+    public ResponseEntity<CustomResponse<?>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
         
         log.warn("[HandlerMethodValidationException] {}", e.getMessage());
 
         return ResponseEntity
                 .status(GeneralErrorCode.INVALID_PAGE.getStatus())
-                .body(ApiResponse.onFailure(GeneralErrorCode.INVALID_PAGE, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.INVALID_PAGE, null));
     }
 
     @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<ApiResponse<?>> handleSecurityException(SecurityException e) {
+    public ResponseEntity<CustomResponse<?>> handleSecurityException(SecurityException e) {
 
         log.warn("[SecurityException] {}", e.getMessage());
 
         return ResponseEntity
                 .status(GeneralErrorCode.UNAUTHORIZED.getStatus())
-                .body(ApiResponse.onFailure(GeneralErrorCode.UNAUTHORIZED, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.UNAUTHORIZED, null));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<?>> handleResourceNotFound(ResourceNotFoundException e) {
+    public ResponseEntity<CustomResponse<?>> handleResourceNotFound(ResourceNotFoundException e) {
 
         log.warn("[ResourceNotFoundException] {}", e.getMessage());
 
         return ResponseEntity
                 .status(GeneralErrorCode.NOT_FOUND.getStatus())
-                .body(ApiResponse.onFailure(GeneralErrorCode.NOT_FOUND, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.NOT_FOUND, null));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleUnexpectedException(Exception e) {
+    public ResponseEntity<CustomResponse<?>> handleUnexpectedException(Exception e) {
 
         log.error("[UnexpectedException]", e);
 
         return ResponseEntity
                 .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(ApiResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, null));
     }
 }

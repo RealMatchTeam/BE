@@ -9,19 +9,27 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:16
+      mysql:
+        image: mysql:8.0
         env:
-          POSTGRES_DB: myapp_db
-          POSTGRES_USER: admin
-          POSTGRES_PASSWORD: secret
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test
+          MYSQL_ROOT_PASSWORD: test_root
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptest_root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+
+    env:
+      SPRING_PROFILES_ACTIVE: test
+      JWT_SECRET: pPmJ9ViYt8f6HAh2q5s36QmEUeyEFRcquPaNpnIGUK8er5DjfTKa4xbDsTFXQ7HRVfTLR2DIYs7s9iGdJ+Yb7Q==
+      JWT_ACCESS_EXPIRE_MS: 600000
+      JWT_REFRESH_EXPIRE_MS: 1209600000
 
     steps:
     - name: Checkout code
@@ -33,18 +41,12 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: gradle
-    
+
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-
-    - name: Make application.properties
-      run: |
-        mkdir -p ./src/main/resources
-        echo "${{ secrets.APPLICATION_YML }}" > ./src/main/resources/application.yml
-      shell: bash
 
     - name: Check code formatting
       run: ./gradlew checkstyleMain checkstyleTest
@@ -66,7 +68,7 @@ jobs:
         # 최대 60초 대기하면서 애플리케이션 시작 확인
         for i in {1..60}; do
           # 로그에서 시작 완료 메시지 확인
-          if grep -q "Started SpotApplication" bootrun.log 2>/dev/null; then
+          if grep -q "Started RealMatchApplication" bootrun.log; then
             echo "✅ Application started successfully after ${i}s"
             kill $APP_PID 2>/dev/null || true
             exit 0
