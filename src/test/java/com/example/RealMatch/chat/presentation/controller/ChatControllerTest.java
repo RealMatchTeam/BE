@@ -13,19 +13,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
+import com.example.RealMatch.chat.presentation.config.ChatCursorConverterConfig;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
-import com.example.RealMatch.chat.presentation.config.ChatCursorConverterConfig;
 import com.example.RealMatch.global.config.jwt.JwtProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 @SuppressWarnings("null")
 @WebMvcTest(ChatController.class)
 @AutoConfigureMockMvc(addFilters = false)

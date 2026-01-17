@@ -19,6 +19,7 @@ import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentInfoResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatProposalActionButtonResponse;
@@ -29,7 +30,6 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessageResponse;
 
 /**
