@@ -14,7 +14,11 @@ public record MessageCursor(Long messageId) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return new MessageCursor(Long.valueOf(value));
+        try {
+            return new MessageCursor(Long.valueOf(value));
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Message Cursor messageId 형식이 올바르지 않습니다.", ex);
+        }
     }
 
     @JsonValue

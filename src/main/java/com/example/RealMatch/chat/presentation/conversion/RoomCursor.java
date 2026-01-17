@@ -22,8 +22,18 @@ public record RoomCursor(LocalDateTime lastMessageAt, Long roomId) {
         if (parts.length != 2) {
             throw new IllegalArgumentException("Room Cursor 형식이 올바르지 않습니다.");
         }
-        LocalDateTime lastMessageAt = LocalDateTime.parse(parts[0], FORMATTER);
-        Long roomId = Long.valueOf(parts[1]);
+        LocalDateTime lastMessageAt;
+        try {
+            lastMessageAt = LocalDateTime.parse(parts[0], FORMATTER);
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("Room Cursor lastMessageAt 형식이 올바르지 않습니다.", ex);
+        }
+        Long roomId;
+        try {
+            roomId = Long.valueOf(parts[1]);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Room Cursor roomId 형식이 올바르지 않습니다.", ex);
+        }
         return new RoomCursor(lastMessageAt, roomId);
     }
 
