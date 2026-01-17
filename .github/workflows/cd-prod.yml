@@ -35,6 +35,7 @@ jobs:
         with:
           context: .
           file: Docker/Dockerfile
+          platforms: linux/amd64
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/realmatch-backend:prod
@@ -48,16 +49,15 @@ jobs:
           key: ${{ secrets.PROD_SERVER_SSH_KEY }}
           script: |
             cd /home/ubuntu/realmatch
-            git pull origin main
 
-            docker compose pull
-            docker compose up -d
-      
+            docker-compose pull
+            docker-compose up -d
+
             echo "Waiting for app to start..."
             sleep 10
-      
-            if ! docker compose ps | grep "Up"; then
+
+            if ! docker-compose ps | grep "Up"; then
               echo "❌ Container is not running"
-              docker compose logs
+              docker-compose logs
               exit 1
             fi

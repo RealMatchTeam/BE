@@ -25,10 +25,9 @@ services:
       - "6379:6379"
 
   app:
-    build:
-      context: .
-      dockerfile: Docker/Dockerfile
+    image: ${DOCKERHUB_USERNAME}/realmatch-backend:prod
     container_name: spring_app
+    restart: always
     ports:
       - "6000:6000"
     depends_on:
