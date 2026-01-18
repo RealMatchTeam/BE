@@ -28,6 +28,7 @@ public class SecurityConfig {
     private static final String[] PERMIT_ALL_URL_ARRAY = {
             "/api/test",
             "/api/chat/**",
+            "/ws/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"
     };
 
