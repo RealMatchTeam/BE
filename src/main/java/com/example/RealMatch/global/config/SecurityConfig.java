@@ -65,7 +65,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl));
+        configuration.setAllowedOrigins(List.of(allowedOrigin, swaggerUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);  // 쿠키/인증정보 포함 요청
