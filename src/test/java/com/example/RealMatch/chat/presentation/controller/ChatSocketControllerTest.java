@@ -31,6 +31,7 @@ import org.springframework.web.socket.server.HandshakeHandler;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
+import com.example.RealMatch.chat.presentation.dto.enums.ChatSendMessageAckStatus;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
@@ -93,7 +94,7 @@ class ChatSocketControllerTest {
         session.send(APP_SEND_DESTINATION, Objects.requireNonNull(command));
 
         ChatSendMessageAck ack = ackFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        assertThat(ack.status().name()).isEqualTo("SUCCESS");
+        assertThat(ack.status()).isEqualTo(ChatSendMessageAckStatus.SUCCESS);
         assertThat(ack.clientMessageId()).isEqualTo(command.clientMessageId());
     }
 
