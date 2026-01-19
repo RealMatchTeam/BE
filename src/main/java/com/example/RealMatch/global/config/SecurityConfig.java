@@ -80,7 +80,7 @@ public class SecurityConfig {
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler((request, response, exception) -> {
                             log.error("OAuth2 login failed", exception);
-                            response.sendRedirect("/api/test?error=" + exception.getMessage());
+                            response.sendRedirect("/api/test?error=oauth_login_failed");
                         }));
 
         return http.build();
