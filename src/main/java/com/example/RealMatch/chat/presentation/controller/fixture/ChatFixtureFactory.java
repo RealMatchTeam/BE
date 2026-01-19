@@ -30,10 +30,11 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessageResponse;
 
 /**
- * 채팅 API 테스트를 위한 Fixture 응답 DTO를 생성하는 팩토리 (서비스 로직 완성하면 삭제할 것임)
+ * 채팅 API 테스트를 위한 Fixture 응답 DTO를 생성하는 팩토리 (서비스 로직 완성하면 운영 코드에서 제거하고 테스트 전용으로 남겨둠)
  */
 public final class ChatFixtureFactory {
 
@@ -96,6 +97,30 @@ public final class ChatFixtureFactory {
                 ),
                 MessageCursor.of(6999L),
                 true
+        );
+    }
+
+    public static ChatMessageResponse sampleSystemMessageResponse(
+            Long roomId,
+            ChatSystemMessageKind kind,
+            ChatSystemMessagePayload payload
+    ) {
+        if (kind == null) {
+            throw new IllegalArgumentException("System message kind is required.");
+        }
+        ChatSystemMessagePayload resolvedPayload = payload != null ? payload : defaultSystemMessagePayload(kind);
+        ChatSystemMessageResponse systemMessage = new ChatSystemMessageResponse(1, kind, resolvedPayload);
+        return new ChatMessageResponse(
+                systemMessageMessageId(kind),
+                roomId,
+                null,
+                ChatSenderType.SYSTEM,
+                ChatMessageType.SYSTEM,
+                null,
+                null,
+                systemMessage,
+                systemMessageCreatedAt(kind),
+                null
         );
     }
 
@@ -163,92 +188,68 @@ public final class ChatFixtureFactory {
     }
 
     private static ChatMessageResponse sampleSystemMessage(Long roomId) {
-        ChatSystemMessageResponse systemMessage = new ChatSystemMessageResponse(
-                1,
-                ChatSystemMessageKind.PROPOSAL_CARD,
-                new ChatProposalCardPayloadResponse(
-                        5001L,
-                        4001L,
-                        "캠페인 A",
-                        "캠페인 요약 문구",
-                        ChatProposalDecisionStatus.PENDING,
-                        ChatProposalDirection.BRAND_TO_CREATOR,
-                        new ChatProposalActionButtonsResponse(
-                                new ChatProposalActionButtonResponse(
-                                        "제안 수락하기",
-                                        true
-                                ),
-                                new ChatProposalActionButtonResponse(
-                                        "거절하기",
-                                        true
-                                )
-                        ),
-                        null
-                )
-        );
-        return new ChatMessageResponse(
-                7004L,
-                roomId,
-                null,
-                ChatSenderType.SYSTEM,
-                ChatMessageType.SYSTEM,
-                null,
-                null,
-                systemMessage,
-                LocalDateTime.of(2025, 1, 1, 10, 5),
-                null
-        );
+        return sampleSystemMessageResponse(roomId, ChatSystemMessageKind.PROPOSAL_CARD, null);
     }
 
     private static ChatMessageResponse sampleProposalStatusNoticeMessage(Long roomId) {
-        ChatSystemMessageResponse systemMessage = new ChatSystemMessageResponse(
-                1,
-                ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE,
-                new ChatProposalStatusNoticePayloadResponse(
-                        5001L,
-                        202L,
-                        LocalDateTime.of(2025, 1, 1, 10, 6)
-                )
-        );
-        return new ChatMessageResponse(
-                7005L,
-                roomId,
-                null,
-                ChatSenderType.SYSTEM,
-                ChatMessageType.SYSTEM,
-                null,
-                null,
-                systemMessage,
-                LocalDateTime.of(2025, 1, 1, 10, 6),
-                null
-        );
+        return sampleSystemMessageResponse(roomId, ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE, null);
     }
 
     private static ChatMessageResponse sampleMatchedCampaignMessage(Long roomId) {
-        ChatSystemMessageResponse systemMessage = new ChatSystemMessageResponse(
-                1,
-                ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD,
-                new ChatMatchedCampaignPayloadResponse(
-                        4001L,
-                        "캠페인 A",
-                        150000L,
-                        "KRW",
-                        "ORDER-20250101-0001",
-                        "캠페인이 매칭되었습니다. 협업을 시작해 주세요."
-                )
-        );
-        return new ChatMessageResponse(
-                7006L,
-                roomId,
-                null,
-                ChatSenderType.SYSTEM,
-                ChatMessageType.SYSTEM,
-                null,
-                null,
-                systemMessage,
-                LocalDateTime.of(2025, 1, 1, 10, 7),
-                null
-        );
+        return sampleSystemMessageResponse(roomId, ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD, null);
+    }
+
+    private static ChatSystemMessagePayload defaultSystemMessagePayload(ChatSystemMessageKind kind) {
+        return switch (kind) {
+            case PROPOSAL_CARD -> new ChatProposalCardPayloadResponse(
+                    5001L,
+                    4001L,
+                    "캠페인 A",
+                    "캠페인 요약 문구",
+                    ChatProposalDecisionStatus.PENDING,
+                    ChatProposalDirection.BRAND_TO_CREATOR,
+                    new ChatProposalActionButtonsResponse(
+                            new ChatProposalActionButtonResponse(
+                                    "제안 수락하기",
+                                    true
+                            ),
+                            new ChatProposalActionButtonResponse(
+                                    "거절하기",
+                                    true
+                            )
+                    ),
+                    null
+            );
+            case PROPOSAL_STATUS_NOTICE -> new ChatProposalStatusNoticePayloadResponse(
+                    5001L,
+                    202L,
+                    LocalDateTime.of(2025, 1, 1, 10, 6)
+            );
+            case MATCHED_CAMPAIGN_CARD -> new ChatMatchedCampaignPayloadResponse(
+                    4001L,
+                    "캠페인 A",
+                    150000L,
+                    "KRW",
+                    "ORDER-20250101-0001",
+                    "캠페인이 매칭되었습니다. 협업을 시작해 주세요."
+            );
+        };
+    }
+
+    private static long systemMessageMessageId(ChatSystemMessageKind kind) {
+        return switch (kind) {
+            case PROPOSAL_CARD -> 7004L;
+            case PROPOSAL_STATUS_NOTICE -> 7005L;
+            case MATCHED_CAMPAIGN_CARD -> 7006L;
+        };
+    }
+
+    private static LocalDateTime systemMessageCreatedAt(ChatSystemMessageKind kind) {
+        return switch (kind) {
+            case PROPOSAL_CARD -> LocalDateTime.of(2025, 1, 1, 10, 5);
+            case PROPOSAL_STATUS_NOTICE -> LocalDateTime.of(2025, 1, 1, 10, 6);
+            case MATCHED_CAMPAIGN_CARD -> LocalDateTime.of(2025, 1, 1, 10, 7);
+        };
     }
 
     public static ChatAttachmentUploadResponse sampleAttachmentUploadResponse(
