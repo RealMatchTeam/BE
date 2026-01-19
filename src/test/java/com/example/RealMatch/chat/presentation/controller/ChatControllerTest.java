@@ -2,6 +2,10 @@ package com.example.RealMatch.chat.presentation.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -19,6 +23,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.example.RealMatch.chat.application.service.ChatService;
+import com.example.RealMatch.chat.presentation.controller.fixture.ChatFixtureFactory;
 import com.example.RealMatch.chat.presentation.config.ChatCursorConverterConfig;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
@@ -40,10 +46,16 @@ class ChatControllerTest {
     @MockitoBean
     private JwtProvider jwtProvider;
 
+    @MockitoBean
+    private ChatService chatService;
+
     @Test
     @DisplayName("채팅방 생성/조회: 200 + 공통 응답 포맷")
     void createOrGetRoom_returnsOk() throws Exception {
         ChatRoomCreateRequest request = new ChatRoomCreateRequest(101L, 202L);
+
+        given(chatService.createOrGetRoom(any(), any()))
+                .willReturn(ChatFixtureFactory.sampleRoomCreateResponse());
 
         mockMvc.perform(post("/api/chat/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -61,6 +73,9 @@ class ChatControllerTest {
     @Test
     @DisplayName("채팅방 목록 조회: 200 + 공통 응답 포맷")
     void getRoomList_returnsOk() throws Exception {
+        given(chatService.getRoomList(any(), any(), any(), any(), any(), anyInt()))
+                .willReturn(ChatFixtureFactory.sampleRoomListResponse());
+
         mockMvc.perform(get("/api/chat/rooms")
                         .param("tab", "SENT")
                         .param("status", "ALL")
@@ -89,6 +104,9 @@ class ChatControllerTest {
     @Test
     @DisplayName("채팅방 상세 조회: 200 + 공통 응답 포맷")
     void getRoomDetail_returnsOk() throws Exception {
+        given(chatService.getRoomDetail(any(), anyLong()))
+                .willReturn(ChatFixtureFactory.sampleRoomDetailResponse(3001L));
+
         mockMvc.perform(get("/api/chat/rooms/{roomId}", 3001L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
@@ -105,6 +123,9 @@ class ChatControllerTest {
     @Test
     @DisplayName("채팅 메시지 조회: 200 + 공통 응답 포맷")
     void getMessages_returnsOk() throws Exception {
+        given(chatService.getMessages(any(), anyLong(), any(), anyInt()))
+                .willReturn(ChatFixtureFactory.sampleMessageListResponse(3001L));
+
         mockMvc.perform(get("/api/chat/rooms/{roomId}/messages", 3001L)
                         .param("cursor", "7001")
                         .param("size", "20"))
@@ -165,6 +186,12 @@ class ChatControllerTest {
                 MediaType.IMAGE_PNG_VALUE,
                 "dummy".getBytes()
         );
+
+        given(chatService.uploadAttachment(any(), any(), any()))
+                .willAnswer(invocation -> ChatFixtureFactory.sampleAttachmentUploadResponse(
+                        invocation.getArgument(1),
+                        invocation.getArgument(2)
+                ));
 
         mockMvc.perform(multipart("/api/chat/attachments")
                         .file(jsonPart)

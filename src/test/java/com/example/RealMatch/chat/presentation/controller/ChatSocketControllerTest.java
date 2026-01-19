@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -30,7 +31,11 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.server.HandshakeHandler;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
+import com.example.RealMatch.chat.application.service.ChatSocketService;
+import com.example.RealMatch.chat.presentation.controller.fixture.ChatSocketFixtureFactory;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
+import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
+import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSendMessageAckStatus;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;
@@ -207,6 +212,31 @@ class ChatSocketControllerTest {
 
     @TestConfiguration
     static class WebSocketTestConfig {
+
+        @Bean
+        @Primary
+        ChatSocketService chatSocketService() {
+            return new ChatSocketService() {
+                @Override
+                public ChatMessageCreatedEvent createMessageEvent(ChatSendMessageCommand command) {
+                    return ChatSocketFixtureFactory.sampleMessageCreatedEvent(command);
+                }
+
+                @Override
+                public ChatSendMessageAck createAck(ChatSendMessageCommand command, Long messageId) {
+                    return ChatSocketFixtureFactory.sampleAck(command, messageId);
+                }
+
+                @Override
+                public ChatMessageCreatedEvent createSystemMessageEvent(
+                        Long roomId,
+                        ChatSystemMessageKind kind,
+                        ChatSystemMessagePayload payload
+                ) {
+                    throw new UnsupportedOperationException("Not implemented yet.");
+                }
+            };
+        }
 
         @Bean
         HandshakeHandler handshakeHandler() {
