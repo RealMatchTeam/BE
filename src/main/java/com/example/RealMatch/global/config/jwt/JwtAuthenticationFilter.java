@@ -1,6 +1,8 @@
 package com.example.RealMatch.global.config.jwt;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,11 +22,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
 
+    // JWT 검증을 건너뛸 경로들
+    private static final List<String> EXCLUDED_PATHS = Arrays.asList(
+            "/login",
+            "/oauth2/",
+            "/login/oauth2/",
+            "/oauth/callback",
+            "/api/v1/test",
+            "/v3/api-docs",
+            "/swagger-ui",
+            "/swagger-resources"
+    );
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
+
+        String requestURI = request.getRequestURI();
+
+        // OAuth2 관련 경로는 JWT 검증 건너뛰기
+        if (shouldNotFilter(requestURI)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
@@ -59,4 +81,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private boolean shouldNotFilter(String requestURI) {
+        return EXCLUDED_PATHS.stream()
+                .anyMatch(requestURI::startsWith);
+    }
 }
