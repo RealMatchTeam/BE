@@ -41,12 +41,12 @@ public class SecurityConfig {
             "/login/**", "/oauth2/**",
             "/api/test",
             "/api/login/success",
-            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
             "/api/test-auth"
     };
-     
+
     @Value("${swagger.server-url}")
     private String swaggerUrl;
 
@@ -60,19 +60,19 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-          
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-          
+
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
-          
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
                         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
                         .anyRequest().authenticated())
-          
+
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
