@@ -43,10 +43,15 @@ public class SecurityConfig {
             "/api/login/success",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"
 
+    private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
+            "/api/test-auth"
     };
+     
+    @Value("${swagger.server-url}")
+    private String swaggerUrl;
 
-    @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:8080}")
-    private List<String> allowedOrigins;
+    @Value("${cors.allowed-origin}")
+    private String allowedOrigin;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -55,14 +60,19 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+          
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+          
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
+          
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
                         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
                         .anyRequest().authenticated())
+          
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
@@ -79,7 +89,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

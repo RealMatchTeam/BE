@@ -9,19 +9,21 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:16
+      mysql:
+        image: mysql:8.0
         env:
-          POSTGRES_DB: myapp_db
-          POSTGRES_USER: admin
-          POSTGRES_PASSWORD: secret
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test
+          MYSQL_ROOT_PASSWORD: test_root
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptest_root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
 
     env:
       SPRING_PROFILES_ACTIVE: test
