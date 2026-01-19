@@ -34,9 +34,9 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import com.example.RealMatch.chat.application.service.ChatSocketService;
 import com.example.RealMatch.chat.presentation.controller.fixture.ChatSocketFixtureFactory;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
+import com.example.RealMatch.chat.presentation.dto.enums.ChatSendMessageAckStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatSendMessageAckStatus;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
@@ -218,8 +218,11 @@ class ChatSocketControllerTest {
         ChatSocketService chatSocketService() {
             return new ChatSocketService() {
                 @Override
-                public ChatMessageCreatedEvent createMessageEvent(ChatSendMessageCommand command) {
-                    return ChatSocketFixtureFactory.sampleMessageCreatedEvent(command);
+                public @NonNull ChatMessageCreatedEvent createMessageEvent(ChatSendMessageCommand command) {
+                    return Objects.requireNonNull(
+                            ChatSocketFixtureFactory.sampleMessageCreatedEvent(command),
+                            "ChatMessageCreatedEvent must not be null."
+                    );
                 }
 
                 @Override

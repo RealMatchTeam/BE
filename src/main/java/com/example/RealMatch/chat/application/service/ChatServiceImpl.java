@@ -15,10 +15,10 @@ import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
 @Service
@@ -71,11 +71,6 @@ public class ChatServiceImpl implements ChatService {
             ChatSystemMessageKind kind,
             ChatSystemMessagePayload payload
     ) {
-        return ChatFixtureFactory.sampleMessageListResponse(roomId)
-                .messages()
-                .stream()
-                .filter(message -> message.systemMessage() != null && message.systemMessage().kind() == kind)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported system message kind: " + kind));
+        return ChatFixtureFactory.sampleSystemMessageResponse(roomId, kind, payload);
     }
 }

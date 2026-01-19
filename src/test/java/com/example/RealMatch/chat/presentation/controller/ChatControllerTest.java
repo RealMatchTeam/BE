@@ -24,13 +24,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.RealMatch.chat.application.service.ChatService;
-import com.example.RealMatch.chat.presentation.controller.fixture.ChatFixtureFactory;
 import com.example.RealMatch.chat.presentation.config.ChatCursorConverterConfig;
+import com.example.RealMatch.chat.presentation.controller.fixture.ChatFixtureFactory;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.global.config.jwt.JwtProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 @SuppressWarnings("null")
 @WebMvcTest(ChatController.class)
 @AutoConfigureMockMvc(addFilters = false)
