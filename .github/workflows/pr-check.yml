@@ -30,6 +30,9 @@ jobs:
       JWT_SECRET: pPmJ9ViYt8f6HAh2q5s36QmEUeyEFRcquPaNpnIGUK8er5DjfTKa4xbDsTFXQ7HRVfTLR2DIYs7s9iGdJ+Yb7Q==
       JWT_ACCESS_EXPIRE_MS: 600000
       JWT_REFRESH_EXPIRE_MS: 1209600000
+      KAKAO_ID: client
+      KAKAO_SECRET: secret
+      KAKAO_REDIRECT_URI: http://redirect-uri-test
 
     steps:
     - name: Checkout code
