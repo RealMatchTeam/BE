@@ -9,7 +9,10 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.global.config.oauth.*;
+import com.example.RealMatch.global.config.oauth.CustomOAuth2User;
+import com.example.RealMatch.global.config.oauth.KakaoUserInfo;
+import com.example.RealMatch.global.config.oauth.NaverUserInfo;
+import com.example.RealMatch.global.config.oauth.OAuth2UserInfo;
 import com.example.RealMatch.match.domain.entity.User;
 import com.example.RealMatch.match.domain.repository.UserRepository;
 
@@ -72,7 +75,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String newEmail = userInfo.getEmail();
         String newName = userInfo.getName();
 
-        return (newEmail != null && !newEmail.equals(user.getEmail())) ||
-                (newName != null && !newName.equals(user.getName()));
+        return newEmail != null && !newEmail.equals(user.getEmail()) ||
+                newName != null && !newName.equals(user.getName());
     }
 }
