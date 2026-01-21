@@ -38,9 +38,6 @@ public class ChatMessageResponseMapper {
 
     private ChatSystemMessageResponse toSystemMessageResponse(ChatMessage message) {
         ChatSystemMessageKind kind = message.getSystemKind();
-        if (kind == null) {
-            throw new IllegalArgumentException("System message kind is required.");
-        }
         ChatSystemMessagePayload payload = payloadSerializer.deserialize(kind, message.getSystemPayload());
         return new ChatSystemMessageResponse(SYSTEM_MESSAGE_SCHEMA_VERSION, kind, payload);
     }

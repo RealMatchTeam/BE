@@ -11,6 +11,7 @@ public interface ChatMessageCommandService {
     @NonNull
     ChatMessageResponse saveMessage(ChatSendMessageCommand command, Long senderId);
 
+    @NonNull
     ChatMessageResponse saveSystemMessage(
             Long roomId,
             ChatSystemMessageKind kind,

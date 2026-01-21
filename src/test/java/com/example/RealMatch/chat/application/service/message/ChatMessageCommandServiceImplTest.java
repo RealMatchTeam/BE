@@ -19,10 +19,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
+import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
+import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
@@ -39,6 +41,7 @@ class ChatMessageCommandServiceImplTest {
     private final ChatMessageRepository chatMessageRepository = Mockito.mock(ChatMessageRepository.class);
     private final ChatAttachmentRepository chatAttachmentRepository = Mockito.mock(ChatAttachmentRepository.class);
     private final ChatRoomMemberRepository chatRoomMemberRepository = Mockito.mock(ChatRoomMemberRepository.class);
+    private final ChatRoomRepository chatRoomRepository = Mockito.mock(ChatRoomRepository.class);
     private final ChatRoomUpdateService chatRoomUpdateService = Mockito.mock(ChatRoomUpdateService.class);
     private final MessagePreviewGenerator messagePreviewGenerator = Mockito.mock(MessagePreviewGenerator.class);
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
@@ -49,6 +52,7 @@ class ChatMessageCommandServiceImplTest {
                     chatMessageRepository,
                     chatAttachmentRepository,
                     chatRoomMemberRepository,
+                    chatRoomRepository,
                     chatRoomUpdateService,
                     messagePreviewGenerator,
                     payloadSerializer
@@ -137,8 +141,15 @@ class ChatMessageCommandServiceImplTest {
         ChatSendMessageCommand command = new ChatSendMessageCommand(3001L, ChatMessageType.IMAGE, null, null,
                 "22222222-2222-2222-2222-222222222222");
 
+        ChatRoomMember member = ChatRoomMember.create(3001L, 202L, ChatRoomMemberRole.BRAND);
+        given(chatRoomMemberRepository.findByRoomIdAndUserId(3001L, 202L))
+                .willReturn(Optional.of(member));
+        given(chatMessageRepository.findByClientMessageIdAndSenderId(anyString(), anyLong()))
+                .willReturn(Optional.empty());
+
         assertThatThrownBy(() -> service.saveMessage(command, 202L))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Attachment id is required for IMAGE/FILE messages");
     }
 
     @Test
@@ -152,6 +163,11 @@ class ChatMessageCommandServiceImplTest {
                 "ORDER-20250101-0001",
                 "캠페인이 매칭되었습니다. 협업을 시작해 주세요."
         );
+
+        ChatRoom room = ChatRoom.createDirectRoom("direct:101:202");
+        ReflectionTestUtils.setField(room, "id", 3001L);
+        given(chatRoomRepository.findById(3001L))
+                .willReturn(Optional.of(room));
 
         given(chatMessageRepository.save(any(ChatMessage.class))).willAnswer(invocation -> {
             ChatMessage message = invocation.getArgument(0);

@@ -10,12 +10,13 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
 import com.example.RealMatch.chat.application.service.ChatSocketService;
+import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
 import com.example.RealMatch.chat.presentation.resolver.ChatUserIdResolver;
+import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 
 @Controller
@@ -40,13 +41,22 @@ public class ChatSocketController {
         try {
             Long senderId = chatUserIdResolver.resolve(principal);
             ChatMessageResponse response = chatSocketService.createMessageEvent(command, senderId);
-            return chatSocketService.createAck(command, response.messageId());
-        } catch (ConstraintViolationException | IllegalArgumentException ex) {
-            LOG.warn("Invalid chat send request. clientMessageId={}", command.clientMessageId(), ex);
-            return chatSocketService.createFailedAck(command);
+            
+            Long messageId = response.messageId();
+            if (messageId == null) {
+                LOG.error("Response messageId is null. clientMessageId={}", command.clientMessageId());
+                return ChatSendMessageAck.failure(command.clientMessageId(), GeneralErrorCode.INTERNAL_SERVER_ERROR);
+            }
+            
+            return chatSocketService.createAck(command, messageId);
+        } catch (ChatException ex) {
+            LOG.warn("Chat domain exception. clientMessageId={}, errorCode={}", 
+                    command.clientMessageId(), ex.getErrorCode().getCode(), ex);
+            return ChatSendMessageAck.failure(command.clientMessageId(), ex.getErrorCode());
         } catch (RuntimeException ex) {
-            LOG.error("Failed to process chat send request. clientMessageId={}", command.clientMessageId(), ex);
-            return chatSocketService.createFailedAck(command);
+            LOG.error("Unexpected runtime exception in chat send request. clientMessageId={}", 
+                    command.clientMessageId(), ex);
+            return ChatSendMessageAck.failure(command.clientMessageId(), GeneralErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }

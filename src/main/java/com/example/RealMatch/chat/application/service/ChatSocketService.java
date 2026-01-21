@@ -2,6 +2,7 @@ package com.example.RealMatch.chat.application.service;
 
 import org.springframework.lang.NonNull;
 
+import com.example.RealMatch.global.presentation.code.BaseErrorCode;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
@@ -15,7 +16,7 @@ public interface ChatSocketService {
 
     ChatSendMessageAck createAck(ChatSendMessageCommand command, Long messageId);
 
-    ChatSendMessageAck createFailedAck(ChatSendMessageCommand command);
+    ChatSendMessageAck createFailedAck(ChatSendMessageCommand command, BaseErrorCode errorCode);
 
     ChatMessageCreatedEvent createSystemMessageEvent(
             Long roomId,

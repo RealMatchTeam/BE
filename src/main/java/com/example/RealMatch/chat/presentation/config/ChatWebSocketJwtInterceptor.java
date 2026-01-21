@@ -1,7 +1,5 @@
 package com.example.RealMatch.chat.presentation.config;
 
-import java.security.Principal;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
@@ -36,16 +34,22 @@ public class ChatWebSocketJwtInterceptor implements ChannelInterceptor {
         if (accessor == null || accessor.getCommand() != StompCommand.CONNECT) {
             return message;
         }
-        Principal existingUser = accessor.getUser();
-        if (existingUser != null) {
+
+        if (accessor.getUser() != null) {
             return message;
         }
         String authHeader = resolveAuthorization(accessor);
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            // TODO: 인증 시스템 완성 후 연결 거부 처리 활성화
+            // 인증 헤더가 없거나 형식이 맞지 않으면 연결 거부
+
             return message;
         }
         String token = authHeader.substring(BEARER_PREFIX.length());
         if (!jwtProvider.validateToken(token)) {
+            // TODO: 인증 시스템 완성 후 연결 거부 처리 활성화
+            // JWT 검증 실패 시 연결 거부
+
             return message;
         }
         Long userId = jwtProvider.getUserId(token);
