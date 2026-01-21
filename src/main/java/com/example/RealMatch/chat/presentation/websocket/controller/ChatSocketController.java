@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.controller;
+package com.example.RealMatch.chat.presentation.websocket.controller;
 
 import java.security.Principal;
 
@@ -9,7 +9,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
-import com.example.RealMatch.chat.application.service.socket.ChatSocketService;
+import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;
@@ -24,14 +24,14 @@ public class ChatSocketController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatSocketController.class);
 
-    private final ChatSocketService chatSocketService;
+    private final ChatMessageSocketService chatMessageSocketService;
     private final ChatUserIdResolver chatUserIdResolver;
 
     public ChatSocketController(
-            ChatSocketService chatSocketService,
+            ChatMessageSocketService chatMessageSocketService,
             ChatUserIdResolver chatUserIdResolver
     ) {
-        this.chatSocketService = chatSocketService;
+        this.chatMessageSocketService = chatMessageSocketService;
         this.chatUserIdResolver = chatUserIdResolver;
     }
 
@@ -40,8 +40,8 @@ public class ChatSocketController {
     public ChatSendMessageAck sendMessage(@Valid @Payload ChatSendMessageCommand command, Principal principal) {
         try {
             Long senderId = chatUserIdResolver.resolve(principal);
-            ChatMessageResponse response = chatSocketService.createMessageEvent(command, senderId);
-            return chatSocketService.createAck(command, response.messageId());
+            ChatMessageResponse response = chatMessageSocketService.sendMessage(command, senderId);
+            return ChatSendMessageAck.success(command.clientMessageId(), response.messageId());
         } catch (ChatException ex) {
             LOG.warn("Chat domain exception. clientMessageId={}, errorCode={}", 
                     command.clientMessageId(), ex.getErrorCode().getCode(), ex);

@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.controller;
+package com.example.RealMatch.chat.presentation.rest.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.RealMatch.chat.application.conversion.MessageCursor;
+import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.service.attachment.ChatAttachmentService;
 import com.example.RealMatch.chat.application.service.message.ChatMessageQueryService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomService;
-import com.example.RealMatch.chat.presentation.conversion.MessageCursor;
-import com.example.RealMatch.chat.presentation.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomSort;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
@@ -27,7 +27,7 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListRespo
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
-import com.example.RealMatch.chat.presentation.swagger.ChatSwagger;
+import com.example.RealMatch.chat.presentation.rest.swagger.ChatSwagger;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
@@ -37,18 +37,18 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/chat")
 public class ChatController implements ChatSwagger {
 
-    private final ChatRoomService chatRoomService;
+    private final ChatRoomCommandService chatRoomCommandService;
     private final ChatRoomQueryService chatRoomQueryService;
     private final ChatMessageQueryService chatMessageQueryService;
     private final ChatAttachmentService chatAttachmentService;
 
     public ChatController(
-            ChatRoomService chatRoomService,
+            ChatRoomCommandService chatRoomCommandService,
             ChatRoomQueryService chatRoomQueryService,
             ChatMessageQueryService chatMessageQueryService,
             ChatAttachmentService chatAttachmentService
     ) {
-        this.chatRoomService = chatRoomService;
+        this.chatRoomCommandService = chatRoomCommandService;
         this.chatRoomQueryService = chatRoomQueryService;
         this.chatMessageQueryService = chatMessageQueryService;
         this.chatAttachmentService = chatAttachmentService;
@@ -59,7 +59,7 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestBody ChatRoomCreateRequest request
     ) {
-        return CustomResponse.ok(chatRoomService.createOrGetRoom(user, request));
+        return CustomResponse.ok(chatRoomCommandService.createOrGetRoom(user, request));
     }
 
     @GetMapping("/rooms")

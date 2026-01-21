@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.swagger;
+package com.example.RealMatch.chat.presentation.rest.swagger;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.RealMatch.chat.presentation.conversion.MessageCursor;
-import com.example.RealMatch.chat.presentation.conversion.RoomCursor;
+import com.example.RealMatch.chat.application.conversion.MessageCursor;
+import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomSort;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;

@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.controller.fixture;
+package com.example.RealMatch.chat.presentation.fixture;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,8 +11,9 @@ import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
-import com.example.RealMatch.chat.presentation.conversion.MessageCursor;
-import com.example.RealMatch.chat.presentation.conversion.RoomCursor;
+
+import com.example.RealMatch.chat.application.conversion.MessageCursor;
+import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalDecisionStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSenderType;

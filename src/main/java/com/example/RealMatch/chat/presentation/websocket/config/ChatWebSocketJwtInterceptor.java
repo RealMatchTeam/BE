@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.config;
+package com.example.RealMatch.chat.presentation.websocket.config;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;

@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.config;
+package com.example.RealMatch.chat.presentation.websocket.config;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;

@@ -11,14 +11,23 @@ import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
+import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
+import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
+import com.example.RealMatch.chat.presentation.fixture.ChatFixtureFactory;
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
 @Service
-public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
+public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     private final ChatRoomRepository chatRoomRepository;
 
-    public ChatRoomUpdateServiceImpl(ChatRoomRepository chatRoomRepository) {
+    public ChatRoomCommandServiceImpl(ChatRoomRepository chatRoomRepository) {
         this.chatRoomRepository = chatRoomRepository;
+    }
+
+    @Override
+    public ChatRoomCreateResponse createOrGetRoom(CustomUserDetails user, ChatRoomCreateRequest request) {
+        return ChatFixtureFactory.sampleRoomCreateResponse();
     }
 
     @Override

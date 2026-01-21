@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
-import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
@@ -32,7 +32,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     private final ChatAttachmentRepository chatAttachmentRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomRepository chatRoomRepository;
-    private final ChatRoomUpdateService chatRoomUpdateService;
+    private final ChatRoomCommandService chatRoomCommandService;
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
     private final SystemMessagePayloadSerializer payloadSerializer;
@@ -42,7 +42,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
             ChatAttachmentRepository chatAttachmentRepository,
             ChatRoomMemberRepository chatRoomMemberRepository,
             ChatRoomRepository chatRoomRepository,
-            ChatRoomUpdateService chatRoomUpdateService,
+            ChatRoomCommandService chatRoomCommandService,
             MessagePreviewGenerator messagePreviewGenerator,
             ChatMessageResponseMapper responseMapper,
             SystemMessagePayloadSerializer payloadSerializer
@@ -51,7 +51,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         this.chatAttachmentRepository = chatAttachmentRepository;
         this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.chatRoomRepository = chatRoomRepository;
-        this.chatRoomUpdateService = chatRoomUpdateService;
+        this.chatRoomCommandService = chatRoomCommandService;
         this.messagePreviewGenerator = messagePreviewGenerator;
         this.responseMapper = responseMapper;
         this.payloadSerializer = payloadSerializer;
@@ -134,8 +134,9 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         if (roomId == null) {
             throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
         }
-        chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
+        if (!chatRoomRepository.existsById(roomId)) {
+            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
         
         ChatMessage message;
         try {
@@ -201,7 +202,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
     private void updateChatRoomLastMessage(ChatMessage message) {
         String preview = messagePreviewGenerator.generate(message.getMessageType(), message.getContent());
-        chatRoomUpdateService.updateLastMessage(
+        chatRoomCommandService.updateLastMessage(
                 message.getRoomId(),
                 message.getId(),
                 message.getCreatedAt(),

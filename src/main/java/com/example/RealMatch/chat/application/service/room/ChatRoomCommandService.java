@@ -5,8 +5,13 @@ import java.time.LocalDateTime;
 import org.springframework.lang.NonNull;
 
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
+import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
+import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
-public interface ChatRoomUpdateService {
+public interface ChatRoomCommandService {
+    ChatRoomCreateResponse createOrGetRoom(CustomUserDetails user, ChatRoomCreateRequest request);
+
     void updateLastMessage(
             @NonNull Long roomId,
             @NonNull Long messageId,

@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.conversion;
+package com.example.RealMatch.chat.application.conversion;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

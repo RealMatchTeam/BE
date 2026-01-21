@@ -1,6 +1,6 @@
 package com.example.RealMatch.chat.application.service.room;
 
-import com.example.RealMatch.chat.presentation.conversion.RoomCursor;
+import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomSort;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
