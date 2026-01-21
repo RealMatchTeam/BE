@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_signup_purposes")
+@Table(name = "signup_purposes")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SignupPurpose extends BaseEntity {

@@ -5,18 +5,18 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.campaign.domain.entity.CampaignProposalEntity;
+import com.example.RealMatch.campaign.domain.entity.CampaignProposal;
 import com.example.RealMatch.campaign.domain.entity.enums.ProposalStatus;
 
-public interface CampaignProposalRepository extends JpaRepository<CampaignProposalEntity, Long> {
+public interface CampaignProposalRepository extends JpaRepository<CampaignProposal, Long> {
 
-    List<CampaignProposalEntity> findByUserId(Long userId);
+    List<CampaignProposal> findByUserId(Long userId);
 
-    List<CampaignProposalEntity> findByCampaignId(Long campaignId);
+    List<CampaignProposal> findByCampaignId(Long campaignId);
 
-    List<CampaignProposalEntity> findByUserIdAndStatus(Long userId, ProposalStatus status);
+    List<CampaignProposal> findByUserIdAndStatus(Long userId, ProposalStatus status);
 
-    List<CampaignProposalEntity> findByCampaignIdAndStatus(Long campaignId, ProposalStatus status);
+    List<CampaignProposal> findByCampaignIdAndStatus(Long campaignId, ProposalStatus status);
 
-    Optional<CampaignProposalEntity> findByUserIdAndCampaignId(Long userId, Long campaignId);
+    Optional<CampaignProposal> findByUserIdAndCampaignId(Long userId, Long campaignId);
 }

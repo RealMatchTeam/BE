@@ -5,15 +5,15 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandLikeEntity;
+import com.example.RealMatch.brand.domain.entity.BrandLike;
 
-public interface BrandLikeRepository extends JpaRepository<BrandLikeEntity, Long> {
+public interface BrandLikeRepository extends JpaRepository<BrandLike, Long> {
 
-    List<BrandLikeEntity> findByUserId(Long userId);
+    List<BrandLike> findByUserId(Long userId);
 
-    List<BrandLikeEntity> findByBrandId(Long brandId);
+    List<BrandLike> findByBrandId(Long brandId);
 
-    Optional<BrandLikeEntity> findByUserIdAndBrandId(Long userId, Long brandId);
+    Optional<BrandLike> findByUserIdAndBrandId(Long userId, Long brandId);
 
     boolean existsByUserIdAndBrandId(Long userId, Long brandId);
 

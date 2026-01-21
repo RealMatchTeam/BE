@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.user.domain.entity.UserSignupPurposeEntity;
+import com.example.RealMatch.user.domain.entity.UserSignupPurpose;
 
-public interface UserSignupPurposeRepository extends JpaRepository<UserSignupPurposeEntity, Long> {
+public interface UserSignupPurposeRepository extends JpaRepository<UserSignupPurpose, Long> {
 
-    List<UserSignupPurposeEntity> findByUserId(Long userId);
+    List<UserSignupPurpose> findByUserId(Long userId);
 
     void deleteByUserId(Long userId);
 }

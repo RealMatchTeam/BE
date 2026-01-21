@@ -1,8 +1,7 @@
 package com.example.RealMatch.brand.domain.entity;
 
-import java.time.LocalDateTime;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -17,10 +16,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_category_view")
+@Table(name = "brand_category_view")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandCategoryView {
+public class BrandCategoryView extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,25 +33,10 @@ public class BrandCategoryView {
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Builder
     public BrandCategoryView(BrandCategory category, Brand brand) {
         this.category = category;
         this.brand = brand;
-        this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
     }
 
-    public void softDelete() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
-    }
 }

@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.campaign.domain.entity.CampaignToneEntity;
+import com.example.RealMatch.campaign.domain.entity.CampaignTone;
 
-public interface CampaignToneRepository extends JpaRepository<CampaignToneEntity, Long> {
+public interface CampaignToneRepository extends JpaRepository<CampaignTone, Long> {
 
-    List<CampaignToneEntity> findByCampaignIdAndIsDeletedFalse(Long campaignId);
+    List<CampaignTone> findByCampaignId(Long campaignId);
 }

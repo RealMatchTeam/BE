@@ -19,7 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_user_term")
+@Table(name = "user_term")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserTerm extends BaseEntity {

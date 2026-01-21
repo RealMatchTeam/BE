@@ -5,12 +5,12 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.user.domain.entity.TermEntity;
+import com.example.RealMatch.user.domain.entity.Term;
 import com.example.RealMatch.user.domain.entity.enums.TermName;
 
-public interface TermRepository extends JpaRepository<TermEntity, Long> {
+public interface TermRepository extends JpaRepository<Term, Long> {
 
-    Optional<TermEntity> findByName(TermName name);
+    Optional<Term> findByName(TermName name);
 
-    List<TermEntity> findByIsRequired(boolean isRequired);
+    List<Term> findByIsRequired(boolean isRequired);
 }

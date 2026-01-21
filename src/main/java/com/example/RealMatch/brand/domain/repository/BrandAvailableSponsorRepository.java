@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsorEntity;
+import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
 
-public interface BrandAvailableSponsorRepository extends JpaRepository<BrandAvailableSponsorEntity, Long> {
+public interface BrandAvailableSponsorRepository extends JpaRepository<BrandAvailableSponsor, Long> {
 
-    List<BrandAvailableSponsorEntity> findByBrandIdAndIsDeletedFalse(Long brandId);
+    List<BrandAvailableSponsor> findByBrandId(Long brandId);
 
-    List<BrandAvailableSponsorEntity> findByCampaignIdAndIsDeletedFalse(Long campaignId);
+    List<BrandAvailableSponsor> findByCampaignId(Long campaignId);
 }

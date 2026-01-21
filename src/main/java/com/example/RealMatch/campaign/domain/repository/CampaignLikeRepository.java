@@ -5,15 +5,15 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.campaign.domain.entity.CampaignLikeEntity;
+import com.example.RealMatch.campaign.domain.entity.CampaignLike;
 
-public interface CampaignLikeRepository extends JpaRepository<CampaignLikeEntity, Long> {
+public interface CampaignLikeRepository extends JpaRepository<CampaignLike, Long> {
 
-    List<CampaignLikeEntity> findByUserId(Long userId);
+    List<CampaignLike> findByUserId(Long userId);
 
-    List<CampaignLikeEntity> findByCampaignId(Long campaignId);
+    List<CampaignLike> findByCampaignId(Long campaignId);
 
-    Optional<CampaignLikeEntity> findByUserIdAndCampaignId(Long userId, Long campaignId);
+    Optional<CampaignLike> findByUserIdAndCampaignId(Long userId, Long campaignId);
 
     boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
 

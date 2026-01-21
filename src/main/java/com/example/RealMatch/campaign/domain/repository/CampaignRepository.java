@@ -6,17 +6,17 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.campaign.domain.entity.CampaignEntity;
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 
-public interface CampaignRepository extends JpaRepository<CampaignEntity, Long> {
+public interface CampaignRepository extends JpaRepository<Campaign, Long> {
 
-    Optional<CampaignEntity> findByIdAndIsDeletedFalse(Long id);
+    Optional<Campaign> findById(Long id);
 
-    List<CampaignEntity> findByIsDeletedFalse();
+    List<Campaign> findAll();
 
-    List<CampaignEntity> findByCreatedByAndIsDeletedFalse(Long createdBy);
+    List<Campaign> findByCreatedBy(Long createdBy);
 
-    List<CampaignEntity> findByRecruitEndDateAfterAndIsDeletedFalse(LocalDateTime now);
+    List<Campaign> findByRecruitEndDateAfter(LocalDateTime now);
 
-    List<CampaignEntity> findByTitleContainingAndIsDeletedFalse(String title);
+    List<Campaign> findByTitleContaining(String title);
 }

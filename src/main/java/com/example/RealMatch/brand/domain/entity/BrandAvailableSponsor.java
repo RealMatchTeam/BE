@@ -1,9 +1,7 @@
 package com.example.RealMatch.brand.domain.entity;
 
-import java.time.LocalDateTime;
-
 import com.example.RealMatch.campaign.domain.entity.Campaign;
-import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,10 +18,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_available_sponsor")
+@Table(name = "brand_available_sponsor")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandAvailableSponsor extends UpdateBaseEntity {
+public class BrandAvailableSponsor extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

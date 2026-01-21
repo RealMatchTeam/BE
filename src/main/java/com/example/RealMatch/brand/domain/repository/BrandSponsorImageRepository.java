@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandSponsorImageEntity;
+import com.example.RealMatch.brand.domain.entity.BrandSponsorImage;
 
-public interface BrandSponsorImageRepository extends JpaRepository<BrandSponsorImageEntity, Long> {
+public interface BrandSponsorImageRepository extends JpaRepository<BrandSponsorImage, Long> {
 
-    List<BrandSponsorImageEntity> findBySponsorIdAndIsDeletedFalse(Long sponsorId);
+    List<BrandSponsorImage> findBySponsorId(Long sponsorId);
 }

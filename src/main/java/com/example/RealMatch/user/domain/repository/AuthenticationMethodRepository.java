@@ -5,14 +5,14 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.user.domain.entity.AuthenticationMethodEntity;
+import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 
-public interface AuthenticationMethodRepository extends JpaRepository<AuthenticationMethodEntity, Long> {
+public interface AuthenticationMethodRepository extends JpaRepository<AuthenticationMethod, Long> {
 
-    Optional<AuthenticationMethodEntity> findByProviderAndProviderId(AuthProvider provider, String providerId);
+    Optional<AuthenticationMethod> findByProviderAndProviderId(AuthProvider provider, String providerId);
 
-    List<AuthenticationMethodEntity> findByUserId(Long userId);
+    List<AuthenticationMethod> findByUserId(Long userId);
 
     boolean existsByProviderAndProviderId(AuthProvider provider, String providerId);
 }

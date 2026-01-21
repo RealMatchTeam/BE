@@ -1,18 +1,16 @@
 package com.example.RealMatch.user.domain.repository;
 
-import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.user.domain.entity.UserEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
-public interface UserEntityRepository extends JpaRepository<UserEntity, Long> {
+public interface UserEntityRepository extends JpaRepository<User, Long> {
 
-    Optional<UserEntity> findByEmail(String email);
-
-    Optional<UserEntity> findByNickname(String nickname);
-
-    boolean existsByEmail(String email);
-
-    boolean existsByNickname(String nickname);
+//    Optional<User> findByEmail(String email);
+//
+//    Optional<User> findByNickname(String nickname);
+//
+//    boolean existsByEmail(String email);
+//
+//    boolean existsByNickname(String nickname);
 }

@@ -5,13 +5,10 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandCategoryEntity;
+import com.example.RealMatch.brand.domain.entity.BrandCategory;
 
-public interface BrandCategoryRepository extends JpaRepository<BrandCategoryEntity, Long> {
+public interface BrandCategoryRepository extends JpaRepository<BrandCategory, Long> {
 
-    Optional<BrandCategoryEntity> findByIdAndIsDeletedFalse(Long id);
+    Optional<BrandCategory> findById(Long id);
 
-    List<BrandCategoryEntity> findByIsDeletedFalse();
-
-    Optional<BrandCategoryEntity> findByNameAndIsDeletedFalse(String name);
 }

@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_matching_tag")
+@Table(name = "matching_tag")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MatchingTag extends BaseEntity {

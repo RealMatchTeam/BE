@@ -4,9 +4,9 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandLikeReadEntity;
+import com.example.RealMatch.brand.domain.entity.BrandLikeRead;
 
-public interface BrandLikeReadRepository extends JpaRepository<BrandLikeReadEntity, Long> {
+public interface BrandLikeReadRepository extends JpaRepository<BrandLikeRead, Long> {
 
-    Optional<BrandLikeReadEntity> findByBrandIdAndIsDeletedFalse(Long brandId);
+    Optional<BrandLikeRead> findByBrandId(Long brandId);
 }

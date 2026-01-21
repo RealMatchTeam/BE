@@ -1,6 +1,6 @@
 package com.example.RealMatch.brand.domain.entity;
 
-import java.time.LocalDateTime;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,10 +17,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_image")
+@Table(name = "brand_image")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandImage {
+public class BrandImage extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,23 +33,12 @@ public class BrandImage {
     @Column(name = "image_url", nullable = false, length = 500)
     private String imageUrl;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
     @Column(name = "created_by")
     private Long createdBy;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
     private Long updatedBy;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     @Column(name = "deleted_by")
     private Long deletedBy;
@@ -59,13 +48,9 @@ public class BrandImage {
         this.brand = brand;
         this.imageUrl = imageUrl;
         this.createdBy = createdBy;
-        this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
     }
 
     public void softDelete(Long deletedBy) {
-        this.isDeleted = true;
         this.deletedBy = deletedBy;
-        this.deletedAt = LocalDateTime.now();
     }
 }

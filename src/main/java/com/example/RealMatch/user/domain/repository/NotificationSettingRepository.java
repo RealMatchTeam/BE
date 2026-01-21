@@ -5,15 +5,15 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.user.domain.entity.NotificationSettingEntity;
+import com.example.RealMatch.user.domain.entity.NotificationSetting;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 import com.example.RealMatch.user.domain.entity.enums.NotificationType;
 
-public interface NotificationSettingRepository extends JpaRepository<NotificationSettingEntity, Long> {
+public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {
 
-    List<NotificationSettingEntity> findByUserId(Long userId);
+    List<NotificationSetting> findByUserId(Long userId);
 
-    Optional<NotificationSettingEntity> findByUserIdAndTypeAndChannel(Long userId, NotificationType type, NotificationChannel channel);
+    Optional<NotificationSetting> findByUserIdAndTypeAndChannel(Long userId, NotificationType type, NotificationChannel channel);
 
-    List<NotificationSettingEntity> findByUserIdAndIsEnabled(Long userId, boolean isEnabled);
+    List<NotificationSetting> findByUserIdAndIsEnabled(Long userId, boolean isEnabled);
 }

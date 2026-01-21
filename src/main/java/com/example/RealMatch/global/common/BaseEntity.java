@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public abstract class BaseEntity {
 
     @CreatedDate

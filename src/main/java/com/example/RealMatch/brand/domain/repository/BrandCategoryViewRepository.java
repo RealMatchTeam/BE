@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandCategoryViewEntity;
+import com.example.RealMatch.brand.domain.entity.BrandCategoryView;
 
-public interface BrandCategoryViewRepository extends JpaRepository<BrandCategoryViewEntity, Long> {
+public interface BrandCategoryViewRepository extends JpaRepository<BrandCategoryView, Long> {
 
-    List<BrandCategoryViewEntity> findByBrandIdAndIsDeletedFalse(Long brandId);
+    List<BrandCategoryView> findByBrandId(Long brandId);
 
-    List<BrandCategoryViewEntity> findByCategoryIdAndIsDeletedFalse(Long categoryId);
+    List<BrandCategoryView> findByCategoryId(Long categoryId);
 }

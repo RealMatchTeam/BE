@@ -1,8 +1,6 @@
 package com.example.RealMatch.brand.domain.entity;
 
-import java.time.LocalDateTime;
-
-import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,10 +17,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_like_read")
+@Table(name = "brand_like_read")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandLikeRead extends BaseEntity {
+public class BrandLikeRead extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,25 +34,13 @@ public class BrandLikeRead extends BaseEntity {
     @Column(name = "like_num")
     private Integer likeNum;
 
-    @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Builder
     public BrandLikeRead(Brand brand, Integer likeNum) {
         this.brand = brand;
         this.likeNum = likeNum;
-        this.isDeleted = false;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateLikeNum(Integer likeNum) {
         this.likeNum = likeNum;
-        this.updatedAt = LocalDateTime.now();
     }
 }

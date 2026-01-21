@@ -5,16 +5,15 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandEntity;
+import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 
-public interface BrandRepository extends JpaRepository<BrandEntity, Long> {
+public interface BrandRepository extends JpaRepository<Brand, Long> {
+    Optional<Brand> findById(Long id);
 
-    Optional<BrandEntity> findByIdAndIsDeletedFalse(Long id);
+    List<Brand> findAll();
 
-    List<BrandEntity> findByIsDeletedFalse();
+    List<Brand> findByIndustryType(IndustryType industryType);
 
-    List<BrandEntity> findByIndustryTypeAndIsDeletedFalse(IndustryType industryType);
-
-    List<BrandEntity> findByBrandNameContainingAndIsDeletedFalse(String brandName);
+    List<Brand> findByBrandNameContaining(String brandName);
 }

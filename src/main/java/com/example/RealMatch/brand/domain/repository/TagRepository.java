@@ -4,15 +4,15 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.TagEntity;
+import com.example.RealMatch.brand.domain.entity.Tag;
 
-public interface TagRepository extends JpaRepository<TagEntity, Long> {
+public interface TagRepository extends JpaRepository<Tag, Long> {
 
-    List<TagEntity> findByBrandIdAndIsDeletedFalse(Long brandId);
+    List<Tag> findByBrandId(Long brandId);
 
-    List<TagEntity> findByUserIdAndIsDeletedFalse(Long userId);
+    List<Tag> findByUserId(Long userId);
 
-    List<TagEntity> findByTagParentTagParentIdAndIsDeletedFalse(Long tagParentId);
+    List<Tag> findByTagParentTagParentId(Long tagParentId);
 
-    List<TagEntity> findByNameContainingAndIsDeletedFalse(String name);
+    List<Tag> findByNameContaining(String name);
 }

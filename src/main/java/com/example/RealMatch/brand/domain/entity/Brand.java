@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,10 +20,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand")
+@Table(name = "brand")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Brand extends BaseEntity {
+public class Brand extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,15 +51,6 @@ public class Brand extends BaseEntity {
     @Column(name = "matching_rate")
     private Integer matchingRate;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @Column(name = "updated_by")
     private Long updatedBy;
 
@@ -80,7 +72,6 @@ public class Brand extends BaseEntity {
         this.homepageUrl = homepageUrl;
         this.matchingRate = matchingRate;
         this.createdBy = createdBy;
-        this.isDeleted = false;
     }
 
     public void update(String brandName, String logoUrl, String simpleIntro,
@@ -91,12 +82,9 @@ public class Brand extends BaseEntity {
         this.detailIntro = detailIntro;
         this.homepageUrl = homepageUrl;
         this.updatedBy = updatedBy;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void softDelete(Long deletedBy) {
-        this.isDeleted = true;
         this.deletedBy = deletedBy;
-        this.deletedAt = LocalDateTime.now();
     }
 }

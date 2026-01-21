@@ -1,8 +1,6 @@
 package com.example.RealMatch.user.domain.entity;
 
-import java.time.LocalDateTime;
-
-import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 
 import jakarta.persistence.Column;
@@ -22,10 +20,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_authentication_methods")
+@Table(name = "authentication_methods")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AuthenticationMethod extends UpdateBaseEntity {
+public class AuthenticationMethod extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

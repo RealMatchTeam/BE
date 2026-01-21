@@ -4,13 +4,13 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.match.domain.entity.MatchBrandHistoryEntity;
+import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 
-public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHistoryEntity, Long> {
+public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHistory, Long> {
 
-    List<MatchBrandHistoryEntity> findByUserIdAndIsDeletedFalse(Long userId);
+    List<MatchBrandHistory> findByUserId(Long userId);
 
-    List<MatchBrandHistoryEntity> findByBrandIdAndIsDeletedFalse(Long brandId);
+    List<MatchBrandHistory> findByBrandId(Long brandId);
 
-    boolean existsByUserIdAndBrandIdAndIsDeletedFalse(Long userId, Long brandId);
+    boolean existsByUserIdAndBrandId(Long userId, Long brandId);
 }

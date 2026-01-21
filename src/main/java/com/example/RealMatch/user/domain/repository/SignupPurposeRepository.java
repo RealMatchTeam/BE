@@ -4,9 +4,9 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.user.domain.entity.SignupPurposeEntity;
+import com.example.RealMatch.user.domain.entity.SignupPurpose;
 
-public interface SignupPurposeRepository extends JpaRepository<SignupPurposeEntity, Long> {
+public interface SignupPurposeRepository extends JpaRepository<SignupPurpose, Long> {
 
-    Optional<SignupPurposeEntity> findByPurposeName(String purposeName);
+    Optional<SignupPurpose> findByPurposeName(String purposeName);
 }

@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_campaign_tone")
+@Table(name = "campaign_tone")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CampaignTone {

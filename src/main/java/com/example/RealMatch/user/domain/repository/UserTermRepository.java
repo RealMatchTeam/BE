@@ -5,13 +5,13 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.user.domain.entity.UserTermEntity;
+import com.example.RealMatch.user.domain.entity.UserTerm;
 
-public interface UserTermRepository extends JpaRepository<UserTermEntity, Long> {
+public interface UserTermRepository extends JpaRepository<UserTerm, Long> {
 
-    List<UserTermEntity> findByUserId(Long userId);
+    List<UserTerm> findByUserId(Long userId);
 
-    Optional<UserTermEntity> findByUserIdAndTermId(Long userId, Long termId);
+    Optional<UserTerm> findByUserIdAndTermId(Long userId, Long termId);
 
-    List<UserTermEntity> findByUserIdAndIsAgreed(Long userId, boolean isAgreed);
+    List<UserTerm> findByUserIdAndIsAgreed(Long userId, boolean isAgreed);
 }

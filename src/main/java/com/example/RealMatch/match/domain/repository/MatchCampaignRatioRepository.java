@@ -5,15 +5,15 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.match.domain.entity.MatchCampaignRatioEntity;
+import com.example.RealMatch.match.domain.entity.MatchCampaignRatio;
 
-public interface MatchCampaignRatioRepository extends JpaRepository<MatchCampaignRatioEntity, Long> {
+public interface MatchCampaignRatioRepository extends JpaRepository<MatchCampaignRatio, Long> {
 
-    List<MatchCampaignRatioEntity> findByUserIdAndIsDeletedFalse(Long userId);
+    List<MatchCampaignRatio> findByUserId(Long userId);
 
-    List<MatchCampaignRatioEntity> findByCampaignIdAndIsDeletedFalse(Long campaignId);
+    List<MatchCampaignRatio> findByCampaignId(Long campaignId);
 
-    Optional<MatchCampaignRatioEntity> findByUserIdAndCampaignIdAndIsDeletedFalse(Long userId, Long campaignId);
+    Optional<MatchCampaignRatio> findByUserIdAndCampaignId(Long userId, Long campaignId);
 
-    List<MatchCampaignRatioEntity> findByUserIdAndIsDeletedFalseOrderByRatioDesc(Long userId);
+    List<MatchCampaignRatio> findByUserIdOrderByRatioDesc(Long userId);
 }
