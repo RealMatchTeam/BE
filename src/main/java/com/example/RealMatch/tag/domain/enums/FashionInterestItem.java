@@ -10,7 +10,7 @@ public enum FashionInterestItem {
     BAG("가방"),
     SHOES("신발"),
     JEWELRY("주얼리"),
-    FASHIONPROPS("패션소품");
+    FASHION_PROPS("패션소품");
 
     private final String description;
 }

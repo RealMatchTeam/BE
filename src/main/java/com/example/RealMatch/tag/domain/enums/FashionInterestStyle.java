@@ -9,7 +9,7 @@ public enum FashionInterestStyle {
     MINIMAL("미니멀"),
     FEMININE("페미닌"),
     LOVELY("러블리"),
-    BUSINESSCASUAL("비즈니스캐주얼"),
+    BUSINESS_CASUAL("비즈니스캐주얼"),
     CASUAL("캐주얼"),
     STREET("스트릿");
 

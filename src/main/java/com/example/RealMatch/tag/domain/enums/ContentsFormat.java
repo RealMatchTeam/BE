@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ContentsFormat {
-    INSTAGRAMHISTORY("인스타그램 스토리"),
-    INSTAGRAMPOST("인스타그램 포스트"),
-    INSTAGRAMREELS("인스타그램 릴스");
+    INSTAGRAM_HISTORY("인스타그램 스토리"),
+    INSTAGRAM_POST("인스타그램 포스트"),
+    INSTAGRAM_REELS("인스타그램 릴스");
 
     private final String description;
 }

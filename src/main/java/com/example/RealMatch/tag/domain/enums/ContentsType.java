@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum ContentsType {
     VLOG("브이로그"),
     REVIEW("리뷰"),
-    GETREADYWITHME("겟레디윗미"),
-    BEFOREAFTER("비포애프터"),
+    GET_READY_WITH_ME("겟레디윗미"),
+    BEFORE_AFTER("비포애프터"),
     STORY("스토리"),
     CHALLENGE("챌린지");
 

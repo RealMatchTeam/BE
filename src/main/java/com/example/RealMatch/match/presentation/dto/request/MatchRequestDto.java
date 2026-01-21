@@ -4,10 +4,8 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
 @NoArgsConstructor
 public class MatchRequestDto {
 
@@ -15,31 +13,61 @@ public class MatchRequestDto {
     private String brandId;
     private String sex;
     private Integer age;
-
-    // === 뷰티 특성 ===
-    private List<String> beautyInterestStyle;
-    private List<String> beautyInterestFunction;
-    private String beautySkinType;
-    private String beautySkinBright;
-    private String beautyMakeupStyle;
-
-    // === 패션 특성 ===
-    private List<String> fashionInterestStyle;
-    private List<String> fashionInterestItem;
-    private List<String> fashionInterestType;
     private Integer height;
     private Integer weight;
-    private Integer upperSize;
-    private Integer bottomSize;
+    private SizeDto size;
+    private BeautyDto beauty;
+    private FashionDto fashion;
+    private SnsDto sns;
 
-    // === 콘텐츠 특성 ===
-    private String snsUrl;
-    private List<String> mainWatchSex;
-    private List<String> mainWatchAge;
-    private String averageVieoLength;
-    private String averageViews;
-    private String conentsFormat;
-    private String contentsType;
-    private String contentsContribution;
-    private String contentsUseConverage;
+    @Getter
+    @NoArgsConstructor
+    public static class SizeDto {
+        private Integer upper;
+        private Integer bottom;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class BeautyDto {
+        private List<String> interests;
+        private List<String> functions;
+        private String skinType;
+        private String skinTone;
+        private String makeupStyle;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class FashionDto {
+        private List<String> styles;
+        private List<String> items;
+        private List<String> preferredBrands;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class SnsDto {
+        private String url;
+        private MainAudienceDto mainAudience;
+        private ContentStyleDto contentStyle;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class MainAudienceDto {
+        private List<String> sex;
+        private List<String> age;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class ContentStyleDto {
+        private String avgVideoLength;
+        private String avgViews;
+        private String format;
+        private String type;
+        private String contributionLevel;
+        private String usageCoverage;
+    }
 }
