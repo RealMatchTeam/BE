@@ -1,9 +1,6 @@
 package com.example.RealMatch.brand.domain.entity;
 
-import java.time.LocalDateTime;
-
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
-import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;

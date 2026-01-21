@@ -1,7 +1,5 @@
 package com.example.RealMatch.user.domain.entity;
 
-import java.time.LocalDateTime;
-
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.enums.TermName;
 

@@ -2,8 +2,8 @@ package com.example.RealMatch.global.common;
 
 import java.time.LocalDateTime;
 
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.hibernate.annotations.Where;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
