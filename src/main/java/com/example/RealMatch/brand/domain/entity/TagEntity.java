@@ -1,0 +1,71 @@
+package com.example.RealMatch.brand.domain.entity;
+
+import java.time.LocalDateTime;
+
+import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.user.domain.entity.UserEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "p_tag")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class TagEntity extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tag_parent_id", nullable = false)
+    private BrandTagParentEntity tagParent;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brand_id", nullable = false)
+    private BrandEntity brand;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
+
+    @Column(name = "category_name", nullable = false, length = 100)
+    private String categoryName;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Builder
+    public TagEntity(BrandTagParentEntity tagParent, BrandEntity brand, UserEntity user,
+                     String categoryName, String name) {
+        this.tagParent = tagParent;
+        this.brand = brand;
+        this.user = user;
+        this.categoryName = categoryName;
+        this.name = name;
+        this.isDeleted = false;
+    }
+
+    public void softDelete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+}
