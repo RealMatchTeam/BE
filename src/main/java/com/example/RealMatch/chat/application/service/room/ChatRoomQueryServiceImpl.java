@@ -4,11 +4,11 @@ import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.fixture.ChatFixtureFactory;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomSort;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
+import com.example.RealMatch.chat.presentation.fixture.ChatFixtureFactory;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
 @Service
