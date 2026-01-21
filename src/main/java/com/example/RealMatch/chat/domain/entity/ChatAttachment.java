@@ -1,9 +1,8 @@
 package com.example.RealMatch.chat.domain.entity;
 
-import java.time.LocalDateTime;
-
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +11,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "chat_attachment")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatAttachment {
+public class ChatAttachment extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,14 +48,4 @@ public class ChatAttachment {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private ChatAttachmentStatus status;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    private void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
 }

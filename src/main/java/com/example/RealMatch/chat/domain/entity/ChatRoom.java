@@ -6,6 +6,7 @@ import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomType;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,8 +15,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -25,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "chat_room")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatRoom {
+public class ChatRoom extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,15 +58,6 @@ public class ChatRoom {
     @Column(name = "proposal_status", length = 20)
     private ChatProposalStatus proposalStatus;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     private ChatRoom(
             String roomKey,
             ChatRoomType roomType,
@@ -100,21 +90,5 @@ public class ChatRoom {
 
     public void updateProposalDirection(ChatProposalDirection direction) {
         this.lastProposalDirection = direction;
-    }
-
-    @PrePersist
-    private void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
-    }
-
-    @PreUpdate
-    private void preUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

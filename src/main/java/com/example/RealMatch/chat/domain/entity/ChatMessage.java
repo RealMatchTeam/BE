@@ -1,9 +1,8 @@
 package com.example.RealMatch.chat.domain.entity;
 
-import java.time.LocalDateTime;
-
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
+import com.example.RealMatch.global.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +11,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "chat_message")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatMessage {
+public class ChatMessage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,9 +51,6 @@ public class ChatMessage {
 
     @Column(name = "client_message_id", length = 36)
     private String clientMessageId;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
 
     private ChatMessage(
             Long roomId,
@@ -121,12 +116,5 @@ public class ChatMessage {
         message.systemKind = systemKind;
         message.systemPayload = systemPayload;
         return message;
-    }
-
-    @PrePersist
-    private void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
     }
 }

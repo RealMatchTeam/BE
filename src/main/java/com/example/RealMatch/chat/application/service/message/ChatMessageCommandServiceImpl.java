@@ -9,8 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
+import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
+import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
@@ -22,6 +24,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatAttachmentRepository chatAttachmentRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomUpdateService chatRoomUpdateService;
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
@@ -30,12 +33,14 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     public ChatMessageCommandServiceImpl(
             ChatMessageRepository chatMessageRepository,
             ChatAttachmentRepository chatAttachmentRepository,
+            ChatRoomMemberRepository chatRoomMemberRepository,
             ChatRoomUpdateService chatRoomUpdateService,
             MessagePreviewGenerator messagePreviewGenerator,
             SystemMessagePayloadSerializer payloadSerializer
     ) {
         this.chatMessageRepository = chatMessageRepository;
         this.chatAttachmentRepository = chatAttachmentRepository;
+        this.chatRoomMemberRepository = chatRoomMemberRepository;
         this.chatRoomUpdateService = chatRoomUpdateService;
         this.messagePreviewGenerator = messagePreviewGenerator;
         this.payloadSerializer = payloadSerializer;
@@ -49,10 +54,16 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     public ChatMessageResponse saveMessage(ChatSendMessageCommand command, Long senderId) {
         validateCommand(command, senderId);
 
-        // 첨부 파일 존재 검증
+        // Room 멤버 권한 검증
+        validateRoomMembership(command.roomId(), senderId);
+
+        // 첨부 파일 존재 및 소유권 검증
         if (command.attachmentId() != null) {
-            chatAttachmentRepository.findById(command.attachmentId())
+            ChatAttachment attachment = chatAttachmentRepository.findById(command.attachmentId())
                     .orElseThrow(() -> new IllegalArgumentException("Attachment not found: " + command.attachmentId()));
+            if (!attachment.getUploaderId().equals(senderId)) {
+                throw new IllegalArgumentException("Attachment ownership mismatch. Attachment does not belong to sender.");
+            }
         }
 
         ChatMessage existing = chatMessageRepository
@@ -120,6 +131,17 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         }
         return chatAttachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Attachment not found: " + attachmentId));
+    }
+
+    private void validateRoomMembership(Long roomId, Long senderId) {
+        ChatRoomMember member = chatRoomMemberRepository
+                .findByRoomIdAndUserId(roomId, senderId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User is not a member of the room. roomId=" + roomId + ", userId=" + senderId));
+        if (member.getLeftAt() != null) {
+            throw new IllegalArgumentException(
+                    "User has left the room. roomId=" + roomId + ", userId=" + senderId);
+        }
     }
 
     private void updateChatRoomLastMessage(ChatMessage message) {

@@ -19,11 +19,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
+import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
+import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
+import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomMemberRole;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
@@ -35,6 +38,7 @@ class ChatMessageCommandServiceImplTest {
 
     private final ChatMessageRepository chatMessageRepository = Mockito.mock(ChatMessageRepository.class);
     private final ChatAttachmentRepository chatAttachmentRepository = Mockito.mock(ChatAttachmentRepository.class);
+    private final ChatRoomMemberRepository chatRoomMemberRepository = Mockito.mock(ChatRoomMemberRepository.class);
     private final ChatRoomUpdateService chatRoomUpdateService = Mockito.mock(ChatRoomUpdateService.class);
     private final MessagePreviewGenerator messagePreviewGenerator = Mockito.mock(MessagePreviewGenerator.class);
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
@@ -44,6 +48,7 @@ class ChatMessageCommandServiceImplTest {
             new ChatMessageCommandServiceImpl(
                     chatMessageRepository,
                     chatAttachmentRepository,
+                    chatRoomMemberRepository,
                     chatRoomUpdateService,
                     messagePreviewGenerator,
                     payloadSerializer
@@ -58,6 +63,9 @@ class ChatMessageCommandServiceImplTest {
                 command.clientMessageId());
         ReflectionTestUtils.setField(saved, "id", 7001L);
 
+        ChatRoomMember member = ChatRoomMember.create(3001L, 202L, ChatRoomMemberRole.BRAND);
+        given(chatRoomMemberRepository.findByRoomIdAndUserId(3001L, 202L))
+                .willReturn(Optional.of(member));
         given(chatMessageRepository.findByClientMessageIdAndSenderId(anyString(), anyLong()))
                 .willReturn(Optional.empty());
         given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(saved);
@@ -80,6 +88,7 @@ class ChatMessageCommandServiceImplTest {
 
         ChatAttachment attachment = Mockito.mock(ChatAttachment.class);
         given(attachment.getId()).willReturn(9001L);
+        given(attachment.getUploaderId()).willReturn(202L);
         given(attachment.getAttachmentType()).willReturn(ChatAttachmentType.IMAGE);
         given(attachment.getContentType()).willReturn("image/png");
         given(attachment.getOriginalName()).willReturn("photo.png");
@@ -87,6 +96,9 @@ class ChatMessageCommandServiceImplTest {
         given(attachment.getAccessUrl()).willReturn("https://example.com/9001");
         given(attachment.getStatus()).willReturn(ChatAttachmentStatus.UPLOADED);
 
+        ChatRoomMember member = ChatRoomMember.create(3001L, 202L, ChatRoomMemberRole.BRAND);
+        given(chatRoomMemberRepository.findByRoomIdAndUserId(3001L, 202L))
+                .willReturn(Optional.of(member));
         given(chatMessageRepository.findByClientMessageIdAndSenderId(anyString(), anyLong()))
                 .willReturn(Optional.empty());
         given(chatMessageRepository.save(any(ChatMessage.class))).willReturn(saved);
@@ -107,6 +119,9 @@ class ChatMessageCommandServiceImplTest {
                 command.clientMessageId());
         ReflectionTestUtils.setField(existing, "id", 7001L);
 
+        ChatRoomMember member = ChatRoomMember.create(3001L, 202L, ChatRoomMemberRole.BRAND);
+        given(chatRoomMemberRepository.findByRoomIdAndUserId(3001L, 202L))
+                .willReturn(Optional.of(member));
         given(chatMessageRepository.findByClientMessageIdAndSenderId(anyString(), anyLong()))
                 .willReturn(Optional.of(existing));
 
