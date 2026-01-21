@@ -1,6 +1,6 @@
 package com.example.RealMatch.chat.presentation.dto.response;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
+import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 
 public record ChatSystemMessageResponse(
         int schemaVersion,
