@@ -1,4 +1,4 @@
-package com.example.RealMatch.campaign.domain.entity;
+package com.example.RealMatch.brand.domain.entity;
 
 import java.time.LocalDateTime;
 
@@ -19,18 +19,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_campaign_like_read")
+@Table(name = "p_brand_like_read")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignLikeReadEntity extends BaseEntity {
+public class BrandLikeRead extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "like_read_id")
+    private Long likeReadId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "campaign_id", nullable = false)
-    private CampaignEntity campaign;
+    @JoinColumn(name = "brand_id", nullable = false)
+    private Brand brand;
 
     @Column(name = "like_num")
     private Integer likeNum;
@@ -45,8 +46,8 @@ public class CampaignLikeReadEntity extends BaseEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public CampaignLikeReadEntity(CampaignEntity campaign, Integer likeNum) {
-        this.campaign = campaign;
+    public BrandLikeRead(Brand brand, Integer likeNum) {
+        this.brand = brand;
         this.likeNum = likeNum;
         this.isDeleted = false;
         this.updatedAt = LocalDateTime.now();

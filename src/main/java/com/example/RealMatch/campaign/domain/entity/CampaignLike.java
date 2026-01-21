@@ -1,4 +1,7 @@
-package com.example.RealMatch.user.domain.entity;
+package com.example.RealMatch.campaign.domain.entity;
+
+import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,26 +17,26 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_user_signup_purposes")
+@Table(name = "p_campaign_like")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserSignupPurposeEntity {
+public class CampaignLike extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "purpose_id", nullable = false)
-    private SignupPurposeEntity purpose;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @JoinColumn(name = "campaign_id", nullable = false)
+    private Campaign campaign;
 
     @Builder
-    public UserSignupPurposeEntity(SignupPurposeEntity purpose, UserEntity user) {
-        this.purpose = purpose;
+    public CampaignLike(User user, Campaign campaign) {
         this.user = user;
+        this.campaign = campaign;
     }
 }

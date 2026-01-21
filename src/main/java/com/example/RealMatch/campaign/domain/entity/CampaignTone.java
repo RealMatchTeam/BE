@@ -1,4 +1,4 @@
-package com.example.RealMatch.brand.domain.entity;
+package com.example.RealMatch.campaign.domain.entity;
 
 import java.time.LocalDateTime;
 
@@ -17,33 +17,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_sponsor_image")
+@Table(name = "p_campaign_tone")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandSponsorImageEntity {
+public class CampaignTone {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sponsor_id", nullable = false)
-    private BrandAvailableSponsorEntity sponsor;
+    @JoinColumn(name = "campaign_id", nullable = false)
+    private Campaign campaign;
 
-    @Column(name = "image_url", nullable = false, length = 500)
-    private String imageUrl;
+    @Column(length = 100)
+    private String name;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "created_by")
-    private Long createdBy;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "updated_by")
-    private Long updatedBy;
 
     @Column(name = "is_deleted")
     private Boolean isDeleted;
@@ -51,21 +42,16 @@ public class BrandSponsorImageEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Column(name = "deleted_by")
-    private Long deletedBy;
-
     @Builder
-    public BrandSponsorImageEntity(BrandAvailableSponsorEntity sponsor, String imageUrl, Long createdBy) {
-        this.sponsor = sponsor;
-        this.imageUrl = imageUrl;
-        this.createdBy = createdBy;
+    public CampaignTone(Campaign campaign, String name) {
+        this.campaign = campaign;
+        this.name = name;
         this.createdAt = LocalDateTime.now();
         this.isDeleted = false;
     }
 
-    public void softDelete(Long deletedBy) {
+    public void softDelete() {
         this.isDeleted = true;
-        this.deletedBy = deletedBy;
         this.deletedAt = LocalDateTime.now();
     }
 }

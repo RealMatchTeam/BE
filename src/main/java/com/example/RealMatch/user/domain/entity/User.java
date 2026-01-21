@@ -1,4 +1,6 @@
-package com.example.RealMatch.match.domain.entity;
+package com.example.RealMatch.user.domain.entity;
+
+import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor
-public class User {
+public class User extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -17,18 +17,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_image")
+@Table(name = "p_brand_sponsor_image")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandImageEntity {
+public class BrandSponsorImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    @JoinColumn(name = "sponsor_id", nullable = false)
+    private BrandAvailableSponsor sponsor;
 
     @Column(name = "image_url", nullable = false, length = 500)
     private String imageUrl;
@@ -55,8 +55,8 @@ public class BrandImageEntity {
     private Long deletedBy;
 
     @Builder
-    public BrandImageEntity(BrandEntity brand, String imageUrl, Long createdBy) {
-        this.brand = brand;
+    public BrandSponsorImage(BrandAvailableSponsor sponsor, String imageUrl, Long createdBy) {
+        this.sponsor = sponsor;
         this.imageUrl = imageUrl;
         this.createdBy = createdBy;
         this.createdAt = LocalDateTime.now();

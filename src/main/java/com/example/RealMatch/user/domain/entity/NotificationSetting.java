@@ -2,6 +2,7 @@ package com.example.RealMatch.user.domain.entity;
 
 import java.time.LocalDateTime;
 
+import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 import com.example.RealMatch.user.domain.entity.enums.NotificationType;
 
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_notification_setting")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class NotificationSettingEntity {
+public class NotificationSetting extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,7 +34,7 @@ public class NotificationSettingEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30)
@@ -46,28 +47,19 @@ public class NotificationSettingEntity {
     @Column(name = "is_enabled", nullable = false)
     private boolean isEnabled;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @Builder
-    public NotificationSettingEntity(UserEntity user, NotificationType type, NotificationChannel channel, boolean isEnabled) {
+    public NotificationSetting(User user, NotificationType type, NotificationChannel channel, boolean isEnabled) {
         this.user = user;
         this.type = type;
         this.channel = channel;
         this.isEnabled = isEnabled;
-        this.createdAt = LocalDateTime.now();
     }
 
     public void enable() {
         this.isEnabled = true;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void disable() {
         this.isEnabled = false;
-        this.updatedAt = LocalDateTime.now();
     }
 }

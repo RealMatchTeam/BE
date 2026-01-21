@@ -2,7 +2,8 @@ package com.example.RealMatch.brand.domain.entity;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.campaign.domain.entity.CampaignEntity;
+import com.example.RealMatch.campaign.domain.entity.Campaign;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,7 +23,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_brand_available_sponsor")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandAvailableSponsorEntity {
+public class BrandAvailableSponsor extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,11 +31,11 @@ public class BrandAvailableSponsorEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_id", nullable = false)
-    private CampaignEntity campaign;
+    private Campaign campaign;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    private Brand brand;
 
     @Column(length = 100)
     private String name;
@@ -42,27 +43,11 @@ public class BrandAvailableSponsorEntity {
     @Column(length = 1000)
     private String content;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Builder
-    public BrandAvailableSponsorEntity(CampaignEntity campaign, BrandEntity brand, String name, String content) {
+    public BrandAvailableSponsor(Campaign campaign, Brand brand, String name, String content) {
         this.campaign = campaign;
         this.brand = brand;
         this.name = name;
         this.content = content;
-        this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
-    }
-
-    public void softDelete() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
     }
 }

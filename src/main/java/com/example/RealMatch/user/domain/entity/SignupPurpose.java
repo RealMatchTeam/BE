@@ -1,5 +1,7 @@
 package com.example.RealMatch.user.domain.entity;
 
+import com.example.RealMatch.global.common.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_signup_purposes")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SignupPurposeEntity {
+public class SignupPurpose extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +27,7 @@ public class SignupPurposeEntity {
     private String purposeName;
 
     @Builder
-    public SignupPurposeEntity(String purposeName) {
+    public SignupPurpose(String purposeName) {
         this.purposeName = purposeName;
     }
 }

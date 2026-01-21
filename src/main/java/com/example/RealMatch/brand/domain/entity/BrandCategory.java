@@ -1,15 +1,14 @@
-package com.example.RealMatch.campaign.domain.entity;
+package com.example.RealMatch.brand.domain.entity;
 
 import java.time.LocalDateTime;
 
+import com.example.RealMatch.global.common.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -17,24 +16,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_campaign_type")
+@Table(name = "p_brand_category")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignTypeEntity {
+public class BrandCategory extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "campaign_id", nullable = false)
-    private CampaignEntity campaign;
-
-    @Column(length = 100)
+    @Column(nullable = false, length = 100)
     private String name;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 
     @Column(name = "is_deleted")
     private Boolean isDeleted;
@@ -43,10 +35,8 @@ public class CampaignTypeEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public CampaignTypeEntity(CampaignEntity campaign, String name) {
-        this.campaign = campaign;
+    public BrandCategory(String name) {
         this.name = name;
-        this.createdAt = LocalDateTime.now();
         this.isDeleted = false;
     }
 

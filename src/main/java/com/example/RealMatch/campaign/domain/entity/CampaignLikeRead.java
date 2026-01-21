@@ -1,8 +1,9 @@
-package com.example.RealMatch.brand.domain.entity;
+package com.example.RealMatch.campaign.domain.entity;
 
 import java.time.LocalDateTime;
 
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,42 +20,29 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_like_read")
+@Table(name = "p_campaign_like_read")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandLikeReadEntity extends BaseEntity {
+public class CampaignLikeRead extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "like_read_id")
-    private Long likeReadId;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    @JoinColumn(name = "campaign_id", nullable = false)
+    private Campaign campaign;
 
     @Column(name = "like_num")
     private Integer likeNum;
 
-    @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Builder
-    public BrandLikeReadEntity(BrandEntity brand, Integer likeNum) {
-        this.brand = brand;
+    public CampaignLikeRead(Campaign campaign, Integer likeNum) {
+        this.campaign = campaign;
         this.likeNum = likeNum;
-        this.isDeleted = false;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateLikeNum(Integer likeNum) {
         this.likeNum = likeNum;
-        this.updatedAt = LocalDateTime.now();
     }
 }

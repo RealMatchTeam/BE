@@ -1,9 +1,8 @@
-package com.example.RealMatch.match.domain.entity;
+package com.example.RealMatch.brand.domain.entity;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.campaign.domain.entity.CampaignEntity;
-import com.example.RealMatch.user.domain.entity.UserEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,10 +19,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_match_campaign_history")
+@Table(name = "p_brand_like")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MatchCampaignHistoryEntity {
+public class BrandLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,31 +30,19 @@ public class MatchCampaignHistoryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "campaign_id", nullable = false)
-    private CampaignEntity campaign;
+    @JoinColumn(name = "brand_id", nullable = false)
+    private Brand brand;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
-
     @Builder
-    public MatchCampaignHistoryEntity(UserEntity user, CampaignEntity campaign) {
+    public BrandLike(User user, Brand brand) {
         this.user = user;
-        this.campaign = campaign;
+        this.brand = brand;
         this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
-    }
-
-    public void softDelete() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
     }
 }

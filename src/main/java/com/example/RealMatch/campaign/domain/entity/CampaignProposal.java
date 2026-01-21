@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import com.example.RealMatch.campaign.domain.entity.enums.ProposalStatus;
 import com.example.RealMatch.campaign.domain.entity.enums.WhoProposed;
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.user.domain.entity.UserEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_campaign_proposal")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignProposalEntity extends BaseEntity {
+public class CampaignProposal extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,11 +35,11 @@ public class CampaignProposalEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_id", nullable = false)
-    private CampaignEntity campaign;
+    private Campaign campaign;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "who_proposed", nullable = false, length = 20)
@@ -62,8 +62,8 @@ public class CampaignProposalEntity extends BaseEntity {
     private LocalDateTime updatedAt;
 
     @Builder
-    public CampaignProposalEntity(CampaignEntity campaign, UserEntity user, WhoProposed whoProposed,
-                                  String reason, String proposalDescription) {
+    public CampaignProposal(Campaign campaign, User user, WhoProposed whoProposed,
+                            String reason, String proposalDescription) {
         this.campaign = campaign;
         this.user = user;
         this.whoProposed = whoProposed;

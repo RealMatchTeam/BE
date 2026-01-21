@@ -1,6 +1,11 @@
-package com.example.RealMatch.brand.domain.entity;
+package com.example.RealMatch.match.domain.entity;
 
 import java.time.LocalDateTime;
+
+import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,42 +22,28 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_category_view")
+@Table(name = "p_match_brand_history")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandCategoryViewEntity {
+public class MatchBrandHistory extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private BrandCategoryEntity category;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Brand brand;
 
     @Builder
-    public BrandCategoryViewEntity(BrandCategoryEntity category, BrandEntity brand) {
-        this.category = category;
+    public MatchBrandHistory(User user, Brand brand) {
+        this.user = user;
         this.brand = brand;
-        this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
     }
 
-    public void softDelete() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
-    }
+
 }

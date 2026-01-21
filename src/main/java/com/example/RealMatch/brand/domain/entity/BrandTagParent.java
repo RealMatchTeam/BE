@@ -2,8 +2,6 @@ package com.example.RealMatch.brand.domain.entity;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.user.domain.entity.UserEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,30 +17,30 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_like")
+@Table(name = "p_brand_tag_parent")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandLikeEntity {
+public class BrandTagParent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @Column(name = "tag_parent_id")
+    private Long tagParentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    private Brand brand;
 
-    @Column(name = "created_at")
+    @Column(name = "tag_parent_name", nullable = false, length = 100)
+    private String tagParentName;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Builder
-    public BrandLikeEntity(UserEntity user, BrandEntity brand) {
-        this.user = user;
+    public BrandTagParent(Brand brand, String tagParentName) {
         this.brand = brand;
+        this.tagParentName = tagParentName;
         this.createdAt = LocalDateTime.now();
     }
 }

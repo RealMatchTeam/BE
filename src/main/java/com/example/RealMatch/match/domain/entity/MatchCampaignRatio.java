@@ -2,9 +2,10 @@ package com.example.RealMatch.match.domain.entity;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.brand.domain.entity.BrandEntity;
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.user.domain.entity.UserEntity;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,10 +22,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_match_brand_history")
+@Table(name = "p_match_campaign_ratio")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MatchBrandHistoryEntity extends BaseEntity {
+public class MatchCampaignRatio extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,27 +33,24 @@ public class MatchBrandHistoryEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    @JoinColumn(name = "campaign_id", nullable = false)
+    private Campaign campaign;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted;
+    @Column(nullable = false)
+    private Long ratio;
 
     @Builder
-    public MatchBrandHistoryEntity(UserEntity user, BrandEntity brand) {
+    public MatchCampaignRatio(User user, Campaign campaign, Long ratio) {
         this.user = user;
-        this.brand = brand;
-        this.isDeleted = false;
+        this.campaign = campaign;
+        this.ratio = ratio;
     }
 
-    public void softDelete() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
+    public void updateRatio(Long ratio) {
+        this.ratio = ratio;
     }
+
 }

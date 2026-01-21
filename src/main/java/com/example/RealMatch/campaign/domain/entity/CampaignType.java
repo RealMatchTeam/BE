@@ -2,6 +2,8 @@ package com.example.RealMatch.campaign.domain.entity;
 
 import java.time.LocalDateTime;
 
+import com.example.RealMatch.global.common.UpdateBaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,10 +19,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_campaign_tone")
+@Table(name = "p_campaign_type")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignToneEntity {
+public class CampaignType extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,30 +30,14 @@ public class CampaignToneEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_id", nullable = false)
-    private CampaignEntity campaign;
+    private Campaign campaign;
 
     @Column(length = 100)
     private String name;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Builder
-    public CampaignToneEntity(CampaignEntity campaign, String name) {
+    public CampaignType(Campaign campaign, String name) {
         this.campaign = campaign;
         this.name = name;
-        this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
-    }
-
-    public void softDelete() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
     }
 }

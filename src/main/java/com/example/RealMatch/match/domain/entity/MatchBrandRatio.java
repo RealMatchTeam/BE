@@ -1,6 +1,10 @@
-package com.example.RealMatch.brand.domain.entity;
+package com.example.RealMatch.match.domain.entity;
 
 import java.time.LocalDateTime;
+
+import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,30 +21,34 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_brand_tag_parent")
+@Table(name = "p_match_brand_ratio")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandTagParentEntity {
+public class MatchBrandRatio extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "tag_parent_id")
-    private Long tagParentId;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    private Brand brand;
 
-    @Column(name = "tag_parent_name", nullable = false, length = 100)
-    private String tagParentName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Long ratio;
 
     @Builder
-    public BrandTagParentEntity(BrandEntity brand, String tagParentName) {
+    public MatchBrandRatio(Brand brand, User user, Long ratio) {
         this.brand = brand;
-        this.tagParentName = tagParentName;
-        this.createdAt = LocalDateTime.now();
+        this.user = user;
+        this.ratio = ratio;
     }
+
+    public void updateRatio(Long ratio) {
+        this.ratio = ratio;
+    }
+
 }

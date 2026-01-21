@@ -1,9 +1,6 @@
-package com.example.RealMatch.match.domain.entity;
+package com.example.RealMatch.brand.domain.entity;
 
 import java.time.LocalDateTime;
-
-import com.example.RealMatch.brand.domain.entity.BrandEntity;
-import com.example.RealMatch.user.domain.entity.UserEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,10 +17,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_match_brand_ratio")
+@Table(name = "p_brand_image")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MatchBrandRatioEntity {
+public class BrandImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,19 +28,22 @@ public class MatchBrandRatioEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    private Brand brand;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
-
-    private Long ratio;
+    @Column(name = "image_url", nullable = false, length = 500)
+    private String imageUrl;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "created_by")
+    private Long createdBy;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "updated_by")
+    private Long updatedBy;
 
     @Column(name = "is_deleted")
     private Boolean isDeleted;
@@ -51,22 +51,21 @@ public class MatchBrandRatioEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
     @Builder
-    public MatchBrandRatioEntity(BrandEntity brand, UserEntity user, Long ratio) {
+    public BrandImage(Brand brand, String imageUrl, Long createdBy) {
         this.brand = brand;
-        this.user = user;
-        this.ratio = ratio;
+        this.imageUrl = imageUrl;
+        this.createdBy = createdBy;
         this.createdAt = LocalDateTime.now();
         this.isDeleted = false;
     }
 
-    public void updateRatio(Long ratio) {
-        this.ratio = ratio;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void softDelete() {
+    public void softDelete(Long deletedBy) {
         this.isDeleted = true;
+        this.deletedBy = deletedBy;
         this.deletedAt = LocalDateTime.now();
     }
 }

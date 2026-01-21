@@ -1,9 +1,10 @@
 package com.example.RealMatch.match.domain.entity;
 
+import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.match.domain.entity.enums.VideoLength;
 import com.example.RealMatch.match.domain.entity.enums.ViewsRange;
 import com.example.RealMatch.match.domain.entity.enums.WeightRange;
-import com.example.RealMatch.user.domain.entity.UserEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_matching_test")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MatchingTestEntity {
+public class MatchingTest extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,7 +34,7 @@ public class MatchingTestEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private User user;
 
     private Long height;
 
@@ -65,10 +66,10 @@ public class MatchingTestEntity {
     private String goodWith;
 
     @Builder
-    public MatchingTestEntity(UserEntity user, Long height, WeightRange weight,
-                              Long upperSize, Long lowerSize, String snsUrl,
-                              VideoLength videoLength, ViewsRange views,
-                              String creatorType, String goodWith) {
+    public MatchingTest(User user, Long height, WeightRange weight,
+                        Long upperSize, Long lowerSize, String snsUrl,
+                        VideoLength videoLength, ViewsRange views,
+                        String creatorType, String goodWith) {
         this.user = user;
         this.height = height;
         this.weight = weight;

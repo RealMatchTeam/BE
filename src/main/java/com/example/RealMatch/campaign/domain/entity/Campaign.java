@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_campaign")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignEntity extends BaseEntity {
+public class Campaign extends UpdateBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,20 +51,8 @@ public class CampaignEntity extends BaseEntity {
     @Column(nullable = false)
     private Integer quota;
 
-    @Column(name = "matching_rate")
-    private Integer matchingRate;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Column(name = "deleted_by")
     private Long deletedBy;
-
-    @Column(name = "is_deleted")
-    private Boolean isDeleted;
 
     @Column(name = "updated_by")
     private Long updatedBy;
@@ -72,10 +61,10 @@ public class CampaignEntity extends BaseEntity {
     private Long createdBy;
 
     @Builder
-    public CampaignEntity(String title, String description, Long rewardAmount,
-                          LocalDate startDate, LocalDate endDate,
-                          LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
-                          Integer quota, Integer matchingRate, Long createdBy) {
+    public Campaign(String title, String description, Long rewardAmount,
+                    LocalDate startDate, LocalDate endDate,
+                    LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
+                    Integer quota, Integer matchingRate, Long createdBy) {
         this.title = title;
         this.description = description;
         this.rewardAmount = rewardAmount;
@@ -84,9 +73,7 @@ public class CampaignEntity extends BaseEntity {
         this.recruitStartDate = recruitStartDate;
         this.recruitEndDate = recruitEndDate;
         this.quota = quota;
-        this.matchingRate = matchingRate;
         this.createdBy = createdBy;
-        this.isDeleted = false;
     }
 
     public void update(String title, String description, Long rewardAmount,
@@ -102,12 +89,9 @@ public class CampaignEntity extends BaseEntity {
         this.recruitEndDate = recruitEndDate;
         this.quota = quota;
         this.updatedBy = updatedBy;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void softDelete(Long deletedBy) {
-        this.isDeleted = true;
         this.deletedBy = deletedBy;
-        this.deletedAt = LocalDateTime.now();
     }
 }

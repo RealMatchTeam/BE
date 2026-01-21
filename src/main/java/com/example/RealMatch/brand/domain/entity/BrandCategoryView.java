@@ -2,9 +2,6 @@ package com.example.RealMatch.brand.domain.entity;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.user.domain.entity.UserEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,47 +17,37 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_tag")
+@Table(name = "p_brand_category_view")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TagEntity extends BaseEntity {
+public class BrandCategoryView {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tag_parent_id", nullable = false)
-    private BrandTagParentEntity tagParent;
+    @JoinColumn(name = "category_id", nullable = false)
+    private BrandCategory category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
-    private BrandEntity brand;
+    private Brand brand;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(name = "category_name", nullable = false, length = 100)
-    private String categoryName;
-
-    @Column(nullable = false, length = 100)
-    private String name;
-
-    @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted;
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Builder
-    public TagEntity(BrandTagParentEntity tagParent, BrandEntity brand, UserEntity user,
-                     String categoryName, String name) {
-        this.tagParent = tagParent;
+    public BrandCategoryView(BrandCategory category, Brand brand) {
+        this.category = category;
         this.brand = brand;
-        this.user = user;
-        this.categoryName = categoryName;
-        this.name = name;
+        this.createdAt = LocalDateTime.now();
         this.isDeleted = false;
     }
 

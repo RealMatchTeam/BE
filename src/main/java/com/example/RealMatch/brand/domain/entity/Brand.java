@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_brand")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandEntity extends BaseEntity {
+public class Brand extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -69,9 +69,9 @@ public class BrandEntity extends BaseEntity {
     private Long deletedBy;
 
     @Builder
-    public BrandEntity(String brandName, IndustryType industryType, String logoUrl,
-                       String simpleIntro, String detailIntro, String homepageUrl,
-                       Integer matchingRate, Long createdBy) {
+    public Brand(String brandName, IndustryType industryType, String logoUrl,
+                 String simpleIntro, String detailIntro, String homepageUrl,
+                 Integer matchingRate, Long createdBy) {
         this.brandName = brandName;
         this.industryType = industryType;
         this.logoUrl = logoUrl;
