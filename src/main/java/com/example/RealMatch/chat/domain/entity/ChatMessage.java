@@ -12,13 +12,22 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "chat_message")
+@Table(
+        name = "chat_message",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_chat_message_sender_client",
+                        columnNames = {"sender_id", "client_message_id"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessage extends BaseEntity {
 

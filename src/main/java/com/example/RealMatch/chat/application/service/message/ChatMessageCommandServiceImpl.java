@@ -1,5 +1,8 @@
 package com.example.RealMatch.chat.application.service.message;
 
+import java.util.Objects;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,31 +61,30 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     @Transactional
     @NonNull
     public ChatMessageResponse saveMessage(ChatSendMessageCommand command, Long senderId) {
-        // Room 멤버 권한 검증
-        validateRoomMembership(command.roomId(), senderId);
+        // Room 존재 여부 및 멤버 권한 검증
+        validateRoomAndMembership(command.roomId(), senderId);
 
-        // 첨부 파일 존재 및 소유권 검증
-        Long attachmentId = command.attachmentId();
-        if (attachmentId != null) {
-            ChatAttachment attachment = chatAttachmentRepository.findById(attachmentId)
-                    .orElseThrow(() -> new ChatException(ChatErrorCode.ATTACHMENT_NOT_FOUND));
-            if (!attachment.getUploaderId().equals(senderId)) {
-                throw new ChatException(ChatErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
-            }
-        }
-
+        // 멱등성을 위해 선조회한다. (이미 저장된 메시지가 있나?)
         ChatMessage existing = chatMessageRepository
                 .findByClientMessageIdAndSenderId(command.clientMessageId(), senderId)
                 .orElse(null);
         if (existing != null) {
-            // roomId 일치 검증
-            if (!existing.getRoomId().equals(command.roomId())) {
-                throw new ChatException(ChatErrorCode.INVALID_ROOM_FOR_MESSAGE);
-            }
-            ChatAttachment attachment = loadAttachmentIfNeeded(existing);
-            return responseMapper.toResponse(existing, attachment);
+            validateIdempotentConsistency(existing, command);
+            ChatAttachment existingAttachment = loadAttachmentIfNeeded(existing);
+            validateAttachmentOwnership(existingAttachment, senderId);
+            return responseMapper.toResponse(existing, existingAttachment);
         }
 
+        // 첨부 파일 존재 및 소유권 검증 (신규 메시지일 때만)
+        ChatAttachment attachment = null;
+        Long attachmentId = command.attachmentId();
+        if (attachmentId != null) {
+            attachment = chatAttachmentRepository.findById(attachmentId)
+                    .orElseThrow(() -> new ChatException(ChatErrorCode.ATTACHMENT_NOT_FOUND));
+            validateAttachmentOwnership(attachment, senderId);
+        }
+
+        // 신규 메시지 생성 및 저장 시도
         ChatMessage message;
         try {
             message = ChatMessage.createUserMessage(
@@ -96,10 +98,28 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         } catch (IllegalArgumentException ex) {
             throw new ChatException(ChatErrorCode.INVALID_MESSAGE_FORMAT, ex.getMessage());
         }
+        ChatMessage saved;
+        try {
+            saved = chatMessageRepository.save(message);
+        } catch (DataIntegrityViolationException ex) {
+            // 다른 트랜잭션에서 이미 저장됐다면, 중복 저장을 방지하기 위해 기존 메시지를 반환한다.
+            ChatMessage duplicateMessage = chatMessageRepository
+                    .findByClientMessageIdAndSenderId(command.clientMessageId(), senderId)
+                    .orElseThrow(() -> ex);
+            
+            validateIdempotentConsistency(duplicateMessage, command);
+            ChatAttachment duplicateAttachment = loadAttachmentIfNeeded(duplicateMessage);
+            validateAttachmentOwnership(duplicateAttachment, senderId);
+            return responseMapper.toResponse(duplicateMessage, duplicateAttachment);
+        }
 
-        ChatMessage saved = chatMessageRepository.save(message);
         updateChatRoomLastMessage(saved);
-        return responseMapper.toResponse(saved, loadAttachmentIfNeeded(saved));
+        // attachment가 있으면 그대로 사용, 없으면 조회한다.
+        ChatAttachment savedAttachment = attachment != null 
+                ? attachment 
+                : loadAttachmentIfNeeded(saved);
+        validateAttachmentOwnership(savedAttachment, senderId);
+        return responseMapper.toResponse(saved, savedAttachment);
     }
 
     @Override
@@ -142,12 +162,40 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ATTACHMENT_NOT_FOUND));
     }
 
-    private void validateRoomMembership(Long roomId, Long senderId) {
+    private void validateRoomAndMembership(Long roomId, Long senderId) {
+        // Room 존재 여부 확인
+        if (roomId == null) {
+            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
+        if (!chatRoomRepository.existsById(roomId)) {
+            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
+        
+        // Room 멤버 권한 검증
         ChatRoomMember member = chatRoomMemberRepository
                 .findByRoomIdAndUserId(roomId, senderId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
         if (member.getLeftAt() != null) {
             throw new ChatException(ChatErrorCode.USER_LEFT_ROOM);
+        }
+    }
+
+    private void validateIdempotentConsistency(ChatMessage stored, ChatSendMessageCommand command) {
+        // roomId 일치 검증
+        if (!Objects.equals(stored.getRoomId(), command.roomId())) {
+            throw new ChatException(ChatErrorCode.INVALID_ROOM_FOR_MESSAGE);
+        }
+        // attachmentId, messageType, content 일치 검증
+        if (!Objects.equals(stored.getAttachmentId(), command.attachmentId())
+                || !Objects.equals(stored.getMessageType(), command.messageType())
+                || !Objects.equals(stored.getContent(), command.content())) {
+            throw new ChatException(ChatErrorCode.IDEMPOTENCY_CONFLICT);
+        }
+    }
+
+    private void validateAttachmentOwnership(ChatAttachment attachment, Long senderId) {
+        if (attachment != null && !Objects.equals(attachment.getUploaderId(), senderId)) {
+            throw new ChatException(ChatErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
         }
     }
 
