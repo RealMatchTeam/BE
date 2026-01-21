@@ -1,9 +1,13 @@
 package com.example.RealMatch.chat.presentation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 
 import java.lang.reflect.Type;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -16,7 +20,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -25,18 +28,21 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.server.HandshakeHandler;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
-import com.example.RealMatch.chat.application.service.ChatSocketService;
-import com.example.RealMatch.chat.presentation.controller.fixture.ChatSocketFixtureFactory;
+import com.example.RealMatch.chat.application.service.message.ChatMessageCommandService;
+import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentStatus;
+import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSendMessageAckStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
-import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
+import com.example.RealMatch.chat.presentation.dto.enums.ChatSenderType;
+import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentInfoResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
@@ -59,6 +65,9 @@ class ChatSocketControllerTest {
     @LocalServerPort
     private int port;
 
+    @MockitoBean
+    private ChatMessageCommandService chatMessageCommandService;
+
     private WebSocketStompClient stompClient;
 
     @BeforeEach
@@ -74,6 +83,29 @@ class ChatSocketControllerTest {
     @Test
     @DisplayName("채팅 메시지 전송: ACK 수신")
     void sendMessage_returnsAck() throws Exception {
+        ChatSendMessageCommand command = createCommand(
+                ChatMessageType.TEXT,
+                "안녕하세요!",
+                null,
+                CLIENT_MESSAGE_ID
+        );
+        LocalDateTime createdAt = LocalDateTime.now();
+        ChatMessageResponse response = new ChatMessageResponse(
+                7001L,
+                ROOM_ID,
+                202L,
+                ChatSenderType.USER,
+                ChatMessageType.TEXT,
+                "안녕하세요!",
+                null,
+                null,
+                createdAt,
+                CLIENT_MESSAGE_ID
+        );
+
+        given(chatMessageCommandService.saveMessage(any(ChatSendMessageCommand.class), anyLong()))
+                .willReturn(response);
+
         StompSession session = connect();
         CompletableFuture<ChatSendMessageAck> ackFuture = new CompletableFuture<>();
 
@@ -90,12 +122,6 @@ class ChatSocketControllerTest {
         });
         waitForSubscriptions();
 
-        ChatSendMessageCommand command = createCommand(
-                ChatMessageType.TEXT,
-                "안녕하세요!",
-                null,
-                CLIENT_MESSAGE_ID
-        );
         session.send(APP_SEND_DESTINATION, Objects.requireNonNull(command));
 
         ChatSendMessageAck ack = ackFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -106,6 +132,24 @@ class ChatSocketControllerTest {
     @Test
     @DisplayName("채팅 메시지 전송: 브로드캐스트 수신")
     void sendMessage_broadcastsMessage() throws Exception {
+        ChatSendMessageCommand command = createCommand(ChatMessageType.TEXT, "안녕하세요!", null, CLIENT_MESSAGE_ID);
+        LocalDateTime createdAt = LocalDateTime.now();
+        ChatMessageResponse response = new ChatMessageResponse(
+                7001L,
+                ROOM_ID,
+                202L,
+                ChatSenderType.USER,
+                ChatMessageType.TEXT,
+                "안녕하세요!",
+                null,
+                null,
+                createdAt,
+                CLIENT_MESSAGE_ID
+        );
+
+        given(chatMessageCommandService.saveMessage(any(ChatSendMessageCommand.class), anyLong()))
+                .willReturn(response);
+
         StompSession session = connect();
         CompletableFuture<ChatMessageCreatedEvent> messageFuture = new CompletableFuture<>();
 
@@ -122,7 +166,6 @@ class ChatSocketControllerTest {
         });
         waitForSubscriptions();
 
-        ChatSendMessageCommand command = createCommand(ChatMessageType.TEXT, "안녕하세요!", null, CLIENT_MESSAGE_ID);
         session.send(APP_SEND_DESTINATION, Objects.requireNonNull(command));
 
         ChatMessageCreatedEvent event = messageFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -133,6 +176,33 @@ class ChatSocketControllerTest {
     @Test
     @DisplayName("이미지 메시지 전송: 브로드캐스트 수신")
     void sendImageMessage_broadcastsMessage() throws Exception {
+        ChatSendMessageCommand command = createCommand(ChatMessageType.IMAGE, null, ATTACHMENT_ID, IMAGE_CLIENT_MESSAGE_ID);
+        LocalDateTime createdAt = LocalDateTime.now();
+        ChatAttachmentInfoResponse attachmentInfo = new ChatAttachmentInfoResponse(
+                ATTACHMENT_ID,
+                ChatAttachmentType.IMAGE,
+                "image/png",
+                "photo.png",
+                204800L,
+                "https://example.com/9001",
+                ChatAttachmentStatus.UPLOADED
+        );
+        ChatMessageResponse response = new ChatMessageResponse(
+                7002L,
+                ROOM_ID,
+                202L,
+                ChatSenderType.USER,
+                ChatMessageType.IMAGE,
+                null,
+                attachmentInfo,
+                null,
+                createdAt,
+                IMAGE_CLIENT_MESSAGE_ID
+        );
+
+        given(chatMessageCommandService.saveMessage(any(ChatSendMessageCommand.class), anyLong()))
+                .willReturn(response);
+
         StompSession session = connect();
         CompletableFuture<ChatMessageCreatedEvent> messageFuture = new CompletableFuture<>();
 
@@ -149,7 +219,6 @@ class ChatSocketControllerTest {
         });
         waitForSubscriptions();
 
-        ChatSendMessageCommand command = createCommand(ChatMessageType.IMAGE, null, ATTACHMENT_ID, IMAGE_CLIENT_MESSAGE_ID);
         session.send(APP_SEND_DESTINATION, Objects.requireNonNull(command));
 
         ChatMessageCreatedEvent event = messageFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -160,6 +229,33 @@ class ChatSocketControllerTest {
     @Test
     @DisplayName("파일 메시지 전송: 브로드캐스트 수신")
     void sendFileMessage_broadcastsMessage() throws Exception {
+        ChatSendMessageCommand command = createCommand(ChatMessageType.FILE, null, ATTACHMENT_ID, FILE_CLIENT_MESSAGE_ID);
+        LocalDateTime createdAt = LocalDateTime.now();
+        ChatAttachmentInfoResponse attachmentInfo = new ChatAttachmentInfoResponse(
+                ATTACHMENT_ID,
+                ChatAttachmentType.FILE,
+                "application/pdf",
+                "document.pdf",
+                102400L,
+                "https://example.com/9001",
+                ChatAttachmentStatus.UPLOADED
+        );
+        ChatMessageResponse response = new ChatMessageResponse(
+                7003L,
+                ROOM_ID,
+                202L,
+                ChatSenderType.USER,
+                ChatMessageType.FILE,
+                null,
+                attachmentInfo,
+                null,
+                createdAt,
+                FILE_CLIENT_MESSAGE_ID
+        );
+
+        given(chatMessageCommandService.saveMessage(any(ChatSendMessageCommand.class), anyLong()))
+                .willReturn(response);
+
         StompSession session = connect();
         CompletableFuture<ChatMessageCreatedEvent> messageFuture = new CompletableFuture<>();
 
@@ -176,7 +272,6 @@ class ChatSocketControllerTest {
         });
         waitForSubscriptions();
 
-        ChatSendMessageCommand command = createCommand(ChatMessageType.FILE, null, ATTACHMENT_ID, FILE_CLIENT_MESSAGE_ID);
         session.send(APP_SEND_DESTINATION, Objects.requireNonNull(command));
 
         ChatMessageCreatedEvent event = messageFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -214,34 +309,6 @@ class ChatSocketControllerTest {
     static class WebSocketTestConfig {
 
         @Bean
-        @Primary
-        ChatSocketService chatSocketService() {
-            return new ChatSocketService() {
-                @Override
-                public @NonNull ChatMessageCreatedEvent createMessageEvent(ChatSendMessageCommand command) {
-                    return Objects.requireNonNull(
-                            ChatSocketFixtureFactory.sampleMessageCreatedEvent(command),
-                            "ChatMessageCreatedEvent must not be null."
-                    );
-                }
-
-                @Override
-                public ChatSendMessageAck createAck(ChatSendMessageCommand command, Long messageId) {
-                    return ChatSocketFixtureFactory.sampleAck(command, messageId);
-                }
-
-                @Override
-                public ChatMessageCreatedEvent createSystemMessageEvent(
-                        Long roomId,
-                        ChatSystemMessageKind kind,
-                        ChatSystemMessagePayload payload
-                ) {
-                    throw new UnsupportedOperationException("Not implemented yet.");
-                }
-            };
-        }
-
-        @Bean
         HandshakeHandler handshakeHandler() {
             return new DefaultHandshakeHandler() {
                 @Override
@@ -250,7 +317,7 @@ class ChatSocketControllerTest {
                         @NonNull WebSocketHandler wsHandler,
                         @NonNull Map<String, Object> attributes
                 ) {
-                    return () -> "test-user";
+                    return () -> "202";
                 }
             };
         }

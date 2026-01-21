@@ -3,6 +3,7 @@ package com.example.RealMatch.chat.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.RealMatch.chat.application.service.message.ChatMessageCommandService;
 import com.example.RealMatch.chat.presentation.controller.fixture.ChatFixtureFactory;
 import com.example.RealMatch.chat.presentation.conversion.MessageCursor;
 import com.example.RealMatch.chat.presentation.conversion.RoomCursor;
@@ -23,6 +24,12 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
 @Service
 public class ChatServiceImpl implements ChatService {
+
+    private final ChatMessageCommandService chatMessageCommandService;
+
+    public ChatServiceImpl(ChatMessageCommandService chatMessageCommandService) {
+        this.chatMessageCommandService = chatMessageCommandService;
+    }
 
     @Override
     public ChatRoomCreateResponse createOrGetRoom(CustomUserDetails user, ChatRoomCreateRequest request) {
@@ -71,6 +78,6 @@ public class ChatServiceImpl implements ChatService {
             ChatSystemMessageKind kind,
             ChatSystemMessagePayload payload
     ) {
-        return ChatFixtureFactory.sampleSystemMessageResponse(roomId, kind, payload);
+        return chatMessageCommandService.saveSystemMessage(roomId, kind, payload);
     }
 }

@@ -33,9 +33,6 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessageResponse;
 
-/**
- * 채팅 API 테스트를 위한 Fixture 응답 DTO를 생성하는 팩토리 (서비스 로직 완성하면 운영 코드에서 제거하고 테스트 전용으로 남겨둠)
- */
 public final class ChatFixtureFactory {
 
     private ChatFixtureFactory() {

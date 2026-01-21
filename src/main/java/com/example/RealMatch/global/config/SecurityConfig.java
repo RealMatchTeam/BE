@@ -41,6 +41,7 @@ public class SecurityConfig {
             "/login/**", "/oauth2/**",
             "/api/test",
             "/api/login/success",
+            "/ws/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
