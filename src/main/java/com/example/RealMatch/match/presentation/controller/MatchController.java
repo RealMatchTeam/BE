@@ -13,28 +13,32 @@ import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchBrandResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchCampaignResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
+import com.example.RealMatch.match.presentation.swagger.MatchSwagger;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/matches")
-public class MatchController {
+public class MatchController implements MatchSwagger {
 
     private final MatchService matchService;
 
+    @Override
     @PostMapping
     public CustomResponse<MatchResponseDto> matchBrand(@RequestBody MatchRequestDto requestDto) {
         MatchResponseDto result = matchService.matchBrand(requestDto);
         return CustomResponse.ok(result);
     }
 
+    @Override
     @GetMapping("/brands/{userId}")
     public CustomResponse<MatchBrandResponseDto> getMatchingBrands(@PathVariable String userId) {
         MatchBrandResponseDto result = matchService.getMatchingBrands(userId);
         return CustomResponse.ok(result);
     }
 
+    @Override
     @GetMapping("/campaigns/{userId}")
     public CustomResponse<MatchCampaignResponseDto> getMatchingCampaigns(@PathVariable String userId) {
         MatchCampaignResponseDto result = matchService.getMatchingCampaigns(userId);
