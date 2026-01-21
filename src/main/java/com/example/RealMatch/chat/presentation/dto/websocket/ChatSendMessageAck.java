@@ -1,7 +1,7 @@
 package com.example.RealMatch.chat.presentation.dto.websocket;
 
-import com.example.RealMatch.global.presentation.code.BaseErrorCode;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSendMessageAckStatus;
+import com.example.RealMatch.global.presentation.code.BaseErrorCode;
 
 public record ChatSendMessageAck(
         String clientMessageId,

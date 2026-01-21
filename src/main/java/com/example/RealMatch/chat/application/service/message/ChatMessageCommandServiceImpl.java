@@ -11,13 +11,13 @@ import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerialize
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
+import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
-import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
@@ -133,17 +133,6 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         return responseMapper.toResponse(saved, null);
     }
 
-
-    /**
-     * 첨부 파일을 로드합니다.
-     * 
-     * 정책: message에 attachmentId가 없으면 null을 반환합니다.
-     * attachmentId가 있으면 반드시 존재해야 하며, 없으면 예외를 던집니다.
-     * 
-     * @param message 메시지 엔티티
-     * @return 첨부 파일 엔티티 (attachmentId가 없으면 null)
-     * @throws ChatException attachmentId가 있는데 첨부 파일을 찾을 수 없는 경우
-     */
     private ChatAttachment loadAttachmentIfNeeded(ChatMessage message) {
         Long attachmentId = message.getAttachmentId();
         if (attachmentId == null) {

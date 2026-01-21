@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
+import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
-import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 
 @Service
 public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
