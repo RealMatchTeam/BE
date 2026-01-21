@@ -1,9 +1,8 @@
-package com.example.RealMatch.campaign.domain.entity;
+package com.example.RealMatch.business.domain;
 
-import java.time.LocalDateTime;
-
-import com.example.RealMatch.campaign.domain.entity.enums.ProposalStatus;
-import com.example.RealMatch.campaign.domain.entity.enums.WhoProposed;
+import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.business.domain.enums.WhoProposed;
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
 
@@ -58,9 +57,6 @@ public class CampaignProposal extends BaseEntity {
     @Column(nullable = false, length = 20)
     private ProposalStatus status;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @Builder
     public CampaignProposal(Campaign campaign, User user, WhoProposed whoProposed,
                             String reason, String proposalDescription) {
@@ -74,17 +70,14 @@ public class CampaignProposal extends BaseEntity {
 
     public void updateStatus(ProposalStatus status) {
         this.status = status;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void reject(String refusalReason) {
         this.status = ProposalStatus.REJECTED;
         this.refusalReason = refusalReason;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void match() {
         this.status = ProposalStatus.MATCHED;
-        this.updatedAt = LocalDateTime.now();
     }
 }

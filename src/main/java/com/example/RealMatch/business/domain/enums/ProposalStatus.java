@@ -1,4 +1,4 @@
-package com.example.RealMatch.campaign.domain.entity.enums;
+package com.example.RealMatch.business.domain.enums;
 
 public enum ProposalStatus {
     NONE,

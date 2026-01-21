@@ -1,6 +1,7 @@
-package com.example.RealMatch.campaign.domain.entity;
+package com.example.RealMatch.business.domain;
 
-import com.example.RealMatch.campaign.domain.entity.enums.ProposalStatus;
+import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
 

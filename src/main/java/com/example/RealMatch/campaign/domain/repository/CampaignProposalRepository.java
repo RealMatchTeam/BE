@@ -5,8 +5,8 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.campaign.domain.entity.CampaignProposal;
-import com.example.RealMatch.campaign.domain.entity.enums.ProposalStatus;
+import com.example.RealMatch.business.domain.CampaignProposal;
+import com.example.RealMatch.business.domain.enums.ProposalStatus;
 
 public interface CampaignProposalRepository extends JpaRepository<CampaignProposal, Long> {
 
