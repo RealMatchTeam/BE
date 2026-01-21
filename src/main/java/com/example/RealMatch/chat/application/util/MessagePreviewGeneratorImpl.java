@@ -1,10 +1,10 @@
-package com.example.RealMatch.chat.application.service.message;
+package com.example.RealMatch.chat.application.util;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 
-@Service
+@Component
 public class MessagePreviewGeneratorImpl implements MessagePreviewGenerator {
 
     private static final int MAX_PREVIEW_LENGTH = 255;

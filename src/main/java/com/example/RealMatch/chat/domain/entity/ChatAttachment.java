@@ -2,7 +2,7 @@ package com.example.RealMatch.chat.domain.entity;
 
 import com.example.RealMatch.chat.domain.enums.ChatAttachmentStatus;
 import com.example.RealMatch.chat.domain.enums.ChatAttachmentType;
-import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "chat_attachment")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatAttachment extends UpdateBaseEntity {
+public class ChatAttachment extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

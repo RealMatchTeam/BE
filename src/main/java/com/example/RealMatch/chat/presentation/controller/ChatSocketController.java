@@ -41,14 +41,7 @@ public class ChatSocketController {
         try {
             Long senderId = chatUserIdResolver.resolve(principal);
             ChatMessageResponse response = chatSocketService.createMessageEvent(command, senderId);
-            
-            Long messageId = response.messageId();
-            if (messageId == null) {
-                LOG.error("Response messageId is null. clientMessageId={}", command.clientMessageId());
-                return ChatSendMessageAck.failure(command.clientMessageId(), GeneralErrorCode.INTERNAL_SERVER_ERROR);
-            }
-            
-            return chatSocketService.createAck(command, messageId);
+            return chatSocketService.createAck(command, response.messageId());
         } catch (ChatException ex) {
             LOG.warn("Chat domain exception. clientMessageId={}, errorCode={}", 
                     command.clientMessageId(), ex.getErrorCode().getCode(), ex);

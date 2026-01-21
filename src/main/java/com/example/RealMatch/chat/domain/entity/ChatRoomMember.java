@@ -3,7 +3,7 @@ package com.example.RealMatch.chat.domain.entity;
 import java.time.LocalDateTime;
 
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
-import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "chat_room_member")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatRoomMember extends UpdateBaseEntity {
+public class ChatRoomMember extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

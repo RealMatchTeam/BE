@@ -4,7 +4,10 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
+import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
+import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
@@ -38,6 +41,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
             ChatRoomRepository chatRoomRepository,
             ChatRoomUpdateService chatRoomUpdateService,
             MessagePreviewGenerator messagePreviewGenerator,
+            ChatMessageResponseMapper responseMapper,
             SystemMessagePayloadSerializer payloadSerializer
     ) {
         this.chatMessageRepository = chatMessageRepository;
@@ -46,21 +50,21 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         this.chatRoomRepository = chatRoomRepository;
         this.chatRoomUpdateService = chatRoomUpdateService;
         this.messagePreviewGenerator = messagePreviewGenerator;
+        this.responseMapper = responseMapper;
         this.payloadSerializer = payloadSerializer;
-        this.responseMapper = new ChatMessageResponseMapper(payloadSerializer);
     }
 
     @Override
     @Transactional
     @NonNull
-    @SuppressWarnings("null")
     public ChatMessageResponse saveMessage(ChatSendMessageCommand command, Long senderId) {
         // Room 멤버 권한 검증
         validateRoomMembership(command.roomId(), senderId);
 
         // 첨부 파일 존재 및 소유권 검증
-        if (command.attachmentId() != null) {
-            ChatAttachment attachment = chatAttachmentRepository.findById(command.attachmentId())
+        Long attachmentId = command.attachmentId();
+        if (attachmentId != null) {
+            ChatAttachment attachment = chatAttachmentRepository.findById(attachmentId)
                     .orElseThrow(() -> new ChatException(ChatErrorCode.ATTACHMENT_NOT_FOUND));
             if (!attachment.getUploaderId().equals(senderId)) {
                 throw new ChatException(ChatErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
@@ -79,14 +83,20 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
             return responseMapper.toResponse(existing, attachment);
         }
 
-        ChatMessage message = ChatMessage.createUserMessage(
-                command.roomId(),
-                senderId,
-                command.messageType(),
-                command.content(),
-                command.attachmentId(),
-                command.clientMessageId()
-        );
+        ChatMessage message;
+        try {
+            message = ChatMessage.createUserMessage(
+                    command.roomId(),
+                    senderId,
+                    command.messageType(),
+                    command.content(),
+                    command.attachmentId(),
+                    command.clientMessageId()
+            );
+        } catch (IllegalArgumentException ex) {
+            throw new ChatException(ChatErrorCode.INVALID_MESSAGE_FORMAT, ex.getMessage());
+        }
+
         ChatMessage saved = chatMessageRepository.save(message);
         updateChatRoomLastMessage(saved);
         return responseMapper.toResponse(saved, loadAttachmentIfNeeded(saved));
@@ -94,27 +104,46 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
     @Override
     @Transactional
-    @SuppressWarnings("null")
+    @NonNull
     public ChatMessageResponse saveSystemMessage(
             Long roomId,
             ChatSystemMessageKind kind,
             ChatSystemMessagePayload payload
     ) {
         // 방 존재 여부 검증
+        if (roomId == null) {
+            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
         chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
         
-        ChatMessage message = ChatMessage.createSystemMessage(
-                roomId,
-                kind,
-                payloadSerializer.serialize(payload)
-        );
+        ChatMessage message;
+        try {
+            message = ChatMessage.createSystemMessage(
+                    roomId,
+                    kind,
+                    payloadSerializer.serialize(payload)
+            );
+        } catch (IllegalArgumentException ex) {
+            throw new ChatException(ChatErrorCode.INVALID_MESSAGE_FORMAT, ex.getMessage());
+        }
+        
         ChatMessage saved = chatMessageRepository.save(message);
         updateChatRoomLastMessage(saved);
         return responseMapper.toResponse(saved, null);
     }
 
 
+    /**
+     * 첨부 파일을 로드합니다.
+     * 
+     * 정책: message에 attachmentId가 없으면 null을 반환합니다.
+     * attachmentId가 있으면 반드시 존재해야 하며, 없으면 예외를 던집니다.
+     * 
+     * @param message 메시지 엔티티
+     * @return 첨부 파일 엔티티 (attachmentId가 없으면 null)
+     * @throws ChatException attachmentId가 있는데 첨부 파일을 찾을 수 없는 경우
+     */
     private ChatAttachment loadAttachmentIfNeeded(ChatMessage message) {
         Long attachmentId = message.getAttachmentId();
         if (attachmentId == null) {
@@ -133,7 +162,6 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         }
     }
 
-    @SuppressWarnings("null")
     private void updateChatRoomLastMessage(ChatMessage message) {
         String preview = messagePreviewGenerator.generate(message.getMessageType(), message.getContent());
         chatRoomUpdateService.updateLastMessage(

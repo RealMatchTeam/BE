@@ -13,11 +13,7 @@ import lombok.Getter;
 @Getter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class UpdateBaseEntity extends BaseEntity {
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+public abstract class DeleteBaseEntity extends BaseEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -25,7 +21,7 @@ public abstract class UpdateBaseEntity extends BaseEntity {
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;
 
-    protected UpdateBaseEntity() {
+    protected DeleteBaseEntity() {
         super();
         this.isDeleted = false;
     }

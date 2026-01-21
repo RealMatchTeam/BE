@@ -6,7 +6,7 @@ import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatRoomType;
-import com.example.RealMatch.global.common.UpdateBaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "chat_room")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatRoom extends UpdateBaseEntity {
+public class ChatRoom extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

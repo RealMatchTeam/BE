@@ -27,7 +27,16 @@ public enum ChatErrorCode implements BaseErrorCode {
             "첨부 파일 소유권이 일치하지 않습니다."),
     INVALID_ROOM_FOR_MESSAGE(HttpStatus.BAD_REQUEST,
             "CHAT400_1",
-            "메시지가 속한 채팅방이 일치하지 않습니다.");
+            "메시지가 속한 채팅방이 일치하지 않습니다."),
+    INVALID_MESSAGE_FORMAT(HttpStatus.BAD_REQUEST,
+            "CHAT400_2",
+            "메시지 형식이 올바르지 않습니다."),
+    MESSAGE_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
+            "CHAT500_1",
+            "메시지 저장에 실패했습니다."),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
+            "CHAT500_2",
+            "내부 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String code;

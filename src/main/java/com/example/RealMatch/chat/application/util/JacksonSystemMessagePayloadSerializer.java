@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.application.service.message;
+package com.example.RealMatch.chat.application.util;
 
 import org.springframework.stereotype.Component;
 
