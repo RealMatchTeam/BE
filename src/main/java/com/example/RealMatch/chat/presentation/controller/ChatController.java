@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.RealMatch.chat.application.service.ChatService;
+import com.example.RealMatch.chat.application.service.attachment.ChatAttachmentService;
+import com.example.RealMatch.chat.application.service.message.ChatMessageQueryService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomService;
 import com.example.RealMatch.chat.presentation.conversion.MessageCursor;
 import com.example.RealMatch.chat.presentation.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
@@ -34,10 +37,21 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/chat")
 public class ChatController implements ChatSwagger {
 
-    private final ChatService chatService;
+    private final ChatRoomService chatRoomService;
+    private final ChatRoomQueryService chatRoomQueryService;
+    private final ChatMessageQueryService chatMessageQueryService;
+    private final ChatAttachmentService chatAttachmentService;
 
-    public ChatController(ChatService chatService) {
-        this.chatService = chatService;
+    public ChatController(
+            ChatRoomService chatRoomService,
+            ChatRoomQueryService chatRoomQueryService,
+            ChatMessageQueryService chatMessageQueryService,
+            ChatAttachmentService chatAttachmentService
+    ) {
+        this.chatRoomService = chatRoomService;
+        this.chatRoomQueryService = chatRoomQueryService;
+        this.chatMessageQueryService = chatMessageQueryService;
+        this.chatAttachmentService = chatAttachmentService;
     }
 
     @PostMapping("/rooms")
@@ -45,7 +59,7 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestBody ChatRoomCreateRequest request
     ) {
-        return CustomResponse.ok(chatService.createOrGetRoom(user, request));
+        return CustomResponse.ok(chatRoomService.createOrGetRoom(user, request));
     }
 
     @GetMapping("/rooms")
@@ -57,7 +71,7 @@ public class ChatController implements ChatSwagger {
             @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return CustomResponse.ok(chatService.getRoomList(user, tab, filterStatus, sort, roomCursor, size));
+        return CustomResponse.ok(chatRoomQueryService.getRoomList(user, tab, filterStatus, sort, roomCursor, size));
     }
 
     @GetMapping("/rooms/{roomId}")
@@ -65,7 +79,7 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long roomId
     ) {
-        return CustomResponse.ok(chatService.getRoomDetail(user, roomId));
+        return CustomResponse.ok(chatRoomQueryService.getRoomDetail(user, roomId));
     }
 
     @GetMapping("/rooms/{roomId}/messages")
@@ -75,7 +89,7 @@ public class ChatController implements ChatSwagger {
             @RequestParam(name = "cursor", required = false) MessageCursor messageCursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return CustomResponse.ok(chatService.getMessages(user, roomId, messageCursor, size));
+        return CustomResponse.ok(chatMessageQueryService.getMessages(user, roomId, messageCursor, size));
     }
 
     @PostMapping("/attachments")
@@ -84,6 +98,6 @@ public class ChatController implements ChatSwagger {
             @Valid @RequestPart("request") ChatAttachmentUploadRequest request,
             @RequestPart("file") MultipartFile file
     ) {
-        return CustomResponse.ok(chatService.uploadAttachment(user, request, file));
+        return CustomResponse.ok(chatAttachmentService.uploadAttachment(user, request, file));
     }
 }

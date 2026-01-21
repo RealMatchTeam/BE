@@ -2,7 +2,7 @@ package com.example.RealMatch.chat.domain.entity;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomMemberRole;
+import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
 import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;

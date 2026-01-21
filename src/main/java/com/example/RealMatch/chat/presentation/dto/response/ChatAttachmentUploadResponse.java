@@ -2,8 +2,8 @@ package com.example.RealMatch.chat.presentation.dto.response;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
+import com.example.RealMatch.chat.domain.enums.ChatAttachmentStatus;
+import com.example.RealMatch.chat.domain.enums.ChatAttachmentType;
 
 public record ChatAttachmentUploadResponse(
         Long attachmentId,

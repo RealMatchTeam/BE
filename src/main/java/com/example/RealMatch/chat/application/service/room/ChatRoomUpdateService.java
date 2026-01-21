@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.lang.NonNull;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
+import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 
 public interface ChatRoomUpdateService {
     void updateLastMessage(

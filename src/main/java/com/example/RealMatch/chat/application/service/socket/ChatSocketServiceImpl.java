@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.application.service;
+package com.example.RealMatch.chat.application.service.socket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +11,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.example.RealMatch.chat.application.service.message.ChatMessageCommandService;
 import com.example.RealMatch.global.presentation.code.BaseErrorCode;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
+import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;

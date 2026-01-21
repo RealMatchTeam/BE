@@ -9,7 +9,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
-import com.example.RealMatch.chat.application.service.ChatSocketService;
+import com.example.RealMatch.chat.application.service.socket.ChatSocketService;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;

@@ -2,7 +2,7 @@ package com.example.RealMatch.chat.application.service.message;
 
 import org.springframework.stereotype.Component;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
+import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatProposalStatusNoticePayloadResponse;

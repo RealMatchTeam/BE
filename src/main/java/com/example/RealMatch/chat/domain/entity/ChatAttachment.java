@@ -1,7 +1,7 @@
 package com.example.RealMatch.chat.domain.entity;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatAttachmentType;
+import com.example.RealMatch.chat.domain.enums.ChatAttachmentStatus;
+import com.example.RealMatch.chat.domain.enums.ChatAttachmentType;
 import com.example.RealMatch.global.common.UpdateBaseEntity;
 
 import jakarta.persistence.Column;

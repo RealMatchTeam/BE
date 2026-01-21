@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.dto.enums;
+package com.example.RealMatch.chat.domain.enums;
 
 public enum ChatSystemMessageKind {
     PROPOSAL_CARD,

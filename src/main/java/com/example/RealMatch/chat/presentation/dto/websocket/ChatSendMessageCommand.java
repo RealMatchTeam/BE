@@ -1,6 +1,6 @@
 package com.example.RealMatch.chat.presentation.dto.websocket;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
+import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

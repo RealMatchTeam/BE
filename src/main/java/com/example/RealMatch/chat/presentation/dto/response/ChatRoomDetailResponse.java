@@ -2,7 +2,7 @@ package com.example.RealMatch.chat.presentation.dto.response;
 
 import java.util.List;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalStatus;
+import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 
 public record ChatRoomDetailResponse(
         Long roomId,

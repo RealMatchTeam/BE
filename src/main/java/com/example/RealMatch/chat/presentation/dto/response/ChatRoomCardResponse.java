@@ -2,8 +2,8 @@ package com.example.RealMatch.chat.presentation.dto.response;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalStatus;
+import com.example.RealMatch.chat.domain.enums.ChatMessageType;
+import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 
 public record ChatRoomCardResponse(

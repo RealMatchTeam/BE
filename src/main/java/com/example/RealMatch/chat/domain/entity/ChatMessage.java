@@ -1,7 +1,7 @@
 package com.example.RealMatch.chat.domain.entity;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatSystemMessageKind;
+import com.example.RealMatch.chat.domain.enums.ChatMessageType;
+import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.global.common.BaseEntity;
 
 import jakarta.persistence.Column;

@@ -2,7 +2,7 @@ package com.example.RealMatch.chat.application.service.message;
 
 import org.springframework.stereotype.Service;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
+import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 
 @Service
 public class MessagePreviewGeneratorImpl implements MessagePreviewGenerator {
