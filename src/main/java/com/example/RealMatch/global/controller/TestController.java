@@ -1,11 +1,15 @@
 package com.example.RealMatch.global.controller;
 
+import java.util.Map;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
+import com.example.RealMatch.global.config.jwt.JwtProvider;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
 
@@ -18,6 +22,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api")
 public class TestController {
+
+    private final JwtProvider jwtProvider;
+
+    public TestController(JwtProvider jwtProvider) {
+        this.jwtProvider = jwtProvider;
+    }
 
     @Operation(summary = "api 테스트 확인",
             description = """
@@ -52,7 +62,11 @@ public class TestController {
         String response = "Hello from Spring Boot 👋";
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, response);
     }
-
-
+    @GetMapping("/login/success")
+    public CustomResponse<Map<String, String>> loginSuccess(
+            @RequestParam("accessToken") String accessToken,
+            @RequestParam("refreshToken") String refreshToken
+    ) {
+        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, Map.of("accessToken", accessToken, "refreshToken", refreshToken));
+    }
 }
-
