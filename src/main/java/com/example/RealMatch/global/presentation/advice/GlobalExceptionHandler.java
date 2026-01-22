@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
+import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
@@ -63,6 +64,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(GeneralErrorCode.NOT_FOUND.getStatus())
                 .body(CustomResponse.onFailure(GeneralErrorCode.NOT_FOUND, null));
+    }
+
+    @ExceptionHandler(ChatException.class)
+    public ResponseEntity<CustomResponse<?>> handleChatException(ChatException e) {
+        log.warn("[ChatException] code={}, message={}", e.getErrorCode().getCode(), e.getMessage());
+        return ResponseEntity
+                .status(e.getErrorCode().getStatus())
+                .body(CustomResponse.onFailure(e.getErrorCode(), null));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<CustomResponse<?>> handleIllegalState(IllegalStateException e) {
+        log.error("[IllegalStateException] {}", e.getMessage(), e);
+        return ResponseEntity
+                .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
+                .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, null));
     }
 
     @ExceptionHandler(Exception.class)
