@@ -1,19 +1,22 @@
-package com.example.RealMatch.global.config.oauth;
+package com.example.RealMatch.global.oauth.handler;
 
-import com.example.RealMatch.global.config.jwt.JwtProvider;
-import com.example.RealMatch.global.presentation.CustomResponse;
-import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import com.example.RealMatch.global.config.jwt.JwtProvider;
+import com.example.RealMatch.global.oauth.dto.CustomOAuth2User;
+import com.example.RealMatch.global.oauth.dto.OAuthTokenResponse;
+import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
+import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -33,19 +36,19 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 (CustomOAuth2User) authentication.getPrincipal();
 
         Long userId = oAuth2User.getUserId();
-        String provider = oAuth2User.getProvider();
+        AuthProvider provider = oAuth2User.getProvider();
         String role = oAuth2User.getRole();
 
         // 토큰 발급
         String accessToken = jwtProvider.createAccessToken(
                 userId,
-                provider,
+                provider.name(),
                 role
         );
 
         String refreshToken = jwtProvider.createRefreshToken(
                 userId,
-                provider,
+                provider.name(),
                 role
         );
 

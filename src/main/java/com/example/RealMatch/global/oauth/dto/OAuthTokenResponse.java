@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.config.oauth;
+package com.example.RealMatch.global.oauth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

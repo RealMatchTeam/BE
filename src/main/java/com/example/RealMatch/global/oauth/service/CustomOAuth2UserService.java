@@ -1,8 +1,7 @@
-package com.example.RealMatch.global.config.service;
+package com.example.RealMatch.global.oauth.service;
 
 import java.util.Map;
 
-import com.example.RealMatch.global.config.oauth.*;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -10,11 +9,18 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.oauth.code.OAuthErrorCode;
+import com.example.RealMatch.global.oauth.dto.CustomOAuth2User;
+import com.example.RealMatch.global.oauth.dto.GoogleUserInfo;
+import com.example.RealMatch.global.oauth.dto.KakaoUserInfo;
+import com.example.RealMatch.global.oauth.dto.NaverUserInfo;
+import com.example.RealMatch.global.oauth.dto.OAuth2UserInfo;
+import com.example.RealMatch.global.oauth.exception.AuthException;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.AuthenticationMethodRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
-import com.example.RealMatch.user.enums.UserRole;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +45,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2UserInfo userInfo = getOAuth2UserInfo(provider, attributes);
 
+        if (userInfo.getEmail() == null || userInfo.getEmail().isBlank()) {
+            throw new AuthException(OAuthErrorCode.EMAIL_NOT_PROVIDED);
+        }
+
         // 이미 가입된 유저인지 확인
         AuthenticationMethod authMethod =
                 authenticationMethodRepository
@@ -62,7 +72,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 User.builder()
                         .name(userInfo.getName())
                         .nickname(userInfo.getName()) // 초기에 닉네임은 이름과 동일하게 설정
-                        .role(UserRole.CREATOR)
+                        .email(userInfo.getEmail())
+                        .role(Role.CREATOR)
                         .build()
         );
 

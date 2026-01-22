@@ -1,10 +1,12 @@
-package com.example.RealMatch.global.config.oauth;
+package com.example.RealMatch.global.oauth.dto;
 
 import java.util.Collection;
 import java.util.Map;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+
+import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 
 import lombok.Getter;
 
@@ -13,13 +15,13 @@ public class CustomOAuth2User implements OAuth2User {
 
     private final Long userId;
     private final String role;
-    private final String provider;
+    private final AuthProvider provider;
     private final Map<String, Object> attributes;
 
     public CustomOAuth2User(
             Long userId,
             String role,
-            String provider,
+            AuthProvider provider,
             Map<String, Object> attributes
     ) {
         this.userId = userId;

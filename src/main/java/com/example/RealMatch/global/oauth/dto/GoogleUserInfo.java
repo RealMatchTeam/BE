@@ -1,6 +1,8 @@
-package com.example.RealMatch.global.config.oauth;
+package com.example.RealMatch.global.oauth.dto;
 
 import java.util.Map;
+
+import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 
 public class GoogleUserInfo implements OAuth2UserInfo {
 
@@ -30,7 +32,7 @@ public class GoogleUserInfo implements OAuth2UserInfo {
     }
 
     @Override
-    public String getProvider() {
-        return "google";
+    public AuthProvider getProvider() {
+        return AuthProvider.GOOGLE;
     }
 }

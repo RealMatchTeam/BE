@@ -1,89 +1,101 @@
 package com.example.RealMatch.user.domain.entity;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.user.enums.DeleteType;
-import com.example.RealMatch.user.enums.UserRole;
-import com.example.RealMatch.user.enums.Gender;
-import jakarta.persistence.*;
+import com.example.RealMatch.user.domain.entity.enums.Gender;
+import com.example.RealMatch.user.domain.entity.enums.Role;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
 public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
     private Long id;
 
+    @Column(length = 100)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private Gender gender;
 
     private LocalDate birth;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String nickname;
 
+    @Column(nullable = false, length = 255)
+    private String email;
+
+    @Column(length = 500)
     private String address;
 
-    @Column(name = "detail_address")
+    @Column(name = "detail_address", length = 500)
     private String detailAddress;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role;
-
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at", nullable = false)
-    private LocalDate updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.updatedAt = LocalDate.now();
-    }
+    @Column(nullable = false, length = 20)
+    private Role role;
 
     @Column(name = "deleted_at")
     private LocalDate deletedAt;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "deleted_by")
-    private DeleteType deletedBy;
+    private Long deletedBy;
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @Column(name = "main_account")
-    private String mainAccount;
-
-    @Column(name = "sns_url")
-    private String snsUrl;
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
 
     @Builder
-    public User(String name,
-                String nickname, UserRole role, Gender gender, LocalDate birth, String address, String detailAddress, String snsUrl) {
+    public User(String name, Gender gender, LocalDate birth, String nickname,
+                      String email, String address, String detailAddress, Role role,
+                      String profileImageUrl) {
         this.name = name;
-        this.nickname = nickname;
-        this.role = role != null ? role : UserRole.CREATOR;
         this.gender = gender;
         this.birth = birth;
+        this.nickname = nickname;
+        this.email = email;
         this.address = address;
         this.detailAddress = detailAddress;
-        this.snsUrl = snsUrl;
+        this.role = role;
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updateLastLogin() {
+        this.lastLogin = LocalDateTime.now();
+    }
+
+    public void updateProfile(String name, String nickname, String address, String detailAddress, String profileImageUrl) {
+        this.name = name;
+        this.nickname = nickname;
+        this.address = address;
+        this.detailAddress = detailAddress;
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void softDelete(Long deletedBy) {
+        this.deletedAt = LocalDate.now();
+        this.deletedBy = deletedBy;
     }
 }

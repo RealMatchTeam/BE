@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.example.RealMatch.chat.domain.exception.ChatException;
+import com.example.RealMatch.global.oauth.exception.AuthException;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
@@ -38,7 +39,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<CustomResponse<?>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
-        
+
         log.warn("[HandlerMethodValidationException] {}", e.getMessage());
 
         return ResponseEntity
@@ -90,5 +91,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, null));
+    }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<CustomResponse<?>> handleAuthException(AuthException e) {
+        log.warn("[AuthException] code={}, message={}", e.getErrorCode().getCode(), e.getErrorCode().getMessage());
+
+        return ResponseEntity
+                .status(e.getErrorCode().getStatus())
+                .body(CustomResponse.onFailure(
+                        e.getErrorCode(),
+                        null
+                ));
     }
 }
