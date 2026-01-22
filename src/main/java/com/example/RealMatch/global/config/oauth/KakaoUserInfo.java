@@ -1,4 +1,3 @@
-// KakaoUserInfo.java
 package com.example.RealMatch.global.config.oauth;
 
 import java.util.Map;

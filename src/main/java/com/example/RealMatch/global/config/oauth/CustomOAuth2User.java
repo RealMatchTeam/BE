@@ -1,24 +1,30 @@
 package com.example.RealMatch.global.config.oauth;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-
-import com.example.RealMatch.match.domain.entity.User;
 
 import lombok.Getter;
 
 @Getter
 public class CustomOAuth2User implements OAuth2User {
 
-    private final User user;
+    private final Long userId;
+    private final String role;
+    private final String provider;
     private final Map<String, Object> attributes;
 
-    public CustomOAuth2User(User user, Map<String, Object> attributes) {
-        this.user = user;
+    public CustomOAuth2User(
+            Long userId,
+            String role,
+            String provider,
+            Map<String, Object> attributes
+    ) {
+        this.userId = userId;
+        this.role = role;
+        this.provider = provider;
         this.attributes = attributes;
     }
 
@@ -29,11 +35,11 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return null; // Jwt 써서 null
     }
 
     @Override
     public String getName() {
-        return user.getProviderId();
+        return String.valueOf(userId);
     }
 }
