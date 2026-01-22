@@ -100,9 +100,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             case "google":
                 return new GoogleUserInfo(attributes);
             default:
-                throw new OAuth2AuthenticationException(
-                        "지원하지 않는 소셜 로그인입니다: " + provider
-                );
+                throw new AuthException(OAuthErrorCode.UNSUPPORTED_PROVIDER);
         }
     }
 }

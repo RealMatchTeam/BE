@@ -1,5 +1,7 @@
 package com.example.RealMatch.global.presentation.advice;
 
+import java.util.Collections;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -95,13 +97,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<CustomResponse<?>> handleAuthException(AuthException e) {
-        log.warn("[AuthException] code={}, message={}", e.getErrorCode().getCode(), e.getErrorCode().getMessage());
-
+        log.warn("[AuthException] code={}, message={}",
+                e.getErrorCode().getCode(),
+                e.getErrorCode().getMessage()
+        );
+        // result 필드가 null이면 일부 프론트에서 처리 문제 가능 -> 빈 객체로 반환
         return ResponseEntity
                 .status(e.getErrorCode().getStatus())
                 .body(CustomResponse.onFailure(
                         e.getErrorCode(),
-                        null
+                        Collections.emptyMap() // null 대신 빈 맵
                 ));
     }
 }
