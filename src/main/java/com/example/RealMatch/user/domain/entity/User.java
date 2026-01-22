@@ -1,4 +1,4 @@
-package com.example.RealMatch.match.domain.entity;
+package com.example.RealMatch.user.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

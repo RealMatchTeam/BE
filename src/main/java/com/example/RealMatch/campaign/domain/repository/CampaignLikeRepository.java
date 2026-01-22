@@ -1,0 +1,23 @@
+package com.example.RealMatch.campaign.domain.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.RealMatch.campaign.domain.entity.CampaignLike;
+
+public interface CampaignLikeRepository extends JpaRepository<CampaignLike, Long> {
+
+    List<CampaignLike> findByUserId(Long userId);
+
+    List<CampaignLike> findByCampaignId(Long campaignId);
+
+    Optional<CampaignLike> findByUserIdAndCampaignId(Long userId, Long campaignId);
+
+    boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
+
+    void deleteByUserIdAndCampaignId(Long userId, Long campaignId);
+
+    long countByCampaignId(Long campaignId);
+}

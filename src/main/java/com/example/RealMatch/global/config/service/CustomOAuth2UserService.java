@@ -13,8 +13,8 @@ import com.example.RealMatch.global.config.oauth.CustomOAuth2User;
 import com.example.RealMatch.global.config.oauth.KakaoUserInfo;
 import com.example.RealMatch.global.config.oauth.NaverUserInfo;
 import com.example.RealMatch.global.config.oauth.OAuth2UserInfo;
-import com.example.RealMatch.match.domain.entity.User;
 import com.example.RealMatch.match.domain.repository.UserRepository;
+import com.example.RealMatch.user.domain.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
