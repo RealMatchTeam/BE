@@ -24,6 +24,7 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,7 +41,10 @@ public interface ChatSwagger {
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "채팅방 생성/조회 성공"),
-            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다.")
+            @ApiResponse(responseCode = "COMMON400_1", description = "잘못된 요청입니다. (요청 데이터 검증 실패)"),
+            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다."),
+            @ApiResponse(responseCode = "CHAT400_2", description = "채팅방 생성 요청이 올바르지 않습니다. (brandId/creatorId가 null이거나 동일한 경우)"),
+            @ApiResponse(responseCode = "CHAT403_2", description = "채팅방 멤버가 아닙니다. (요청한 사용자가 brandId나 creatorId가 아닌 경우)")
     })
     CustomResponse<ChatRoomCreateResponse> createOrGetRoom(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -60,11 +64,11 @@ public interface ChatSwagger {
     })
     CustomResponse<ChatRoomListResponse> getRoomList(
             @AuthenticationPrincipal CustomUserDetails user,
-            @RequestParam(required = false) ChatRoomTab tab,
-            @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
-            @RequestParam(required = false) ChatRoomSort sort,
-            @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
-            @RequestParam(defaultValue = "20") int size
+            @Parameter(description = "채팅방 탭 (SENT: 보낸 제안, RECEIVED: 받은 제안)") @RequestParam(required = false) ChatRoomTab tab,
+            @Parameter(description = "채팅방 필터 상태") @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
+            @Parameter(description = "정렬 기준 (LATEST: 최신순)") @RequestParam(required = false) ChatRoomSort sort,
+            @Parameter(description = "페이지네이션 커서 (lastMessageAt|roomId 형식)") @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
+            @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(summary = "채팅방 상세 조회 API By 여채현",
@@ -74,11 +78,14 @@ public interface ChatSwagger {
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "채팅방 상세 조회 성공"),
-            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다.")
+            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다."),
+            @ApiResponse(responseCode = "CHAT404_1", description = "채팅방을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "CHAT403_2", description = "채팅방 멤버가 아닙니다."),
+            @ApiResponse(responseCode = "CHAT403_3", description = "이미 나간 채팅방입니다.")
     })
     CustomResponse<ChatRoomDetailResponse> getRoomDetail(
             @AuthenticationPrincipal CustomUserDetails user,
-            @PathVariable Long roomId
+            @Parameter(description = "채팅방 ID") @PathVariable Long roomId
     );
 
     @Operation(summary = "채팅 메시지 조회 API By 여채현",
@@ -89,13 +96,16 @@ public interface ChatSwagger {
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "채팅 메시지 조회 성공"),
-            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다.")
+            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다."),
+            @ApiResponse(responseCode = "CHAT404_1", description = "채팅방을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "CHAT403_2", description = "채팅방 멤버가 아닙니다."),
+            @ApiResponse(responseCode = "CHAT403_3", description = "이미 나간 채팅방입니다.")
     })
     CustomResponse<ChatMessageListResponse> getMessages(
             @AuthenticationPrincipal CustomUserDetails user,
-            @PathVariable Long roomId,
-            @RequestParam(name = "cursor", required = false) MessageCursor messageCursor,
-            @RequestParam(defaultValue = "20") int size
+            @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
+            @Parameter(description = "페이지네이션 커서 (messageId 형식)") @RequestParam(name = "cursor", required = false) MessageCursor messageCursor,
+            @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(summary = "첨부 업로드 API By 여채현",
@@ -106,11 +116,13 @@ public interface ChatSwagger {
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "첨부 업로드 성공"),
-            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다.")
+            @ApiResponse(responseCode = "COMMON400_1", description = "잘못된 요청입니다. (요청 데이터 검증 실패)"),
+            @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다."),
+            @ApiResponse(responseCode = "CHAT404_2", description = "첨부 파일을 찾을 수 없습니다.")
     })
     CustomResponse<ChatAttachmentUploadResponse> uploadAttachment(
             @AuthenticationPrincipal CustomUserDetails user,
-            @Valid @RequestPart("request") ChatAttachmentUploadRequest request,
-            @RequestPart("file") MultipartFile file
+            @Parameter(description = "첨부 파일 업로드 요청 정보") @Valid @RequestPart("request") ChatAttachmentUploadRequest request,
+            @Parameter(description = "업로드할 파일") @RequestPart("file") MultipartFile file
     );
 }
