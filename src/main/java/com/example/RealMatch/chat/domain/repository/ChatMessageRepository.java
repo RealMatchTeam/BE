@@ -8,4 +8,8 @@ import com.example.RealMatch.chat.domain.entity.ChatMessage;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     Optional<ChatMessage> findByClientMessageIdAndSenderId(String clientMessageId, Long senderId);
+
+    long countByRoomIdAndIdGreaterThan(Long roomId, Long messageId);
+
+    long countByRoomIdAndIdGreaterThanAndSenderIdNot(Long roomId, Long messageId, Long senderId);
 }
