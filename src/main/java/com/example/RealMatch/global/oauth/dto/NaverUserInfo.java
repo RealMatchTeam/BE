@@ -1,7 +1,8 @@
-// NaverUserInfo.java
-package com.example.RealMatch.global.config.oauth;
+package com.example.RealMatch.global.oauth.dto;
 
 import java.util.Map;
+
+import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 
 public class NaverUserInfo implements OAuth2UserInfo {
     private final Map<String, Object> attributes;
@@ -29,7 +30,7 @@ public class NaverUserInfo implements OAuth2UserInfo {
     }
 
     @Override
-    public String getProvider() {
-        return "naver";
+    public AuthProvider getProvider() {
+        return AuthProvider.NAVER;
     }
 }
