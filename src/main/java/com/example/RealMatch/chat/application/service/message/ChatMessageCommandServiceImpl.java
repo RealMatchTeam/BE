@@ -25,7 +25,10 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class ChatMessageCommandServiceImpl implements ChatMessageCommandService {
 
     private final ChatMessageRepository chatMessageRepository;
@@ -36,26 +39,6 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
     private final SystemMessagePayloadSerializer payloadSerializer;
-
-    public ChatMessageCommandServiceImpl(
-            ChatMessageRepository chatMessageRepository,
-            ChatAttachmentRepository chatAttachmentRepository,
-            ChatRoomMemberRepository chatRoomMemberRepository,
-            ChatRoomRepository chatRoomRepository,
-            ChatRoomCommandService chatRoomCommandService,
-            MessagePreviewGenerator messagePreviewGenerator,
-            ChatMessageResponseMapper responseMapper,
-            SystemMessagePayloadSerializer payloadSerializer
-    ) {
-        this.chatMessageRepository = chatMessageRepository;
-        this.chatAttachmentRepository = chatAttachmentRepository;
-        this.chatRoomMemberRepository = chatRoomMemberRepository;
-        this.chatRoomRepository = chatRoomRepository;
-        this.chatRoomCommandService = chatRoomCommandService;
-        this.messagePreviewGenerator = messagePreviewGenerator;
-        this.responseMapper = responseMapper;
-        this.payloadSerializer = payloadSerializer;
-    }
 
     @Override
     @Transactional

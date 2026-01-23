@@ -11,17 +11,16 @@ import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class WebSocketChatMessageEventPublisher implements ChatMessageEventPublisher {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketChatMessageEventPublisher.class);
     private static final String ROOM_TOPIC_PREFIX = "/topic/rooms/";
 
     private final SimpMessagingTemplate messagingTemplate;
-
-    public WebSocketChatMessageEventPublisher(SimpMessagingTemplate messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
-    }
 
     @Override
     public void publishMessageCreated(Long roomId, ChatMessageResponse message) {

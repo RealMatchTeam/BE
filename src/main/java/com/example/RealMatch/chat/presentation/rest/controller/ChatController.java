@@ -33,26 +33,17 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/chat")
+@RequiredArgsConstructor
 public class ChatController implements ChatSwagger {
 
     private final ChatRoomCommandService chatRoomCommandService;
     private final ChatRoomQueryService chatRoomQueryService;
     private final ChatMessageQueryService chatMessageQueryService;
     private final ChatAttachmentService chatAttachmentService;
-
-    public ChatController(
-            ChatRoomCommandService chatRoomCommandService,
-            ChatRoomQueryService chatRoomQueryService,
-            ChatMessageQueryService chatMessageQueryService,
-            ChatAttachmentService chatAttachmentService
-    ) {
-        this.chatRoomCommandService = chatRoomCommandService;
-        this.chatRoomQueryService = chatRoomQueryService;
-        this.chatMessageQueryService = chatMessageQueryService;
-        this.chatAttachmentService = chatAttachmentService;
-    }
 
     @PostMapping("/rooms")
     public CustomResponse<ChatRoomCreateResponse> createOrGetRoom(

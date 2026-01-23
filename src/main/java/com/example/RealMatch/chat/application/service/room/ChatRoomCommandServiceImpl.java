@@ -22,21 +22,16 @@ import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatRoomCommandServiceImpl.class);
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
-
-    public ChatRoomCommandServiceImpl(
-            ChatRoomRepository chatRoomRepository,
-            ChatRoomMemberRepository chatRoomMemberRepository
-    ) {
-        this.chatRoomRepository = chatRoomRepository;
-        this.chatRoomMemberRepository = chatRoomMemberRepository;
-    }
 
     @Override
     @Transactional
