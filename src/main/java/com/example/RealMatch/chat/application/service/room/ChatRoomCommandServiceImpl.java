@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
@@ -20,7 +19,6 @@ import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
-import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,8 +33,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     @Override
     @Transactional
-    public ChatRoomCreateResponse createOrGetRoom(CustomUserDetails user, ChatRoomCreateRequest request) {
-        Long userId = user.getUserId();
+    public ChatRoomCreateResponse createOrGetRoom(Long userId, ChatRoomCreateRequest request) {
         Long brandId = request.brandId();
         Long creatorId = request.creatorId();
 
@@ -56,10 +53,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
     }
 
     private void validateRequest(Long userId, Long brandId, Long creatorId) {
-        if (brandId == null || creatorId == null) {
-            throw new ChatException(ChatErrorCode.INVALID_ROOM_REQUEST);
-        }
-        if (brandId.equals(creatorId)) {
+        if (brandId == null || creatorId == null || brandId.equals(creatorId)) {
             throw new ChatException(ChatErrorCode.INVALID_ROOM_REQUEST);
         }
         if (!userId.equals(brandId) && !userId.equals(creatorId)) {
@@ -78,7 +72,8 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         try {
             room = chatRoomRepository.saveAndFlush(ChatRoom.createDirectRoom(roomKey));
         } catch (DataIntegrityViolationException e) {
-            return chatRoomRepository.findByRoomKey(roomKey)
+            // 다른 스레드가 이미 채팅방을 생성한 경우, 기존 방을 조회
+            room = chatRoomRepository.findByRoomKey(roomKey)
                     .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR));
         }
 
@@ -88,13 +83,17 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         return room;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void createMemberIfNotExists(Long roomId, Long userId, ChatRoomMemberRole role) {
+        if (chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId).isPresent()) {
+            return;
+        }
+
         try {
             chatRoomMemberRepository.saveAndFlush(
                     ChatRoomMember.create(roomId, userId, role)
             );
         } catch (DataIntegrityViolationException e) {
+            // 동시성 상황에서 다른 스레드가 이미 멤버를 생성한 경우 무시
             LOG.debug("createMemberIfNotExists ignored. roomId={}, userId={}, role={}", roomId, userId, role, e);
         }
     }
