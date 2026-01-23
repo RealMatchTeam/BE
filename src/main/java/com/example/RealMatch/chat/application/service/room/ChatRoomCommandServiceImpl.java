@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
@@ -49,10 +50,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         String roomKey = generateRoomKey(brandId, creatorId);
 
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey)
-                .orElseGet(() -> createRoomOnly(roomKey));
-
-        createMemberIfNotExists(room.getId(), brandId, ChatRoomMemberRole.BRAND);
-        createMemberIfNotExists(room.getId(), creatorId, ChatRoomMemberRole.CREATOR);
+                .orElseGet(() -> createRoomWithMembers(roomKey, brandId, creatorId));
 
         return new ChatRoomCreateResponse(
                 room.getId(),
@@ -80,15 +78,22 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         return String.format("direct:%d:%d", smallerId, largerId);
     }
 
-    private ChatRoom createRoomOnly(String roomKey) {
+    private ChatRoom createRoomWithMembers(String roomKey, Long brandId, Long creatorId) {
+        ChatRoom room;
         try {
-            return chatRoomRepository.saveAndFlush(ChatRoom.createDirectRoom(roomKey));
+            room = chatRoomRepository.saveAndFlush(ChatRoom.createDirectRoom(roomKey));
         } catch (DataIntegrityViolationException e) {
             return chatRoomRepository.findByRoomKey(roomKey)
                     .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR));
         }
+
+        createMemberIfNotExists(room.getId(), brandId, ChatRoomMemberRole.BRAND);
+        createMemberIfNotExists(room.getId(), creatorId, ChatRoomMemberRole.CREATOR);
+
+        return room;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void createMemberIfNotExists(Long roomId, Long userId, ChatRoomMemberRole role) {
         try {
             chatRoomMemberRepository.saveAndFlush(
