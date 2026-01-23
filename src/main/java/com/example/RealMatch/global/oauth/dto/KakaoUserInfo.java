@@ -4,12 +4,11 @@ import java.util.Map;
 
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class KakaoUserInfo implements OAuth2UserInfo {
     private final Map<String, Object> attributes;
-
-    public KakaoUserInfo(Map<String, Object> attributes) {
-        this.attributes = attributes;
-    }
 
     @Override
     public String getProviderId() {
