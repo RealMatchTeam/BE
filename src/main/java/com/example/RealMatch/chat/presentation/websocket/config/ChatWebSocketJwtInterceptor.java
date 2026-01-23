@@ -14,16 +14,15 @@ import org.springframework.stereotype.Component;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.config.jwt.JwtProvider;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class ChatWebSocketJwtInterceptor implements ChannelInterceptor {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtProvider jwtProvider;
-
-    public ChatWebSocketJwtInterceptor(JwtProvider jwtProvider) {
-        this.jwtProvider = jwtProvider;
-    }
 
     @Override
     public Message<?> preSend(@Nullable Message<?> message, @Nullable MessageChannel channel) {

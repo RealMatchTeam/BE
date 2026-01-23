@@ -11,22 +11,17 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.HandshakeHandler;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class ChatWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Value("${cors.allowed-origin}")
     private String allowedOrigin;
     private final ObjectProvider<HandshakeHandler> handshakeHandlerProvider;
     private final ObjectProvider<ChatWebSocketJwtInterceptor> jwtInterceptorProvider;
-
-    public ChatWebSocketConfig(
-            ObjectProvider<HandshakeHandler> handshakeHandlerProvider,
-            ObjectProvider<ChatWebSocketJwtInterceptor> jwtInterceptorProvider
-    ) {
-        this.handshakeHandlerProvider = handshakeHandlerProvider;
-        this.jwtInterceptorProvider = jwtInterceptorProvider;
-    }
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
