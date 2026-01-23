@@ -25,7 +25,7 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 @Service
 public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
-    private static final Logger log = LoggerFactory.getLogger(ChatRoomCommandServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ChatRoomCommandServiceImpl.class);
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
@@ -100,7 +100,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
                     ChatRoomMember.create(roomId, userId, role)
             );
         } catch (DataIntegrityViolationException e) {
-            log.debug("createMemberIfNotExists ignored. roomId={}, userId={}, role={}", roomId, userId, role, e);
+            LOG.debug("createMemberIfNotExists ignored. roomId={}, userId={}, role={}", roomId, userId, role, e);
         }
     }
 
