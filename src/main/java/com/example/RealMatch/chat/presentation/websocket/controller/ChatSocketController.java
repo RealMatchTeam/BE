@@ -18,7 +18,6 @@ import com.example.RealMatch.chat.presentation.resolver.ChatUserIdResolver;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
 import jakarta.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
 
 @Controller
