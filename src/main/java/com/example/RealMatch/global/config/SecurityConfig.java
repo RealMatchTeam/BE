@@ -15,8 +15,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.RealMatch.global.config.jwt.JwtAuthenticationFilter;
-import com.example.RealMatch.global.config.oauth.OAuth2SuccessHandler;
-import com.example.RealMatch.global.config.service.CustomOAuth2UserService;
+import com.example.RealMatch.global.oauth.handler.OAuth2SuccessHandler;
+import com.example.RealMatch.global.oauth.service.CustomOAuth2UserService;
 import com.example.RealMatch.global.presentation.advice.CustomAccessDeniedHandler;
 import com.example.RealMatch.global.presentation.advice.CustomAuthEntryPoint;
 
