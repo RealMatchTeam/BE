@@ -10,14 +10,13 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePay
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class JacksonSystemMessagePayloadSerializer implements SystemMessagePayloadSerializer {
 
     private final ObjectMapper objectMapper;
-
-    public JacksonSystemMessagePayloadSerializer(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     public String serialize(ChatSystemMessagePayload payload) {

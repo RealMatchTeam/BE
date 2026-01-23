@@ -32,9 +32,11 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/chat")
+@RequiredArgsConstructor
 public class ChatController implements ChatSwagger {
 
     private final ChatRoomCommandService chatRoomCommandService;
@@ -42,24 +44,13 @@ public class ChatController implements ChatSwagger {
     private final ChatMessageQueryService chatMessageQueryService;
     private final ChatAttachmentService chatAttachmentService;
 
-    public ChatController(
-            ChatRoomCommandService chatRoomCommandService,
-            ChatRoomQueryService chatRoomQueryService,
-            ChatMessageQueryService chatMessageQueryService,
-            ChatAttachmentService chatAttachmentService
-    ) {
-        this.chatRoomCommandService = chatRoomCommandService;
-        this.chatRoomQueryService = chatRoomQueryService;
-        this.chatMessageQueryService = chatMessageQueryService;
-        this.chatAttachmentService = chatAttachmentService;
-    }
-
     @PostMapping("/rooms")
     public CustomResponse<ChatRoomCreateResponse> createOrGetRoom(
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestBody ChatRoomCreateRequest request
     ) {
-        return CustomResponse.ok(chatRoomCommandService.createOrGetRoom(user, request));
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatRoomCommandService.createOrGetRoom(userId, request));
     }
 
     @GetMapping("/rooms")

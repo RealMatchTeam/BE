@@ -11,22 +11,15 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class ChatMessageSocketServiceImpl implements ChatMessageSocketService {
 
     private final ChatMessageCommandService chatMessageCommandService;
     private final AfterCommitExecutor afterCommitExecutor;
     private final ChatMessageEventPublisher eventPublisher;
-
-    public ChatMessageSocketServiceImpl(
-            ChatMessageCommandService chatMessageCommandService,
-            AfterCommitExecutor afterCommitExecutor,
-            ChatMessageEventPublisher eventPublisher
-    ) {
-        this.chatMessageCommandService = chatMessageCommandService;
-        this.afterCommitExecutor = afterCommitExecutor;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Override
     @Transactional

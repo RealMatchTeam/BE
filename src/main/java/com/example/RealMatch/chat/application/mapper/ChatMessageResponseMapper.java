@@ -15,17 +15,16 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessageResponse;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class ChatMessageResponseMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatMessageResponseMapper.class);
     private static final int SYSTEM_MESSAGE_SCHEMA_VERSION = 1;
 
     private final SystemMessagePayloadSerializer payloadSerializer;
-
-    public ChatMessageResponseMapper(SystemMessagePayloadSerializer payloadSerializer) {
-        this.payloadSerializer = payloadSerializer;
-    }
 
     public ChatMessageResponse toResponse(ChatMessage message, ChatAttachment attachment) {
         if (message == null) {

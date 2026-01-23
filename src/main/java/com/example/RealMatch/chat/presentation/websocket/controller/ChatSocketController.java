@@ -18,22 +18,16 @@ import com.example.RealMatch.chat.presentation.resolver.ChatUserIdResolver;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @Controller
+@RequiredArgsConstructor
 public class ChatSocketController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatSocketController.class);
 
     private final ChatMessageSocketService chatMessageSocketService;
     private final ChatUserIdResolver chatUserIdResolver;
-
-    public ChatSocketController(
-            ChatMessageSocketService chatMessageSocketService,
-            ChatUserIdResolver chatUserIdResolver
-    ) {
-        this.chatMessageSocketService = chatMessageSocketService;
-        this.chatUserIdResolver = chatUserIdResolver;
-    }
 
     @MessageMapping("/chat.send")
     @SendToUser("/queue/chat.ack")
