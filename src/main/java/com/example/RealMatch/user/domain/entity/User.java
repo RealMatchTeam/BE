@@ -43,7 +43,7 @@ public class User extends BaseEntity {
     private String nickname;
 
     @Column(nullable = false, length = 255)
-    private String email;
+    private String email; // 최초 가입한 계정의 이메일
 
     @Column(length = 500)
     private String address;
@@ -55,8 +55,11 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
     @Column(name = "deleted_at")
-    private LocalDate deletedAt;
+    private LocalDateTime deletedAt;
 
     @Column(name = "deleted_by")
     private Long deletedBy;
@@ -69,8 +72,8 @@ public class User extends BaseEntity {
 
     @Builder
     public User(String name, Gender gender, LocalDate birth, String nickname,
-                      String email, String address, String detailAddress, Role role,
-                      String profileImageUrl) {
+                String email, String address, String detailAddress, Role role,
+                String profileImageUrl) {
         this.name = name;
         this.gender = gender;
         this.birth = birth;
@@ -95,7 +98,9 @@ public class User extends BaseEntity {
     }
 
     public void softDelete(Long deletedBy) {
-        this.deletedAt = LocalDate.now();
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
     }
 }
+
