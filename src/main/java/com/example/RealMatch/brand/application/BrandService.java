@@ -1,5 +1,6 @@
 package com.example.RealMatch.brand.application;
 
+import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailViewResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeViewResponseDto;
@@ -20,6 +21,11 @@ public class BrandService {
 
     public BrandFilterResponseDto getBrandFilters(String domain) {
         // TODO: Implement logic to get brand filters based on domain
+        return null;
+    }
+
+    public List<BeautyFilterResponseDto> getBeautyFilters() {
+        // TODO: Implement logic to get beauty filters
         return null;
     }
 
