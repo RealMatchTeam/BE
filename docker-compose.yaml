@@ -17,7 +17,6 @@ services:
     command:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
-
   redis:
     image: redis:alpine
     container_name: redis_cache
@@ -33,6 +32,7 @@ services:
     depends_on:
       - db
       - redis
+      - rabbitmq
     env_file:
       - .env
     environment:
@@ -43,3 +43,20 @@ services:
         SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
         SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
         SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+        SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+        SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-server
+    restart: always
+    ports:
+      - "5672:5672"     # for mq
+      - "15672:15672"   # for webpage
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq
