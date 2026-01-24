@@ -17,9 +17,11 @@ import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
+import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepositoryCustom.RoomCursorInfo;
+import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse;
@@ -89,28 +91,9 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
         Map<Long, OpponentInfo> opponentInfoMap = getOpponentInfoMapBatch(rooms, userId, roomIds);
 
-        List<ChatRoomCardResponse> roomCards = new ArrayList<>();
-        for (ChatRoom room : rooms) {
-            ChatRoomMember member = myMemberMap.get(room.getId());
-            if (member == null) {
-                continue;
-            }
-            OpponentInfo opponent = opponentInfoMap.get(room.getId());
-            ChatRoomTab tabCategory = calculateTabCategory(room, member);
-
-            roomCards.add(new ChatRoomCardResponse(
-                    room.getId(),
-                    opponent.userId(),
-                    opponent.name(),
-                    opponent.profileImageUrl(),
-                    room.getProposalStatus(),
-                    room.getLastMessagePreview(),
-                    room.getLastMessageType(),
-                    room.getLastMessageAt(),
-                    unreadCountMap.getOrDefault(room.getId(), 0L).intValue(),
-                    tabCategory
-            ));
-        }
+        List<ChatRoomCardResponse> roomCards = assembleRoomCards(
+                rooms, myMemberMap, unreadCountMap, opponentInfoMap
+        );
 
         long sentTabUnreadCount = chatRoomRepository.countUnreadMessagesByUserAndTab(userId, ChatRoomTab.SENT);
         long receivedTabUnreadCount = chatRoomRepository.countUnreadMessagesByUserAndTab(userId, ChatRoomTab.RECEIVED);
@@ -129,17 +112,17 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     @Override
     public ChatRoomDetailResponse getRoomDetail(CustomUserDetails user, Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+                .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
 
         Long userId = user.getUserId();
         chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("User is not a member of room: " + roomId));
+                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
 
         List<ChatRoomMember> allMembers = chatRoomMemberRepository.findByRoomId(roomId);
         ChatRoomMember opponentMember = allMembers.stream()
                 .filter(m -> !m.getUserId().equals(userId) && !m.isDeleted())
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Opponent member not found"));
+                .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR, "Opponent member not found"));
 
         OpponentInfo opponent = getOpponentInfo(opponentMember.getUserId());
 
@@ -237,6 +220,37 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         }
 
         return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
+    }
+
+    private List<ChatRoomCardResponse> assembleRoomCards(
+            List<ChatRoom> rooms,
+            Map<Long, ChatRoomMember> myMemberMap,
+            Map<Long, Long> unreadCountMap,
+            Map<Long, OpponentInfo> opponentInfoMap
+    ) {
+        List<ChatRoomCardResponse> roomCards = new ArrayList<>();
+        for (ChatRoom room : rooms) {
+            ChatRoomMember member = myMemberMap.get(room.getId());
+            if (member == null) {
+                continue;
+            }
+            OpponentInfo opponent = opponentInfoMap.get(room.getId());
+            ChatRoomTab tabCategory = calculateTabCategory(room, member);
+
+            roomCards.add(new ChatRoomCardResponse(
+                    room.getId(),
+                    opponent.userId(),
+                    opponent.name(),
+                    opponent.profileImageUrl(),
+                    room.getProposalStatus(),
+                    room.getLastMessagePreview(),
+                    room.getLastMessageType(),
+                    room.getLastMessageAt(),
+                    unreadCountMap.getOrDefault(room.getId(), 0L),
+                    tabCategory
+            ));
+        }
+        return roomCards;
     }
 
     private ChatRoomTab calculateTabCategory(ChatRoom room, ChatRoomMember member) {

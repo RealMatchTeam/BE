@@ -15,7 +15,7 @@ public record ChatRoomCardResponse(
         String lastMessagePreview,
         ChatMessageType lastMessageType,
         LocalDateTime lastMessageAt,
-        int unreadCount,
+        long unreadCount,
         ChatRoomTab tabCategory
 ) {
 }
