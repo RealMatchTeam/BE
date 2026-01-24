@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BrandLikeViewResponseDto {
 
-    @JsonProperty("BrandIsLiked")
-    private Boolean brandIsLiked;
+    @JsonProperty("brandIsLiked")
+    private Boolean isLiked;
 }
