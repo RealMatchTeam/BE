@@ -25,7 +25,7 @@ public class BrandService {
         return null;
     }
 
-    public List<BeautyFilterResponseDto> getBeautyFilters() {
+    public BeautyFilterResponseDto getBeautyFilters() {
         // TODO: Implement logic to get beauty filters
         return null;
     }

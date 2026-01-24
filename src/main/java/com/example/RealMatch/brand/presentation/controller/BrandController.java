@@ -84,7 +84,7 @@ public class BrandController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "뷰티 필터 옵션 조회 성공")
     })
     @GetMapping("/filters/beauty")
-    public CustomResponse<List<BeautyFilterResponseDto>> getBeautyFilters() {
+    public CustomResponse<BeautyFilterResponseDto> getBeautyFilters() {
         return CustomResponse.ok(brandService.getBeautyFilters());
     }
 
