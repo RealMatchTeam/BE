@@ -21,52 +21,42 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<CustomResponse<?>> handleIllegalArgument(IllegalArgumentException e) {
-
         log.warn("[IllegalArgumentException] {}", e.getMessage());
-
         return ResponseEntity
                 .status(GeneralErrorCode.BAD_REQUEST.getStatus())
-                .body(CustomResponse.onFailure(GeneralErrorCode.BAD_REQUEST, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.BAD_REQUEST, e.getMessage()));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<CustomResponse<?>> handleConstraintViolation(ConstraintViolationException e) {
-
         log.warn("[ConstraintViolationException] {}", e.getMessage());
-
         return ResponseEntity
                 .status(GeneralErrorCode.INVALID_PAGE.getStatus())
-                .body(CustomResponse.onFailure(GeneralErrorCode.INVALID_PAGE, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.INVALID_PAGE, e.getMessage()));
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<CustomResponse<?>> handleHandlerMethodValidation(HandlerMethodValidationException e) {
-
         log.warn("[HandlerMethodValidationException] {}", e.getMessage());
-
         return ResponseEntity
                 .status(GeneralErrorCode.INVALID_PAGE.getStatus())
-                .body(CustomResponse.onFailure(GeneralErrorCode.INVALID_PAGE, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.INVALID_PAGE, e.getMessage()));
     }
 
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<CustomResponse<?>> handleSecurityException(SecurityException e) {
-
         log.warn("[SecurityException] {}", e.getMessage());
-
         return ResponseEntity
                 .status(GeneralErrorCode.UNAUTHORIZED.getStatus())
-                .body(CustomResponse.onFailure(GeneralErrorCode.UNAUTHORIZED, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.UNAUTHORIZED, e.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<CustomResponse<?>> handleResourceNotFound(ResourceNotFoundException e) {
-
         log.warn("[ResourceNotFoundException] {}", e.getMessage());
-
         return ResponseEntity
                 .status(GeneralErrorCode.NOT_FOUND.getStatus())
-                .body(CustomResponse.onFailure(GeneralErrorCode.NOT_FOUND, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.NOT_FOUND, e.getMessage()));
     }
 
     @ExceptionHandler(ChatException.class)
@@ -74,7 +64,7 @@ public class GlobalExceptionHandler {
         log.warn("[ChatException] code={}, message={}", e.getErrorCode().getCode(), e.getMessage());
         return ResponseEntity
                 .status(e.getErrorCode().getStatus())
-                .body(CustomResponse.onFailure(e.getErrorCode(), null));
+                .body(CustomResponse.onFailure(e.getErrorCode(), e.getMessage()));
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -82,17 +72,15 @@ public class GlobalExceptionHandler {
         log.error("[IllegalStateException] {}", e.getMessage(), e);
         return ResponseEntity
                 .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<CustomResponse<?>> handleUnexpectedException(Exception e) {
-
         log.error("[UnexpectedException]", e);
-
         return ResponseEntity
                 .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, null));
+                .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
     }
 
     @ExceptionHandler(AuthException.class)
@@ -101,12 +89,11 @@ public class GlobalExceptionHandler {
                 e.getErrorCode().getCode(),
                 e.getErrorCode().getMessage()
         );
-        // result 필드가 null이면 일부 프론트에서 처리 문제 가능 -> 빈 객체로 반환
         return ResponseEntity
                 .status(e.getErrorCode().getStatus())
                 .body(CustomResponse.onFailure(
                         e.getErrorCode(),
-                        Collections.emptyMap() // null 대신 빈 맵
+                        e.getMessage()
                 ));
     }
 }

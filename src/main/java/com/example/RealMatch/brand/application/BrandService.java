@@ -2,7 +2,7 @@ package com.example.RealMatch.brand.application;
 
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailViewResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandLikeViewResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,8 +28,8 @@ public class BrandService {
         return null;
     }
 
-    public BrandLikeResponseDto toggleBrandLike(Long brandId) {
-        // TODO: Implement brand like toggle logic
+    public List<BrandLikeViewResponseDto> toggleBrandLike(Long brandId) {
+        // TODO: Implement brand like toggle logic and return a List
         return null;
     }
 }

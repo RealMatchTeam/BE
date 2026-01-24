@@ -3,7 +3,7 @@ package com.example.RealMatch.brand.presentation.controller;
 import com.example.RealMatch.brand.application.BrandService;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailViewResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandLikeViewResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +34,7 @@ public class BrandController {
             "동적인 상세 필터는 `subCategories`, `skinTypes` 등의 파라미터를 직접 사용하여 전달합니다. (예: `...&skinTypes=DRY,OILY&functions=SOOTHING`)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브랜드 목록 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "BAD_REQUEST: 잘못된 도메인 요청", content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "BAD_REQUEST: 잘못된 도메인 요청", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"BAD_REQUEST\", \"message\":\"잘못된 요청입니다\", \"result\":\"유효하지 않은 도메인입니다.\"}")))
     })
     @Parameters({
             @Parameter(name = "domain", description = "도메인 구분 (BEAUTY 또는 FASHION)", required = true, in = ParameterIn.QUERY, example = "BEAUTY"),
@@ -63,7 +63,7 @@ public class BrandController {
     @Operation(summary = "필터 옵션 메타데이터 조회", description = "정렬 및 상세 필터에 사용될 선택지 목록을 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "필터 옵션 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "BAD_REQUEST: 잘못된 도메인 요청", content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "BAD_REQUEST: 잘못된 도메인 요청", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"BAD_REQUEST\", \"message\":\"잘못된 요청입니다\", \"result\":\"유효하지 않은 도메인입니다.\"}")))
     })
     @GetMapping("/filters")
     public CustomResponse<BrandFilterResponseDto> getBrandFilters(
@@ -74,7 +74,7 @@ public class BrandController {
     @Operation(summary = "브랜드 상세 정보 조회", description = "특정 브랜드의 상세 정보, 캠페인, 협찬 제품 등을 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브랜드 상세 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "NOT_FOUND: 해당 브랜드를 찾을 수 없음", content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "NOT_FOUND: 해당 브랜드를 찾을 수 없음", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"NOT_FOUND\", \"message\":\"리소스를 찾을 수 없습니다.\", \"result\":\"해당 브랜드를 찾을 수 없습니다.\"}")))
     })
     @GetMapping("/{brandId}")
     public CustomResponse<BrandDetailViewResponseDto> getBrandDetail(
@@ -85,10 +85,10 @@ public class BrandController {
     @Operation(summary = "브랜드 좋아요 토글", description = "특정 브랜드의 좋아요 상태를 변경(토글)합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브랜드 좋아요 토글 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "NOT_FOUND: 해당 브랜드를 찾을 수 없음", content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "NOT_FOUND: 해당 브랜드를 찾을 수 없음", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"NOT_FOUND\", \"message\":\"리소스를 찾을 수 없습니다.\", \"result\":\"해당 브랜드를 찾을 수 없습니다.\"}")))
     })
     @PostMapping("/{brandId}/like")
-    public CustomResponse<BrandLikeResponseDto> toggleBrandLike(
+    public CustomResponse<List<BrandLikeViewResponseDto>> toggleBrandLike(
             @Parameter(description = "좋아요를 토글할 브랜드의 ID", required = true, example = "1") @PathVariable Long brandId) {
         return CustomResponse.ok(brandService.toggleBrandLike(brandId));
     }
