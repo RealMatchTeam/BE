@@ -15,6 +15,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,7 +23,12 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "chat_room")
+@Table(
+        name = "chat_room",
+        indexes = {
+                @Index(name = "idx_room_deleted_lastmsg_proposal", columnList = "is_deleted, last_message_at, last_proposal_direction")
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoom extends DeleteBaseEntity {
 

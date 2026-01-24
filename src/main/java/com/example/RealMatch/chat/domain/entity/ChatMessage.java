@@ -11,6 +11,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -21,6 +22,9 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "chat_message",
+        indexes = {
+                @Index(name = "idx_message_room_sender_id", columnList = "room_id, sender_id, id")
+        },
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_chat_message_sender_client",

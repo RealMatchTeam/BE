@@ -17,8 +17,6 @@ import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +30,6 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
     private static final QChatRoom ROOM = QChatRoom.chatRoom;
     private static final QChatRoomMember MEMBER = QChatRoomMember.chatRoomMember;
     private static final QChatMessage MESSAGE = QChatMessage.chatMessage;
-    private static final String UNCLASSIFIED_TAB = "UNCLASSIFIED";
 
     @Override
     public List<ChatRoom> findRoomsByUser(
@@ -92,48 +89,12 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
 
     @Override
     public Map<ChatRoomTab, Long> countUnreadMessagesByTabs(Long userId) {
-        QChatRoomMember memberForCount = new QChatRoomMember("memberForCount");
-        QChatRoom roomForCount = new QChatRoom("roomForCount");
-
-        // SENT/RECEIVED 외 미분류 메시지는 UNCLASSIFIED로 그룹핑(집계 결과에 미사용)
-        // 이론적으로는 모든 방이 BRAND_TO_CREATOR 또는 CREATOR_TO_BRAND이므로 미분류는 발생하지 않아야 함...
-        StringExpression tabExpression = Expressions
-                .cases()
-                .when(sentCondition(roomForCount, memberForCount)).then(ChatRoomTab.SENT.name())
-                .when(receivedCondition(roomForCount, memberForCount)).then(ChatRoomTab.RECEIVED.name())
-                .otherwise(UNCLASSIFIED_TAB)
-                .as("tab");
-
-        List<Tuple> results = queryFactory
-                .select(tabExpression, MESSAGE.count())
-                .from(MESSAGE)
-                .innerJoin(memberForCount).on(
-                        MESSAGE.roomId.eq(memberForCount.roomId)
-                                .and(memberForCount.userId.eq(userId))
-                                .and(memberForCount.isDeleted.isFalse())
-                )
-                .innerJoin(roomForCount).on(
-                        MESSAGE.roomId.eq(roomForCount.id)
-                                .and(roomForCount.isDeleted.isFalse())
-                                .and(roomForCount.lastMessageAt.isNotNull())
-                )
-                .where(
-                        MESSAGE.senderId.isNotNull(),
-                        MESSAGE.senderId.ne(userId),
-                        isUnreadMessage(MESSAGE.id, memberForCount.lastReadMessageId)
-                )
-                .groupBy(tabExpression)
-                .fetch();
-
-        Map<String, Long> resultMap = results.stream()
-                .collect(Collectors.toMap(
-                        tuple -> tuple.get(tabExpression),
-                        tuple -> tuple.get(MESSAGE.count())
-                ));
+        long sentCount = countUnreadMessagesByUserAndTab(userId, ChatRoomTab.SENT);
+        long receivedCount = countUnreadMessagesByUserAndTab(userId, ChatRoomTab.RECEIVED);
 
         return Map.of(
-                ChatRoomTab.SENT, resultMap.getOrDefault(ChatRoomTab.SENT.name(), 0L),
-                ChatRoomTab.RECEIVED, resultMap.getOrDefault(ChatRoomTab.RECEIVED.name(), 0L)
+                ChatRoomTab.SENT, sentCount,
+                ChatRoomTab.RECEIVED, receivedCount
         );
     }
 
@@ -160,8 +121,7 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                         MESSAGE.roomId.in(roomIds),
                         MESSAGE.senderId.isNotNull(),
                         MESSAGE.senderId.ne(userId),
-                        m.lastReadMessageId.isNull()
-                                .or(MESSAGE.id.gt(m.lastReadMessageId))
+                        isUnreadMessage(MESSAGE.id, m.lastReadMessageId)
                 )
                 .groupBy(MESSAGE.roomId)
                 .fetch();
