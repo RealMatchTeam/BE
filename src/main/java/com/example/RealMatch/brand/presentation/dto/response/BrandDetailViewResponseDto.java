@@ -1,5 +1,6 @@
 package com.example.RealMatch.brand.presentation.dto.response;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -75,7 +76,7 @@ public class BrandDetailViewResponseDto {
     public static class CampaignHistoryDto {
         private Long campaignId;
         private String title;
-        private String startDate;
-        private String endDate;
+        private LocalDate startDate;
+        private LocalDate endDate;
     }
 }
