@@ -1,8 +1,8 @@
 cors:
-  allowed-origin: http://localhost:3000
+  allowed-origin: http://${SERVER_IP}
 
 swagger:
-  server-url: http://localhost:8080
+  server-url: ${SWAGGER_SERVER_URL}
 
 server:
   timezone: Asia/Seoul
@@ -10,12 +10,14 @@ server:
 spring:
   application:
     name: Realmatch
+  activate:
+    on-profile: prod
 
   datasource:
-    url: jdbc:mysql://localhost:3306/test_db
-    username: test_user
-    password: test
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DATASOURCE_URL}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: ${DATASOURCE_DRIVER_CLASS_NAME}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -25,7 +27,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${JPA_DDL_OPTION}
     properties:
       hibernate:
         dialect: ${JPA_HIBERNATE_DIALECT}
@@ -84,18 +86,23 @@ spring:
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
   rabbitmq:
     host: ${RABBITMQ_URL}
     port: ${RABBITMQ_MQ_PORT}
     username: ${RABBITMQ_USERNAME}
     password: ${RABBITMQ_PASSWORD}
 
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+logging:
+  level:
+    org.hibernate.SQL: warn
 
 jwt:
   secret: ${JWT_SECRET}
   access-expire-ms: ${JWT_ACCESS_EXPIRE_MS}
   refresh-expire-ms: ${JWT_REFRESH_EXPIRE_MS}
+
