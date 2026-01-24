@@ -95,8 +95,9 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 rooms, myMemberMap, unreadCountMap, opponentInfoMap
         );
 
-        long sentTabUnreadCount = chatRoomRepository.countUnreadMessagesByUserAndTab(userId, ChatRoomTab.SENT);
-        long receivedTabUnreadCount = chatRoomRepository.countUnreadMessagesByUserAndTab(userId, ChatRoomTab.RECEIVED);
+        Map<ChatRoomTab, Long> unreadCountByTab = chatRoomRepository.countUnreadMessagesByTabs(userId);
+        long sentTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.SENT, 0L);
+        long receivedTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.RECEIVED, 0L);
         long totalUnreadCount = sentTabUnreadCount + receivedTabUnreadCount;
 
         return new ChatRoomListResponse(
@@ -151,7 +152,11 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 .collect(Collectors.toMap(
                         ChatRoomMember::getRoomId,
                         ChatRoomMember::getUserId,
-                        (existing, replacement) -> existing
+                        (existing, replacement) -> {
+                            throw new IllegalStateException(
+                                    "Multiple opponent members found for roomId: " + existing
+                            );
+                        }
                 ));
 
         Set<Long> opponentUserIds = new HashSet<>(roomToOpponentUserIdMap.values());

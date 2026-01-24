@@ -19,6 +19,8 @@ public interface ChatRoomRepositoryCustom {
 
     long countUnreadMessagesByUserAndTab(Long userId, ChatRoomTab tab);
 
+    Map<ChatRoomTab, Long> countUnreadMessagesByTabs(Long userId);
+
     Map<Long, Long> countUnreadMessagesByRoomIds(List<Long> roomIds, Long userId);
 
     record RoomCursorInfo(LocalDateTime lastMessageAt, Long roomId) {

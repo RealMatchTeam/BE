@@ -17,6 +17,8 @@ import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -52,7 +54,7 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                         applyCursor(cursorInfo, ROOM)
                 )
                 .orderBy(
-                        ROOM.lastMessageAt.desc().nullsLast(),
+                        ROOM.lastMessageAt.desc(),
                         ROOM.id.desc()
                 )
                 .limit(size + 1)
@@ -85,6 +87,51 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                 )
                 .fetchOne();
         return count != null ? count : 0L;
+    }
+
+    @Override
+    public Map<ChatRoomTab, Long> countUnreadMessagesByTabs(Long userId) {
+        QChatRoomMember memberForCount = new QChatRoomMember("memberForCount");
+        QChatRoom roomForCount = new QChatRoom("roomForCount");
+
+        StringExpression tabExpression = Expressions
+                .cases()
+                .when(sentCondition(roomForCount, memberForCount)).then(ChatRoomTab.SENT.name())
+                .when(receivedCondition(roomForCount, memberForCount)).then(ChatRoomTab.RECEIVED.name())
+                .otherwise(ChatRoomTab.ALL.name())
+                .as("tab");
+
+        List<Tuple> results = queryFactory
+                .select(tabExpression, MESSAGE.count())
+                .from(MESSAGE)
+                .innerJoin(memberForCount).on(
+                        MESSAGE.roomId.eq(memberForCount.roomId)
+                                .and(memberForCount.userId.eq(userId))
+                                .and(memberForCount.isDeleted.isFalse())
+                )
+                .innerJoin(roomForCount).on(
+                        MESSAGE.roomId.eq(roomForCount.id)
+                                .and(roomForCount.isDeleted.isFalse())
+                                .and(roomForCount.lastMessageAt.isNotNull())
+                )
+                .where(
+                        MESSAGE.senderId.isNotNull(),
+                        MESSAGE.senderId.ne(userId),
+                        isUnreadMessage(MESSAGE.id, memberForCount.lastReadMessageId)
+                )
+                .groupBy(tabExpression)
+                .fetch();
+
+        Map<String, Long> resultMap = results.stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(tabExpression),
+                        tuple -> tuple.get(MESSAGE.count())
+                ));
+
+        return Map.of(
+                ChatRoomTab.SENT, resultMap.getOrDefault(ChatRoomTab.SENT.name(), 0L),
+                ChatRoomTab.RECEIVED, resultMap.getOrDefault(ChatRoomTab.RECEIVED.name(), 0L)
+        );
     }
 
     @Override
@@ -160,7 +207,7 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
         if (filterStatus == null || filterStatus == ChatRoomFilterStatus.ALL) {
             return null;
         }
-        ChatProposalStatus status = ChatProposalStatus.valueOf(filterStatus.name());
+        ChatProposalStatus status = filterStatus.toProposalStatus();
         return r.proposalStatus.eq(status);
     }
 
