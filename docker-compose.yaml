@@ -51,7 +51,7 @@ services:
       - "5672:5672"     # for mq
       - "15672:15672"   # for webpage
     environment:
-      - RABBITMQ_DEFAULT_USER= ${RABBITMQ_USERNAME}
-      - RABBITMQ_DEFAULT_PASS= ${RABBITMQ_PASSWORD}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     volumes:
       - ./rabbitmq_data:/var/lib/rabbitmq
