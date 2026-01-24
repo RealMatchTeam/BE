@@ -48,8 +48,8 @@ public class BrandDetailViewResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OnGoingCampaignDto {
-        private Long id;
-        private String name;
+        private Long campaignId;
+        private String campaignName;
         private Integer recruitingTotalNumber;
         private Integer recruitedNumber;
         private String description;
@@ -61,8 +61,8 @@ public class BrandDetailViewResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AvailableSponsorProdDto {
-        private Long id;
-        private String name;
+        private Long productId;
+        private String productName;
         private String type;
         private Integer quantity;
         private Integer size;
@@ -73,7 +73,7 @@ public class BrandDetailViewResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CampaignHistoryDto {
-        private Long id;
+        private Long campaignId;
         private String title;
         private String startDate;
         private String endDate;
