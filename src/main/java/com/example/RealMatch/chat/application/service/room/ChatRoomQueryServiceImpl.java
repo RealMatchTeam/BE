@@ -39,6 +39,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
+    private static final String UNKNOWN_OPPONENT_NAME = "알 수 없음";
+
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final UserRepository userRepository;
@@ -164,7 +166,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
             return rooms.stream()
                     .collect(Collectors.toMap(
                             ChatRoom::getId,
-                            room -> new OpponentInfo(null, "알 수 없음", null)
+                            room -> new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null)
                     ));
         }
 
@@ -188,11 +190,11 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                         room -> {
                             Long opponentUserId = roomToOpponentUserIdMap.get(room.getId());
                             if (opponentUserId == null) {
-                                return new OpponentInfo(null, "알 수 없음", null);
+                                return new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null);
                             }
                             User user = userMap.get(opponentUserId);
                             if (user == null) {
-                                return new OpponentInfo(opponentUserId, "알 수 없음", null);
+                                return new OpponentInfo(opponentUserId, UNKNOWN_OPPONENT_NAME, null);
                             }
 
                             if (user.getRole() == Role.BRAND) {
@@ -209,12 +211,12 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     private OpponentInfo getOpponentInfo(Long opponentUserId) {
         if (opponentUserId == null) {
-            return new OpponentInfo(null, "알 수 없음", null);
+            return new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null);
         }
 
         User user = userRepository.findById(opponentUserId).orElse(null);
         if (user == null) {
-            return new OpponentInfo(opponentUserId, "알 수 없음", null);
+            return new OpponentInfo(opponentUserId, UNKNOWN_OPPONENT_NAME, null);
         }
 
         if (user.getRole() == Role.BRAND) {
