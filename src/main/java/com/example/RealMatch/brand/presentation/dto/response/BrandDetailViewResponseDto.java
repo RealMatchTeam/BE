@@ -13,25 +13,25 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BrandDetailViewResponseDto {
 
-    private String brandName;
-    private List<String> brandTag;
-    private String brandDescription;
-    private Integer brandMatchingRatio;
-    private Boolean brandIsLiked;
-    private List<String> brandCategory;
-    private BrandSkinCareTagDto brandSkinCareTag;
-    private BrandMakeUpTagDto brandMakeUpTag;
-    private List<OnGoingCampaignDto> brandOnGoingCampaign;
-    private List<AvailableSponsorProdDto> availableSponsorProd;
-    private List<CampaignHistoryDto> campaignHistory;
+    private String name;
+    private List<String> tags;
+    private String description;
+    private Integer matchRate;
+    private Boolean isLiked;
+    private List<String> categories;
+    private BrandSkinCareTagDto skinCareTags;
+    private BrandMakeUpTagDto makeUpTags;
+    private List<OnGoingCampaignDto> onGoingCampaigns;
+    private List<AvailableSponsorProdDto> availableSponsorProducts;
+    private List<CampaignHistoryDto> campaignHistories;
 
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BrandSkinCareTagDto {
-        private List<String> brandSkinType;
-        private List<String> brandMainFunction;
+        private List<String> skinTypes;
+        private List<String> mainFunctions;
     }
 
     @Getter
@@ -39,8 +39,8 @@ public class BrandDetailViewResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BrandMakeUpTagDto {
-        private List<String> brandSkinType;
-        private List<String> brandMakeUpStyle;
+        private List<String> skinTypes;
+        private List<String> makeUpStyles;
     }
 
     @Getter
@@ -48,12 +48,12 @@ public class BrandDetailViewResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OnGoingCampaignDto {
-        private Long brandId;
-        private String brandName;
+        private Long id;
+        private String name;
         private Integer recruitingTotalNumber;
         private Integer recruitedNumber;
-        private String campaignDescription;
-        private String campaignManuscriptFee;
+        private String description;
+        private String manuscriptFee;
     }
 
     @Getter
@@ -61,11 +61,11 @@ public class BrandDetailViewResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AvailableSponsorProdDto {
-        private Long productId;
-        private String productName;
-        private String availableType;
-        private Integer availableQuantity;
-        private Integer availableSize;
+        private Long id;
+        private String name;
+        private String type;
+        private Integer quantity;
+        private Integer size;
     }
 
     @Getter
@@ -73,8 +73,8 @@ public class BrandDetailViewResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CampaignHistoryDto {
-        private Long campaignId;
-        private String campaignTitle;
+        private Long id;
+        private String title;
         private String startDate;
         private String endDate;
     }
