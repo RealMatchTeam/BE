@@ -32,6 +32,7 @@ services:
     depends_on:
       - db
       - redis
+      - rabbitmq
     env_file:
       - .env
     environment:
@@ -42,6 +43,10 @@ services:
         SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
         SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
         SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+        SPRING_RABBITMQ_HOST: rabbitmq
+        SPRING_RABBITMQ_PORT: 5672
+        SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+        SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
 
   rabbitmq:
     image: rabbitmq:3-management
