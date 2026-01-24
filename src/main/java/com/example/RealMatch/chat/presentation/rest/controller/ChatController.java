@@ -62,7 +62,8 @@ public class ChatController implements ChatSwagger {
             @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return CustomResponse.ok(chatRoomQueryService.getRoomList(user, tab, filterStatus, roomCursor, size));
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatRoomQueryService.getRoomList(userId, tab, filterStatus, roomCursor, size));
     }
 
     @GetMapping("/rooms/{roomId}")
@@ -70,7 +71,8 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long roomId
     ) {
-        return CustomResponse.ok(chatRoomQueryService.getRoomDetail(user, roomId));
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatRoomQueryService.getRoomDetail(userId, roomId));
     }
 
     @GetMapping("/rooms/{roomId}/messages")

@@ -29,7 +29,6 @@ import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
-import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.UserRepository;
@@ -51,13 +50,12 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     @Override
     public ChatRoomListResponse getRoomList(
-            CustomUserDetails user,
+            Long userId,
             ChatRoomTab tab,
             ChatRoomFilterStatus filterStatus,
             RoomCursor roomCursor,
             int size
     ) {
-        Long userId = user.getUserId();
         RoomCursorInfo cursorInfo = roomCursor != null
                 ? new RoomCursorInfo(roomCursor.lastMessageAt(), roomCursor.roomId())
                 : null;
@@ -123,11 +121,9 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     }
 
     @Override
-    public ChatRoomDetailResponse getRoomDetail(CustomUserDetails user, Long roomId) {
+    public ChatRoomDetailResponse getRoomDetail(Long userId, Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
-
-        Long userId = user.getUserId();
         chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
 

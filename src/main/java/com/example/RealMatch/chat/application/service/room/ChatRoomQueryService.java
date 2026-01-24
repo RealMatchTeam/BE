@@ -5,16 +5,15 @@ import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
-import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
 public interface ChatRoomQueryService {
     ChatRoomListResponse getRoomList(
-            CustomUserDetails user,
+            Long userId,
             ChatRoomTab tab,
             ChatRoomFilterStatus filterStatus,
             RoomCursor roomCursor,
             int size
     );
 
-    ChatRoomDetailResponse getRoomDetail(CustomUserDetails user, Long roomId);
+    ChatRoomDetailResponse getRoomDetail(Long userId, Long roomId);
 }
