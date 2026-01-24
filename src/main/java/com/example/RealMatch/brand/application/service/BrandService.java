@@ -40,8 +40,8 @@ public class BrandService {
         return null;
     }
 
-    public List<BrandLikeViewResponseDto> toggleBrandLike(Long brandId) {
-        // TODO: Implement brand like toggle logic and return a List
+    public BrandLikeViewResponseDto toggleBrandLike(Long brandId) {
+        // TODO: Implement brand like toggle logic and return a BrandLikeViewResponseDto
         return null;
     }
 }

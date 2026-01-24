@@ -121,7 +121,7 @@ public class BrandController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "NOT_FOUND: 해당 브랜드를 찾을 수 없음", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"NOT_FOUND\", \"message\":\"리소스를 찾을 수 없습니다.\", \"result\":\"해당 브랜드를 찾을 수 없습니다.\"}")))
     })
     @PostMapping("/{brandId}/like")
-    public CustomResponse<List<BrandLikeViewResponseDto>> toggleBrandLike(
+    public CustomResponse<BrandLikeViewResponseDto> toggleBrandLike(
             @Parameter(description = "좋아요를 토글할 브랜드의 ID", required = true, example = "1") @PathVariable Long brandId) {
         return CustomResponse.ok(brandService.toggleBrandLike(brandId));
     }
