@@ -68,8 +68,8 @@ public class ChatRoom extends DeleteBaseEntity {
         this.lastProposalDirection = lastProposalDirection;
     }
 
-    public static ChatRoom createDirectRoom(String roomKey) {
-        return new ChatRoom(roomKey, ChatRoomType.DIRECT, ChatProposalDirection.NONE);
+    public static ChatRoom createDirectRoom(String roomKey, ChatProposalDirection lastProposalDirection) {
+        return new ChatRoom(roomKey, ChatRoomType.DIRECT, lastProposalDirection);
     }
 
     public void updateLastMessage(

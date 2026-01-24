@@ -32,6 +32,7 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
     private static final QChatRoom ROOM = QChatRoom.chatRoom;
     private static final QChatRoomMember MEMBER = QChatRoomMember.chatRoomMember;
     private static final QChatMessage MESSAGE = QChatMessage.chatMessage;
+    private static final String UNCLASSIFIED_TAB = "UNCLASSIFIED";
 
     @Override
     public List<ChatRoom> findRoomsByUser(
@@ -94,11 +95,13 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
         QChatRoomMember memberForCount = new QChatRoomMember("memberForCount");
         QChatRoom roomForCount = new QChatRoom("roomForCount");
 
+        // SENT/RECEIVED 외 미분류 메시지는 UNCLASSIFIED로 그룹핑(집계 결과에 미사용)
+        // 이론적으로는 모든 방이 BRAND_TO_CREATOR 또는 CREATOR_TO_BRAND이므로 미분류는 발생하지 않아야 함...
         StringExpression tabExpression = Expressions
                 .cases()
                 .when(sentCondition(roomForCount, memberForCount)).then(ChatRoomTab.SENT.name())
                 .when(receivedCondition(roomForCount, memberForCount)).then(ChatRoomTab.RECEIVED.name())
-                .otherwise(ChatRoomTab.ALL.name())
+                .otherwise(UNCLASSIFIED_TAB)
                 .as("tab");
 
         List<Tuple> results = queryFactory
@@ -179,13 +182,12 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
     }
 
     private BooleanExpression applyTabFilter(ChatRoomTab tab, QChatRoom r, QChatRoomMember m) {
-        if (tab == null || tab == ChatRoomTab.ALL) {
+        if (tab == null) {
             return null;
         }
         return switch (tab) {
             case SENT -> sentCondition(r, m);
             case RECEIVED -> receivedCondition(r, m);
-            default -> null;
         };
     }
 

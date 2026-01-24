@@ -14,6 +14,7 @@ import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerialize
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
+import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
@@ -22,6 +23,7 @@ import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
 
@@ -134,6 +136,15 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         
         ChatMessage saved = chatMessageRepository.save(message);
         updateChatRoomLastMessage(saved);
+        
+        // 제안 카드 메시지인 경우, lastProposalDirection 업데이트
+        if (kind == ChatSystemMessageKind.PROPOSAL_CARD && payload instanceof ChatProposalCardPayloadResponse proposalCard) {
+            ChatProposalDirection dir = proposalCard.proposalDirection();
+            if (dir != null) {
+                chatRoomCommandService.updateProposalDirection(roomId, dir);
+            }
+        }
+        
         return responseMapper.toResponse(saved, null);
     }
 

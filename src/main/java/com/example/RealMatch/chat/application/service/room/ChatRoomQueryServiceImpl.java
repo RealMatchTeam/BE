@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ChatRoomQueryServiceImpl.class);
     private static final String UNKNOWN_OPPONENT_NAME = "알 수 없음";
 
     private final ChatRoomRepository chatRoomRepository;
@@ -68,15 +71,27 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
             rooms = rooms.subList(0, size);
         }
 
+        // 탭 배지는 매칭 필터와 상관없이 전체 보낸 제안/받은 제안의 미읽음 총합을 계산
+        // 예를 들어, 매칭 필터가 '매칭'일 때도 보낸 제안 탭 배지는 전체 보낸 제안의 미읽음 총합을 계산
+        // 그리고 보낸 제안 / 받은 제안 탭이 각각 따로 계산되어야 함!! 
+        // 예를 들어, 아직 읽지 않은 메시지가 총 9개라면 탭 옆 숫자 뱃지에 보낸 제안 5 / 받은 제안 4 이렇게 떠야 하는거임.
+        Map<ChatRoomTab, Long> unreadCountByTab = chatRoomRepository.countUnreadMessagesByTabs(userId);
+        long sentTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.SENT, 0L);
+        long receivedTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.RECEIVED, 0L);
+        long totalUnreadCount = sentTabUnreadCount + receivedTabUnreadCount;
+
         if (rooms.isEmpty()) {
             return new ChatRoomListResponse(
-                    0L, 0L, 0L, List.of(), null, false
+                    sentTabUnreadCount,
+                    receivedTabUnreadCount,
+                    totalUnreadCount,
+                    List.of(), null, false
             );
         }
 
         RoomCursor nextCursor = null;
-        if (hasNext && !rooms.isEmpty()) {
-            ChatRoom lastRoom = rooms.get(rooms.size() - 1);
+        if (hasNext) {
+            ChatRoom lastRoom = rooms.getLast();
             nextCursor = RoomCursor.of(lastRoom.getLastMessageAt(), lastRoom.getId());
         }
 
@@ -91,16 +106,11 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 roomIds, userId
         );
 
-        Map<Long, OpponentInfo> opponentInfoMap = getOpponentInfoMapBatch(rooms, userId, roomIds);
+        Map<Long, OpponentInfo> opponentInfoMap = getOpponentInfoMapBatch(userId, roomIds);
 
         List<ChatRoomCardResponse> roomCards = assembleRoomCards(
-                rooms, myMemberMap, unreadCountMap, opponentInfoMap
+                rooms, userId, myMemberMap, unreadCountMap, opponentInfoMap
         );
-
-        Map<ChatRoomTab, Long> unreadCountByTab = chatRoomRepository.countUnreadMessagesByTabs(userId);
-        long sentTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.SENT, 0L);
-        long receivedTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.RECEIVED, 0L);
-        long totalUnreadCount = sentTabUnreadCount + receivedTabUnreadCount;
 
         return new ChatRoomListResponse(
                 sentTabUnreadCount,
@@ -140,8 +150,8 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         );
     }
 
+    // 1:1 채팅방에서의 상대방 정보 조회
     private Map<Long, OpponentInfo> getOpponentInfoMapBatch(
-            List<ChatRoom> rooms,
             Long userId,
             List<Long> roomIds
     ) {
@@ -150,23 +160,37 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 .filter(m -> !m.getUserId().equals(userId) && !m.isDeleted())
                 .toList();
 
-        Map<Long, Long> roomToOpponentUserIdMap = opponentMembers.stream()
+        Map<Long, List<ChatRoomMember>> opponentByRoom = opponentMembers.stream()
+                .collect(Collectors.groupingBy(ChatRoomMember::getRoomId));
+
+        for (Long roomId : roomIds) {
+            List<ChatRoomMember> members = opponentByRoom.get(roomId);
+            if (members == null || members.isEmpty()) {
+                throw new ChatException(
+                        ChatErrorCode.INTERNAL_ERROR,
+                        "Chat room opponent not found (data integrity issue). roomId=" + roomId
+                );
+            }
+            if (members.size() != 1) {
+                throw new ChatException(
+                        ChatErrorCode.INTERNAL_ERROR,
+                        "Chat room is not 1:1. roomId=" + roomId + ", opponentCount=" + members.size()
+                );
+            }
+        }
+
+        Map<Long, Long> roomToOpponentUserIdMap = roomIds.stream()
                 .collect(Collectors.toMap(
-                        ChatRoomMember::getRoomId,
-                        ChatRoomMember::getUserId,
-                        (existing, replacement) -> {
-                            throw new IllegalStateException(
-                                    "Multiple opponent members found for roomId: " + existing
-                            );
-                        }
+                        roomId -> roomId,
+                        roomId -> opponentByRoom.get(roomId).getFirst().getUserId()
                 ));
 
         Set<Long> opponentUserIds = new HashSet<>(roomToOpponentUserIdMap.values());
         if (opponentUserIds.isEmpty()) {
-            return rooms.stream()
+            return roomIds.stream()
                     .collect(Collectors.toMap(
-                            ChatRoom::getId,
-                            room -> new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null)
+                            roomId -> roomId,
+                            roomId -> new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null)
                     ));
         }
 
@@ -184,11 +208,11 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                         .filter(b -> !b.isDeleted())
                         .collect(Collectors.toMap(Brand::getCreatedBy, b -> b));
 
-        return rooms.stream()
+        return roomIds.stream()
                 .collect(Collectors.toMap(
-                        ChatRoom::getId,
-                        room -> {
-                            Long opponentUserId = roomToOpponentUserIdMap.get(room.getId());
+                        roomId -> roomId,
+                        roomId -> {
+                            Long opponentUserId = roomToOpponentUserIdMap.get(roomId);
                             if (opponentUserId == null) {
                                 return new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null);
                             }
@@ -231,6 +255,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     private List<ChatRoomCardResponse> assembleRoomCards(
             List<ChatRoom> rooms,
+            Long userId,
             Map<Long, ChatRoomMember> myMemberMap,
             Map<Long, Long> unreadCountMap,
             Map<Long, OpponentInfo> opponentInfoMap
@@ -239,9 +264,14 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         for (ChatRoom room : rooms) {
             ChatRoomMember member = myMemberMap.get(room.getId());
             if (member == null) {
+                LOG.warn("ChatRoomMember not found for roomId={}, userId={}. This may indicate data integrity issue.",
+                        room.getId(), userId);
                 continue;
             }
-            OpponentInfo opponent = opponentInfoMap.get(room.getId());
+            OpponentInfo opponent = opponentInfoMap.getOrDefault(
+                    room.getId(),
+                    new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null)
+            );
             ChatRoomTab tabCategory = calculateTabCategory(room, member);
 
             roomCards.add(new ChatRoomCardResponse(
@@ -270,7 +300,16 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         if (direction == ChatProposalDirection.CREATOR_TO_BRAND) {
             return role == ChatRoomMemberRole.CREATOR ? ChatRoomTab.SENT : ChatRoomTab.RECEIVED;
         }
-        return ChatRoomTab.ALL;
+        // BRAND_TO_CREATOR, CREATOR_TO_BRAND가 아닌 경우 (NONE 또는 null)
+        // 이론상 발생하지 않아야 함 (방 생성 시 BRAND_TO_CREATOR 또는 CREATOR_TO_BRAND로 초기화)
+        // 하지만 방어적으로 예외 처리
+        throw new ChatException(
+                ChatErrorCode.INTERNAL_ERROR,
+                String.format(
+                        "ChatRoom with invalid direction should not appear in list. roomId=%d, direction=%s",
+                        room.getId(), direction
+                )
+        );
     }
 
     private record OpponentInfo(Long userId, String name, String profileImageUrl) {
