@@ -81,6 +81,22 @@ public class BrandController {
         return CustomResponse.ok(brandService.getBeautyFilters());
     }
 
+    @Operation(summary = "협찬 가능 제품 리스트 조회", description = "협찬 가능한 제품 리스트를 무한 스크롤 방식으로 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"COMMON400_1\", \"message\":\"잘못된 요청입니다\", \"result\":\"잘못된 카테고리입니다.\"}"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"AUTH401_1\", \"message\":\"인증이 필요합니다\", \"result\":\"Access Token이 유효하지 않습니다\"}"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "데이터 없음", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"COMMON404_1\", \"message\":\"요청한 리소스를 찾을 수 없습니다\", \"result\":\"더 이상 데이터가 없습니다.\"}"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = CustomResponse.class, example = "{\"isSuccess\":false, \"code\":\"COMMON500_1\", \"message\":\"서버 오류입니다\", \"result\":\"서버 내부 오류가 발생했습니다.\"}")))
+    })
+    @GetMapping("/sponsor")
+    public CustomResponse<List<BrandDetailViewResponseDto>> getSponsorBrands(
+            @Parameter(description = "카테고리 필터 (BEAUTY / FASHION 등)") @RequestParam(required = false) String category,
+            @Parameter(description = "무한 스크롤 커서 (마지막으로 조회된 아이템의 ID)") @RequestParam(required = false) Long cursor,
+            @Parameter(description = "페이지 크기 (기본값 10)") @RequestParam(defaultValue = "10") Integer size) {
+        return CustomResponse.ok(brandService.getSponsorBrands(category, cursor, size));
+    }
+
     @Operation(summary = "브랜드 상세 정보 조회", description = "특정 브랜드의 상세 정보, 캠페인, 협찬 제품 등을 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "브랜드 상세 조회 성공"),

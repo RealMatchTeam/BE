@@ -29,6 +29,11 @@ public class BrandService {
         return null;
     }
 
+    public List<BrandDetailViewResponseDto> getSponsorBrands(String category, Long cursor, Integer size) {
+        // TODO: Implement logic to get sponsor brands with infinite scroll
+        return null;
+    }
+
     public BrandDetailViewResponseDto getBrandDetail(Long brandId) {
         // TODO: Implement logic to get brand details
         return null;
