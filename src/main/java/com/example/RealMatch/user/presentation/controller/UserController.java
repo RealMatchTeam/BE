@@ -23,7 +23,7 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = "마이페이지 메인 조회 API By 고경수", description = "로그인한 사용자의 마이페이지 메인 화면 정보를 조회합니다.")
-    @GetMapping("/myaccount")
+    @GetMapping("/me")
     public CustomResponse<MyPageResponseDto> getMyPage(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
