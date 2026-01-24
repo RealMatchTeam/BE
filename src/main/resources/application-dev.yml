@@ -1,8 +1,8 @@
 cors:
-  allowed-origin: http://${SERVER_IP}
+  allowed-origin: http://localhost:3000
 
 swagger:
-  server-url: ${SWAGGER_SERVER_URL}
+  server-url: http://localhost:8080
 
 server:
   timezone: Asia/Seoul
@@ -10,8 +10,6 @@ server:
 spring:
   application:
     name: Realmatch
-  activate:
-    on-profile: prod
 
   datasource:
     url: ${DATASOURCE_URL}
@@ -97,12 +95,7 @@ spring:
     username: ${RABBITMQ_USERNAME}
     password: ${RABBITMQ_PASSWORD}
 
-logging:
-  level:
-    org.hibernate.SQL: warn
-
 jwt:
   secret: ${JWT_SECRET}
   access-expire-ms: ${JWT_ACCESS_EXPIRE_MS}
   refresh-expire-ms: ${JWT_REFRESH_EXPIRE_MS}
-

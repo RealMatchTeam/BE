@@ -49,3 +49,4 @@ logs/
 mysql_data/
 
 bin/
+rabbitmq_data/

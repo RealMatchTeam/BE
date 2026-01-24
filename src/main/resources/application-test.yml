@@ -12,10 +12,10 @@ spring:
     name: Realmatch
 
   datasource:
-    url: jdbc:mysql://localhost:3306/test_db
-    username: test_user
-    password: test
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DATASOURCE_URL}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: ${DATASOURCE_DRIVER_CLASS_NAME}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -25,16 +25,16 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: ${JPA_DDL_OPTION}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: ${JPA_HIBERNATE_DIALECT}
         format_sql: true
     show-sql: false
 
   security:
     refresh-token:
-      expire-days: 14
+      expire-days: ${JWT_REFRESH_EXPIRE_DAYS}
     oauth2:
       client:
         registration:
@@ -85,10 +85,15 @@ spring:
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST}
-    port: ${SPRING_RABBITMQ_PORT}
-    username: ${SPRING_RABBITMQ_USERNAME}
-    password: ${SPRING_RABBITMQ_PASSWORD}
+    host: ${RABBITMQ_URL}
+    port: ${RABBITMQ_MQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 jwt:
   secret: ${JWT_SECRET}
