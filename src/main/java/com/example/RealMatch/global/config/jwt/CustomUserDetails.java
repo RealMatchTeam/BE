@@ -6,20 +6,12 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import lombok.Getter;
-
-@Getter
-public class CustomUserDetails implements UserDetails {
-
-    private final Long userId;        // DB PK
-    private final String providerId;  // 소셜 고유 ID
-    private final String role;        // USER / ADMIN
-
-    public CustomUserDetails(Long userId, String providerId, String role) {
-        this.userId = userId;
-        this.providerId = providerId;
-        this.role = role;
-    }
+/**
+ * @param userId     DB PK
+ * @param providerId 소셜 고유 ID
+ * @param role       USER / ADMIN
+ */
+public record CustomUserDetails(Long userId, String providerId, String role) implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

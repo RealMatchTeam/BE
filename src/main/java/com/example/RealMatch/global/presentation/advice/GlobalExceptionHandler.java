@@ -1,7 +1,5 @@
 package com.example.RealMatch.global.presentation.advice;
 
-import java.util.Collections;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;

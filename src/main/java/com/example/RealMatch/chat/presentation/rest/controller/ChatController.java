@@ -49,7 +49,7 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestBody ChatRoomCreateRequest request
     ) {
-        Long userId = user.getUserId();
+        Long userId = user.userId();
         return CustomResponse.ok(chatRoomCommandService.createOrGetRoom(userId, request));
     }
 

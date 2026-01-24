@@ -1,15 +1,16 @@
-package com.example.RealMatch.brand.application;
+package com.example.RealMatch.brand.application.service;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailViewResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeViewResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class BrandService {

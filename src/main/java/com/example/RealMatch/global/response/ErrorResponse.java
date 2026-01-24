@@ -1,6 +1,7 @@
 package com.example.RealMatch.global.response;
 
 import com.example.RealMatch.global.exception.ErrorCode;
+
 import lombok.Getter;
 
 @Getter

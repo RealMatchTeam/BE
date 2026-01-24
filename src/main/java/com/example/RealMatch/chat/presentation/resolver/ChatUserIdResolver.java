@@ -29,7 +29,7 @@ public class ChatUserIdResolver {
         if (principal instanceof Authentication authentication) {
             Object authPrincipal = authentication.getPrincipal();
             if (authPrincipal instanceof CustomUserDetails userDetails) {
-                return userDetails.getUserId();
+                return userDetails.userId();
             }
         }
         return null;
