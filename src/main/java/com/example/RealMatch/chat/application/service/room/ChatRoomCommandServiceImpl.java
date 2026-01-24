@@ -18,7 +18,6 @@ import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
-import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -34,10 +33,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     @Override
     @Transactional
-    public ChatRoomCreateResponse createOrGetRoom(Long userId, ChatRoomCreateRequest request) {
-        Long brandId = request.brandId();
-        Long creatorId = request.creatorId();
-
+    public ChatRoomCreateResponse createOrGetRoom(Long userId, Long brandId, Long creatorId) {
         validateRequest(userId, brandId, creatorId);
 
         String roomKey = generateRoomKey(brandId, creatorId);
