@@ -13,18 +13,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BeautyFilterResponseDto {
 
-    private BeautyFilterPayloadDto beautyFilter;
-
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BeautyFilterPayloadDto {
-        private List<CategoryDto> category;
-        private List<FunctionDto> function;
-        private List<SkinTypeDto> skinType;
-        private List<MakeUpStyleDto> makeUpStyle;
-    }
+    private List<CategoryDto> category;
+    private List<FunctionDto> function;
+    private List<SkinTypeDto> skinType;
+    private List<MakeUpStyleDto> makeUpStyle;
 
     @Getter
     @Builder
