@@ -124,10 +124,13 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     public ChatRoomDetailResponse getRoomDetail(Long userId, Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
-        chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
 
         List<ChatRoomMember> allMembers = chatRoomMemberRepository.findByRoomId(roomId);
+        allMembers.stream()
+                .filter(m -> m.getUserId().equals(userId) && !m.isDeleted())
+                .findFirst()
+                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
+
         ChatRoomMember opponentMember = allMembers.stream()
                 .filter(m -> !m.getUserId().equals(userId) && !m.isDeleted())
                 .findFirst()
