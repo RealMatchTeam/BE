@@ -121,7 +121,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     }
 
     @Override
-    public ChatRoomDetailResponse getRoomDetail(Long userId, Long roomId) {
+    public ChatRoomDetailResponse getChatRoomDetailWithOpponent(Long userId, Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
 
@@ -212,9 +212,6 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                         roomId -> roomId,
                         roomId -> {
                             Long opponentUserId = roomToOpponentUserIdMap.get(roomId);
-                            if (opponentUserId == null) {
-                                return new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null);
-                            }
                             User user = userMap.get(opponentUserId);
                             if (user == null) {
                                 return new OpponentInfo(opponentUserId, UNKNOWN_OPPONENT_NAME, null);

@@ -69,19 +69,19 @@ public interface ChatSwagger {
             @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20") int size
     );
 
-    @Operation(summary = "채팅방 상세 조회 API By 여채현",
+    @Operation(summary = "채팅방 헤더 조회 API By 여채현",
             description = """
                     채팅방 헤더에 필요한 상대 정보와 상태 값을 반환합니다.
                     태그/상태 라벨 등 UI 구성에 필요한 필드를 포함합니다.
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "채팅방 상세 조회 성공"),
+            @ApiResponse(responseCode = "200", description = "채팅방 헤더 조회 성공"),
             @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다."),
             @ApiResponse(responseCode = "CHAT404_1", description = "채팅방을 찾을 수 없습니다."),
             @ApiResponse(responseCode = "CHAT403_2", description = "채팅방 멤버가 아닙니다."),
             @ApiResponse(responseCode = "CHAT403_3", description = "이미 나간 채팅방입니다.")
     })
-    CustomResponse<ChatRoomDetailResponse> getRoomDetail(
+    CustomResponse<ChatRoomDetailResponse> getChatRoomDetailWithOpponent(
             @AuthenticationPrincipal CustomUserDetails user,
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId
     );

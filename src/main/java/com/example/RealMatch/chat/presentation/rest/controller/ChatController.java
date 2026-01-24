@@ -67,12 +67,12 @@ public class ChatController implements ChatSwagger {
     }
 
     @GetMapping("/rooms/{roomId}")
-    public CustomResponse<ChatRoomDetailResponse> getRoomDetail(
+    public CustomResponse<ChatRoomDetailResponse> getChatRoomDetailWithOpponent(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long roomId
     ) {
         Long userId = user.getUserId();
-        return CustomResponse.ok(chatRoomQueryService.getRoomDetail(userId, roomId));
+        return CustomResponse.ok(chatRoomQueryService.getChatRoomDetailWithOpponent(userId, roomId));
     }
 
     @GetMapping("/rooms/{roomId}/messages")

@@ -15,5 +15,5 @@ public interface ChatRoomQueryService {
             int size
     );
 
-    ChatRoomDetailResponse getRoomDetail(Long userId, Long roomId);
+    ChatRoomDetailResponse getChatRoomDetailWithOpponent(Long userId, Long roomId);
 }
