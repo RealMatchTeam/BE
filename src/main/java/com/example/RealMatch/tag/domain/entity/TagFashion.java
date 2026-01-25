@@ -1,5 +1,7 @@
 package com.example.RealMatch.tag.domain.entity;
 
+import java.util.UUID;
+
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
 
@@ -18,7 +20,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
         name = "tag_content",
@@ -26,11 +27,12 @@ import lombok.NoArgsConstructor;
                 @UniqueConstraint(columnNames = {"tag_type", "eng_name"})
         }
 )
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TagFashion extends DeleteBaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tag_type", nullable = false, length = 30)
@@ -42,20 +44,15 @@ public class TagFashion extends DeleteBaseEntity {
     @Column(name = "kor_name", nullable = false, length = 100)
     private String korName;
 
-    @Column(name = "display_order", nullable = false)
-    private Integer displayOrder;
-
     @Builder
     public TagFashion(
             ContentTagType tagType,
             String engName,
-            String korName,
-            Integer displayOrder
+            String korName
     ) {
         this.tagType = tagType;
         this.engName = engName;
         this.korName = korName;
-        this.displayOrder = displayOrder;
     }
 }
 
