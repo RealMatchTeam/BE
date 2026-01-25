@@ -1,7 +1,5 @@
 package com.example.RealMatch.user.domain.entity;
 
-import java.util.UUID;
-
 import com.example.RealMatch.global.common.BaseEntity;
 
 import jakarta.persistence.Column;
@@ -22,9 +20,8 @@ import lombok.NoArgsConstructor;
 public class SignupPurpose extends BaseEntity {
 
     @Id
-    @GeneratedValue
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "purpose_name", nullable = false, length = 255)
     private String purposeName;

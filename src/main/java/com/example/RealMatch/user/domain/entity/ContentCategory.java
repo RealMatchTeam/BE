@@ -1,12 +1,11 @@
 package com.example.RealMatch.user.domain.entity;
 
-import java.util.UUID;
-
 import com.example.RealMatch.global.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -21,9 +20,8 @@ import lombok.NoArgsConstructor;
 public class ContentCategory extends BaseEntity {
 
     @Id
-    @GeneratedValue
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // UUID 대신 숫자 자동증가
+    private Long id;
 
     @Column(name = "category_name", nullable = false, length = 255)
     private String categoryName;

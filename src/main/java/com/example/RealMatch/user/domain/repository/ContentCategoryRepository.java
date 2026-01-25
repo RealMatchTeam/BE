@@ -5,5 +5,5 @@ import java.util.UUID;
 import com.example.RealMatch.user.domain.entity.ContentCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ContentCategoryRepository extends JpaRepository<ContentCategory, UUID> {
+public interface ContentCategoryRepository extends JpaRepository<ContentCategory, Long> {
 }

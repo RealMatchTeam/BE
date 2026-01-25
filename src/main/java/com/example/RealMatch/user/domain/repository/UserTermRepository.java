@@ -12,7 +12,7 @@ public interface UserTermRepository extends JpaRepository<UserTerm, UUID> {
 
     List<UserTerm> findByUserId(Long userId);
 
-    Optional<UserTerm> findByUserIdAndTermId(Long userId, Long termId);
+    Optional<UserTerm> findByUserIdAndTermId(Long userId, UUID termId);
 
     List<UserTerm> findByUserIdAndIsAgreed(Long userId, boolean isAgreed);
 }
