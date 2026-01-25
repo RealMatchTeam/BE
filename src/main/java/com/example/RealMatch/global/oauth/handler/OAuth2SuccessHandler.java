@@ -39,17 +39,16 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         AuthProvider provider = oAuth2User.getProvider();
         String role = oAuth2User.getRole();
 
-        // 토큰 발급
         String accessToken = jwtProvider.createAccessToken(
                 userId,
                 provider.name(),
-                role
+                role  // ROLE_GUEST
         );
 
         String refreshToken = jwtProvider.createRefreshToken(
                 userId,
                 provider.name(),
-                role
+                role  // ROLE_GUEST
         );
 
         // 응답 데이터 구성

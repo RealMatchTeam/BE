@@ -3,7 +3,6 @@ package com.example.RealMatch.user.domain.entity;
 import java.util.UUID;
 
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.content.domain.entity.ContentCategory;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

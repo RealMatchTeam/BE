@@ -102,5 +102,12 @@ public class User extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
     }
+
+    public void completeSignup(String nickname, LocalDate birth, Gender gender, Role role) {
+        this.nickname = nickname;
+        this.birth = birth;
+        this.gender = gender;
+        this.role = role; // 여기서 Role.GUEST가 Role.CREATOR 등으로 바뀝니다.
+    }
 }
 

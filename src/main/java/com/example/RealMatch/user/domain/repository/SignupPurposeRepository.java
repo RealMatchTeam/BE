@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.RealMatch.user.domain.entity.SignupPurpose;
 
-public interface SignupPurposeRepository extends JpaRepository<SignupPurpose, UUID> {
+public interface SignupPurposeRepository extends JpaRepository<SignupPurpose, Long> {
 
     Optional<SignupPurpose> findByPurposeName(String purposeName);
 }
