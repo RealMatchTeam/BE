@@ -35,6 +35,11 @@ public enum OAuthErrorCode implements BaseErrorCode {
             "이미 회원가입이 완료된 유저입니다."
     ),
 
+    NICKNAME_DUPLICATED(
+            HttpStatus.CONFLICT,
+            "AUTH400_5",
+            "이미 사용 중인 닉네임입니다."
+    ),
 
     INVALID_TOKEN(
             HttpStatus.UNAUTHORIZED,

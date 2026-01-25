@@ -12,4 +12,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 이메일로 조회 (Spring Security 인증 시 주로 사용)
     Optional<User> findByEmail(String email);
+
+    boolean existsByNickname(String nickname);
 }

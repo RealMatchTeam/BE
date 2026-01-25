@@ -53,6 +53,11 @@ public class AuthService {
             throw new AuthException(OAuthErrorCode.ALREADY_SIGNED_UP);
         }
 
+        // 닉네임 중복 체크
+        if (userRepository.existsByNickname(request.nickname())) {
+            throw new AuthException(OAuthErrorCode.NICKNAME_DUPLICATED);
+        }
+
         // 유저 정보 업데이트
         user.completeSignup(
                 request.nickname(),
