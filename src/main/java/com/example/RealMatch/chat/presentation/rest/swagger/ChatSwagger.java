@@ -30,7 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @Tag(name = "chat", description = "채팅 REST API")
-@RequestMapping("/api/chat")
+@RequestMapping("/api/v1/chat")
 public interface ChatSwagger {
 
     @Operation(summary = "채팅방 생성/조회 API By 여채현",
