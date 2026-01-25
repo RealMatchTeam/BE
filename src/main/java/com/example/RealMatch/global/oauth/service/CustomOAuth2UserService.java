@@ -73,7 +73,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .name(userInfo.getName())
                         .nickname(userInfo.getName()) // 초기에 닉네임은 이름과 동일하게 설정
                         .email(userInfo.getEmail())
-                        .role(Role.CREATOR) //
+                        .role(Role.CREATOR)
                         .build()
         );
 
