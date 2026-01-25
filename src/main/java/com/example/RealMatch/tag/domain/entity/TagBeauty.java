@@ -12,9 +12,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
         name = "tag_content",
@@ -22,7 +26,7 @@ import lombok.Getter;
                 @UniqueConstraint(columnNames = {"tag_type", "eng_name"})
         }
 )
-public class TagContent extends DeleteBaseEntity {
+public class TagBeauty extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +45,8 @@ public class TagContent extends DeleteBaseEntity {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
-    public TagContent(
+    @Builder
+    public TagBeauty(
             ContentTagType tagType,
             String engName,
             String korName,
