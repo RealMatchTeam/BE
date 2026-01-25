@@ -1,12 +1,12 @@
 package com.example.RealMatch.global.presentation.swagger;
 
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.oauth.dto.OAuthTokenResponse;
 import com.example.RealMatch.global.oauth.dto.request.SignupCompleteRequest;
 import com.example.RealMatch.global.presentation.CustomResponse;
-
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

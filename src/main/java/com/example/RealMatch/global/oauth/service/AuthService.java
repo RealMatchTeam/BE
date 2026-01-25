@@ -5,27 +5,26 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.config.jwt.JwtProvider;
+import com.example.RealMatch.global.oauth.code.OAuthErrorCode;
+import com.example.RealMatch.global.oauth.dto.OAuthTokenResponse;
+import com.example.RealMatch.global.oauth.dto.request.SignupCompleteRequest;
+import com.example.RealMatch.global.oauth.exception.AuthException;
 import com.example.RealMatch.user.domain.entity.ContentCategory;
 import com.example.RealMatch.user.domain.entity.SignupPurpose;
 import com.example.RealMatch.user.domain.entity.Term;
+import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserContentCategory;
 import com.example.RealMatch.user.domain.entity.UserSignupPurpose;
 import com.example.RealMatch.user.domain.entity.UserTerm;
+import com.example.RealMatch.user.domain.entity.enums.Role;
+import com.example.RealMatch.user.domain.repository.ContentCategoryRepository;
 import com.example.RealMatch.user.domain.repository.SignupPurposeRepository;
 import com.example.RealMatch.user.domain.repository.TermRepository;
 import com.example.RealMatch.user.domain.repository.UserContentCategoryRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.domain.repository.UserSignupPurposeRepository;
 import com.example.RealMatch.user.domain.repository.UserTermRepository;
-import com.example.RealMatch.global.config.jwt.JwtProvider;
-import com.example.RealMatch.global.oauth.code.OAuthErrorCode;
-import com.example.RealMatch.global.oauth.dto.OAuthTokenResponse;
-import com.example.RealMatch.global.oauth.dto.request.SignupCompleteRequest;
-import com.example.RealMatch.global.oauth.exception.AuthException;
-import com.example.RealMatch.user.domain.entity.User;
-import com.example.RealMatch.user.domain.entity.enums.Role;
-import com.example.RealMatch.user.domain.repository.ContentCategoryRepository;
-
 
 import lombok.RequiredArgsConstructor;
 
