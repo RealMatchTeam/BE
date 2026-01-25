@@ -18,7 +18,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
         name = "user_beauty_tag",
@@ -26,6 +25,7 @@ import lombok.NoArgsConstructor;
                 @UniqueConstraint(columnNames = {"user_id", "beauty_tag_id"})
         }
 )
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserBeautyTag extends BaseEntity {
 
     @Id

@@ -22,13 +22,13 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "campaign_content_tag",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"campaign_id", "content_tag_id"})
         }
 )
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CampaignContentTag extends BaseEntity {
 
     @Id
