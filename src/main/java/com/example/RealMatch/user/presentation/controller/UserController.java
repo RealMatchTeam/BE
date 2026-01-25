@@ -9,8 +9,8 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
+import com.example.RealMatch.user.presentation.swagger.UserSwagger;
 
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -18,18 +18,15 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UserSwagger {
 
     private final UserService userService;
 
-    @Operation(summary = "마이페이지 메인 조회 API By 고경수", description = "로그인한 사용자의 마이페이지 메인 화면 정보를 조회합니다.")
+    @Override
     @GetMapping("/me")
     public CustomResponse<MyPageResponseDto> getMyPage(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long userId = userDetails.getUserId(); // CustomUserDetails에 정의된 userId
-
-        MyPageResponseDto result = userService.getMyPage(userId);
-        return CustomResponse.ok(result);
+        return CustomResponse.ok(userService.getMyPage(userDetails.getUserId()));
     }
 }
