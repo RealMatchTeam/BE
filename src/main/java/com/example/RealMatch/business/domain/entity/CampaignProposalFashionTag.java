@@ -1,5 +1,7 @@
 package com.example.RealMatch.business.domain.entity;
 
+import java.util.UUID;
+
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.tag.domain.entity.TagFashion;
 
@@ -29,8 +31,8 @@ import lombok.NoArgsConstructor;
 public class CampaignProposalFashionTag extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_proposal_id", nullable = false)

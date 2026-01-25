@@ -38,8 +38,7 @@ public class TagContentServiceImpl implements TagContentService {
                 .stream()
                 .map(tag -> new ContentTagResponse.TagItemResponse(
                         tag.getId(),
-                        tag.getKorName(),
-                        tag.getDisplayOrder()
+                        tag.getKorName()
                 ))
                 .toList();
     }
