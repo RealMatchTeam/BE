@@ -12,10 +12,10 @@ import lombok.RequiredArgsConstructor;
 public enum UserErrorCode implements BaseErrorCode {
 
     // 404 - 조회 실패
-    MY_PAGE_NOT_FOUND(
+    USER_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "USER404_1",
-            "마이페이지 정보를 불러오는데 실패하였습니다."
+            "유저 정보를 불러오는데 실패하였습니다."
     ),
 
     PROFILE_CARD_NOT_FOUND(
@@ -39,7 +39,7 @@ public enum UserErrorCode implements BaseErrorCode {
     USER_INFO_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "USER404_5",
-            "회원정보를 불러오는데 실패하였습니다."
+            "회원 정보를 불러오는데 실패하였습니다."
     ),
 
     SOCIAL_INFO_NOT_FOUND(

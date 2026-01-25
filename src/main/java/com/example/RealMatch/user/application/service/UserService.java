@@ -22,8 +22,8 @@ public class UserService {
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 1. 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
-        User user = userRepository.findByIdAndIsDeletedFalse(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.MY_PAGE_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         // 2. 매칭 검사 여부 확인
         boolean hasMatchingTest = matchingRepository.existsByUserId(userId);
