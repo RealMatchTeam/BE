@@ -25,6 +25,6 @@ public interface AuthSwagger {
     @Operation(summary = "액세스 토큰 재발급 API By 고경수", description = "리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급받습니다.")
     CustomResponse<OAuthTokenResponse> refresh(
             @Parameter(description = "Bearer {RefreshToken}", required = true)
-            @RequestHeader("Authorization") String refreshToken
+            @RequestHeader("RefreshToken") String refreshToken
     );
 }

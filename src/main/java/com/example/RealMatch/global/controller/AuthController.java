@@ -27,9 +27,10 @@ public class AuthController implements AuthSwagger {
     @PostMapping("/signup")
     public CustomResponse<OAuthTokenResponse> signup(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+
             @RequestBody SignupCompleteRequest request
         ) {
-            OAuthTokenResponse response = authService.completeSignup(userDetails.getUserId(), request);
+            OAuthTokenResponse response = authService.completeSignup(userDetails.getUserId(), userDetails.getProviderId(), request);
             return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, response);
         }
 
