@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "tag_content",
+        name = "tag_fashion",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"tag_type", "eng_name"})
         }
