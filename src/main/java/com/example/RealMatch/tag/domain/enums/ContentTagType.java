@@ -1,4 +1,4 @@
-package com.example.RealMatch.business.domain.enums;
+package com.example.RealMatch.tag.domain.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

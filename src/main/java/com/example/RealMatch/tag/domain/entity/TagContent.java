@@ -1,7 +1,7 @@
-package com.example.RealMatch.business.domain;
+package com.example.RealMatch.tag.domain.entity;
 
-import com.example.RealMatch.business.domain.enums.ContentTagType;
-import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
+import com.example.RealMatch.tag.domain.enums.ContentTagType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,12 +17,12 @@ import lombok.Getter;
 @Getter
 @Entity
 @Table(
-        name = "content_tag",
+        name = "tag_content",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"tag_type", "eng_name"})
         }
 )
-public class ContentTag extends BaseEntity {
+public class TagContent extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,10 +41,10 @@ public class ContentTag extends BaseEntity {
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
-    protected ContentTag() {
+    protected TagContent() {
     }
 
-    public ContentTag(
+    public TagContent(
             ContentTagType tagType,
             String engName,
             String korName,

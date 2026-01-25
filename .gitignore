@@ -2,7 +2,7 @@
 #src/main/resources/application-*.yml
 src/main/resources/application.yml
 src/test/resources/application.yml
-src/test/resources/application-*.yml
+#src/test/resources/application-*.yml
 
 # 환경 변수
 .env
@@ -49,3 +49,4 @@ logs/
 mysql_data/
 
 bin/
+rabbitmq_data/
