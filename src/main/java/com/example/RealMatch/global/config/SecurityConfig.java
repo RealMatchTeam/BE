@@ -42,7 +42,8 @@ public class SecurityConfig {
             "/api/test",
             "/api/login/success",
             "/ws/**",
-            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"};
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html",
+            "/api/v1/tags/**"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
             "/api/test-auth"
