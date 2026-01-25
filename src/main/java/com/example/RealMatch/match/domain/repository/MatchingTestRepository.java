@@ -9,4 +9,6 @@ import com.example.RealMatch.match.domain.entity.MatchingTest;
 public interface MatchingTestRepository extends JpaRepository<MatchingTest, Long> {
 
     Optional<MatchingTest> findByUserId(Long userId);
+
+    boolean existsByUserId(Long userId);
 }

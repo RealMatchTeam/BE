@@ -26,7 +26,7 @@ public class UserService {
                 .orElseThrow(() -> new UserException(UserErrorCode.MY_PAGE_NOT_FOUND));
 
         // 2. 매칭 검사 여부 확인
-        boolean hasMatchingTest = matchingRepository.findByUserId(userId).isPresent();
+        boolean hasMatchingTest = matchingRepository.existsByUserId(userId);
 
         // 3. DTO 변환 및 반환
         return MyPageResponseDto.from(user, hasMatchingTest);
