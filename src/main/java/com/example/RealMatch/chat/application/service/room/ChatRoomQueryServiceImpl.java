@@ -38,7 +38,6 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailRespon
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.user.domain.entity.User;
-import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -201,17 +200,6 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         Map<Long, User> userMap = userRepository.findAllById(opponentUserIds).stream()
                 .collect(Collectors.toMap(User::getId, u -> u));
 
-        List<Long> brandUserIds = userMap.values().stream()
-                .filter(u -> u.getRole() == Role.BRAND)
-                .map(User::getId)
-                .toList();
-
-        Map<Long, Brand> brandMap = brandUserIds.isEmpty()
-                ? Map.of()
-                : brandRepository.findByCreatedByIn(brandUserIds).stream()
-                        .filter(b -> !b.isDeleted())
-                        .collect(Collectors.toMap(Brand::getCreatedBy, b -> b));
-
         return roomIds.stream()
                 .collect(Collectors.toMap(
                         roomId -> roomId,
@@ -220,13 +208,6 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                             User user = userMap.get(opponentUserId);
                             if (user == null) {
                                 return new OpponentInfo(opponentUserId, UNKNOWN_OPPONENT_NAME, null);
-                            }
-
-                            if (user.getRole() == Role.BRAND) {
-                                Brand brand = brandMap.get(opponentUserId);
-                                if (brand != null) {
-                                    return new OpponentInfo(opponentUserId, brand.getBrandName(), brand.getLogoUrl());
-                                }
                             }
 
                             return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
@@ -242,13 +223,6 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         User user = userRepository.findById(opponentUserId).orElse(null);
         if (user == null) {
             return new OpponentInfo(opponentUserId, UNKNOWN_OPPONENT_NAME, null);
-        }
-
-        if (user.getRole() == Role.BRAND) {
-            Brand brand = brandRepository.findByCreatedBy(opponentUserId).orElse(null);
-            if (brand != null && !brand.isDeleted()) {
-                return new OpponentInfo(opponentUserId, brand.getBrandName(), brand.getLogoUrl());
-            }
         }
 
         return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
