@@ -2,6 +2,8 @@ package com.example.RealMatch.tag.domain.entity;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
 
@@ -10,7 +12,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -31,7 +32,9 @@ import lombok.NoArgsConstructor;
 public class TagFashion extends DeleteBaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @UuidGenerator
+    @GeneratedValue
+    @Column(columnDefinition = "UUID")
     private UUID id;
 
     @Enumerated(EnumType.STRING)
