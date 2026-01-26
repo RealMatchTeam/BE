@@ -36,51 +36,45 @@ public enum UserErrorCode implements BaseErrorCode {
             "찜한 캠페인 목록을 불러오는데 실패하였습니다."
     ),
 
-    USER_INFO_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
-            "USER404_5",
-            "회원 정보를 불러오는데 실패하였습니다."
-    ),
-
     SOCIAL_INFO_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "USER404_6",
+            "USER404_5",
             "소셜 연동 정보를 불러오는데 실패하였습니다."
     ),
 
     SOCIAL_CONNECT_FAILED(
             HttpStatus.NOT_FOUND,
-            "USER404_7",
+            "USER404_6",
             "소셜 계정 연동 추가에 실패하였습니다."
     ),
 
     SOCIAL_NOT_CONNECTED(
             HttpStatus.NOT_FOUND,
-            "USER404_8",
+            "USER404_7",
             "연동되지 않은 소셜 계정입니다."
     ),
 
     SOCIAL_DISCONNECT_FAILED(
             HttpStatus.NOT_FOUND,
-            "USER404_9",
+            "USER404_8",
             "소셜 계정 연동 해제에 실패하였습니다."
     ),
 
     BEAUTY_PROFILE_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "USER404_10",
+            "USER404_9",
             "뷰티 프로필 정보를 불러오는데 실패하였습니다."
     ),
 
     FASHION_PROFILE_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "USER404_11",
+            "USER404_10",
             "패션 프로필 정보를 불러오는데 실패하였습니다."
     ),
 
     CONTENT_PROFILE_NOT_FOUND(
             HttpStatus.NOT_FOUND,
-            "USER404_12",
+            "USER404_11",
             "콘텐츠 프로필 정보를 불러오는데 실패하였습니다."
     ),
 
