@@ -112,9 +112,19 @@ public class AuthService {
 
     private void saveTermAgreements(User user, List<SignupCompleteRequest.TermAgreementDto> terms) {
         if (terms != null && !terms.isEmpty()) {
+            List<com.example.RealMatch.user.domain.entity.enums.TermName> termNames = terms.stream()
+                    .map(SignupCompleteRequest.TermAgreementDto::type)
+                    .toList();
+
+            java.util.Map<com.example.RealMatch.user.domain.entity.enums.TermName, Term> termMap = termRepository.findByNameIn(termNames).stream()
+                    .collect(java.util.stream.Collectors.toMap(Term::getName, java.util.function.Function.identity()));
+
+            if (termMap.size() != termNames.size()) {
+                throw new AuthException(OAuthErrorCode.TERM_NOT_FOUND);
+            }
+
             List<UserTerm> userTermsToSave = terms.stream().map(dto -> {
-                Term term = termRepository.findByName(dto.type())
-                        .orElseThrow(() -> new AuthException(OAuthErrorCode.TERM_NOT_FOUND));
+                Term term = termMap.get(dto.type());
                 return UserTerm.builder()
                         .user(user)
                         .term(term)

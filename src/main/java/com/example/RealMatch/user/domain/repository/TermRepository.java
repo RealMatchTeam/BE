@@ -11,7 +11,7 @@ import com.example.RealMatch.user.domain.entity.enums.TermName;
 
 public interface TermRepository extends JpaRepository<Term, UUID> {
 
-    Optional<Term> findByName(TermName name);
+    List<Term> findByNameIn(List<TermName> names);
 
     List<Term> findByIsRequired(boolean isRequired);
 }
