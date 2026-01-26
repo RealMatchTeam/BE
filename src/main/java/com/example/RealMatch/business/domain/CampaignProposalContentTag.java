@@ -1,6 +1,7 @@
 package com.example.RealMatch.business.domain;
 
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.tag.domain.entity.TagContent;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,7 +35,7 @@ public class CampaignProposalContentTag extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_tag_id", nullable = false)
-    private ContentTag contentTag;
+    private TagContent tagContent;
 
     @Column(name = "custom_tag_value")
     private String customTagValue;
@@ -43,13 +44,13 @@ public class CampaignProposalContentTag extends BaseEntity {
 
     private CampaignProposalContentTag(
             CampaignProposal campaignProposal,
-            ContentTag contentTag,
+            TagContent tagContent,
             String customTagValue
     ) {
         this.campaignProposal = campaignProposal;
-        this.contentTag = contentTag;
+        this.tagContent = tagContent;
 
-        if (contentTag.getEngName().equals("ETC")) {
+        if (tagContent.getEngName().equals("ETC")) {
             if (customTagValue == null || customTagValue.isBlank()) {
                 throw new IllegalArgumentException("ETC 태그에는 입력값이 필요합니다.");
             }
@@ -62,17 +63,17 @@ public class CampaignProposalContentTag extends BaseEntity {
     /* 일반 태그 */
     public static CampaignProposalContentTag of(
             CampaignProposal campaignProposal,
-            ContentTag contentTag
+            TagContent tagContent
     ) {
-        return new CampaignProposalContentTag(campaignProposal, contentTag, null);
+        return new CampaignProposalContentTag(campaignProposal, tagContent, null);
     }
 
     /* 사용자 입력 태그 */
     public static CampaignProposalContentTag ofCustom(
             CampaignProposal campaignProposal,
-            ContentTag contentTag,
+            TagContent tagContent,
             String customTagValue
     ) {
-        return new CampaignProposalContentTag(campaignProposal, contentTag, customTagValue);
+        return new CampaignProposalContentTag(campaignProposal, tagContent, customTagValue);
     }
 }
