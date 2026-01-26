@@ -1,5 +1,7 @@
 package com.example.RealMatch.chat.presentation.rest.controller;
 
+import java.io.IOException;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +20,6 @@ import com.example.RealMatch.chat.application.service.message.ChatMessageQuerySe
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomSort;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
@@ -35,7 +35,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class ChatController implements ChatSwagger {
 
@@ -50,27 +50,29 @@ public class ChatController implements ChatSwagger {
             @Valid @RequestBody ChatRoomCreateRequest request
     ) {
         Long userId = user.getUserId();
-        return CustomResponse.ok(chatRoomCommandService.createOrGetRoom(userId, request));
+        Long brandId = request.brandId();
+        Long creatorId = request.creatorId();
+        return CustomResponse.ok(chatRoomCommandService.createOrGetRoom(userId, brandId, creatorId));
     }
 
     @GetMapping("/rooms")
     public CustomResponse<ChatRoomListResponse> getRoomList(
             @AuthenticationPrincipal CustomUserDetails user,
-            @RequestParam(required = false) ChatRoomTab tab,
             @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
-            @RequestParam(required = false) ChatRoomSort sort,
             @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return CustomResponse.ok(chatRoomQueryService.getRoomList(user, tab, filterStatus, sort, roomCursor, size));
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatRoomQueryService.getRoomList(userId, filterStatus, roomCursor, size));
     }
 
     @GetMapping("/rooms/{roomId}")
-    public CustomResponse<ChatRoomDetailResponse> getRoomDetail(
+    public CustomResponse<ChatRoomDetailResponse> getChatRoomDetailWithOpponent(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long roomId
     ) {
-        return CustomResponse.ok(chatRoomQueryService.getRoomDetail(user, roomId));
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatRoomQueryService.getChatRoomDetailWithOpponent(userId, roomId));
     }
 
     @GetMapping("/rooms/{roomId}/messages")
@@ -80,7 +82,8 @@ public class ChatController implements ChatSwagger {
             @RequestParam(name = "cursor", required = false) MessageCursor messageCursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return CustomResponse.ok(chatMessageQueryService.getMessages(user, roomId, messageCursor, size));
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatMessageQueryService.getMessages(userId, roomId, messageCursor, size));
     }
 
     @PostMapping("/attachments")
@@ -88,7 +91,15 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestPart("request") ChatAttachmentUploadRequest request,
             @RequestPart("file") MultipartFile file
-    ) {
-        return CustomResponse.ok(chatAttachmentService.uploadAttachment(user, request, file));
+    ) throws IOException {
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatAttachmentService.uploadAttachment(
+                userId,
+                request,
+                file.getInputStream(),
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getSize()
+        ));
     }
 }

@@ -3,20 +3,16 @@ package com.example.RealMatch.chat.presentation.fixture;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.domain.enums.ChatAttachmentStatus;
 import com.example.RealMatch.chat.domain.enums.ChatAttachmentType;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
-import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
-import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalDecisionStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSenderType;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
+import com.example.RealMatch.chat.presentation.dto.response.CampaignSummaryResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentInfoResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
@@ -42,43 +38,62 @@ public final class ChatFixtureFactory {
         return new ChatRoomCreateResponse(
                 3001L,
                 "direct:101:202",
-                ChatProposalDirection.NONE,
                 LocalDateTime.of(2025, 1, 1, 0, 0)
         );
     }
 
     public static ChatRoomListResponse sampleRoomListResponse() {
-        ChatRoomCardResponse card = new ChatRoomCardResponse(
+        // 협업중인 채팅방 카드
+        ChatRoomCardResponse collaboratingCard = new ChatRoomCardResponse(
                 3001L,
                 202L,
                 "라운드랩",
                 "https://yt3.googleusercontent.com/ytc/AIdro_lLlKeDBBNPBO1FW7jkxvXpJyyM6CU2AR7NMx2GIjFFxQ=s900-c-k-c0x00ffffff-no-rj",
-                ChatProposalStatus.REVIEWING,
+                true,  // isCollaborating: 협업중
+                "안녕하세요 크리에이터 비비 입니다, 협업 제안드리고 싶습니다...",
+                ChatMessageType.TEXT,
+                LocalDateTime.of(2025, 1, 6, 14, 0),
+                2
+        );
+        
+        // 협업중이 아닌 채팅방 카드
+        ChatRoomCardResponse normalCard = new ChatRoomCardResponse(
+                3002L,
+                203L,
+                "비플레인",
+                "https://yt3.googleusercontent.com/ytc/AIdro_lLlKeDBBNPBO1FW7jkxvXpJyyM6CU2AR7NMx2GIjFFxQ=s900-c-k-c0x00ffffff-no-rj",
+                false,  // isCollaborating: 협업중 아님
                 "안녕하세요!",
                 ChatMessageType.TEXT,
-                LocalDateTime.of(2025, 1, 1, 10, 0),
-                3,
-                ChatRoomTab.SENT
+                LocalDateTime.of(2025, 1, 5, 10, 0),
+                0
         );
+        
         return new ChatRoomListResponse(
-                5L,
-                2L,
-                7L,
-                List.of(card),
+                7L,  // totalUnreadCount
+                List.of(collaboratingCard, normalCard),
                 RoomCursor.of(LocalDateTime.of(2025, 1, 1, 9, 59, 59), 2999L),
                 true
         );
     }
 
     public static ChatRoomDetailResponse sampleRoomDetailResponse(Long roomId) {
+        // 협업 요약 바 정보 (제안이 있는 경우)
+        CampaignSummaryResponse campaignSummary = new CampaignSummaryResponse(
+                4001L,
+                null,  // campaignImageUrl: 현재는 null (추후 확장 가능)
+                "라운드랩",
+                "'1025 독도 토너' 일주일 챌린지"
+        );
+        
         return new ChatRoomDetailResponse(
                 roomId,
                 202L,
                 "라운드랩",
                 "https://yt3.googleusercontent.com/ytc/AIdro_lLlKeDBBNPBO1FW7jkxvXpJyyM6CU2AR7NMx2GIjFFxQ=s900-c-k-c0x00ffffff-no-rj",
                 List.of("청정자극", "저자극", "심플한 감성"),
-                ChatProposalStatus.REVIEWING,
-                ChatProposalStatus.REVIEWING.labelOrNull()
+                true,  // isCollaborating: 협업중
+                campaignSummary
         );
     }
 
@@ -204,7 +219,7 @@ public final class ChatFixtureFactory {
                     "캠페인 A",
                     "캠페인 요약 문구",
                     ChatProposalDecisionStatus.PENDING,
-                    ChatProposalDirection.BRAND_TO_CREATOR,
+                    com.example.RealMatch.chat.domain.enums.ChatProposalDirection.BRAND_TO_CREATOR,
                     new ChatProposalActionButtonsResponse(
                             new ChatProposalActionButtonResponse(
                                     "제안 수락하기",
@@ -251,14 +266,16 @@ public final class ChatFixtureFactory {
 
     public static ChatAttachmentUploadResponse sampleAttachmentUploadResponse(
             ChatAttachmentUploadRequest request,
-            MultipartFile file
+            String originalFilename,
+            String contentType,
+            long fileSize
     ) {
         return new ChatAttachmentUploadResponse(
                 9001L,
                 request.attachmentType(),
-                file.getContentType(),
-                file.getOriginalFilename(),
-                file.getSize(),
+                contentType,
+                originalFilename,
+                fileSize,
                 "https://cdn.example.com/attachments/9001",
                 ChatAttachmentStatus.UPLOADED,
                 LocalDateTime.of(2025, 1, 1, 10, 10)
