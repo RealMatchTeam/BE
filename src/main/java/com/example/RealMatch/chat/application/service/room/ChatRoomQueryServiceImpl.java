@@ -149,7 +149,6 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 opponent.userId(),
                 opponent.name(),
                 opponent.profileImageUrl(),
-                List.of(),
                 isCollaborating,
                 campaignSummary
         );

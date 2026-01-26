@@ -72,7 +72,7 @@ public interface ChatSwagger {
     @Operation(summary = "채팅방 헤더 조회 API By 여채현",
             description = """
                     채팅방 헤더에 필요한 상대 정보와 상태 값을 반환합니다.
-                    태그/상태 라벨 등 UI 구성에 필요한 필드를 포함합니다.
+                    협업중 여부, 협업 요약 바 등 UI 구성에 필요한 필드를 포함합니다.
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "채팅방 헤더 조회 성공"),
