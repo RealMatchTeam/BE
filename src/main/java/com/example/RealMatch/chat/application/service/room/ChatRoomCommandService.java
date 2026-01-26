@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.lang.NonNull;
 
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
-import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
+import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 
 public interface ChatRoomCommandService {
@@ -19,5 +19,9 @@ public interface ChatRoomCommandService {
             String messagePreview
     );
 
-    void updateProposalDirection(@NonNull Long roomId, @NonNull ChatProposalDirection direction);
+    void updateProposalStatusByUsers(
+            @NonNull Long brandUserId,
+            @NonNull Long creatorUserId,
+            @NonNull ChatProposalStatus status
+    );
 }

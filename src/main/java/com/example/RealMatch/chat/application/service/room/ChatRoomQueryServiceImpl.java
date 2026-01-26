@@ -14,21 +14,29 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
+import com.example.RealMatch.campaign.domain.entity.Campaign;
+import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
+import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
+import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
-import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
-import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
+import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
+import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.exception.ChatException;
+import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepositoryCustom.RoomCursorInfo;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
+import com.example.RealMatch.chat.presentation.dto.response.CampaignSummaryResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.UserRepository;
@@ -45,13 +53,15 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final BrandRepository brandRepository;
+    private final CampaignRepository campaignRepository;
+    private final SystemMessagePayloadSerializer payloadSerializer;
 
     @Override
     public ChatRoomListResponse getRoomList(
             Long userId,
-            ChatRoomTab tab,
             ChatRoomFilterStatus filterStatus,
             RoomCursor roomCursor,
             int size
@@ -61,7 +71,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 : null;
 
         List<ChatRoom> rooms = chatRoomRepository.findRoomsByUser(
-                userId, tab, filterStatus, cursorInfo, size
+                userId, filterStatus, cursorInfo, size
         );
 
         boolean hasNext = rooms.size() > size;
@@ -69,19 +79,11 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
             rooms = rooms.subList(0, size);
         }
 
-        // 탭 배지는 매칭 필터와 상관없이 전체 보낸 제안/받은 제안의 미읽음 총합을 계산
-        // 예를 들어, 매칭 필터가 '매칭'일 때도 보낸 제안 탭 배지는 전체 보낸 제안의 미읽음 총합을 계산
-        // 그리고 보낸 제안 / 받은 제안 탭이 각각 따로 계산되어야 함!! 
-        // 예를 들어, 아직 읽지 않은 메시지가 총 9개라면 탭 옆 숫자 뱃지에 보낸 제안 5 / 받은 제안 4 이렇게 떠야 하는거임.
-        Map<ChatRoomTab, Long> unreadCountByTab = chatRoomRepository.countUnreadMessagesByTabs(userId);
-        long sentTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.SENT, 0L);
-        long receivedTabUnreadCount = unreadCountByTab.getOrDefault(ChatRoomTab.RECEIVED, 0L);
-        long totalUnreadCount = sentTabUnreadCount + receivedTabUnreadCount;
+        // 전체 미읽음 개수 계산
+        long totalUnreadCount = chatRoomRepository.countTotalUnreadMessages(userId);
 
         if (rooms.isEmpty()) {
             return new ChatRoomListResponse(
-                    sentTabUnreadCount,
-                    receivedTabUnreadCount,
                     totalUnreadCount,
                     List.of(), null, false
             );
@@ -111,8 +113,6 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         );
 
         return new ChatRoomListResponse(
-                sentTabUnreadCount,
-                receivedTabUnreadCount,
                 totalUnreadCount,
                 roomCards,
                 nextCursor,
@@ -138,14 +138,20 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
         OpponentInfo opponent = getOpponentInfo(opponentMember.getUserId());
 
+        // 협업중 여부 판단 (proposalStatus == MATCHED)
+        boolean isCollaborating = room.getProposalStatus() == ChatProposalStatus.MATCHED;
+
+        // 협업 요약 바 정보 조회 (제안이 있는 경우)
+        CampaignSummaryResponse campaignSummary = getCampaignSummary(roomId);
+
         return new ChatRoomDetailResponse(
                 room.getId(),
                 opponent.userId(),
                 opponent.name(),
                 opponent.profileImageUrl(),
                 List.of(),
-                room.getProposalStatus(),
-                room.getProposalStatus() != null ? room.getProposalStatus().label() : null
+                isCollaborating,
+                campaignSummary
         );
     }
 
@@ -268,44 +274,77 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                     room.getId(),
                     new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null)
             );
-            ChatRoomTab tabCategory = calculateTabCategory(room, member);
+            
+            // 협업중 여부 판단 (proposalStatus == MATCHED)
+            boolean isCollaborating = room.getProposalStatus() == ChatProposalStatus.MATCHED;
 
             roomCards.add(new ChatRoomCardResponse(
                     room.getId(),
                     opponent.userId(),
                     opponent.name(),
                     opponent.profileImageUrl(),
-                    room.getProposalStatus(),
+                    isCollaborating,
                     room.getLastMessagePreview(),
                     room.getLastMessageType(),
                     room.getLastMessageAt(),
-                    unreadCountMap.getOrDefault(room.getId(), 0L),
-                    tabCategory
+                    unreadCountMap.getOrDefault(room.getId(), 0L)
             ));
         }
         return roomCards;
     }
 
-    private ChatRoomTab calculateTabCategory(ChatRoom room, ChatRoomMember member) {
-        ChatProposalDirection direction = room.getLastProposalDirection();
-        ChatRoomMemberRole role = member.getRole();
 
-        if (direction == ChatProposalDirection.BRAND_TO_CREATOR) {
-            return role == ChatRoomMemberRole.BRAND ? ChatRoomTab.SENT : ChatRoomTab.RECEIVED;
+    private CampaignSummaryResponse getCampaignSummary(Long roomId) {
+        List<ChatMessage> proposalMessages = chatMessageRepository.findProposalMessagesByRoomId(roomId);
+
+        if (proposalMessages.isEmpty()) {
+            return null; // 제안이 없는 경우
         }
-        if (direction == ChatProposalDirection.CREATOR_TO_BRAND) {
-            return role == ChatRoomMemberRole.CREATOR ? ChatRoomTab.SENT : ChatRoomTab.RECEIVED;
+
+        // 가장 최근 제안 메시지에서 campaignId 추출
+        ChatMessage latestProposalMessage = proposalMessages.get(0);
+        ChatSystemMessageKind kind = latestProposalMessage.getSystemKind();
+        String rawPayload = latestProposalMessage.getSystemPayload();
+
+        if (rawPayload == null || rawPayload.isBlank()) {
+            return null;
         }
-        // BRAND_TO_CREATOR, CREATOR_TO_BRAND가 아닌 경우 (NONE 또는 null)
-        // 이론상 발생하지 않아야 함 (방 생성 시 BRAND_TO_CREATOR 또는 CREATOR_TO_BRAND로 초기화)
-        // 하지만 방어적으로 예외 처리
-        throw new ChatException(
-                ChatErrorCode.INTERNAL_ERROR,
-                String.format(
-                        "ChatRoom with invalid direction should not appear in list. roomId=%d, direction=%s",
-                        room.getId(), direction
-                )
-        );
+
+        try {
+            ChatSystemMessagePayload payload = payloadSerializer.deserialize(kind, rawPayload);
+            Long campaignId = null;
+
+            if (payload instanceof ChatProposalCardPayloadResponse proposalCard) {
+                campaignId = proposalCard.campaignId();
+            } else if (payload instanceof ChatMatchedCampaignPayloadResponse matchedCard) {
+                campaignId = matchedCard.campaignId();
+            }
+
+            if (campaignId == null) {
+                return null;
+            }
+
+            // 캠페인 정보 조회
+            Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
+            if (campaign == null || campaign.isDeleted()) {
+                return null;
+            }
+
+            // 브랜드 정보 조회
+            Brand brand = brandRepository.findByCreatedBy(campaign.getCreatedBy()).orElse(null);
+            String brandName = brand != null && !brand.isDeleted() ? brand.getBrandName() : null;
+
+            return new CampaignSummaryResponse(
+                    campaignId,
+                    null, // 캠페인 대표 이미지는 현재 Campaign 엔티티에 없음
+                    brandName,
+                    campaign.getTitle()
+            );
+        } catch (Exception ex) {
+            LOG.warn("Failed to extract campaign summary from system message. roomId={}, messageId={}", 
+                    roomId, latestProposalMessage.getId(), ex);
+            return null;
+        }
     }
 
     private record OpponentInfo(Long userId, String name, String profileImageUrl) {

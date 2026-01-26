@@ -18,7 +18,6 @@ import com.example.RealMatch.chat.application.service.message.ChatMessageQuerySe
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
@@ -57,13 +56,12 @@ public class ChatController implements ChatSwagger {
     @GetMapping("/rooms")
     public CustomResponse<ChatRoomListResponse> getRoomList(
             @AuthenticationPrincipal CustomUserDetails user,
-            @RequestParam(required = false) ChatRoomTab tab,
             @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
             @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
             @RequestParam(defaultValue = "20") int size
     ) {
         Long userId = user.getUserId();
-        return CustomResponse.ok(chatRoomQueryService.getRoomList(userId, tab, filterStatus, roomCursor, size));
+        return CustomResponse.ok(chatRoomQueryService.getRoomList(userId, filterStatus, roomCursor, size));
     }
 
     @GetMapping("/rooms/{roomId}")

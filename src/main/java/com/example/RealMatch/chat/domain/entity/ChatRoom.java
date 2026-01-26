@@ -3,7 +3,6 @@ package com.example.RealMatch.chat.domain.entity;
 import java.time.LocalDateTime;
 
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
-import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatRoomType;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
@@ -26,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "chat_room",
         indexes = {
-                @Index(name = "idx_room_deleted_lastmsg_proposal", columnList = "is_deleted, last_message_at, last_proposal_direction")
+                @Index(name = "idx_room_deleted_lastmsg", columnList = "is_deleted, last_message_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -57,25 +56,19 @@ public class ChatRoom extends DeleteBaseEntity {
     private ChatMessageType lastMessageType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "last_proposal_direction", nullable = false, length = 30)
-    private ChatProposalDirection lastProposalDirection;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "proposal_status", length = 20)
     private ChatProposalStatus proposalStatus;
 
     private ChatRoom(
             String roomKey,
-            ChatRoomType roomType,
-            ChatProposalDirection lastProposalDirection
+            ChatRoomType roomType
     ) {
         this.roomKey = roomKey;
         this.roomType = roomType;
-        this.lastProposalDirection = lastProposalDirection;
     }
 
-    public static ChatRoom createDirectRoom(String roomKey, ChatProposalDirection lastProposalDirection) {
-        return new ChatRoom(roomKey, ChatRoomType.DIRECT, lastProposalDirection);
+    public static ChatRoom createDirectRoom(String roomKey) {
+        return new ChatRoom(roomKey, ChatRoomType.DIRECT);
     }
 
     public void updateLastMessage(
@@ -92,9 +85,5 @@ public class ChatRoom extends DeleteBaseEntity {
 
     public void updateProposalStatus(ChatProposalStatus status) {
         this.proposalStatus = status;
-    }
-
-    public void updateProposalDirection(ChatProposalDirection direction) {
-        this.lastProposalDirection = direction;
     }
 }

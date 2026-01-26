@@ -10,11 +10,8 @@ import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.QChatMessage;
 import com.example.RealMatch.chat.domain.entity.QChatRoom;
 import com.example.RealMatch.chat.domain.entity.QChatRoomMember;
-import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
-import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -34,7 +31,6 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
     @Override
     public List<ChatRoom> findRoomsByUser(
             Long userId,
-            ChatRoomTab tab,
             ChatRoomFilterStatus filterStatus,
             RoomCursorInfo cursorInfo,
             int size
@@ -47,8 +43,7 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                         MEMBER.isDeleted.isFalse(),
                         ROOM.isDeleted.isFalse(),
                         ROOM.lastMessageAt.isNotNull(),
-                        applyTabFilter(tab, ROOM, MEMBER),
-                        applyStatusFilter(filterStatus, ROOM),
+                        applyFilterStatus(filterStatus, ROOM),
                         applyCursor(cursorInfo, ROOM)
                 )
                 .orderBy(
@@ -60,7 +55,7 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
     }
 
     @Override
-    public long countUnreadMessagesByUserAndTab(Long userId, ChatRoomTab tab) {
+    public long countTotalUnreadMessages(Long userId) {
         QChatRoomMember memberForCount = new QChatRoomMember("memberForCount");
         QChatRoom roomForCount = new QChatRoom("roomForCount");
 
@@ -78,24 +73,12 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                                 .and(roomForCount.lastMessageAt.isNotNull())
                 )
                 .where(
-                        applyTabFilter(tab, roomForCount, memberForCount),
                         MESSAGE.senderId.isNotNull(),
                         MESSAGE.senderId.ne(userId),
                         isUnreadMessage(MESSAGE.id, memberForCount.lastReadMessageId)
                 )
                 .fetchOne();
         return count != null ? count : 0L;
-    }
-
-    @Override
-    public Map<ChatRoomTab, Long> countUnreadMessagesByTabs(Long userId) {
-        long sentCount = countUnreadMessagesByUserAndTab(userId, ChatRoomTab.SENT);
-        long receivedCount = countUnreadMessagesByUserAndTab(userId, ChatRoomTab.RECEIVED);
-
-        return Map.of(
-                ChatRoomTab.SENT, sentCount,
-                ChatRoomTab.RECEIVED, receivedCount
-        );
     }
 
     @Override
@@ -141,36 +124,15 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                 .or(messageIdPath.gt(lastReadMessageIdPath));
     }
 
-    private BooleanExpression applyTabFilter(ChatRoomTab tab, QChatRoom r, QChatRoomMember m) {
-        if (tab == null) {
-            return null;
+    private BooleanExpression applyFilterStatus(ChatRoomFilterStatus filterStatus, QChatRoom r) {
+        if (filterStatus == null || filterStatus == ChatRoomFilterStatus.LATEST) {
+            return null; // 최신순은 필터링 없음
         }
-        return switch (tab) {
-            case SENT -> sentCondition(r, m);
-            case RECEIVED -> receivedCondition(r, m);
-        };
-    }
-
-    private BooleanExpression sentCondition(QChatRoom r, QChatRoomMember m) {
-        return (r.lastProposalDirection.eq(ChatProposalDirection.BRAND_TO_CREATOR)
-                .and(m.role.eq(ChatRoomMemberRole.BRAND)))
-                .or(r.lastProposalDirection.eq(ChatProposalDirection.CREATOR_TO_BRAND)
-                        .and(m.role.eq(ChatRoomMemberRole.CREATOR)));
-    }
-
-    private BooleanExpression receivedCondition(QChatRoom r, QChatRoomMember m) {
-        return (r.lastProposalDirection.eq(ChatProposalDirection.BRAND_TO_CREATOR)
-                .and(m.role.eq(ChatRoomMemberRole.CREATOR)))
-                .or(r.lastProposalDirection.eq(ChatProposalDirection.CREATOR_TO_BRAND)
-                        .and(m.role.eq(ChatRoomMemberRole.BRAND)));
-    }
-
-    private BooleanExpression applyStatusFilter(ChatRoomFilterStatus filterStatus, QChatRoom r) {
-        if (filterStatus == null || filterStatus == ChatRoomFilterStatus.ALL) {
-            return null;
+        if (filterStatus == ChatRoomFilterStatus.COLLABORATING) {
+            // 협업중: proposalStatus == MATCHED
+            return r.proposalStatus.eq(ChatProposalStatus.MATCHED);
         }
-        ChatProposalStatus status = filterStatus.toProposalStatus();
-        return r.proposalStatus.eq(status);
+        return null;
     }
 
     private BooleanExpression applyCursor(RoomCursorInfo cursorInfo, QChatRoom r) {

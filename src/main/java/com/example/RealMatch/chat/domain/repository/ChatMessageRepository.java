@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 
-public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
+public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long>, ChatMessageRepositoryCustom {
     Optional<ChatMessage> findByClientMessageIdAndSenderId(String clientMessageId, Long senderId);
 
     long countByRoomIdAndIdGreaterThan(Long roomId, Long messageId);

@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
@@ -52,7 +51,7 @@ public interface ChatSwagger {
 
     @Operation(summary = "채팅방 목록 조회 API By 여채현",
             description = """
-                    tab/status 기준으로 채팅방 목록을 조회합니다.
+                    status 기준으로 채팅방 목록을 조회합니다.
                     정렬은 항상 lastMessageAt desc, roomId desc 기준입니다.
                     cursor는 lastMessageAt|roomId 포맷을 그대로 재사용하세요.
                     메시지가 없는 방은 목록에서 제외됩니다.
@@ -63,8 +62,7 @@ public interface ChatSwagger {
     })
     CustomResponse<ChatRoomListResponse> getRoomList(
             @AuthenticationPrincipal CustomUserDetails user,
-            @Parameter(description = "채팅방 탭 (SENT: 보낸 제안, RECEIVED: 받은 제안)") @RequestParam(required = false) ChatRoomTab tab,
-            @Parameter(description = "채팅방 필터 상태") @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
+            @Parameter(description = "채팅방 필터 상태 (LATEST: 최신순, COLLABORATING: 협업중)") @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
             @Parameter(description = "페이지네이션 커서 (lastMessageAt|roomId 형식)") @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
             @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20") int size
     );
