@@ -1,5 +1,7 @@
 package com.example.RealMatch.chat.presentation.rest.controller;
 
+import java.io.IOException;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,7 +82,8 @@ public class ChatController implements ChatSwagger {
             @RequestParam(name = "cursor", required = false) MessageCursor messageCursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return CustomResponse.ok(chatMessageQueryService.getMessages(user, roomId, messageCursor, size));
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatMessageQueryService.getMessages(userId, roomId, messageCursor, size));
     }
 
     @PostMapping("/attachments")
@@ -88,7 +91,15 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestPart("request") ChatAttachmentUploadRequest request,
             @RequestPart("file") MultipartFile file
-    ) {
-        return CustomResponse.ok(chatAttachmentService.uploadAttachment(user, request, file));
+    ) throws IOException {
+        Long userId = user.getUserId();
+        return CustomResponse.ok(chatAttachmentService.uploadAttachment(
+                userId,
+                request,
+                file.getInputStream(),
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getSize()
+        ));
     }
 }

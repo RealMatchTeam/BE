@@ -1,5 +1,7 @@
 package com.example.RealMatch.chat.presentation.rest.swagger;
 
+import java.io.IOException;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -120,5 +122,5 @@ public interface ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Parameter(description = "첨부 파일 업로드 요청 정보") @Valid @RequestPart("request") ChatAttachmentUploadRequest request,
             @Parameter(description = "업로드할 파일") @RequestPart("file") MultipartFile file
-    );
+    ) throws IOException;
 }

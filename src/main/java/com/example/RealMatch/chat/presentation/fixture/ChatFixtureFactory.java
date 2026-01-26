@@ -3,8 +3,6 @@ package com.example.RealMatch.chat.presentation.fixture;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.domain.enums.ChatAttachmentStatus;
@@ -268,14 +266,16 @@ public final class ChatFixtureFactory {
 
     public static ChatAttachmentUploadResponse sampleAttachmentUploadResponse(
             ChatAttachmentUploadRequest request,
-            MultipartFile file
+            String originalFilename,
+            String contentType,
+            long fileSize
     ) {
         return new ChatAttachmentUploadResponse(
                 9001L,
                 request.attachmentType(),
-                file.getContentType(),
-                file.getOriginalFilename(),
-                file.getSize(),
+                contentType,
+                originalFilename,
+                fileSize,
                 "https://cdn.example.com/attachments/9001",
                 ChatAttachmentStatus.UPLOADED,
                 LocalDateTime.of(2025, 1, 1, 10, 10)
