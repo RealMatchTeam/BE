@@ -1,11 +1,8 @@
-package com.example.RealMatch.business.domain.entity;
-
-import java.util.UUID;
-
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.tag.domain.entity.TagContent;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -15,10 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
@@ -28,12 +22,11 @@ import lombok.NoArgsConstructor;
                 @UniqueConstraint(columnNames = {"campaign_id", "content_tag_id"})
         }
 )
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CampaignContentTag extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_id", nullable = false)
@@ -43,13 +36,43 @@ public class CampaignContentTag extends BaseEntity {
     @JoinColumn(name = "content_tag_id", nullable = false)
     private TagContent tagContent;
 
-    @Builder
-    public CampaignContentTag(
+    @Column(name = "custom_tag_value")
+    private String customTagValue;
+
+    protected CampaignContentTag() {}
+
+    private CampaignContentTag(
             Campaign campaign,
-            TagContent tagContent
+            TagContent tagContent,
+            String customTagValue
     ) {
         this.campaign = campaign;
         this.tagContent = tagContent;
+
+        if (tagContent.getEngName().equals("ETC")) {
+            if (customTagValue == null || customTagValue.isBlank()) {
+                throw new IllegalArgumentException("ETC 태그에는 입력값이 필요합니다.");
+            }
+            this.customTagValue = customTagValue;
+        } else {
+            this.customTagValue = null;
+        }
     }
 
+    /* 일반 태그 */
+    public static CampaignContentTag of(
+            Campaign campaign,
+            TagContent tagContent
+    ) {
+        return new CampaignContentTag(campaign, tagContent, null);
+    }
+
+    /* 사용자 입력 태그 */
+    public static CampaignContentTag ofCustom(
+            Campaign campaign,
+            TagContent tagContent,
+            String customValue
+    ) {
+        return new CampaignContentTag(campaign, tagContent, customValue);
+    }
 }

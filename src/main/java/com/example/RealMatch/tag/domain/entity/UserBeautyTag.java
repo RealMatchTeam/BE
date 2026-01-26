@@ -1,7 +1,7 @@
-package com.example.RealMatch.user.domain.entity;
+package com.example.RealMatch.tag.domain.entity;
 
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.tag.domain.entity.TagFashion;
+import com.example.RealMatch.tag.domain.entity.TagBeauty;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,13 +20,13 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "user_fashion_tag",
+        name = "user_beauty_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "fashion_tag_id"})
+                @UniqueConstraint(columnNames = {"user_id", "beauty_tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserFashionTag extends BaseEntity {
+public class UserBeautyTag extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,16 +37,15 @@ public class UserFashionTag extends BaseEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fashion_tag_id", nullable = false)
-    private TagFashion tagFashion;
+    @JoinColumn(name = "beauty_tag_id", nullable = false)
+    private TagBeauty tagBeauty;
 
     @Builder
-    public UserFashionTag(
+    public UserBeautyTag(
             User user,
-            TagFashion tagFashion,
-            String customTagValue
+            TagBeauty tagBeauty
     ) {
         this.user = user;
-        this.tagFashion = tagFashion;
+        this.tagBeauty = tagBeauty;
     }
 }

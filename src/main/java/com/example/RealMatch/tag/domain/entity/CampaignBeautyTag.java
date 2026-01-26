@@ -1,5 +1,8 @@
-package com.example.RealMatch.user.domain.entity;
+package com.example.RealMatch.tag.domain.entity;
 
+import java.util.UUID;
+
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.tag.domain.entity.TagBeauty;
 
@@ -20,32 +23,32 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "user_beauty_tag",
+        name = "campaign_beauty_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "beauty_tag_id"})
+                @UniqueConstraint(columnNames = {"campaign_id", "beauty_tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserBeautyTag extends BaseEntity {
+public class CampaignBeautyTag extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "campaign_id", nullable = false)
+    private Campaign campaign;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "beauty_tag_id", nullable = false)
     private TagBeauty tagBeauty;
 
     @Builder
-    public UserBeautyTag(
-            User user,
+    public CampaignBeautyTag(
+            Campaign campaign,
             TagBeauty tagBeauty
     ) {
-        this.user = user;
+        this.campaign = campaign;
         this.tagBeauty = tagBeauty;
     }
 }

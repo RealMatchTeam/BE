@@ -1,10 +1,10 @@
-package com.example.RealMatch.business.domain.entity;
+package com.example.RealMatch.tag.domain.entity;
 
 import java.util.UUID;
 
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.tag.domain.entity.TagBeauty;
+import com.example.RealMatch.tag.domain.entity.TagFashion;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -23,13 +23,13 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "campaign_beauty_tag",
+        name = "campaign_fashion_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"campaign_id", "beauty_tag_id"})
+                @UniqueConstraint(columnNames = {"campaign_id", "fashion_tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignBeautyTag extends BaseEntity {
+public class CampaignFashionTag extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -40,15 +40,15 @@ public class CampaignBeautyTag extends BaseEntity {
     private Campaign campaign;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "beauty_tag_id", nullable = false)
-    private TagBeauty tagBeauty;
+    @JoinColumn(name = "fashion_tag_id", nullable = false)
+    private TagFashion tagFashion;
 
     @Builder
-    public CampaignBeautyTag(
+    public CampaignFashionTag(
             Campaign campaign,
-            TagBeauty tagBeauty
+            TagFashion tagFashion
     ) {
         this.campaign = campaign;
-        this.tagBeauty = tagBeauty;
+        this.tagFashion = tagFashion;
     }
 }

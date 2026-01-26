@@ -1,8 +1,5 @@
-package com.example.RealMatch.user.domain.entity;
+package com.example.RealMatch.tag.domain.entity;
 
-import java.util.UUID;
-
-import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.tag.domain.entity.TagContent;
 
@@ -23,32 +20,32 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "brand_content_tag",
+        name = "user_content_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"brand_id", "content_tag_id"})
+                @UniqueConstraint(columnNames = {"user_id", "content_tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandContentTag extends BaseEntity {
+public class UserContentTag extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_tag_id", nullable = false)
     private TagContent tagContent;
 
     @Builder
-    public BrandContentTag(
-            Brand brand,
+    public UserContentTag(
+            User user,
             TagContent tagContent
     ) {
-        this.brand = brand;
+        this.user = user;
         this.tagContent = tagContent;
     }
 }
