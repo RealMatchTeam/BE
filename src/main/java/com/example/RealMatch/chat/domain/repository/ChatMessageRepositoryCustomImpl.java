@@ -35,4 +35,23 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
                 .orderBy(MESSAGE.id.desc())
                 .fetch();
     }
+
+    @Override
+    public List<ChatMessage> findMessagesByRoomId(Long roomId, Long cursorMessageId, int size) {
+        var query = queryFactory.selectFrom(MESSAGE);
+        
+        if (cursorMessageId != null) {
+            query = query.where(
+                    MESSAGE.roomId.eq(roomId),
+                    MESSAGE.id.lt(cursorMessageId)
+            );
+        } else {
+            query = query.where(MESSAGE.roomId.eq(roomId));
+        }
+
+        return query
+                .orderBy(MESSAGE.id.desc())
+                .limit(size + 1)
+                .fetch();
+    }
 }
