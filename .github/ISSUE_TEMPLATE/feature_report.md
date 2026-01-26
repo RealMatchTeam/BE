@@ -16,5 +16,5 @@ assignees: ''
 ### 작업 내용
 어떤 작업들이 진행되어야 하나요?
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+### 추가 정보
+기능 요청에 대한 추가적인 맥락이나 스크린샷이 있다면 첨부해주세요.

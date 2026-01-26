@@ -25,7 +25,7 @@ public class ChatWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        var registration = registry.addEndpoint("/ws/chat")
+        var registration = registry.addEndpoint("/api/v1/ws/chat")
                 .setAllowedOrigins(allowedOrigin);
         HandshakeHandler handshakeHandler = handshakeHandlerProvider.getIfAvailable();
         if (handshakeHandler != null) {

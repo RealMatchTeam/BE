@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -23,10 +24,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "chat_room_member",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_chat_room_member_room_user",
-                columnNames = {"room_id", "user_id"}
-        )
+        indexes = {
+                @Index(name = "idx_member_user_deleted_room", columnList = "user_id, is_deleted, room_id")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_chat_room_member_room_user",
+                        columnNames = {"room_id", "user_id"}
+                )
+        }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomMember extends DeleteBaseEntity {
