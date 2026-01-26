@@ -1,5 +1,7 @@
 package com.example.RealMatch.chat.presentation.rest.swagger;
 
+import java.io.IOException;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,8 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomSort;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @Tag(name = "chat", description = "채팅 REST API")
-@RequestMapping("/api/chat")
+@RequestMapping("/api/v1/chat")
 public interface ChatSwagger {
 
     @Operation(summary = "채팅방 생성/조회 API By 여채현",
@@ -53,8 +53,8 @@ public interface ChatSwagger {
 
     @Operation(summary = "채팅방 목록 조회 API By 여채현",
             description = """
-                    tab/status/sort 기준으로 채팅방 목록을 조회합니다.
-                    sort=LATEST는 lastMessageAt desc, roomId desc 기준으로 정렬합니다.
+                    status 기준으로 채팅방 목록을 조회합니다.
+                    정렬은 항상 lastMessageAt desc, roomId desc 기준입니다.
                     cursor는 lastMessageAt|roomId 포맷을 그대로 재사용하세요.
                     메시지가 없는 방은 목록에서 제외됩니다.
                     """)
@@ -64,26 +64,24 @@ public interface ChatSwagger {
     })
     CustomResponse<ChatRoomListResponse> getRoomList(
             @AuthenticationPrincipal CustomUserDetails user,
-            @Parameter(description = "채팅방 탭 (SENT: 보낸 제안, RECEIVED: 받은 제안)") @RequestParam(required = false) ChatRoomTab tab,
-            @Parameter(description = "채팅방 필터 상태") @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
-            @Parameter(description = "정렬 기준 (LATEST: 최신순)") @RequestParam(required = false) ChatRoomSort sort,
+            @Parameter(description = "채팅방 필터 상태 (LATEST: 최신순, COLLABORATING: 협업중)") @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
             @Parameter(description = "페이지네이션 커서 (lastMessageAt|roomId 형식)") @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
             @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20") int size
     );
 
-    @Operation(summary = "채팅방 상세 조회 API By 여채현",
+    @Operation(summary = "채팅방 헤더 조회 API By 여채현",
             description = """
                     채팅방 헤더에 필요한 상대 정보와 상태 값을 반환합니다.
                     태그/상태 라벨 등 UI 구성에 필요한 필드를 포함합니다.
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "채팅방 상세 조회 성공"),
+            @ApiResponse(responseCode = "200", description = "채팅방 헤더 조회 성공"),
             @ApiResponse(responseCode = "COMMON401_1", description = "인증이 필요합니다."),
             @ApiResponse(responseCode = "CHAT404_1", description = "채팅방을 찾을 수 없습니다."),
             @ApiResponse(responseCode = "CHAT403_2", description = "채팅방 멤버가 아닙니다."),
             @ApiResponse(responseCode = "CHAT403_3", description = "이미 나간 채팅방입니다.")
     })
-    CustomResponse<ChatRoomDetailResponse> getRoomDetail(
+    CustomResponse<ChatRoomDetailResponse> getChatRoomDetailWithOpponent(
             @AuthenticationPrincipal CustomUserDetails user,
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId
     );
@@ -124,5 +122,5 @@ public interface ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Parameter(description = "첨부 파일 업로드 요청 정보") @Valid @RequestPart("request") ChatAttachmentUploadRequest request,
             @Parameter(description = "업로드할 파일") @RequestPart("file") MultipartFile file
-    );
+    ) throws IOException;
 }

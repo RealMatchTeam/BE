@@ -134,6 +134,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         
         ChatMessage saved = chatMessageRepository.save(message);
         updateChatRoomLastMessage(saved);
+        
         return responseMapper.toResponse(saved, null);
     }
 

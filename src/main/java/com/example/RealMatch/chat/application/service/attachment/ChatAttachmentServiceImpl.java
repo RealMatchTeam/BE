@@ -1,22 +1,27 @@
 package com.example.RealMatch.chat.application.service.attachment;
 
+import java.io.InputStream;
+
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.RealMatch.chat.presentation.dto.request.ChatAttachmentUploadRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentUploadResponse;
 import com.example.RealMatch.chat.presentation.fixture.ChatFixtureFactory;
-import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 
 @Service
 public class ChatAttachmentServiceImpl implements ChatAttachmentService {
 
     @Override
     public ChatAttachmentUploadResponse uploadAttachment(
-            CustomUserDetails user,
+            Long userId,
             ChatAttachmentUploadRequest request,
-            MultipartFile file
+            InputStream fileInputStream,
+            String originalFilename,
+            String contentType,
+            long fileSize
     ) {
-        return ChatFixtureFactory.sampleAttachmentUploadResponse(request, file);
+        // TODO: 실제 파일 업로드 로직 구현 필요
+        // 현재는 Fixture를 사용하지만, 실제 구현 시 fileInputStream을 사용해야 함
+        return ChatFixtureFactory.sampleAttachmentUploadResponse(request, originalFilename, contentType, fileSize);
     }
 }
