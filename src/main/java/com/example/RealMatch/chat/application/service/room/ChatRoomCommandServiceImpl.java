@@ -12,12 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
+import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
-import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -33,10 +33,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     @Override
     @Transactional
-    public ChatRoomCreateResponse createOrGetRoom(Long userId, ChatRoomCreateRequest request) {
-        Long brandId = request.brandId();
-        Long creatorId = request.creatorId();
-
+    public ChatRoomCreateResponse createOrGetRoom(Long userId, Long brandId, Long creatorId) {
         validateRequest(userId, brandId, creatorId);
 
         String roomKey = generateRoomKey(brandId, creatorId);
@@ -47,7 +44,6 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         return new ChatRoomCreateResponse(
                 room.getId(),
                 room.getRoomKey(),
-                room.getLastProposalDirection(),
                 room.getCreatedAt()
         );
     }
@@ -67,10 +63,16 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         return String.format("direct:%d:%d", smallerId, largerId);
     }
 
-    private ChatRoom createRoomWithMembers(String roomKey, Long brandId, Long creatorId) {
+    private ChatRoom createRoomWithMembers(
+            String roomKey,
+            Long brandId,
+            Long creatorId
+    ) {
         ChatRoom room;
         try {
-            room = chatRoomRepository.saveAndFlush(ChatRoom.createDirectRoom(roomKey));
+            room = chatRoomRepository.saveAndFlush(
+                    ChatRoom.createDirectRoom(roomKey)
+            );
         } catch (DataIntegrityViolationException e) {
             // 다른 스레드가 이미 채팅방을 생성한 경우, 기존 방을 조회
             room = chatRoomRepository.findByRoomKey(roomKey)
@@ -111,5 +113,25 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
 
         room.updateLastMessage(messageId, messageAt, messagePreview, messageType);
+    }
+
+    @Override
+    @Transactional
+    public void updateProposalStatusByUsers(
+            @NonNull Long brandUserId,
+            @NonNull Long creatorUserId,
+            @NonNull ChatProposalStatus status
+    ) {
+        String roomKey = generateRoomKey(brandUserId, creatorUserId);
+        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
+
+        if (room == null) {
+            LOG.warn("Chat room not found for proposal status update. brandUserId={}, creatorUserId={}, status={}",
+                    brandUserId, creatorUserId, status);
+            return;
+        }
+
+        room.updateProposalStatus(status);
+        LOG.debug("Chat room proposal status updated. roomId={}, status={}", room.getId(), status);
     }
 }

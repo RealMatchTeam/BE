@@ -16,4 +16,8 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     List<Brand> findByIndustryType(IndustryType industryType);
 
     List<Brand> findByBrandNameContaining(String brandName);
+
+    Optional<Brand> findByCreatedBy(Long createdBy);
+
+    List<Brand> findByCreatedByIn(List<Long> createdByList);
 }
