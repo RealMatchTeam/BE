@@ -30,8 +30,7 @@ public class CampaignQueryService {
                         new CustomException(CampaignErrorCode.CAMPAIGN_NOT_FOUND)
                 );
 
-        List<CampaignContentTag> tags =
-                campaignContentTagRepository.findAllByCampaignId(campaignId);
+        List<CampaignContentTag> tags = campaignContentTagRepository.findAllByCampaignIdWithTagContent(campaignId);
 
         return CampaignDetailResponse.from(campaign, tags);
     }

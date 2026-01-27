@@ -74,7 +74,7 @@ public class Campaign extends DeleteBaseEntity {
     private Long createdBy;
 
     @Builder
-    public Campaign(String title, String description, String preferredSkills, String schedule,
+    public Campaign(String title, String description, String preferredSkills, String schedule, String videoSpec,
                     String product, Long rewardAmount,
                     LocalDate startDate, LocalDate endDate,
                     LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
@@ -83,6 +83,7 @@ public class Campaign extends DeleteBaseEntity {
         this.description = description;
         this.preferredSkills = preferredSkills;
         this.schedule = schedule;
+        this.videoSpec = videoSpec;
         this.product = product;
         this.rewardAmount = rewardAmount;
         this.startDate = startDate;
@@ -93,7 +94,7 @@ public class Campaign extends DeleteBaseEntity {
         this.createdBy = createdBy;
     }
 
-    public void update(String title, String description, String preferredSkills, String schedule,
+    public void update(String title, String description, String preferredSkills, String schedule, String videoSpec,
                        String product, Long rewardAmount,
                        LocalDate startDate, LocalDate endDate,
                        LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
@@ -102,6 +103,7 @@ public class Campaign extends DeleteBaseEntity {
         this.description = description;
         this.preferredSkills = preferredSkills;
         this.schedule = schedule;
+        this.videoSpec = videoSpec;
         this.product = product;
         this.rewardAmount = rewardAmount;
         this.startDate = startDate;
