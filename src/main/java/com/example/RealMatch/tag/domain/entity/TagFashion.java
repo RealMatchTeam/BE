@@ -23,13 +23,13 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "tag_content",
+        name = "tag_fashion",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"tag_type", "eng_name"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TagContent extends DeleteBaseEntity {
+public class TagFashion extends DeleteBaseEntity {
 
     @Id
     @UuidGenerator
@@ -48,7 +48,7 @@ public class TagContent extends DeleteBaseEntity {
     private String korName;
 
     @Builder
-    public TagContent(
+    public TagFashion(
             ContentTagType tagType,
             String engName,
             String korName
