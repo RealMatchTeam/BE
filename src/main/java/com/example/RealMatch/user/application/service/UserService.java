@@ -3,7 +3,7 @@ package com.example.RealMatch.user.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.match.domain.repository.MatchingTestRepository;
+import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.exception.UserException;
 import com.example.RealMatch.user.domain.repository.UserRepository;
@@ -18,17 +18,17 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final MatchingTestRepository matchingTestRepository;
+    private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
 
     public MyPageResponseDto getMyPage(Long userId) {
-        // 1. 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
+        // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
-        // 2. 매칭 검사 여부 확인
-        boolean hasMatchingTest = matchingTestRepository.existsByUserId(userId);
+        // 매칭 검사 여부 확인 (캠페인 매칭 검사 기록 존재 여부)
+        boolean hasMatchingTest = matchCampaignHistoryRepository.existsByUserId(userId);
 
-        // 3. DTO 변환 및 반환
+        // DTO 변환 및 반환
         return MyPageResponseDto.from(user, hasMatchingTest);
     }
 }
