@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_OPTION}
+      ddl-auto: update
     properties:
       hibernate:
         dialect: ${JPA_HIBERNATE_DIALECT}
