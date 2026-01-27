@@ -5,10 +5,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.exception.UserException;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,5 +32,18 @@ public class UserService {
 
         // DTO 변환 및 반환
         return MyPageResponseDto.from(user, hasMatchingTest);
+    }
+
+    public MyProfileCardResponseDto getMyProfileCard(Long userId) {
+        // 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        // 프로필 카드를 볼 자격이 있는지 확인. GUEST 권한이거나, 매칭 테스트 기록이 없다면 예외 발생
+        if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
+            throw new UserException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
+        }
+
+        return MyProfileCardResponseDto.sample(user);
     }
 }
