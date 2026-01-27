@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final MatchingTestRepository matchingRepository;
+    private final MatchingTestRepository matchingTestRepository;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 1. 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -26,7 +26,7 @@ public class UserService {
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         // 2. 매칭 검사 여부 확인
-        boolean hasMatchingTest = matchingRepository.existsByUserId(userId);
+        boolean hasMatchingTest = matchingTestRepository.existsByUserId(userId);
 
         // 3. DTO 변환 및 반환
         return MyPageResponseDto.from(user, hasMatchingTest);
