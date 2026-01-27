@@ -18,12 +18,11 @@ public interface BrandSwagger {
 
     @Operation(summary = "브랜드 상세 조회", description = "브랜드 ID로 상세 정보를 조회합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = CustomResponse.class))),
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드",
                     content = @Content(schema = @Schema(implementation = CustomResponse.class)))
     })
-    CustomResponse<BrandDetailResponseDto> getBrandDetail(
+    CustomResponse<java.util.List<BrandDetailResponseDto>> getBrandDetail(
             @Parameter(description = "조회할 브랜드의 ID", required = true) @PathVariable Long brandId
     );
 }

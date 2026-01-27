@@ -1,5 +1,7 @@
 package com.example.RealMatch.brand.presentation.controller;
 
+import java.util.Collections;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +24,7 @@ public class BrandController implements BrandSwagger {
 
     @Override
     @GetMapping("/{brandId}")
-    public CustomResponse<BrandDetailResponseDto> getBrandDetail(@PathVariable Long brandId) {
-        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, brandService.getBrandDetail(brandId));
+    public CustomResponse<java.util.List<BrandDetailResponseDto>> getBrandDetail(@PathVariable Long brandId) {
+        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, Collections.singletonList(brandService.getBrandDetail(brandId)));
     }
 }
