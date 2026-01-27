@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.example.RealMatch.chat.domain.exception.ChatException;
-import com.example.RealMatch.global.oauth.exception.AuthException;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
+import com.example.RealMatch.oauth.exception.AuthException;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
