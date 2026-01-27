@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.oauth.service;
+package com.example.RealMatch.oauth.service;
 
 import java.util.Map;
 
@@ -9,13 +9,13 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.global.oauth.code.OAuthErrorCode;
-import com.example.RealMatch.global.oauth.dto.CustomOAuth2User;
-import com.example.RealMatch.global.oauth.dto.GoogleUserInfo;
-import com.example.RealMatch.global.oauth.dto.KakaoUserInfo;
-import com.example.RealMatch.global.oauth.dto.NaverUserInfo;
-import com.example.RealMatch.global.oauth.dto.OAuth2UserInfo;
-import com.example.RealMatch.global.oauth.exception.AuthException;
+import com.example.RealMatch.oauth.code.OAuthErrorCode;
+import com.example.RealMatch.oauth.dto.CustomOAuth2User;
+import com.example.RealMatch.oauth.dto.GoogleUserInfo;
+import com.example.RealMatch.oauth.dto.KakaoUserInfo;
+import com.example.RealMatch.oauth.dto.NaverUserInfo;
+import com.example.RealMatch.oauth.dto.OAuth2UserInfo;
+import com.example.RealMatch.oauth.exception.AuthException;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
@@ -73,7 +73,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .name(userInfo.getName())
                         .nickname(userInfo.getName()) // 초기에 닉네임은 이름과 동일하게 설정
                         .email(userInfo.getEmail())
-                        .role(Role.CREATOR)
+                        .role(Role.GUEST) // [수정] 최초 가입 시 GUEST 권한 부여
                         .build()
         );
 

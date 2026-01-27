@@ -1,5 +1,7 @@
 package com.example.RealMatch.user.domain.entity;
 
+import java.util.UUID;
+
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 
@@ -9,7 +11,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -26,8 +27,9 @@ import lombok.NoArgsConstructor;
 public class AuthenticationMethod extends DeleteBaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

@@ -1,5 +1,7 @@
 package com.example.RealMatch.user.domain.entity;
 
+import java.util.UUID;
+
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.enums.TermName;
 
@@ -8,7 +10,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -23,8 +24,9 @@ import lombok.NoArgsConstructor;
 public class Term extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
