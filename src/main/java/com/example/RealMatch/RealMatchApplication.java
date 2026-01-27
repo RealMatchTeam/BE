@@ -8,7 +8,7 @@ import com.redis.om.spring.annotations.EnableRedisDocumentRepositories;
 
 @EnableAsync
 @SpringBootApplication
-@EnableRedisDocumentRepositories(basePackages = "com.example.RealMatch.tag.infrastructure.redis.repository")
+@EnableRedisDocumentRepositories(basePackages = "com.example.RealMatch.match.infrastructure.redis.repository")
 public class RealMatchApplication {
 
     public static void main(String[] args) {

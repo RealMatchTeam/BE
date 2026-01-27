@@ -34,7 +34,7 @@ public class UserFashionTag extends BaseEntity {
     @Id
     @UuidGenerator
     @GeneratedValue
-    @Column(columnDefinition = "UUID")
+    @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(name = "user_id", nullable = false)

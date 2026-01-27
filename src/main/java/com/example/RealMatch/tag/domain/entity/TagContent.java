@@ -34,7 +34,7 @@ public class TagContent extends DeleteBaseEntity {
     @Id
     @UuidGenerator
     @GeneratedValue
-    @Column(columnDefinition = "UUID")
+    @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Enumerated(EnumType.STRING)
