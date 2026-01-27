@@ -17,8 +17,6 @@ public class ChatRoomMemberQueryServiceImpl implements ChatRoomMemberQueryServic
 
     @Override
     public List<ChatRoomMember> findActiveMembers(Long roomId) {
-        return chatRoomMemberRepository.findByRoomId(roomId).stream()
-                .filter(member -> !member.isDeleted() && member.getLeftAt() == null)
-                .toList();
+        return chatRoomMemberRepository.findActiveMembersByRoomId(roomId);
     }
 }

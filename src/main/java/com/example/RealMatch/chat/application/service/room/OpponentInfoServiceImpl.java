@@ -42,9 +42,9 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
 
     @Override
     public Map<Long, OpponentInfo> getOpponentInfoMapBatch(Long userId, List<Long> roomIds) {
-        List<ChatRoomMember> opponentMembers = chatRoomMemberRepository
-                .findByRoomIdIn(roomIds).stream()
-                .filter(m -> !m.getUserId().equals(userId) && !m.isDeleted())
+        List<ChatRoomMember> activeMembers = chatRoomMemberRepository.findActiveMembersByRoomIdIn(roomIds);
+        List<ChatRoomMember> opponentMembers = activeMembers.stream()
+                .filter(m -> !m.getUserId().equals(userId))
                 .toList();
 
         Map<Long, List<ChatRoomMember>> opponentByRoom = opponentMembers.stream()
@@ -102,9 +102,9 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
 
     @Override
     public ChatRoomMember getOpponentMember(Long roomId, Long userId) {
-        List<ChatRoomMember> allMembers = chatRoomMemberRepository.findByRoomId(roomId);
-        return allMembers.stream()
-                .filter(m -> !m.getUserId().equals(userId) && !m.isDeleted())
+        List<ChatRoomMember> activeMembers = chatRoomMemberRepository.findActiveMembersByRoomId(roomId);
+        return activeMembers.stream()
+                .filter(m -> !m.getUserId().equals(userId))
                 .findFirst()
                 .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR, "Opponent member not found"));
     }

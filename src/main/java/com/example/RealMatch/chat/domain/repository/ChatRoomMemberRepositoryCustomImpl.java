@@ -1,5 +1,6 @@
 package com.example.RealMatch.chat.domain.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
@@ -51,5 +52,33 @@ public class ChatRoomMemberRepositoryCustomImpl implements ChatRoomMemberReposit
                 .fetchOne();
 
         return Optional.ofNullable(member);
+    }
+
+    @Override
+    public List<ChatRoomMember> findActiveMembersByRoomId(Long roomId) {
+        return queryFactory
+                .selectFrom(MEMBER)
+                .innerJoin(ROOM).on(MEMBER.roomId.eq(ROOM.id))
+                .where(
+                        MEMBER.roomId.eq(roomId),
+                        MEMBER.isDeleted.isFalse(),
+                        MEMBER.leftAt.isNull(),
+                        ROOM.isDeleted.isFalse()
+                )
+                .fetch();
+    }
+
+    @Override
+    public List<ChatRoomMember> findActiveMembersByRoomIdIn(List<Long> roomIds) {
+        return queryFactory
+                .selectFrom(MEMBER)
+                .innerJoin(ROOM).on(MEMBER.roomId.eq(ROOM.id))
+                .where(
+                        MEMBER.roomId.in(roomIds),
+                        MEMBER.isDeleted.isFalse(),
+                        MEMBER.leftAt.isNull(),
+                        ROOM.isDeleted.isFalse()
+                )
+                .fetch();
     }
 }
