@@ -1,4 +1,6 @@
-package com.example.RealMatch.business.domain;
+package com.example.RealMatch.business.domain.entity;
+
+import java.util.UUID;
 
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.business.domain.enums.WhoProposed;
@@ -29,8 +31,8 @@ import lombok.NoArgsConstructor;
 public class CampaignProposal extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_id", nullable = false)

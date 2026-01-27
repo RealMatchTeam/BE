@@ -24,15 +24,62 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     env:
-      SPRING_PROFILES_ACTIVE: test
+      SPRING_PROFILES_ACTIVE: dev
+      # Database
+      DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/test_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test
+      DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      JPA_DDL_OPTION: create
+      JPA_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+      # JWT
       JWT_SECRET: pPmJ9ViYt8f6HAh2q5s36QmEUeyEFRcquPaNpnIGUK8er5DjfTKa4xbDsTFXQ7HRVfTLR2DIYs7s9iGdJ+Yb7Q==
       JWT_ACCESS_EXPIRE_MS: 600000
       JWT_REFRESH_EXPIRE_MS: 1209600000
-      KAKAO_ID: client
-      KAKAO_SECRET: secret
-      KAKAO_REDIRECT_URI: http://redirect-uri-test
+      JWT_REFRESH_EXPIRE_DAYS: 14
+      # OAuth - Kakao
+      KAKAO_ID: test_kakao_client
+      KAKAO_SECRET: test_kakao_secret
+      KAKAO_REDIRECT_URI: http://localhost:8080/login/oauth2/code/kakao
+      # OAuth - Naver
+      NAVER_ID: test_naver_client
+      NAVER_SECRET: test_naver_secret
+      NAVER_REDIRECT_URI: http://localhost:8080/login/oauth2/code/naver
+      # OAuth - Google
+      GOOGLE_ID: test_google_client
+      GOOGLE_SECRET: test_google_secret
+      GOOGLE_REDIRECT_URI: http://localhost:8080/login/oauth2/code/google
+      # Redis
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      # RabbitMQ
+      RABBITMQ_URL: 127.0.0.1
+      RABBITMQ_MQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
 
     steps:
     - name: Checkout code
