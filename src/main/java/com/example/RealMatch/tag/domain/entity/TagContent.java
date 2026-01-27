@@ -1,5 +1,9 @@
 package com.example.RealMatch.tag.domain.entity;
 
+import java.util.UUID;
+
+import org.hibernate.annotations.UuidGenerator;
+
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
 
@@ -8,11 +12,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
@@ -22,11 +28,14 @@ import lombok.Getter;
                 @UniqueConstraint(columnNames = {"tag_type", "eng_name"})
         }
 )
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TagContent extends DeleteBaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidGenerator
+    @GeneratedValue
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tag_type", nullable = false, length = 30)
@@ -38,22 +47,15 @@ public class TagContent extends DeleteBaseEntity {
     @Column(name = "kor_name", nullable = false, length = 100)
     private String korName;
 
-    @Column(name = "display_order", nullable = false)
-    private Integer displayOrder;
-
-    protected TagContent() {
-    }
-
+    @Builder
     public TagContent(
             ContentTagType tagType,
             String engName,
-            String korName,
-            Integer displayOrder
+            String korName
     ) {
         this.tagType = tagType;
         this.engName = engName;
         this.korName = korName;
-        this.displayOrder = displayOrder;
     }
 }
 

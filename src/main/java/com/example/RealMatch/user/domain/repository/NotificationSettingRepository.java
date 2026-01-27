@@ -2,6 +2,7 @@ package com.example.RealMatch.user.domain.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,7 +10,7 @@ import com.example.RealMatch.user.domain.entity.NotificationSetting;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 import com.example.RealMatch.user.domain.entity.enums.NotificationType;
 
-public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, Long> {
+public interface NotificationSettingRepository extends JpaRepository<NotificationSetting, UUID> {
 
     List<NotificationSetting> findByUserId(Long userId);
 

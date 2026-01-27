@@ -25,15 +25,16 @@ services:
     container_name: realmatch_redis
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     networks:
       - realmatch-network
 
   app:
-    image: ${DOCKERHUB_USERNAME}/realmatch-backend:prod
-    # build:          # 이건 DEV 환경에서 사용해주세요
-    #   context: .
-    #   dockerfile: Docker/Dockerfile
+    # image: ${DOCKERHUB_USERNAME}/realmatch-backend:prod
+    build:          # 이건 DEV 환경에서 사용해주세요
+      context: .
+      dockerfile: Docker/Dockerfile
     container_name: realmatch_spring
     restart: always
     ports:
@@ -55,8 +56,8 @@ services:
       - ${RABBITMQ_MQ_PORT}:${RABBITMQ_MQ_PORT}    # for mq
       - ${RABBITMQ_WEB_PORT}:${RABBITMQ_WEB_PORT}  # for webpage
     environment:
-      - RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
-      - RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     volumes:
       - ./rabbitmq_data:/var/lib/rabbitmq
     networks:
