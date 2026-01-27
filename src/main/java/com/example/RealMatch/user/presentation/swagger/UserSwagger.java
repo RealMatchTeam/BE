@@ -27,7 +27,7 @@ public interface UserSwagger {
 
     @Operation(
             summary = "내 찜 목록 조회 API By 고경수",
-            description = "찜한 브랜드 또는 캠페인 목록을 조회합니다. GUEST 권한이거나 매칭 테스트 기록이 없으면 접근할 수 없습니다. (하드코딩 - 캠페인 데이터 삽입 안했습니다!!)"
+            description = "찜한 브랜드 또는 캠페인 목록을 조회합니다. GUEST 권한이거나 매칭 테스트 기록이 없으면 접근할 수 없습니다. (하드코딩)"
     )
     CustomResponse<MyScrapResponseDto> getMyScrap(
             @Parameter(hidden = true) CustomUserDetails userDetails,

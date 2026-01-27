@@ -66,18 +66,18 @@ public class ScrapMockDataProvider { // Querydsl 대신 사용할 목업 데이�
         return list;
     }
 
-    // --- 정렬 프라이빗 메서드들 ---
+    // --- 정렬 프라이빗 메서드들 --- 아직 불완전
     private void sortBrandList(List<BrandScrap> list, String sort) {
         if (sort == null || sort.isBlank()) {
             sort = "matchingRate"; // 기본값 명시
         }
 
         switch (sort.toLowerCase()) {
-            case "matchingrate", "matching" ->
+            case "matchingrate" ->
                     list.sort(Comparator.comparingInt(BrandScrap::matchingRate).reversed());
-            case "popular", "popularity" ->
+            case "popular" ->
                     list.sort(Comparator.comparingLong(BrandScrap::brandId));
-            case "recent", "new" ->
+            case "recent"->
                     list.sort(Comparator.comparingLong(BrandScrap::brandId).reversed());
             default ->
                     list.sort(Comparator.comparingInt(BrandScrap::matchingRate).reversed());
@@ -90,13 +90,13 @@ public class ScrapMockDataProvider { // Querydsl 대신 사용할 목업 데이�
         }
 
         switch (sort.toLowerCase()) {
-            case "matchingrate", "matching" ->
+            case "matchingrate" ->
                     list.sort(Comparator.comparingInt(CampaignScrap::matchingRate).reversed());
-            case "popular", "popularity" ->
+            case "popular" ->
                     list.sort(Comparator.comparingInt(CampaignScrap::currentApplicants).reversed());
-            case "reward", "price" ->
+            case "reward" ->
                     list.sort(Comparator.comparingInt(CampaignScrap::reward).reversed());
-            case "deadline", "dday" ->
+            case "dday" ->
                     list.sort(Comparator.comparingInt(CampaignScrap::dDay));
             default ->
                     list.sort(Comparator.comparingInt(CampaignScrap::matchingRate).reversed());
