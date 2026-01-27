@@ -1,5 +1,4 @@
-package com.example.RealMatch.business.domain;
-
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.tag.domain.entity.TagContent;
 
@@ -18,20 +17,20 @@ import lombok.Getter;
 @Getter
 @Entity
 @Table(
-        name = "campaign_proposal_content_tag",
+        name = "campaign_content_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"campaign_proposal_id", "content_tag_id"})
+                @UniqueConstraint(columnNames = {"campaign_id", "content_tag_id"})
         }
 )
-public class CampaignProposalContentTag extends BaseEntity {
+public class CampaignContentTag extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "campaign_proposal_id", nullable = false)
-    private CampaignProposal campaignProposal;
+    @JoinColumn(name = "campaign_id", nullable = false)
+    private Campaign campaign;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_tag_id", nullable = false)
@@ -40,14 +39,14 @@ public class CampaignProposalContentTag extends BaseEntity {
     @Column(name = "custom_tag_value")
     private String customTagValue;
 
-    protected CampaignProposalContentTag() {}
+    protected CampaignContentTag() {}
 
-    private CampaignProposalContentTag(
-            CampaignProposal campaignProposal,
+    private CampaignContentTag(
+            Campaign campaign,
             TagContent tagContent,
             String customTagValue
     ) {
-        this.campaignProposal = campaignProposal;
+        this.campaign = campaign;
         this.tagContent = tagContent;
 
         if (tagContent.getEngName().equals("ETC")) {
@@ -61,19 +60,19 @@ public class CampaignProposalContentTag extends BaseEntity {
     }
 
     /* 일반 태그 */
-    public static CampaignProposalContentTag of(
-            CampaignProposal campaignProposal,
+    public static CampaignContentTag of(
+            Campaign campaign,
             TagContent tagContent
     ) {
-        return new CampaignProposalContentTag(campaignProposal, tagContent, null);
+        return new CampaignContentTag(campaign, tagContent, null);
     }
 
     /* 사용자 입력 태그 */
-    public static CampaignProposalContentTag ofCustom(
-            CampaignProposal campaignProposal,
+    public static CampaignContentTag ofCustom(
+            Campaign campaign,
             TagContent tagContent,
-            String customTagValue
+            String customValue
     ) {
-        return new CampaignProposalContentTag(campaignProposal, tagContent, customTagValue);
+        return new CampaignContentTag(campaign, tagContent, customValue);
     }
 }

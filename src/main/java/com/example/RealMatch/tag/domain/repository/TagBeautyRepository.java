@@ -5,11 +5,11 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.tag.domain.entity.TagContent;
+import com.example.RealMatch.tag.domain.entity.TagBeauty;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
 
-public interface TagContentRepository extends JpaRepository<TagContent, UUID> {
-    List<TagContent> findByTagType(
+public interface TagBeautyRepository extends JpaRepository<TagBeauty, UUID> {
+    List<TagBeauty> findByTagType(
             ContentTagType tagType
     );
 }

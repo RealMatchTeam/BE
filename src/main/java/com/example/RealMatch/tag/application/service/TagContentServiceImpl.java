@@ -34,12 +34,11 @@ public class TagContentServiceImpl implements TagContentService {
             ContentTagType tagType
     ) {
         return tagContentRepository
-                .findByTagTypeOrderByDisplayOrderAsc(tagType)
+                .findByTagType(tagType)
                 .stream()
                 .map(tag -> new ContentTagResponse.TagItemResponse(
                         tag.getId(),
-                        tag.getKorName(),
-                        tag.getDisplayOrder()
+                        tag.getKorName()
                 ))
                 .toList();
     }
