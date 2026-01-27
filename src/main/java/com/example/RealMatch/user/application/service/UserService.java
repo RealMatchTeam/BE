@@ -1,7 +1,5 @@
 package com.example.RealMatch.user.application.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,14 +44,6 @@ public class UserService {
             throw new UserException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
         }
 
-        return new MyProfileCardResponseDto( // 샘플 데이터 반환
-                user.getNickname(),
-                "FEMALE",
-                22,
-                List.of("뷰티", "패션"),
-                "www.instagram.com/vivi",
-                MyProfileCardResponseDto.MatchingResult.sample(),
-                MyProfileCardResponseDto.MyType.sample()
-        );
+        return MyProfileCardResponseDto.sample(user);
     }
 }
