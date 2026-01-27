@@ -15,13 +15,18 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users",   uniqueConstraints = {
+        @UniqueConstraint(name = "uq_user_email_deleted", columnNames = {"email", "is_deleted"}),
+        @UniqueConstraint(name = "uq_user_nickname_deleted", columnNames = {"nickname", "is_deleted"})
+    }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
@@ -56,7 +61,7 @@ public class User extends BaseEntity {
     private Role role;
 
     @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
+    private boolean isDeleted = false;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
