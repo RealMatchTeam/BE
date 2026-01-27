@@ -13,6 +13,7 @@ import com.example.RealMatch.business.presentation.dto.request.CampaignApplyRequ
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +25,14 @@ public class CampaignApplyController {
 
     private final CampaignApplyService campaignApplyService;
 
+    @Operation(
+            summary = "캠페인 지원 API by 박지영",
+            description = """
+                    해당 캠페인을 지원합니다. 
+                    (아직 제출 프로필을 받지 않습니다. 우선은 지원 이유만 응답에 포함시켜주세요. 
+                    추후 제출 프로필을 받는 것도 추가하겠습니다.)
+                    """
+    )
     @PostMapping("/{campaignId}/apply")
     public CustomResponse<String> applyCampaign(
             @PathVariable Long campaignId,

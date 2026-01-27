@@ -12,8 +12,10 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+@Tag(name="Campaign", description = "캠페인 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/campaigns")
@@ -25,6 +27,12 @@ public class CampaignController {
             summary = "캠페인 상세 정보 조회 API by 박지영",
             description = """
                     캠페인 상세 정보를 조회합니다.
+                    
+                    formats : 형식, 
+                    categories : 종류, 
+                    tones : 톤, 
+                    involvements : 관여도, 
+                    usageRanges : 활용 범위 ,
                     """
     )
     @GetMapping("/{campaignId}")
