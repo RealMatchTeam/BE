@@ -32,8 +32,22 @@ public class Campaign extends DeleteBaseEntity {
     @Column(nullable = false, length = 1000)
     private String description;
 
+    @Column(name="preferred_skills", nullable = false, length = 1000)
+    private String preferredSkills;
+
+    @Column(name="schedule", nullable = false, length = 1000)
+    private String schedule;
+
+    @Column(name="video_spec", nullable = false, length = 1000)
+    private String videoSpec;
+
+    // 협찬품으로 수정 필요!!
+    @Column(nullable = false)
+    private String product;
+
     @Column(name = "reward_amount", nullable = false)
     private Long rewardAmount;
+
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
@@ -60,12 +74,16 @@ public class Campaign extends DeleteBaseEntity {
     private Long createdBy;
 
     @Builder
-    public Campaign(String title, String description, Long rewardAmount,
+    public Campaign(String title, String description, String preferredSkills, String schedule,
+                    String product, Long rewardAmount,
                     LocalDate startDate, LocalDate endDate,
                     LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
-                    Integer quota, Integer matchingRate, Long createdBy) {
+                    Integer quota, Long createdBy) {
         this.title = title;
         this.description = description;
+        this.preferredSkills = preferredSkills;
+        this.schedule = schedule;
+        this.product = product;
         this.rewardAmount = rewardAmount;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -75,12 +93,16 @@ public class Campaign extends DeleteBaseEntity {
         this.createdBy = createdBy;
     }
 
-    public void update(String title, String description, Long rewardAmount,
+    public void update(String title, String description, String preferredSkills, String schedule,
+                       String product, Long rewardAmount,
                        LocalDate startDate, LocalDate endDate,
                        LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
                        Integer quota, Long updatedBy) {
         this.title = title;
         this.description = description;
+        this.preferredSkills = preferredSkills;
+        this.schedule = schedule;
+        this.product = product;
         this.rewardAmount = rewardAmount;
         this.startDate = startDate;
         this.endDate = endDate;

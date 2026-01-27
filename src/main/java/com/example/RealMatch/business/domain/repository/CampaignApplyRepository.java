@@ -1,4 +1,4 @@
-package com.example.RealMatch.campaign.domain.repository;
+package com.example.RealMatch.business.domain.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
