@@ -124,12 +124,21 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
 
-        List<ChatRoomMember> allMembers = chatRoomMemberRepository.findByRoomId(roomId);
-        allMembers.stream()
-                .filter(m -> m.getUserId().equals(userId) && !m.isDeleted())
-                .findFirst()
-                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
+        // 내 멤버십 확인 (활성 상태)
+        chatRoomMemberRepository.findActiveMemberByRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> {
+                    // 활성 멤버가 아닌 경우, 나간 멤버인지 확인
+                    ChatRoomMember member = chatRoomMemberRepository
+                            .findMemberByRoomIdAndUserIdWithRoomCheck(roomId, userId)
+                            .orElse(null);
+                    if (member != null && member.getLeftAt() != null) {
+                        return new ChatException(ChatErrorCode.USER_LEFT_ROOM);
+                    }
+                    return new ChatException(ChatErrorCode.NOT_ROOM_MEMBER);
+                });
 
+        // 상대방 멤버 조회 (1:1 채팅방이므로 상대방은 1명)
+        List<ChatRoomMember> allMembers = chatRoomMemberRepository.findByRoomId(roomId);
         ChatRoomMember opponentMember = allMembers.stream()
                 .filter(m -> !m.getUserId().equals(userId) && !m.isDeleted())
                 .findFirst()

@@ -38,15 +38,12 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
 
     @Override
     public List<ChatMessage> findMessagesByRoomId(Long roomId, Long cursorMessageId, int size) {
-        var query = queryFactory.selectFrom(MESSAGE);
-        
+        var query = queryFactory
+                .selectFrom(MESSAGE)
+                .where(MESSAGE.roomId.eq(roomId));
+
         if (cursorMessageId != null) {
-            query = query.where(
-                    MESSAGE.roomId.eq(roomId),
-                    MESSAGE.id.lt(cursorMessageId)
-            );
-        } else {
-            query = query.where(MESSAGE.roomId.eq(roomId));
+            query = query.where(MESSAGE.id.lt(cursorMessageId));
         }
 
         return query

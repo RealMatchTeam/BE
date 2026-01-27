@@ -17,7 +17,6 @@ import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
-import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
@@ -29,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
     private final ChatMessageRepository chatMessageRepository;
-    private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatAttachmentRepository chatAttachmentRepository;
     private final ChatMessageResponseMapper responseMapper;
@@ -42,7 +40,20 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
             MessageCursor messageCursor,
             int size
     ) {
-        ChatRoomMember member = validateRoomAndMembership(roomId, userId);
+        if (roomId == null) {
+            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
+        ChatRoomMember member = chatRoomMemberRepository
+                .findMemberByRoomIdAndUserIdWithRoomCheck(roomId, userId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
+        
+        // 활성 상태 검증
+        if (member.isDeleted()) {
+            throw new ChatException(ChatErrorCode.NOT_ROOM_MEMBER);
+        }
+        if (member.getLeftAt() != null) {
+            throw new ChatException(ChatErrorCode.USER_LEFT_ROOM);
+        }
 
         Long cursorMessageId = messageCursor != null ? messageCursor.messageId() : null;
         List<ChatMessage> messages = chatMessageRepository.findMessagesByRoomId(roomId, cursorMessageId, size);
@@ -96,20 +107,4 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
         }
     }
 
-    private ChatRoomMember validateRoomAndMembership(Long roomId, Long userId) {
-        if (roomId == null) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
-        }
-        if (!chatRoomRepository.existsById(roomId)) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
-        }
-
-        ChatRoomMember member = chatRoomMemberRepository
-                .findByRoomIdAndUserId(roomId, userId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
-        if (member.getLeftAt() != null) {
-            throw new ChatException(ChatErrorCode.USER_LEFT_ROOM);
-        }
-        return member;
-    }
 }
