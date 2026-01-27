@@ -12,10 +12,10 @@ spring:
     name: Realmatch
 
   datasource:
-    url: ${DATASOURCE_URL}
-    username: ${MYSQL_USER}
-    password: ${MYSQL_PASSWORD}
-    driver-class-name: ${DATASOURCE_DRIVER_CLASS_NAME}
+    url: jdbc:mysql://localhost:3306/test_db
+    username: test_user
+    password: test
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_OPTION}
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: ${JPA_HIBERNATE_DIALECT}
@@ -84,17 +84,17 @@ spring:
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
-
   rabbitmq:
     host: ${RABBITMQ_URL}
     port: ${RABBITMQ_MQ_PORT}
     username: ${RABBITMQ_USERNAME}
     password: ${RABBITMQ_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
 
 jwt:
   secret: ${JWT_SECRET}
