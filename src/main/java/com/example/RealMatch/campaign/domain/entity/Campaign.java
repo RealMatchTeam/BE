@@ -32,13 +32,13 @@ public class Campaign extends DeleteBaseEntity {
     @Column(nullable = false, length = 1000)
     private String description;
 
-    @Column(name="preferred_skills", nullable = false, length = 1000)
+    @Column(name = "preferred_skills", nullable = false, length = 1000)
     private String preferredSkills;
 
-    @Column(name="schedule", nullable = false, length = 1000)
+    @Column(name = "schedule", nullable = false, length = 1000)
     private String schedule;
 
-    @Column(name="video_spec", nullable = false, length = 1000)
+    @Column(name = "video_spec", nullable = false, length = 1000)
     private String videoSpec;
 
     // 협찬품으로 수정 필요!!

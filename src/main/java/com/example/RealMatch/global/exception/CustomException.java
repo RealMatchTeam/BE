@@ -5,7 +5,7 @@ import com.example.RealMatch.global.presentation.code.BaseErrorCode;
 import lombok.Getter;
 
 @Getter
-public class CustomException extends RuntimeException{
+public class CustomException extends RuntimeException {
 
     private final BaseErrorCode code;
 
