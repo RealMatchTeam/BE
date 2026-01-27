@@ -1,5 +1,7 @@
 package com.example.RealMatch.user.application.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -8,9 +10,11 @@ import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.exception.UserException;
 import com.example.RealMatch.user.domain.repository.UserRepository;
+import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +25,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
+    private final ScrapMockDataProvider scrapMockDataProvider;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -45,5 +50,43 @@ public class UserService {
         }
 
         return MyProfileCardResponseDto.sample(user);
+    }
+
+    public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
+        // 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        // 프로필 카드를 볼 자격이 있는지 확인
+        if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
+            throw new UserException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
+        }
+
+        // type에 따라 다른 응답 반환
+        try {
+            return switch (type.toLowerCase()) {
+                case "brand" -> {
+                    List<MyScrapResponseDto.BrandScrap> brandList = scrapMockDataProvider.getBrandScraps(sort, null);
+                    yield MyScrapResponseDto.ofBrandType(brandList);
+                }
+                case "campaign" -> {
+                    List<MyScrapResponseDto.CampaignScrap> campaignList = scrapMockDataProvider.getCampaignScraps(sort, null);
+                    yield MyScrapResponseDto.ofCampaignType(campaignList);
+                }
+                default -> throw new UserException(
+                        type.equalsIgnoreCase("brand")
+                                ? UserErrorCode.LIKE_BRAND_NOT_FOUND
+                                : UserErrorCode.LIKE_CAMPAIGN_NOT_FOUND
+                );
+            };
+        } catch (UserException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new UserException(
+                    type.equalsIgnoreCase("brand")
+                            ? UserErrorCode.LIKE_BRAND_NOT_FOUND
+                            : UserErrorCode.LIKE_CAMPAIGN_NOT_FOUND
+            );
+        }
     }
 }
