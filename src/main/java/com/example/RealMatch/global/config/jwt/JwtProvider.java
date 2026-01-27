@@ -38,20 +38,21 @@ public class JwtProvider {
     //   토큰 생성
     // =========================
     public String createAccessToken(Long userId, String providerId, String role) {
-        return createToken(userId, providerId, role, accessTokenExpireMillis);
+        return createToken(userId, providerId, role, "access", accessTokenExpireMillis);
     }
 
     public String createRefreshToken(Long userId, String providerId, String role) {
-        return createToken(userId, providerId, role, refreshTokenExpireMillis);
+        return createToken(userId, providerId, role, "refresh", refreshTokenExpireMillis);
     }
 
-    private String createToken(Long userId, String providerId, String role, long expireMillis) {
+    private String createToken(Long userId, String providerId, String role, String type, long expireMillis) {
         long now = System.currentTimeMillis();
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("providerId", providerId)
                 .claim("role", role)
+                .claim("type", type)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + expireMillis))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -89,6 +90,10 @@ public class JwtProvider {
 
     public String getRole(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    public String getType(String token) {
+        return getClaims(token).get("type", String.class);
     }
 
     private Jws<Claims> parseClaims(String token) {

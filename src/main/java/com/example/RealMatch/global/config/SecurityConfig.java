@@ -15,10 +15,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.RealMatch.global.config.jwt.JwtAuthenticationFilter;
-import com.example.RealMatch.global.oauth.handler.OAuth2SuccessHandler;
-import com.example.RealMatch.global.oauth.service.CustomOAuth2UserService;
 import com.example.RealMatch.global.presentation.advice.CustomAccessDeniedHandler;
 import com.example.RealMatch.global.presentation.advice.CustomAuthEntryPoint;
+import com.example.RealMatch.oauth.handler.OAuth2SuccessHandler;
+import com.example.RealMatch.oauth.service.CustomOAuth2UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
