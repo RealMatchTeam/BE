@@ -22,8 +22,8 @@ import lombok.RequiredArgsConstructor;
 public class WebSocketChatMessageEventPublisher implements ChatMessageEventPublisher {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebSocketChatMessageEventPublisher.class);
-    private static final String ROOM_TOPIC_PREFIX = "/topic/rooms/";
-    private static final String USER_ROOM_LIST_TOPIC_PREFIX = "/topic/user/";
+    private static final String ROOM_TOPIC_PREFIX = "/topic/v1/rooms/";
+    private static final String USER_ROOM_LIST_TOPIC_PREFIX = "/topic/v1/user/";
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatRoomMemberQueryService chatRoomMemberQueryService;
