@@ -10,9 +10,9 @@ public interface CampaignTagRedisRepository extends RedisDocumentRepository<Camp
 
     Optional<CampaignTagDocument> findByCampaignId(Long campaignId);
 
-    List<CampaignTagDocument> findByRequiredFashionTagsContaining(String tag);
+    List<CampaignTagDocument> findByPreferredFashionTagsContaining(String tag);
 
-    List<CampaignTagDocument> findByRequiredBeautyTagsContaining(String tag);
+    List<CampaignTagDocument> findByPreferredBeautyTagsContaining(String tag);
 
-    List<CampaignTagDocument> findByRequiredContentTagsContaining(String tag);
+    List<CampaignTagDocument> findByPreferredContentTagsContaining(String tag);
 }

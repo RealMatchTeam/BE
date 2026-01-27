@@ -35,7 +35,7 @@ public class BrandContentTag extends BaseEntity {
     @Id
     @UuidGenerator
     @GeneratedValue
-    @Column(columnDefinition = "UUID")
+    @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
