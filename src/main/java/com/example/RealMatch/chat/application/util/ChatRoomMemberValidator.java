@@ -13,9 +13,6 @@ import lombok.NoArgsConstructor;
 public class ChatRoomMemberValidator {
 
     public static void validateActiveMember(@NonNull ChatRoomMember member) {
-        if (member.isDeleted()) {
-            throw new ChatException(ChatErrorCode.NOT_ROOM_MEMBER);
-        }
         if (member.getLeftAt() != null) {
             throw new ChatException(ChatErrorCode.USER_LEFT_ROOM);
         }

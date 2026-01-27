@@ -45,6 +45,7 @@ public class ChatRoomMemberRepositoryCustomImpl implements ChatRoomMemberReposit
                 .where(
                         MEMBER.roomId.eq(roomId),
                         MEMBER.userId.eq(userId),
+                        MEMBER.isDeleted.isFalse(),
                         ROOM.isDeleted.isFalse()
                 )
                 .fetchOne();
