@@ -10,8 +10,6 @@ public interface BrandTagRedisRepository extends RedisDocumentRepository<BrandTa
 
     Optional<BrandTagDocument> findByBrandId(Long brandId);
 
-    List<BrandTagDocument> findByIndustryType(String industryType);
-
     List<BrandTagDocument> findByPreferredFashionTagsContaining(String tag);
 
     List<BrandTagDocument> findByPreferredBeautyTagsContaining(String tag);

@@ -31,7 +31,7 @@ services:
       - realmatch-network
 
   app:
-#    image: ${DOCKERHUB_USERNAME}/realmatch-backend:prod
+    # image: ${DOCKERHUB_USERNAME}/realmatch-backend:prod
     build:          # 이건 DEV 환경에서 사용해주세요
       context: .
       dockerfile: Docker/Dockerfile
