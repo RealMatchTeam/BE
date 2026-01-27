@@ -1,8 +1,11 @@
 package com.example.RealMatch.brand.presentation.swagger;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,5 +27,15 @@ public interface BrandSwagger {
     })
     CustomResponse<java.util.List<BrandDetailResponseDto>> getBrandDetail(
             @Parameter(description = "조회할 브랜드의 ID", required = true) @PathVariable Long brandId
+    );
+
+    @Operation(summary = "브랜드 좋아요 토글", description = "브랜드 ID로 좋아요를 추가하거나 취소합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "토글 성공"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드",
+                    content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+    })
+    CustomResponse<List<BrandLikeResponseDto>> likeBrand(
+            @Parameter(description = "좋아요 토글할 브랜드의 ID", required = true) @PathVariable Long brandId
     );
 }

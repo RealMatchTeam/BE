@@ -2,6 +2,7 @@ package com.example.RealMatch.brand.application;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
+import com.example.RealMatch.brand.domain.entity.BrandLike;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
@@ -17,6 +19,8 @@ import com.example.RealMatch.brand.domain.repository.BrandTagParentRepository;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
+import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +35,7 @@ public class BrandService {
     private final BrandCategoryViewRepository brandCategoryViewRepository;
     private final CampaignRepository campaignRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
+    private final UserRepository userRepository;
 
     public BrandDetailResponseDto getBrandDetail(Long brandId) {
         // TODO: Replace with actual user ID from security context
@@ -102,5 +107,30 @@ public class BrandService {
                 .availableSponsorProd(availableSponsorProds)
                 .campaignHistory(campaignHistories)
                 .build();
+    }
+
+    @Transactional
+    public Boolean likeBrand(Long brandId) {
+        // TODO: Replace with actual user ID from security context
+        Long currentUserId = 1L;
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + currentUserId));
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new IllegalArgumentException("Brand not found with id: " + brandId));
+
+        Optional<BrandLike> brandLike = brandLikeRepository.findByUserAndBrand(user, brand);
+
+        if (brandLike.isPresent()) {
+            brandLikeRepository.delete(brandLike.get());
+            return false; // 좋아요 취소
+        } else {
+            BrandLike newBrandLike = BrandLike.builder()
+                    .user(user)
+                    .brand(brand)
+                    .build();
+            brandLikeRepository.save(newBrandLike);
+            return true; // 좋아요 추가
+        }
     }
 }
