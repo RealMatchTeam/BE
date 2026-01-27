@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
+import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
@@ -51,12 +52,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
         
         // 활성 상태 검증
-        if (member.isDeleted()) {
-            throw new ChatException(ChatErrorCode.NOT_ROOM_MEMBER);
-        }
-        if (member.getLeftAt() != null) {
-            throw new ChatException(ChatErrorCode.USER_LEFT_ROOM);
-        }
+        ChatRoomMemberValidator.validateActiveMember(member);
 
         // 멱등성을 위해 선조회한다. (이미 저장된 메시지가 있나?)
         ChatMessage existing = chatMessageRepository

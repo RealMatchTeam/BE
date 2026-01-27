@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
+import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
@@ -48,12 +49,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
                 .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
         
         // 활성 상태 검증
-        if (member.isDeleted()) {
-            throw new ChatException(ChatErrorCode.NOT_ROOM_MEMBER);
-        }
-        if (member.getLeftAt() != null) {
-            throw new ChatException(ChatErrorCode.USER_LEFT_ROOM);
-        }
+        ChatRoomMemberValidator.validateActiveMember(member);
 
         Long cursorMessageId = messageCursor != null ? messageCursor.messageId() : null;
         List<ChatMessage> messages = chatMessageRepository.findMessagesByRoomId(roomId, cursorMessageId, size);

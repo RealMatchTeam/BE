@@ -9,8 +9,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
+import com.example.RealMatch.chat.application.service.room.ChatRoomMemberQueryService;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
-import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatRoomListUpdatedEvent;
@@ -26,7 +26,7 @@ public class WebSocketChatMessageEventPublisher implements ChatMessageEventPubli
     private static final String USER_ROOM_LIST_TOPIC_PREFIX = "/topic/user/";
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatRoomMemberQueryService chatRoomMemberQueryService;
 
     @Override
     public void publishMessageCreated(Long roomId, ChatMessageResponse message) {
@@ -51,9 +51,7 @@ public class WebSocketChatMessageEventPublisher implements ChatMessageEventPubli
 
         try {
             // 채팅방의 모든 활성 멤버 조회
-            List<ChatRoomMember> activeMembers = chatRoomMemberRepository.findByRoomId(roomId).stream()
-                    .filter(member -> !member.isDeleted() && member.getLeftAt() == null)
-                    .toList();
+            List<ChatRoomMember> activeMembers = chatRoomMemberQueryService.findActiveMembers(roomId);
 
             ChatRoomListUpdatedEvent event = new ChatRoomListUpdatedEvent(roomId);
 
