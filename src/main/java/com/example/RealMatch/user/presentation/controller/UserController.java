@@ -41,6 +41,7 @@ public class UserController implements UserSwagger {
         return CustomResponse.ok(userService.getMyProfileCard(userDetails.getUserId()));
     }
 
+    @Override
     @GetMapping("/me/scrap")
     public CustomResponse<MyScrapResponseDto> getMyScrap(
             @AuthenticationPrincipal CustomUserDetails userDetails,

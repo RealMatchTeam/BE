@@ -53,7 +53,7 @@ public class ScrapMockDataProvider { // Querydsl 대신 사용할 목업 데이�
     private List<BrandScrap> createBrandMockData() {
         List<BrandScrap> list = new ArrayList<>();
         list.add(new BrandScrap(1L, "라운드랩", "url", 99, List.of("청정자극", "저자극", "심플한 감성"), true));
-        list.add(new BrandScrap(2L, "명큐파머", "url", 89, List.of("자연주의", "식간갑의 미학", "심플함적"), true));
+        list.add(new BrandScrap(2L, "비플레인", "url", 89, List.of("비건", "천연재료"), true));
         list.add(new BrandScrap(3L, "이즈앤트리", "url", 79, List.of("클린 뷰티", "저자극", "성분 중심"), true));
         return list;
     }
@@ -68,38 +68,25 @@ public class ScrapMockDataProvider { // Querydsl 대신 사용할 목업 데이�
 
     // --- 정렬 프라이빗 메서드들 --- 아직 불완전
     private void sortBrandList(List<BrandScrap> list, String sort) {
-        if (sort == null || sort.isBlank()) {
-            sort = "matchingRate"; // 기본값 명시
-        }
+        String sortKey = (sort == null || sort.isBlank()) ? "matchingrate" : sort.toLowerCase();
 
-        switch (sort.toLowerCase()) {
-            case "matchingrate" ->
-                    list.sort(Comparator.comparingInt(BrandScrap::matchingRate).reversed());
-            case "popular" ->
-                    list.sort(Comparator.comparingLong(BrandScrap::brandId));
-            case "recent" ->
-                    list.sort(Comparator.comparingLong(BrandScrap::brandId).reversed());
-            default ->
-                    list.sort(Comparator.comparingInt(BrandScrap::matchingRate).reversed());
-        }
+        Comparator<BrandScrap> comparator = switch (sortKey) {
+            case "popular" -> Comparator.comparingLong(BrandScrap::brandId);
+            case "recent" -> Comparator.comparingLong(BrandScrap::brandId).reversed();
+            default -> Comparator.comparingInt(BrandScrap::matchingRate).reversed();
+        };
+        list.sort(comparator);
     }
 
     private void sortCampaignList(List<CampaignScrap> list, String sort) {
-        if (sort == null || sort.isBlank()) {
-            sort = "matchingRate"; // 기본값 명시
-        }
+        String sortKey = (sort == null || sort.isBlank()) ? "matchingrate" : sort.toLowerCase();
 
-        switch (sort.toLowerCase()) {
-            case "matchingrate" ->
-                    list.sort(Comparator.comparingInt(CampaignScrap::matchingRate).reversed());
-            case "popular" ->
-                    list.sort(Comparator.comparingInt(CampaignScrap::currentApplicants).reversed());
-            case "reward" ->
-                    list.sort(Comparator.comparingInt(CampaignScrap::reward).reversed());
-            case "dday" ->
-                    list.sort(Comparator.comparingInt(CampaignScrap::dDay));
-            default ->
-                    list.sort(Comparator.comparingInt(CampaignScrap::matchingRate).reversed());
-        }
+        Comparator<CampaignScrap> comparator = switch (sortKey) {
+            case "popular" -> Comparator.comparingInt(CampaignScrap::currentApplicants).reversed();
+            case "reward" -> Comparator.comparingInt(CampaignScrap::reward).reversed();
+            case "dday" -> Comparator.comparingInt(CampaignScrap::dDay);
+            default -> Comparator.comparingInt(CampaignScrap::matchingRate).reversed();
+        };
+        list.sort(comparator);
     }
 }

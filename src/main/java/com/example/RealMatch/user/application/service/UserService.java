@@ -62,31 +62,23 @@ public class UserService {
             throw new UserException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
         }
 
-        // type에 따라 다른 응답 반환
-        try {
-            return switch (type.toLowerCase()) {
-                case "brand" -> {
-                    List<MyScrapResponseDto.BrandScrap> brandList = scrapMockDataProvider.getBrandScraps(sort, null);
-                    yield MyScrapResponseDto.ofBrandType(brandList);
-                }
-                case "campaign" -> {
-                    List<MyScrapResponseDto.CampaignScrap> campaignList = scrapMockDataProvider.getCampaignScraps(sort, null);
-                    yield MyScrapResponseDto.ofCampaignType(campaignList);
-                }
-                default -> throw new UserException(
-                        type.equalsIgnoreCase("brand")
-                                ? UserErrorCode.LIKE_BRAND_NOT_FOUND
-                                : UserErrorCode.LIKE_CAMPAIGN_NOT_FOUND
-                );
-            };
-        } catch (UserException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new UserException(
-                    type.equalsIgnoreCase("brand")
-                            ? UserErrorCode.LIKE_BRAND_NOT_FOUND
-                            : UserErrorCode.LIKE_CAMPAIGN_NOT_FOUND
-            );
-        }
+        // type이 null일 경우
+           if (type == null) {
+             throw new UserException(UserErrorCode.INVALID_SCRAP_TYPE);
+           }
+
+        // 하드코딩된 Mock 데이터 제공자를 통해 찜 목록 조회
+        return switch (type.toLowerCase()) {
+            case "brand" -> {
+                List<MyScrapResponseDto.BrandScrap> brandList = scrapMockDataProvider.getBrandScraps(sort, null);
+                yield MyScrapResponseDto.ofBrandType(brandList);
+            }
+            case "campaign" -> {
+                List<MyScrapResponseDto.CampaignScrap> campaignList = scrapMockDataProvider.getCampaignScraps(sort, null);
+                yield MyScrapResponseDto.ofCampaignType(campaignList);
+            }
+            // 정의되지 않은 type이 들어올 경우
+            default -> throw new UserException(UserErrorCode.INVALID_SCRAP_TYPE);
+        };
     }
 }
