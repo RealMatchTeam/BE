@@ -9,6 +9,7 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.swagger.UserSwagger;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,5 +29,13 @@ public class UserController implements UserSwagger {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return CustomResponse.ok(userService.getMyPage(userDetails.getUserId()));
+    }
+
+    @Override
+    @GetMapping("/me/profile-card")
+    public CustomResponse<MyProfileCardResponseDto> getMyProfileCard(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return CustomResponse.ok(userService.getMyProfileCard(userDetails.getUserId()));
     }
 }
