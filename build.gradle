@@ -63,7 +63,9 @@ dependencies {
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
 	// Redis OM Spring (RediSearch)
-	implementation 'com.redis.om:redis-om-spring:0.9.7'
+	implementation('com.redis.om:redis-om-spring:0.9.7') {
+		exclude group: 'io.swagger.core.v3', module: 'swagger-annotations'
+	}
 	implementation 'redis.clients:jedis'
   
 	// QueryDSL
