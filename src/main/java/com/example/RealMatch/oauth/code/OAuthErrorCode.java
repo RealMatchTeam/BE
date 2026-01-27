@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.oauth.code;
+package com.example.RealMatch.oauth.code;
 
 import org.springframework.http.HttpStatus;
 

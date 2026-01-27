@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.oauth.dto;
+package com.example.RealMatch.oauth.dto;
 
 import java.util.Collection;
 import java.util.Collections;

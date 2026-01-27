@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.controller;
+package com.example.RealMatch.oauth.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
-import com.example.RealMatch.global.oauth.dto.OAuthTokenResponse;
-import com.example.RealMatch.global.oauth.dto.request.SignupCompleteRequest;
-import com.example.RealMatch.global.oauth.service.AuthService;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
-import com.example.RealMatch.global.presentation.swagger.AuthSwagger;
+import com.example.RealMatch.oauth.dto.OAuthTokenResponse;
+import com.example.RealMatch.oauth.dto.request.SignupCompleteRequest;
+import com.example.RealMatch.oauth.service.AuthService;
+import com.example.RealMatch.oauth.swagger.AuthSwagger;
 
 import lombok.RequiredArgsConstructor;
 

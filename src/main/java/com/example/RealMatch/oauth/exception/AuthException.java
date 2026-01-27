@@ -1,6 +1,6 @@
-package com.example.RealMatch.global.oauth.exception;
+package com.example.RealMatch.oauth.exception;
 
-import com.example.RealMatch.global.oauth.code.OAuthErrorCode;
+import com.example.RealMatch.oauth.code.OAuthErrorCode;
 
 import lombok.Getter;
 

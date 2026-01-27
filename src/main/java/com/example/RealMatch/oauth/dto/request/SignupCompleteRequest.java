@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.oauth.dto.request;
+package com.example.RealMatch.oauth.dto.request;
 
 import java.time.LocalDate;
 import java.util.List;

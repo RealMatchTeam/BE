@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.oauth.handler;
+package com.example.RealMatch.oauth.handler;
 
 import java.io.IOException;
 
@@ -7,10 +7,10 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.global.config.jwt.JwtProvider;
-import com.example.RealMatch.global.oauth.dto.CustomOAuth2User;
-import com.example.RealMatch.global.oauth.dto.OAuthTokenResponse;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
+import com.example.RealMatch.oauth.dto.CustomOAuth2User;
+import com.example.RealMatch.oauth.dto.OAuthTokenResponse;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

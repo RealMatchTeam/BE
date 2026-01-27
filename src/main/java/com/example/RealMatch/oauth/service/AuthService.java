@@ -1,4 +1,4 @@
-package com.example.RealMatch.global.oauth.service;
+package com.example.RealMatch.oauth.service;
 
 import java.util.List;
 
@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.config.jwt.JwtProvider;
-import com.example.RealMatch.global.oauth.code.OAuthErrorCode;
-import com.example.RealMatch.global.oauth.dto.OAuthTokenResponse;
-import com.example.RealMatch.global.oauth.dto.request.SignupCompleteRequest;
-import com.example.RealMatch.global.oauth.exception.AuthException;
+import com.example.RealMatch.oauth.code.OAuthErrorCode;
+import com.example.RealMatch.oauth.dto.OAuthTokenResponse;
+import com.example.RealMatch.oauth.dto.request.SignupCompleteRequest;
+import com.example.RealMatch.oauth.exception.AuthException;
 import com.example.RealMatch.user.domain.entity.ContentCategory;
 import com.example.RealMatch.user.domain.entity.SignupPurpose;
 import com.example.RealMatch.user.domain.entity.Term;
