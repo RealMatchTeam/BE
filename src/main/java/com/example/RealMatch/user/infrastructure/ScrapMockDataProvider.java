@@ -77,7 +77,7 @@ public class ScrapMockDataProvider { // Querydsl 대신 사용할 목업 데이�
                     list.sort(Comparator.comparingInt(BrandScrap::matchingRate).reversed());
             case "popular" ->
                     list.sort(Comparator.comparingLong(BrandScrap::brandId));
-            case "recent"->
+            case "recent" ->
                     list.sort(Comparator.comparingLong(BrandScrap::brandId).reversed());
             default ->
                     list.sort(Comparator.comparingInt(BrandScrap::matchingRate).reversed());

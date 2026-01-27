@@ -57,10 +57,10 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
-        /* 프로필 카드를 볼 자격이 있는지 확인
+        // 프로필 카드를 볼 자격이 있는지 확인
         if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
             throw new UserException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
-        } */
+        }
 
         // type에 따라 다른 응답 반환
         try {
