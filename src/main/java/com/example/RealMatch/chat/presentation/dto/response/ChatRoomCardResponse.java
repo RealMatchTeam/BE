@@ -2,20 +2,17 @@ package com.example.RealMatch.chat.presentation.dto.response;
 
 import java.time.LocalDateTime;
 
-import com.example.RealMatch.chat.presentation.dto.enums.ChatMessageType;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomTab;
+import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 
 public record ChatRoomCardResponse(
         Long roomId,
         Long opponentUserId,
         String opponentName,
         String opponentProfileImageUrl,
-        ChatProposalStatus proposalStatus,
+        boolean isCollaborating,  // 협업중 여부 (협업중일 때만 true)
         String lastMessagePreview,
         ChatMessageType lastMessageType,
         LocalDateTime lastMessageAt,
-        int unreadCount,
-        ChatRoomTab tabCategory
+        long unreadCount
 ) {
 }

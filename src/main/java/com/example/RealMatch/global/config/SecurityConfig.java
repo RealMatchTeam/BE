@@ -15,10 +15,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.RealMatch.global.config.jwt.JwtAuthenticationFilter;
-import com.example.RealMatch.global.config.oauth.OAuth2SuccessHandler;
-import com.example.RealMatch.global.config.service.CustomOAuth2UserService;
 import com.example.RealMatch.global.presentation.advice.CustomAccessDeniedHandler;
 import com.example.RealMatch.global.presentation.advice.CustomAuthEntryPoint;
+import com.example.RealMatch.oauth.handler.OAuth2SuccessHandler;
+import com.example.RealMatch.oauth.service.CustomOAuth2UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,9 @@ public class SecurityConfig {
             "/login/**", "/oauth2/**",
             "/api/test",
             "/api/login/success",
-            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html"};
+            "/ws/**",
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html",
+            "/api/v1/tags/**"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
             "/api/test-auth"
@@ -67,11 +69,16 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
+                
+                // 1월 28일 API 테스트를 위해 잠시 주석처리함. 이후 풀어주세요.
 
+                // .authorizeHttpRequests(auth -> auth
+                //         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
+                //         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
+                //         .anyRequest().authenticated())
+                
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
-                        .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll())
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
