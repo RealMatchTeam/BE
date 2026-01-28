@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
@@ -33,7 +34,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
     private final ChatMessageResponseMapper responseMapper;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ChatMessageListResponse getMessages(
             Long userId,
             Long roomId,
@@ -64,7 +65,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
         if (cursorMessageId == null) {
             ChatMessage latestMessage = messages.get(0);
-            updateLastReadMessage(member, latestMessage.getId());
+            updateLastReadMessageInSeparateTransaction(member.getId(), latestMessage.getId());
         }
 
         List<Long> attachmentIds = messages.stream()
@@ -93,8 +94,11 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
         return new ChatMessageListResponse(messageResponses, nextCursor, hasNext);
     }
 
-    private void updateLastReadMessage(ChatRoomMember member, Long messageId) {
-        if (member.getLastReadMessageId() == null || member.getLastReadMessageId() < messageId) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateLastReadMessageInSeparateTransaction(Long memberId, Long messageId) {
+        ChatRoomMember member = chatRoomMemberRepository.findById(memberId)
+                .orElse(null);
+        if (member != null && (member.getLastReadMessageId() == null || member.getLastReadMessageId() < messageId)) {
             member.updateLastReadMessage(messageId, LocalDateTime.now());
         }
     }

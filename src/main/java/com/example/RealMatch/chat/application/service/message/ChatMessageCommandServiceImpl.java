@@ -60,20 +60,11 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 .orElse(null);
         if (existing != null) {
             validateIdempotentConsistency(existing, command);
-            Long existingAttachmentId = existing.getAttachmentId();
-            if (existingAttachmentId != null) {
-                attachmentQueryService.validateOwnership(existingAttachmentId, senderId);
-            }
-            AttachmentDto existingAttachment = attachmentQueryService.findById(existingAttachmentId);
+            AttachmentDto existingAttachment = getAndValidateAttachment(existing.getAttachmentId(), senderId);
             return responseMapper.toResponse(existing, existingAttachment);
         }
 
-        AttachmentDto attachment = null;
-        Long attachmentId = command.attachmentId();
-        if (attachmentId != null) {
-            attachmentQueryService.validateOwnership(attachmentId, senderId);
-            attachment = attachmentQueryService.findById(attachmentId);
-        }
+        AttachmentDto attachment = getAndValidateAttachment(command.attachmentId(), senderId);
 
         // 신규 메시지 생성 및 저장 시도
         ChatMessage message;
@@ -99,11 +90,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                     .orElseThrow(() -> ex);
             
             validateIdempotentConsistency(duplicateMessage, command);
-            Long duplicateAttachmentId = duplicateMessage.getAttachmentId();
-            if (duplicateAttachmentId != null) {
-                attachmentQueryService.validateOwnership(duplicateAttachmentId, senderId);
-            }
-            AttachmentDto duplicateAttachment = attachmentQueryService.findById(duplicateAttachmentId);
+            AttachmentDto duplicateAttachment = getAndValidateAttachment(duplicateMessage.getAttachmentId(), senderId);
             return responseMapper.toResponse(duplicateMessage, duplicateAttachment);
         }
 
@@ -142,6 +129,14 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         updateChatRoomLastMessage(saved);
         
         return responseMapper.toResponse(saved, null);
+    }
+
+    private AttachmentDto getAndValidateAttachment(Long attachmentId, Long userId) {
+        if (attachmentId == null) {
+            return null;
+        }
+        attachmentQueryService.validateOwnership(attachmentId, userId);
+        return attachmentQueryService.findById(attachmentId);
     }
 
     private void validateIdempotentConsistency(ChatMessage stored, ChatSendMessageCommand command) {

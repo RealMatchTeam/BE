@@ -10,9 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.attachment.application.util.FileValidator;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
+import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
+import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
 import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
 
@@ -45,7 +47,7 @@ public class AttachmentServiceImpl implements AttachmentService {
                 : s3Properties.getMaxFileSizeBytes();
 
         if (originalFilename == null || originalFilename.isBlank()) {
-            throw new IllegalArgumentException("파일명이 필요합니다.");
+            throw new AttachmentException(AttachmentErrorCode.INVALID_FILE_NAME);
         }
         FileValidator.validateFileName(originalFilename);
         FileValidator.validateFileSize(fileSize, maxSize);
