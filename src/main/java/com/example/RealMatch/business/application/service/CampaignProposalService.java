@@ -3,6 +3,7 @@ package com.example.RealMatch.business.application.service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -23,7 +24,6 @@ import com.example.RealMatch.tag.domain.repository.TagContentRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
-import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
 
@@ -110,8 +110,6 @@ public class CampaignProposalService {
             );
         }
     }
-
-
 
 
 //    @Transactional(readOnly = true)

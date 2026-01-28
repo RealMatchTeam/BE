@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-
 import jakarta.validation.Valid;
 
 public interface CampaignProposalSwagger {
@@ -34,37 +33,37 @@ public interface CampaignProposalSwagger {
                             name = "CampaignProposalRequestExample",
                             summary = "캠페인 제안 요청 예시",
                             value = """
-                            {
-                              "brandId": 1,
-                              "campaignId": null,
-                              "campaignName": "비플레인 선크림 리뷰 캠페인",
-                              "description": "비플레인 선크림을 체험하고 솔직한 리뷰 콘텐츠를 제작해주세요.",
-                                                          "formatTags": [
-                                                            { "tagId":  "33000000-0000-0000-0000-000000000000" }
-                                                          ],
-                                                          "typeTags": [
-                                                            { "tagId": "37000000-0000-0000-0000-000000000000" }
-                                                          ],
-                                                          "toneTags": [
-                                                            { "tagId": "31360000-0000-0000-0000-000000000000" }
-                                                          ],
-                                                          "engagementTags": [
-                                                            { "tagId": "31310000-0000-0000-0000-000000000000", "customValue": "성분 분석 리뷰" }
-                                                          ],
-                                                          "usageTags": [
-                                                            { "tagId": "32340000-0000-0000-0000-000000000000" }
-                                                          ],
-                              "rewardAmount": 200000,
-                              "productId": 5,
-                              "startDate": "2025-03-01",
-                              "endDate": "2025-03-15"
-                            }
-                            """
+                                    {
+                                      "brandId": 1,
+                                      "campaignId": null,
+                                      "campaignName": "비플레인 선크림 리뷰 캠페인",
+                                      "description": "비플레인 선크림을 체험하고 솔직한 리뷰 콘텐츠를 제작해주세요.",
+                                                                  "formatTags": [
+                                                                    { "tagId":  "33000000-0000-0000-0000-000000000000" }
+                                                                  ],
+                                                                  "typeTags": [
+                                                                    { "tagId": "37000000-0000-0000-0000-000000000000" }
+                                                                  ],
+                                                                  "toneTags": [
+                                                                    { "tagId": "31360000-0000-0000-0000-000000000000" }
+                                                                  ],
+                                                                  "engagementTags": [
+                                                                    { "tagId": "31310000-0000-0000-0000-000000000000", "customValue": "성분 분석 리뷰" }
+                                                                  ],
+                                                                  "usageTags": [
+                                                                    { "tagId": "32340000-0000-0000-0000-000000000000" }
+                                                                  ],
+                                      "rewardAmount": 200000,
+                                      "productId": 5,
+                                      "startDate": "2025-03-01",
+                                      "endDate": "2025-03-15"
+                                    }
+                                    """
                     )
             )
     )
     CustomResponse<String> requestCampaignProposal(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @org.springframework.web.bind.annotation.RequestBody @Valid CampaignProposalRequestDto request
+            @RequestBody @Valid CampaignProposalRequestDto request
     );
 }
