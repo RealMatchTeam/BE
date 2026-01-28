@@ -16,4 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 이메일로 조회 (Spring Security 인증 시 주로 사용)
     @Query("select u from User u where u.email = :email and u.isDeleted = false")
     Optional<User> findByEmail(@Param("email") String email);
+
+    boolean existsByEmail(String email);
 }
