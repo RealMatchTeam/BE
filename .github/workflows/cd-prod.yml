@@ -2,7 +2,8 @@ name: CD - PROD
 
 on:
   push:
-    branches: [ main ]
+#    branches: [ main ]
+    branches: [ dev ]
 
 jobs:
   deploy:
