@@ -1,5 +1,6 @@
 package com.example.RealMatch.brand.presentation.controller;
 
+import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,5 +37,11 @@ public class BrandController implements BrandSwagger {
     public CustomResponse<List<BrandLikeResponseDto>> likeBrand(@PathVariable Long brandId) {
         Boolean isLiked = brandService.likeBrand(brandId);
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, Collections.singletonList(new BrandLikeResponseDto(isLiked)));
+    }
+
+    @Override
+    @GetMapping("/filters")
+    public CustomResponse<List<BrandFilterResponseDto>> getBrandFilters() {
+        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, Collections.singletonList(brandService.getBrandFilters()));
     }
 }

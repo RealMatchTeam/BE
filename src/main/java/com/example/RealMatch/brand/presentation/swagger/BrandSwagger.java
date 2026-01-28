@@ -1,5 +1,6 @@
 package com.example.RealMatch.brand.presentation.swagger;
 
+import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,4 +39,10 @@ public interface BrandSwagger {
     CustomResponse<List<BrandLikeResponseDto>> likeBrand(
             @Parameter(description = "좋아요 토글할 브랜드의 ID", required = true) @PathVariable Long brandId
     );
+
+    @Operation(summary = "브랜드 필터 옵션 조회", description = "브랜드 필터링에 사용될 옵션들을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    CustomResponse<List<BrandFilterResponseDto>> getBrandFilters();
 }
