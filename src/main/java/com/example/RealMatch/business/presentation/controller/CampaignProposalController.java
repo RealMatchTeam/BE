@@ -17,10 +17,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "Business", description = "비즈니스 API")
 @RestController
 @RequestMapping("/api/v1/campaigns")
 @RequiredArgsConstructor
-@Tag(name = "Campaign Request", description = "캠페인 제안 API")
 public class CampaignProposalController implements CampaignProposalSwagger {
     private final CampaignProposalService campaignProposalService;
 

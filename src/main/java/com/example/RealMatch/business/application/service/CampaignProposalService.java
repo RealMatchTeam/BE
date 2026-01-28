@@ -65,11 +65,11 @@ public class CampaignProposalService {
                 .build();
 
         // 태그 매핑
-        saveTags(proposal, request.getFormatTags());
-        saveTags(proposal, request.getTypeTags());
-        saveTags(proposal, request.getToneTags());
-        saveTags(proposal, request.getEngagementTags());
-        saveTags(proposal, request.getUsageTags());
+        saveTags(proposal, request.getFormats());
+        saveTags(proposal, request.getCategories());
+        saveTags(proposal, request.getTones());
+        saveTags(proposal, request.getInvolvements());
+        saveTags(proposal, request.getUsageRanges());
 
         campaignProposalRepository.save(proposal);
     }
@@ -80,7 +80,7 @@ public class CampaignProposalService {
     ) {
         // 1. tagId(UUID) 수집
         List<UUID> tagIds = tagRequests.stream()
-                .map(CampaignProposalRequestDto.CampaignContentTagRequest::tagId)
+                .map(CampaignProposalRequestDto.CampaignContentTagRequest::id)
                 .toList();
 
         // 2. 한 번에 조회
@@ -99,7 +99,7 @@ public class CampaignProposalService {
 
         // 4. 매핑
         for (CampaignProposalRequestDto.CampaignContentTagRequest tagRequest : tagRequests) {
-            TagContent tag = tagMap.get(tagRequest.tagId());
+            TagContent tag = tagMap.get(tagRequest.id());
 
             proposal.addContentTag(
                     CampaignProposalContentTag.create(
