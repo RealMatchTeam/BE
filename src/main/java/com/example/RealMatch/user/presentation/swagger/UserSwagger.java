@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
@@ -35,5 +36,13 @@ public interface UserSwagger {
             @RequestParam String type,
             @Parameter(description = "정렬 기준", example = "matchingRate")
             @RequestParam(required = false, defaultValue = "matchingRate") String sort
+    );
+
+    @Operation(
+            summary = "회원 정보 변경 기본 조회 API By 고경수",
+            description = "내 정보 수정에 필요한 정보를 조회합니다."
+    )
+    CustomResponse<MyEditInfoResponseDto> getMyEditInfo(
+            @Parameter(hidden = true) CustomUserDetails userDetails
     );
 }
