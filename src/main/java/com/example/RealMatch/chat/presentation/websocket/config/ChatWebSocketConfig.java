@@ -25,12 +25,17 @@ public class ChatWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
+        // 중간 점검을 위해 모든 origin 허용 (permit all)
         var registration = registry.addEndpoint("/api/v1/ws/chat")
-                .setAllowedOrigins(allowedOrigin);
+                .setAllowedOriginPatterns("*");
+        
+        // HandshakeHandler는 withSockJS() 전에 설정해야 함
         HandshakeHandler handshakeHandler = handshakeHandlerProvider.getIfAvailable();
         if (handshakeHandler != null) {
             registration.setHandshakeHandler(handshakeHandler);
         }
+        
+        registration.withSockJS(); // SockJS 활성화
     }
 
     @Override

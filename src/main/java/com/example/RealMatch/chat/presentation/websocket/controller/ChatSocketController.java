@@ -29,8 +29,8 @@ public class ChatSocketController {
     private final ChatMessageSocketService chatMessageSocketService;
     private final ChatUserIdResolver chatUserIdResolver;
 
-    @MessageMapping("/chat.send")
-    @SendToUser("/queue/chat.ack")
+    @MessageMapping("/v1/chat.send")
+    @SendToUser("/queue/v1/chat.ack")
     public ChatSendMessageAck sendMessage(@Valid @Payload ChatSendMessageCommand command, Principal principal) {
         try {
             Long senderId = chatUserIdResolver.resolve(principal);
