@@ -115,7 +115,7 @@ public class UserService {
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         // 닉네임 중복 체크
-        if (userRepository.existsByEmail(request.nickname()) &&
+        if (userRepository.existsByNickname(request.nickname()) &&
                 !user.getNickname().equals(request.nickname())) {
             throw new UserException(UserErrorCode.DUPLICATE_NICKNAME);
         }
