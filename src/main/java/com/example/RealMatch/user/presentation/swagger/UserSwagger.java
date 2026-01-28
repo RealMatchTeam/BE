@@ -1,9 +1,12 @@
 package com.example.RealMatch.user.presentation.swagger;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
@@ -11,7 +14,10 @@ import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "user", description = "유저 관련 API")
 public interface UserSwagger {
@@ -44,5 +50,16 @@ public interface UserSwagger {
     )
     CustomResponse<MyEditInfoResponseDto> getMyEditInfo(
             @Parameter(hidden = true) CustomUserDetails userDetails
+    );
+
+    @Operation(summary = "회원정보 변경 API By 고경수", description = "사용자의 닉네임, 주소, 상세주소를 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음")
+    })
+    CustomResponse<Void> updateMyInfo(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyEditInfoRequestDto request
     );
 }

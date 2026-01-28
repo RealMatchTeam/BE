@@ -15,6 +15,7 @@ import com.example.RealMatch.user.domain.repository.AuthenticationMethodReposito
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
+import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
@@ -105,5 +106,26 @@ public class UserService {
 
         // DTO 변환 및 반환
         return MyEditInfoResponseDto.from(user, providers);
+    }
+
+    @Transactional
+    public void updateMyInfo(Long userId, MyEditInfoRequestDto request) {
+        // 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        // 닉네임 중복 체크
+        if (userRepository.existsByNickname(request.nickname()) &&
+                !user.getNickname().equals(request.nickname())) {
+            throw new UserException(UserErrorCode.DUPLICATE_NICKNAME);
+        }
+
+        // 정보 수정
+        user.updateInfo(
+                request.nickname(),
+                request.address(),
+                request.detailAddress()
+        );
+
     }
 }

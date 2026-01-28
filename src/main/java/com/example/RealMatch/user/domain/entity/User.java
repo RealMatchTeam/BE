@@ -15,18 +15,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "users",   uniqueConstraints = {
-        @UniqueConstraint(name = "uq_user_email_deleted", columnNames = {"email", "is_deleted"}),
-        @UniqueConstraint(name = "uq_user_nickname_deleted", columnNames = {"nickname", "is_deleted"})
-    }
-)
+@Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
@@ -94,12 +89,16 @@ public class User extends BaseEntity {
         this.lastLogin = LocalDateTime.now();
     }
 
-    public void updateProfile(String name, String nickname, String address, String detailAddress, String profileImageUrl) {
-        this.name = name;
+    public void updateProfileImage(String profileImageUrl) {
+        if (profileImageUrl != null && !profileImageUrl.isBlank()) {
+            this.profileImageUrl = profileImageUrl;
+        }
+    }
+
+    public void updateInfo(String nickname, String address, String detailAddress) {
         this.nickname = nickname;
         this.address = address;
         this.detailAddress = detailAddress;
-        this.profileImageUrl = profileImageUrl;
     }
 
     public void softDelete(Long deletedBy) {
@@ -115,4 +114,3 @@ public class User extends BaseEntity {
         this.role = role; // 여기서 Role.GUEST가 Role.CREATOR 등으로 바뀝니다.
     }
 }
-
