@@ -1,6 +1,5 @@
 package com.example.RealMatch.brand.presentation.controller;
 
-import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.brand.application.BrandService;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
 import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.presentation.CustomResponse;
