@@ -6,12 +6,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
+import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.exception.UserException;
+import com.example.RealMatch.user.domain.repository.AuthenticationMethodRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
+import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
@@ -26,6 +30,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
     private final ScrapMockDataProvider scrapMockDataProvider;
+    private final AuthenticationMethodRepository authenticationMethodRepository;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -80,5 +85,25 @@ public class UserService {
             // 정의되지 않은 type이 들어올 경우
             default -> throw new UserException(UserErrorCode.SCRAP_NOT_FOUND);
         };
+    }
+
+    public MyEditInfoResponseDto getMyEditInfo(Long userId) {
+        // 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+        // 해당 유저의 모든 소셜 로그인 방법 조회
+        List<AuthProvider> providers = authenticationMethodRepository.findByUserId(userId)
+                .stream()
+                .map(AuthenticationMethod::getProvider)
+                .toList();
+
+        // 유저 로그인 정보를 불러오지 못했을 때
+        if (providers.isEmpty()) {
+            throw new UserException(UserErrorCode.USER_NOT_FOUND);
+        }
+
+        // DTO 변환 및 반환
+        return MyEditInfoResponseDto.from(user, providers);
     }
 }
