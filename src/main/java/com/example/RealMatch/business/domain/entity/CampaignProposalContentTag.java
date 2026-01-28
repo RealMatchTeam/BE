@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.tag.domain.entity.TagContent;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -42,12 +43,17 @@ public class CampaignProposalContentTag extends BaseEntity {
     @JoinColumn(name = "content_tag_id", nullable = false)
     private TagContent tagContent;
 
+    @Column(name = "custom_tag_value")
+    private String customTagValue;
+
     @Builder
     public CampaignProposalContentTag(
             CampaignProposal campaignProposal,
-            TagContent tagContent
+            TagContent tagContent,
+            String customTagValue
     ) {
         this.campaignProposal = campaignProposal;
         this.tagContent = tagContent;
+        this.customTagValue = customTagValue;
     }
 }

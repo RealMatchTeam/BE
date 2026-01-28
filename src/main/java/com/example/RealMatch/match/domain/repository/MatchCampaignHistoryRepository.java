@@ -13,4 +13,7 @@ public interface MatchCampaignHistoryRepository extends JpaRepository<MatchCampa
     List<MatchCampaignHistory> findByCampaignId(Long campaignId);
 
     boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
+
+    boolean existsByUserId(Long userId);
 }
+

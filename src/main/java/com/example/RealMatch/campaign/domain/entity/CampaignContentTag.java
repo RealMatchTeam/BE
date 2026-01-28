@@ -1,4 +1,5 @@
-import com.example.RealMatch.campaign.domain.entity.Campaign;
+package com.example.RealMatch.campaign.domain.entity;
+
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.tag.domain.entity.TagContent;
 
