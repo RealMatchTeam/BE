@@ -74,7 +74,7 @@ public class BrandService {
                         .recruitingTotalNumber(campaign.getQuota())
                         .recruitedNumber(0) // TODO: Need to implement logic to count recruited number
                         .campaignDescription(campaign.getDescription())
-                        .campaginManuscriptFee(String.valueOf(campaign.getRewardAmount()))
+                        .campaignManuscriptFee(String.valueOf(campaign.getRewardAmount()))
                         .build())
                 .collect(Collectors.toList());
 
