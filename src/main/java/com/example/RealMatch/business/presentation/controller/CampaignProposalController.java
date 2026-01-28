@@ -31,10 +31,12 @@ public class CampaignProposalController implements CampaignProposalSwagger {
             description = """
                     크리에이터가 브랜드에 캠페인을 제안합니다.
                     
-                    신규 캠페인인 경우 campaignId null 을 보내주세요.
+                    신규 캠페인인 경우 campaignId null을 보내주세요.
                     기존 캠페인인 경우 campaignId을 보내주세요.
                     
                     기타인 경우 customValue를 포함해서 보내주세요.
+                    
+                    태그 ID는 api/v1/tags/content에서 확인할 수 있습니다.
                     """
     )
     public CustomResponse<String> requestCampaignProposal(
