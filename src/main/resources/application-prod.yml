@@ -1,3 +1,4 @@
+
 cors:
   allowed-origin: http://${SERVER_IP}
 
@@ -106,4 +107,3 @@ jwt:
   secret: ${JWT_SECRET}
   access-expire-ms: ${JWT_ACCESS_EXPIRE_MS}
   refresh-expire-ms: ${JWT_REFRESH_EXPIRE_MS}
-
