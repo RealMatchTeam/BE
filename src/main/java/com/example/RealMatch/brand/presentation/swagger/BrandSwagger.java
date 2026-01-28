@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,4 +46,17 @@ public interface BrandSwagger {
             @ApiResponse(responseCode = "200", description = "조회 성공")
     })
     CustomResponse<List<BrandFilterResponseDto>> getBrandFilters();
+
+    @Operation(summary = "협찬 가능 제품 상세 조회", description = "브랜드의 특정 협찬 가능 제품 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청",
+                    content = @Content(schema = @Schema(implementation = CustomResponse.class))),
+            @ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+    })
+    CustomResponse<SponsorProductDetailResponseDto> getSponsorProductDetail(
+            @Parameter(description = "브랜드 ID", required = true) @PathVariable Long brandId,
+            @Parameter(description = "제품 ID", required = true) @PathVariable Long productId
+    );
 }

@@ -11,16 +11,22 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
+import com.example.RealMatch.brand.domain.entity.BrandTagParent;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.domain.repository.BrandTagParentRepository;
+import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
+import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
@@ -38,10 +44,7 @@ public class BrandService {
     private final CampaignRepository campaignRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
     private final UserRepository userRepository;
-    // private final CategoryRepository categoryRepository; // Assuming these repositories exist
-    // private final FunctionRepository functionRepository;
-    // private final SkinTypeRepository skinTypeRepository;
-    // private final MakeUpStyleRepository makeUpStyleRepository;
+    // private final BrandSponsorImageRepository brandSponsorImageRepository; // Assuming this exists
 
     public BrandDetailResponseDto getBrandDetail(Long brandId) {
         // TODO: Replace with actual user ID from security context
@@ -51,7 +54,7 @@ public class BrandService {
                 .orElseThrow(() -> new IllegalArgumentException("Brand not found with id: " + brandId));
 
         List<String> brandTags = brandTagParentRepository.findByBrandId(brandId).stream()
-                .map(brandTagParent -> brandTagParent.getTagParentName())
+                .map(BrandTagParent::getTagParentName)
                 .collect(Collectors.toList());
 
         boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
@@ -178,6 +181,55 @@ public class BrandService {
 
         return BrandFilterResponseDto.builder()
                 .beautyFilter(beautyFilter)
+                .build();
+    }
+
+    public SponsorProductDetailResponseDto getSponsorProductDetail(Long brandId, Long productId) {
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
+
+        BrandAvailableSponsor product = brandAvailableSponsorRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("제품 정보를 찾을 수 없습니다."));
+
+        // Check if the product belongs to the brand
+        if (!product.getBrand().getId().equals(brandId)) {
+            throw new IllegalArgumentException("해당 브랜드의 제품이 아닙니다.");
+        }
+
+        // Mock data for now, assuming repositories and entities need to be created/updated
+        List<String> mockImageUrls = List.of(
+                "https://cdn.example.com/products/100/1.png",
+                "https://cdn.example.com/products/100/2.png",
+                "https://cdn.example.com/products/100/3.png"
+        );
+
+        List<String> mockCategories = List.of("스킨케어", "메이크업");
+
+        List<SponsorItemDto> mockItems = List.of(
+                SponsorItemDto.builder().itemId(1L).availableType("SAMPLE").availableQuantity(1).availableSize(50).sizeUnit("ml").build(),
+                SponsorItemDto.builder().itemId(2L).availableType("FULL").availableQuantity(1).availableSize(100).sizeUnit("ml").build()
+        );
+
+        SponsorInfoDto sponsorInfo = SponsorInfoDto.builder()
+                .items(mockItems)
+                .shippingType("CREATOR_PAY")
+                .build();
+
+        ActionDto action = ActionDto.builder()
+                .canProposeCampaign(true)
+                .proposeCampaignCtaText("캠페인 제안하기")
+                .build();
+
+        return SponsorProductDetailResponseDto.builder()
+                .brandId(brand.getId())
+                .brandName(brand.getBrandName())
+                .productId(product.getId())
+                .productName(product.getName())
+                .productDescription(product.getCampaign().getDescription()) // Assuming description field exists
+                .productImageUrls(mockImageUrls) // Replace with actual image fetching logic
+                .categories(mockCategories) // Replace with actual category fetching logic
+                .sponsorInfo(sponsorInfo)
+                .action(action)
                 .build();
     }
 }
