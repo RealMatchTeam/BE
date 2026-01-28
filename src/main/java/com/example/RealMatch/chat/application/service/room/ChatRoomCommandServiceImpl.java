@@ -9,6 +9,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
+import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
@@ -30,6 +32,8 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatMessageEventPublisher eventPublisher;
+    private final AfterCommitExecutor afterCommitExecutor;
 
     @Override
     @Transactional
@@ -39,7 +43,14 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         String roomKey = generateRoomKey(brandId, creatorId);
 
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey)
-                .orElseGet(() -> createRoomWithMembers(roomKey, brandId, creatorId));
+                .orElseGet(() -> {
+                    ChatRoom newRoom = createRoomWithMembers(roomKey, brandId, creatorId);
+                    // 새로 생성된 채팅방인 경우, 양쪽 사용자에게 채팅방 목록 업데이트 알림
+                    afterCommitExecutor.execute(() -> {
+                        eventPublisher.publishRoomListUpdated(newRoom.getId());
+                    });
+                    return newRoom;
+                });
 
         return new ChatRoomCreateResponse(
                 room.getId(),

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
+import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.domain.entity.ChatAttachment;
@@ -19,7 +20,6 @@ import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
-import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
@@ -34,7 +34,6 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatAttachmentRepository chatAttachmentRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
-    private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomCommandService chatRoomCommandService;
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
@@ -45,7 +44,15 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     @NonNull
     public ChatMessageResponse saveMessage(ChatSendMessageCommand command, Long senderId) {
         // Room 존재 여부 및 멤버 권한 검증
-        validateRoomAndMembership(command.roomId(), senderId);
+        if (command.roomId() == null) {
+            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
+        ChatRoomMember member = chatRoomMemberRepository
+                .findMemberByRoomIdAndUserIdWithRoomCheck(command.roomId(), senderId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
+        
+        // 활성 상태 검증
+        ChatRoomMemberValidator.validateActiveMember(member);
 
         // 멱등성을 위해 선조회한다. (이미 저장된 메시지가 있나?)
         ChatMessage existing = chatMessageRepository
@@ -117,9 +124,6 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         if (roomId == null) {
             throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
         }
-        if (!chatRoomRepository.existsById(roomId)) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
-        }
         
         ChatMessage message;
         try {
@@ -147,23 +151,6 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 .orElseThrow(() -> new ChatException(ChatErrorCode.ATTACHMENT_NOT_FOUND));
     }
 
-    private void validateRoomAndMembership(Long roomId, Long senderId) {
-        // Room 존재 여부 확인
-        if (roomId == null) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
-        }
-        if (!chatRoomRepository.existsById(roomId)) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
-        }
-        
-        // Room 멤버 권한 검증
-        ChatRoomMember member = chatRoomMemberRepository
-                .findByRoomIdAndUserId(roomId, senderId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
-        if (member.getLeftAt() != null) {
-            throw new ChatException(ChatErrorCode.USER_LEFT_ROOM);
-        }
-    }
 
     private void validateIdempotentConsistency(ChatMessage stored, ChatSendMessageCommand command) {
         // roomId 일치 검증

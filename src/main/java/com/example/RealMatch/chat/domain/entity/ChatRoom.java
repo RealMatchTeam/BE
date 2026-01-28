@@ -86,4 +86,8 @@ public class ChatRoom extends DeleteBaseEntity {
     public void updateProposalStatus(ChatProposalStatus status) {
         this.proposalStatus = status;
     }
+
+    public boolean isCollaborating() {
+        return this.proposalStatus == ChatProposalStatus.MATCHED;
+    }
 }
