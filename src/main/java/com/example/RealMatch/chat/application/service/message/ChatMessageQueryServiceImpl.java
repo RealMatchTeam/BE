@@ -3,19 +3,18 @@ package com.example.RealMatch.chat.application.service.message;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
+import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
-import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.exception.ChatException;
-import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
@@ -30,7 +29,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
-    private final ChatAttachmentRepository chatAttachmentRepository;
+    private final AttachmentQueryService attachmentQueryService;
     private final ChatMessageResponseMapper responseMapper;
 
     @Override
@@ -74,14 +73,11 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
                 .distinct()
                 .toList();
 
-        Map<Long, ChatAttachment> attachmentMap = attachmentIds.isEmpty()
-                ? Map.of()
-                : chatAttachmentRepository.findAllById(attachmentIds).stream()
-                        .collect(Collectors.toMap(ChatAttachment::getId, attachment -> attachment));
+        Map<Long, AttachmentInfoResponse> attachmentMap = attachmentQueryService.findAllById(attachmentIds);
 
         List<ChatMessageResponse> messageResponses = messages.stream()
                 .map(message -> {
-                    ChatAttachment attachment = message.getAttachmentId() != null
+                    AttachmentInfoResponse attachment = message.getAttachmentId() != null
                             ? attachmentMap.get(message.getAttachmentId())
                             : null;
                     return responseMapper.toResponse(message, attachment);

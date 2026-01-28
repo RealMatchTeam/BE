@@ -4,13 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
-import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSenderType;
-import com.example.RealMatch.chat.presentation.dto.response.ChatAttachmentInfoResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessageResponse;
@@ -26,7 +25,7 @@ public class ChatMessageResponseMapper {
 
     private final SystemMessagePayloadSerializer payloadSerializer;
 
-    public ChatMessageResponse toResponse(ChatMessage message, ChatAttachment attachment) {
+    public ChatMessageResponse toResponse(ChatMessage message, AttachmentInfoResponse attachment) {
         if (message == null) {
             throw new IllegalStateException("Message must not be null when mapping to response.");
         }
@@ -50,7 +49,7 @@ public class ChatMessageResponseMapper {
                 messageType == ChatMessageType.SYSTEM ? ChatSenderType.SYSTEM : ChatSenderType.USER,
                 messageType,
                 message.getContent(),
-                toAttachmentResponse(attachment),
+                attachment,
                 messageType == ChatMessageType.SYSTEM ? toSystemMessageResponse(message) : null,
                 message.getCreatedAt(),
                 message.getClientMessageId()
@@ -94,20 +93,5 @@ public class ChatMessageResponseMapper {
                     String.format("Failed to deserialize system message payload. messageId=%d, kind=%s", 
                             messageId, kind), ex);
         }
-    }
-
-    private ChatAttachmentInfoResponse toAttachmentResponse(ChatAttachment attachment) {
-        if (attachment == null) {
-            return null;
-        }
-        return new ChatAttachmentInfoResponse(
-                attachment.getId(),
-                attachment.getAttachmentType(),
-                attachment.getContentType(),
-                attachment.getOriginalName(),
-                attachment.getFileSize(),
-                attachment.getAccessUrl(),
-                attachment.getStatus()
-        );
     }
 }

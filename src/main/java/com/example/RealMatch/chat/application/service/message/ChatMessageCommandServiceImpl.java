@@ -7,17 +7,17 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
+import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
-import com.example.RealMatch.chat.domain.entity.ChatAttachment;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.exception.ChatException;
-import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class ChatMessageCommandServiceImpl implements ChatMessageCommandService {
 
     private final ChatMessageRepository chatMessageRepository;
-    private final ChatAttachmentRepository chatAttachmentRepository;
+    private final AttachmentQueryService attachmentQueryService;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomCommandService chatRoomCommandService;
     private final MessagePreviewGenerator messagePreviewGenerator;
@@ -60,18 +60,19 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 .orElse(null);
         if (existing != null) {
             validateIdempotentConsistency(existing, command);
-            ChatAttachment existingAttachment = loadAttachmentIfNeeded(existing);
-            validateAttachmentOwnership(existingAttachment, senderId);
+            Long existingAttachmentId = existing.getAttachmentId();
+            if (existingAttachmentId != null) {
+                attachmentQueryService.validateOwnership(existingAttachmentId, senderId);
+            }
+            AttachmentInfoResponse existingAttachment = attachmentQueryService.findById(existingAttachmentId);
             return responseMapper.toResponse(existing, existingAttachment);
         }
 
-        // 첨부 파일 존재 및 소유권 검증 (신규 메시지일 때만)
-        ChatAttachment attachment = null;
+        AttachmentInfoResponse attachment = null;
         Long attachmentId = command.attachmentId();
         if (attachmentId != null) {
-            attachment = chatAttachmentRepository.findById(attachmentId)
-                    .orElseThrow(() -> new ChatException(ChatErrorCode.ATTACHMENT_NOT_FOUND));
-            validateAttachmentOwnership(attachment, senderId);
+            attachmentQueryService.validateOwnership(attachmentId, senderId);
+            attachment = attachmentQueryService.findById(attachmentId);
         }
 
         // 신규 메시지 생성 및 저장 시도
@@ -98,17 +99,18 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                     .orElseThrow(() -> ex);
             
             validateIdempotentConsistency(duplicateMessage, command);
-            ChatAttachment duplicateAttachment = loadAttachmentIfNeeded(duplicateMessage);
-            validateAttachmentOwnership(duplicateAttachment, senderId);
+            Long duplicateAttachmentId = duplicateMessage.getAttachmentId();
+            if (duplicateAttachmentId != null) {
+                attachmentQueryService.validateOwnership(duplicateAttachmentId, senderId);
+            }
+            AttachmentInfoResponse duplicateAttachment = attachmentQueryService.findById(duplicateAttachmentId);
             return responseMapper.toResponse(duplicateMessage, duplicateAttachment);
         }
 
         updateChatRoomLastMessage(saved);
-        // attachment가 있으면 그대로 사용, 없으면 조회한다.
-        ChatAttachment savedAttachment = attachment != null 
+        AttachmentInfoResponse savedAttachment = attachment != null 
                 ? attachment 
-                : loadAttachmentIfNeeded(saved);
-        validateAttachmentOwnership(savedAttachment, senderId);
+                : attachmentQueryService.findById(saved.getAttachmentId());
         return responseMapper.toResponse(saved, savedAttachment);
     }
 
@@ -142,32 +144,14 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         return responseMapper.toResponse(saved, null);
     }
 
-    private ChatAttachment loadAttachmentIfNeeded(ChatMessage message) {
-        Long attachmentId = message.getAttachmentId();
-        if (attachmentId == null) {
-            return null;
-        }
-        return chatAttachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.ATTACHMENT_NOT_FOUND));
-    }
-
-
     private void validateIdempotentConsistency(ChatMessage stored, ChatSendMessageCommand command) {
-        // roomId 일치 검증
         if (!Objects.equals(stored.getRoomId(), command.roomId())) {
             throw new ChatException(ChatErrorCode.INVALID_ROOM_FOR_MESSAGE);
         }
-        // attachmentId, messageType, content 일치 검증
         if (!Objects.equals(stored.getAttachmentId(), command.attachmentId())
                 || !Objects.equals(stored.getMessageType(), command.messageType())
                 || !Objects.equals(stored.getContent(), command.content())) {
             throw new ChatException(ChatErrorCode.IDEMPOTENCY_CONFLICT);
-        }
-    }
-
-    private void validateAttachmentOwnership(ChatAttachment attachment, Long senderId) {
-        if (attachment != null && !Objects.equals(attachment.getUploaderId(), senderId)) {
-            throw new ChatException(ChatErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
         }
     }
 
