@@ -16,4 +16,6 @@ public interface AuthenticationMethodRepository extends JpaRepository<Authentica
     List<AuthenticationMethod> findByUserId(Long userId);
 
     boolean existsByProviderAndProviderId(AuthProvider provider, String providerId);
+
+
 }

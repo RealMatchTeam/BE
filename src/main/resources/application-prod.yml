@@ -1,3 +1,4 @@
+
 cors:
   allowed-origin: http://${SERVER_IP}
 
@@ -107,3 +108,14 @@ jwt:
   access-expire-ms: ${JWT_ACCESS_EXPIRE_MS}
   refresh-expire-ms: ${JWT_REFRESH_EXPIRE_MS}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+  health:
+    redis:
+      enabled: false

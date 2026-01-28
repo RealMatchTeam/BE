@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  haproxy:
+    image: haproxy:2.8
+    container_name: haproxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./haproxy/certs:/etc/ssl/certs:ro
+    depends_on:
+      - app
+    networks:
+      - realmatch-network
   db:
     image: mysql:8.0
     container_name: realmatch_mysql

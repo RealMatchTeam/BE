@@ -69,14 +69,14 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
-                
+
                 // 1월 28일 API 테스트를 위해 잠시 주석처리함. 이후 풀어주세요.
 
                 // .authorizeHttpRequests(auth -> auth
                 //         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
                 //         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
                 //         .anyRequest().authenticated())
-                
+
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll())
 
