@@ -56,4 +56,32 @@ public class CampaignProposalContentTag extends BaseEntity {
         this.tagContent = tagContent;
         this.customTagValue = customTagValue;
     }
+
+    public static CampaignProposalContentTag create(
+            CampaignProposal campaignProposal,
+            TagContent tagContent,
+            String customTagValue
+    ) {
+        if (campaignProposal == null) {
+            throw new IllegalArgumentException("campaignProposal은 null일 수 없습니다.");
+        }
+        if (tagContent == null) {
+            throw new IllegalArgumentException("tagContent는 null일 수 없습니다.");
+        }
+
+        return CampaignProposalContentTag.builder()
+                .campaignProposal(campaignProposal)
+                .tagContent(tagContent)
+                .customTagValue(normalize(customTagValue))
+                .build();
+    }
+
+    private static String normalize(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+
 }
