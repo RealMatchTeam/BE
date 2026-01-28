@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.application.service.UserService;
+import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
@@ -49,5 +50,13 @@ public class UserController implements UserSwagger {
             @RequestParam(required = false, defaultValue = "matchingRate") String sort
     ) {
         return CustomResponse.ok(userService.getMyScrap(userDetails.getUserId(), type, sort));
+    }
+
+    @Override
+    @GetMapping("/me/edit")
+    public CustomResponse<MyEditInfoResponseDto> getMyEditInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return CustomResponse.ok(userService.getMyEditInfo(userDetails.getUserId()));
     }
 }
