@@ -91,7 +91,6 @@ public final class ChatFixtureFactory {
                 202L,
                 "라운드랩",
                 "https://yt3.googleusercontent.com/ytc/AIdro_lLlKeDBBNPBO1FW7jkxvXpJyyM6CU2AR7NMx2GIjFFxQ=s900-c-k-c0x00ffffff-no-rj",
-                List.of("청정자극", "저자극", "심플한 감성"),
                 true,  // isCollaborating: 협업중
                 campaignSummary
         );

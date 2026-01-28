@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.example.RealMatch.chat.domain.exception.ChatException;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.global.presentation.code.BaseErrorCode;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 import com.example.RealMatch.oauth.exception.AuthException;
 
@@ -108,5 +110,15 @@ public class GlobalExceptionHandler {
                         e.getErrorCode(),
                         Collections.emptyMap() // null 대신 빈 맵
                 ));
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<CustomResponse<?>> handleCustomException(CustomException e) {
+
+        log.warn("[CustomException] {}", e.getMessage());
+        BaseErrorCode errorCode = e.getCode();
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(CustomResponse.onFailure(errorCode, null));
     }
 }
