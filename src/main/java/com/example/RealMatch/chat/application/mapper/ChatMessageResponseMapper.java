@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
@@ -25,7 +26,7 @@ public class ChatMessageResponseMapper {
 
     private final SystemMessagePayloadSerializer payloadSerializer;
 
-    public ChatMessageResponse toResponse(ChatMessage message, AttachmentInfoResponse attachment) {
+    public ChatMessageResponse toResponse(ChatMessage message, AttachmentDto attachment) {
         if (message == null) {
             throw new IllegalStateException("Message must not be null when mapping to response.");
         }
@@ -42,6 +43,10 @@ public class ChatMessageResponseMapper {
                     String.format("Message type must not be null. messageId=%d", messageId));
         }
         
+        AttachmentInfoResponse attachmentResponse = attachment != null 
+                ? toAttachmentInfoResponse(attachment) 
+                : null;
+        
         return new ChatMessageResponse(
                 messageId,
                 message.getRoomId(),
@@ -49,10 +54,22 @@ public class ChatMessageResponseMapper {
                 messageType == ChatMessageType.SYSTEM ? ChatSenderType.SYSTEM : ChatSenderType.USER,
                 messageType,
                 message.getContent(),
-                attachment,
+                attachmentResponse,
                 messageType == ChatMessageType.SYSTEM ? toSystemMessageResponse(message) : null,
                 message.getCreatedAt(),
                 message.getClientMessageId()
+        );
+    }
+
+    private AttachmentInfoResponse toAttachmentInfoResponse(AttachmentDto attachment) {
+        return new AttachmentInfoResponse(
+                attachment.attachmentId(),
+                attachment.attachmentType(),
+                attachment.contentType(),
+                attachment.originalName(),
+                attachment.fileSize(),
+                attachment.accessUrl(),
+                attachment.status()
         );
     }
 

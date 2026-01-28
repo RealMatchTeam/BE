@@ -7,8 +7,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
@@ -73,11 +73,11 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
                 .distinct()
                 .toList();
 
-        Map<Long, AttachmentInfoResponse> attachmentMap = attachmentQueryService.findAllById(attachmentIds);
+        Map<Long, AttachmentDto> attachmentMap = attachmentQueryService.findAllById(attachmentIds);
 
         List<ChatMessageResponse> messageResponses = messages.stream()
                 .map(message -> {
-                    AttachmentInfoResponse attachment = message.getAttachmentId() != null
+                    AttachmentDto attachment = message.getAttachmentId() != null
                             ? attachmentMap.get(message.getAttachmentId())
                             : null;
                     return responseMapper.toResponse(message, attachment);

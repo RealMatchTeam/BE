@@ -1,8 +1,5 @@
 package com.example.RealMatch.chat.presentation.rest.controller;
 
-import java.io.IOException;
-
-import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,14 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
-import com.example.RealMatch.attachment.application.service.AttachmentService;
-import com.example.RealMatch.attachment.domain.enums.AttachmentType;
-import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.service.message.ChatMessageQueryService;
@@ -44,7 +35,6 @@ public class ChatController implements ChatSwagger {
     private final ChatRoomCommandService chatRoomCommandService;
     private final ChatRoomQueryService chatRoomQueryService;
     private final ChatMessageQueryService chatMessageQueryService;
-    private final AttachmentService attachmentService;
 
     @PostMapping("/rooms")
     public CustomResponse<ChatRoomCreateResponse> createOrGetRoom(
@@ -86,23 +76,5 @@ public class ChatController implements ChatSwagger {
     ) {
         Long userId = user.getUserId();
         return CustomResponse.ok(chatMessageQueryService.getMessages(userId, roomId, messageCursor, size));
-    }
-
-    @PostMapping(value = "/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public CustomResponse<AttachmentUploadResponse> uploadAttachment(
-            @AuthenticationPrincipal CustomUserDetails user,
-            @Valid @RequestParam("attachmentType") AttachmentType attachmentType,
-            @RequestPart("file") MultipartFile file
-    ) throws IOException {
-        Long userId = user.getUserId();
-        AttachmentUploadRequest request = new AttachmentUploadRequest(attachmentType);
-        return CustomResponse.ok(attachmentService.uploadAttachment(
-                userId,
-                request,
-                file.getInputStream(),
-                file.getOriginalFilename(),
-                file.getContentType(),
-                file.getSize()
-        ));
     }
 }

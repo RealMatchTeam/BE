@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,24 +21,24 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
     private final AttachmentRepository attachmentRepository;
 
     @Override
-    public AttachmentInfoResponse findById(Long attachmentId) {
+    public AttachmentDto findById(Long attachmentId) {
         if (attachmentId == null) {
             return null;
         }
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElse(null);
-        return attachment != null ? toResponse(attachment) : null;
+        return attachment != null ? toDto(attachment) : null;
     }
 
     @Override
-    public Map<Long, AttachmentInfoResponse> findAllById(List<Long> attachmentIds) {
+    public Map<Long, AttachmentDto> findAllById(List<Long> attachmentIds) {
         if (attachmentIds == null || attachmentIds.isEmpty()) {
             return Map.of();
         }
         return attachmentRepository.findAllById(attachmentIds).stream()
                 .collect(Collectors.toMap(
                         Attachment::getId,
-                        this::toResponse
+                        this::toDto
                 ));
     }
 
@@ -55,8 +55,8 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         }
     }
 
-    private AttachmentInfoResponse toResponse(Attachment attachment) {
-        return new AttachmentInfoResponse(
+    private AttachmentDto toDto(Attachment attachment) {
+        return new AttachmentDto(
                 attachment.getId(),
                 attachment.getAttachmentType(),
                 attachment.getContentType(),

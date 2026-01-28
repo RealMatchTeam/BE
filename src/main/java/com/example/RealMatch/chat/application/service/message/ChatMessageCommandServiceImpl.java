@@ -7,8 +7,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
@@ -64,11 +64,11 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
             if (existingAttachmentId != null) {
                 attachmentQueryService.validateOwnership(existingAttachmentId, senderId);
             }
-            AttachmentInfoResponse existingAttachment = attachmentQueryService.findById(existingAttachmentId);
+            AttachmentDto existingAttachment = attachmentQueryService.findById(existingAttachmentId);
             return responseMapper.toResponse(existing, existingAttachment);
         }
 
-        AttachmentInfoResponse attachment = null;
+        AttachmentDto attachment = null;
         Long attachmentId = command.attachmentId();
         if (attachmentId != null) {
             attachmentQueryService.validateOwnership(attachmentId, senderId);
@@ -103,12 +103,12 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
             if (duplicateAttachmentId != null) {
                 attachmentQueryService.validateOwnership(duplicateAttachmentId, senderId);
             }
-            AttachmentInfoResponse duplicateAttachment = attachmentQueryService.findById(duplicateAttachmentId);
+            AttachmentDto duplicateAttachment = attachmentQueryService.findById(duplicateAttachmentId);
             return responseMapper.toResponse(duplicateMessage, duplicateAttachment);
         }
 
         updateChatRoomLastMessage(saved);
-        AttachmentInfoResponse savedAttachment = attachment != null 
+        AttachmentDto savedAttachment = attachment != null 
                 ? attachment 
                 : attachmentQueryService.findById(saved.getAttachmentId());
         return responseMapper.toResponse(saved, savedAttachment);
