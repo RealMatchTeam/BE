@@ -87,4 +87,9 @@ public class ChatRoomMember extends DeleteBaseEntity {
             joinedAt = LocalDateTime.now();
         }
     }
+
+    public void updateLastReadMessage(Long messageId, LocalDateTime readAt) {
+        this.lastReadMessageId = messageId;
+        this.lastReadAt = readAt;
+    }
 }
