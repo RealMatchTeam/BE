@@ -24,10 +24,10 @@ public enum UserErrorCode implements BaseErrorCode {
             "내 프로필 카드 정보를 불러오는데 실패하였습니다."
     ),
 
-    INVALID_SCRAP_TYPE(
+    SCRAP_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "USER404_3",
-            "내 찜 목록 타입이 올바르지 않습니다."
+            "내 찜 정보를 불러오는데 실패하였습니다."
     ),
 
     SOCIAL_INFO_NOT_FOUND(

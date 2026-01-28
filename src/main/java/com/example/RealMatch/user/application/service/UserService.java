@@ -57,15 +57,15 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
-        // 프로필 카드를 볼 자격이 있는지 확인
+        // 내 찜 조회를 볼 자격이 있는지 확인
         if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
-            throw new UserException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
+            throw new UserException(UserErrorCode.SCRAP_NOT_FOUND);
         }
 
         // type이 null일 경우
-           if (type == null) {
-             throw new UserException(UserErrorCode.INVALID_SCRAP_TYPE);
-           }
+        if (type == null) {
+            throw new UserException(UserErrorCode.SCRAP_NOT_FOUND);
+        }
 
         // 하드코딩된 Mock 데이터 제공자를 통해 찜 목록 조회
         return switch (type.toLowerCase()) {
@@ -78,7 +78,7 @@ public class UserService {
                 yield MyScrapResponseDto.ofCampaignType(campaignList);
             }
             // 정의되지 않은 type이 들어올 경우
-            default -> throw new UserException(UserErrorCode.INVALID_SCRAP_TYPE);
+            default -> throw new UserException(UserErrorCode.SCRAP_NOT_FOUND);
         };
     }
 }
