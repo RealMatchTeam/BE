@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -47,8 +46,7 @@ public class SecurityConfig {
             "/api/v1/tags/**"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
-            "/api/test-auth",
-            "/api/v1/brands/**"
+            "/api/test-auth"
     };
 
     @Value("${swagger.server-url}")
@@ -63,7 +61,7 @@ public class SecurityConfig {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(CsrfConfigurer::disable)
+                .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -72,10 +70,15 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
 
+                // 1월 28일 API 테스트를 위해 잠시 주석처리함. 이후 풀어주세요.
+
+                // .authorizeHttpRequests(auth -> auth
+                //         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
+                //         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
+                //         .anyRequest().authenticated())
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
-                        .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll())
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2

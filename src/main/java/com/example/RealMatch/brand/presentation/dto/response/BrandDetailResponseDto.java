@@ -42,7 +42,7 @@ public class BrandDetailResponseDto {
         private Integer recruitingTotalNumber;
         private Integer recruitedNumber;
         private String campaignDescription;
-        private String campaginManuscriptFee;
+        private String campaignManuscriptFee;
     }
 
     @Getter
