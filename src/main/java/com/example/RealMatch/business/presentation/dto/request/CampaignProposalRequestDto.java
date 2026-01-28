@@ -30,23 +30,23 @@ public class CampaignProposalRequestDto {
 
     @NotEmpty
     @Valid
-    private List<CampaignContentTagRequest> formatTags;
+    private List<CampaignContentTagRequest> formats;
 
     @NotEmpty
     @Valid
-    private List<CampaignContentTagRequest> typeTags;
+    private List<CampaignContentTagRequest> categories;
 
     @NotEmpty
     @Valid
-    private List<CampaignContentTagRequest> toneTags;
+    private List<CampaignContentTagRequest> tones;
 
     @NotEmpty
     @Valid
-    private List<CampaignContentTagRequest> engagementTags;
+    private List<CampaignContentTagRequest> involvements;
 
     @NotEmpty
     @Valid
-    private List<CampaignContentTagRequest> usageTags;
+    private List<CampaignContentTagRequest> usageRanges;
 
     @NotNull
     private Integer rewardAmount;
@@ -61,7 +61,7 @@ public class CampaignProposalRequestDto {
     private LocalDate endDate;
 
     public record CampaignContentTagRequest(
-            @NotNull UUID tagId,
+            @NotNull UUID id,
             String customValue
     ) {}
 }
