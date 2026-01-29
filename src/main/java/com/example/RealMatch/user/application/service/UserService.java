@@ -141,11 +141,6 @@ public class UserService {
                 .map(AuthenticationMethod::getProvider)
                 .toList();
 
-        // 유저 로그인 정보를 불러오지 못했을 때
-        if (linkedProviders.isEmpty()) {
-            throw new UserException(UserErrorCode.SOCIAL_INFO_NOT_FOUND);
-        }
-
         // DTO 변환 및 반환
         return MyLoginResponseDto.from(linkedProviders);
     }
