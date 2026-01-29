@@ -2,9 +2,11 @@ package com.example.RealMatch.business.presentation.dto.request;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
@@ -29,8 +31,25 @@ public class CampaignProposalRequestDto {
     @NotBlank
     private String description;
 
+    @NotEmpty
     @Valid
-    private List<TagRequest> tags;
+    private List<CampaignContentTagRequest> formats;
+
+    @NotEmpty
+    @Valid
+    private List<CampaignContentTagRequest> categories;
+
+    @NotEmpty
+    @Valid
+    private List<CampaignContentTagRequest> tones;
+
+    @NotEmpty
+    @Valid
+    private List<CampaignContentTagRequest> involvements;
+
+    @NotEmpty
+    @Valid
+    private List<CampaignContentTagRequest> usageRanges;
 
     @NotNull
     private Integer rewardAmount;
@@ -44,8 +63,10 @@ public class CampaignProposalRequestDto {
     @NotNull
     private LocalDate endDate;
 
-    public record TagRequest(
-            @NotNull Long id,
+    public record CampaignContentTagRequest(
+            @NotNull UUID id,
             String customValue
     ) {}
+
+
 }

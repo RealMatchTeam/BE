@@ -3,14 +3,15 @@ package com.example.RealMatch.business.presentation.dto.response;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
-import com.example.RealMatch.business.domain.entity.CampaignProposalTag;
-import com.example.RealMatch.tag.presentation.dto.response.TagResponse;
+import com.example.RealMatch.campaign.domain.entity.CampaignContentTag;
+import com.example.RealMatch.tag.domain.enums.ContentTagType;
+import com.example.RealMatch.tag.presentation.dto.response.ContentTagResponse;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -38,11 +39,11 @@ public class CampaignProposalDetailResponse {
 
     private LocalDateTime createdAt;
 
-    private TagResponse tags;
+    private ContentTagResponse contentTags;
 
     public static CampaignProposalDetailResponse from(
             CampaignProposal proposal,
-            List<CampaignProposalTag> tags
+            List<CampaignContentTag> tags
     ) {
         return CampaignProposalDetailResponse.builder()
                 .proposalId(proposal.getId())
@@ -57,32 +58,45 @@ public class CampaignProposalDetailResponse {
                 .status(proposal.getStatus().name())
                 .refusalReason(proposal.getRefusalReason())
                 .createdAt(proposal.getCreatedAt())
-                .tags(toTagResponse(tags))
+                .contentTags(toContentTagResponse(tags))
                 .build();
     }
 
-    private static TagResponse toTagResponse(List<CampaignProposalTag> proposalTags) {
-        Map<String, List<TagResponse.TagItem>> categories = new HashMap<>();
+    private static ContentTagResponse toContentTagResponse(
+            List<CampaignContentTag> tags
+    ) {
+        Map<ContentTagType, List<ContentTagResponse.TagItemResponse>> map =
+                new EnumMap<>(ContentTagType.class);
 
-        for (CampaignProposalTag proposalTag : proposalTags) {
-            String category = proposalTag.getTag().getTagCategory();
-            String tagName = resolveTagName(proposalTag);
+        for (CampaignContentTag tag : tags) {
+            ContentTagType type = tag.getTagContent().getTagType();
 
-            categories.computeIfAbsent(category, k -> new ArrayList<>())
-                    .add(new TagResponse.TagItem(
-                            proposalTag.getTag().getId(),
-                            tagName
-                    ));
+            map.computeIfAbsent(type, k -> new ArrayList<>())
+                    .add(toTagItem(tag));
         }
 
-        String tagType = proposalTags.isEmpty() ? null : proposalTags.get(0).getTag().getTagType();
-        return new TagResponse(tagType, categories);
+        return new ContentTagResponse(
+                map.getOrDefault(ContentTagType.FORMAT, List.of()),
+                map.getOrDefault(ContentTagType.CATEGORY, List.of()),
+                map.getOrDefault(ContentTagType.TONE, List.of()),
+                map.getOrDefault(ContentTagType.INVOLVEMENT, List.of()),
+                map.getOrDefault(ContentTagType.USAGE_RANGE, List.of())
+        );
     }
 
-    private static String resolveTagName(CampaignProposalTag proposalTag) {
-        String baseName = proposalTag.getTag().getTagName();
-        if (proposalTag.getCustomTagValue() != null && !proposalTag.getCustomTagValue().isBlank()) {
-            return baseName + " (" + proposalTag.getCustomTagValue() + ")";
+    private static ContentTagResponse.TagItemResponse toTagItem(
+            CampaignContentTag tag
+    ) {
+        return new ContentTagResponse.TagItemResponse(
+                tag.getTagContent().getId(),
+                resolveTagName(tag)
+        );
+    }
+
+    private static String resolveTagName(CampaignContentTag tag) {
+        String baseName = tag.getTagContent().getKorName();
+        if (tag.getCustomTagValue() != null && !tag.getCustomTagValue().isBlank()) {
+            return baseName + " (" + tag.getCustomTagValue() + ")";
         }
         return baseName;
     }

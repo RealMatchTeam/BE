@@ -1,7 +1,9 @@
 package com.example.RealMatch.business.domain.entity;
 
+import java.util.UUID;
+
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.entity.TagContent;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,56 +23,56 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "campaign_proposal_tag",
+        name = "campaign_proposal_content_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"campaign_proposal_id", "tag_id"})
+                @UniqueConstraint(columnNames = {"campaign_proposal_id", "content_tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignProposalTag extends BaseEntity {
+public class CampaignProposalContentTag extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_proposal_id", nullable = false)
     private CampaignProposal campaignProposal;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tag_id", nullable = false)
-    private Tag tag;
+    @JoinColumn(name = "content_tag_id", nullable = false)
+    private TagContent tagContent;
 
     @Column(name = "custom_tag_value")
     private String customTagValue;
 
     @Builder
-    public CampaignProposalTag(
+    public CampaignProposalContentTag(
             CampaignProposal campaignProposal,
-            Tag tag,
+            TagContent tagContent,
             String customTagValue
     ) {
         this.campaignProposal = campaignProposal;
-        this.tag = tag;
-        this.customTagValue = normalize(customTagValue);
+        this.tagContent = tagContent;
+        this.customTagValue = customTagValue;
     }
 
-    public static CampaignProposalTag create(
+    public static CampaignProposalContentTag create(
             CampaignProposal campaignProposal,
-            Tag tag,
+            TagContent tagContent,
             String customTagValue
     ) {
         if (campaignProposal == null) {
             throw new IllegalArgumentException("campaignProposal은 null일 수 없습니다.");
         }
-        if (tag == null) {
-            throw new IllegalArgumentException("tag는 null일 수 없습니다.");
+        if (tagContent == null) {
+            throw new IllegalArgumentException("tagContent는 null일 수 없습니다.");
         }
 
-        return CampaignProposalTag.builder()
+        return CampaignProposalContentTag.builder()
                 .campaignProposal(campaignProposal)
-                .tag(tag)
-                .customTagValue(customTagValue)
+                .tagContent(tagContent)
+                .customTagValue(normalize(customTagValue))
                 .build();
     }
 
@@ -80,4 +82,6 @@ public class CampaignProposalTag extends BaseEntity {
         }
         return value.trim();
     }
+
+
 }
