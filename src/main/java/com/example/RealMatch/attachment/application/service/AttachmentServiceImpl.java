@@ -11,13 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
-import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
 import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -101,7 +101,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             }
             
             // 원래 예외를 래핑하여 더 명확한 메시지 제공
-            throw new AttachmentException(
+            throw new CustomException(
                     AttachmentErrorCode.S3_UPLOAD_FAILED,
                     "파일 업로드에 실패했습니다: " + e.getMessage(),
                     e

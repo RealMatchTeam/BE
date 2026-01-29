@@ -16,11 +16,11 @@ import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,10 +54,10 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     private void validateRequest(Long userId, Long brandId, Long creatorId) {
         if (brandId == null || creatorId == null || brandId.equals(creatorId)) {
-            throw new ChatException(ChatErrorCode.INVALID_ROOM_REQUEST);
+            throw new CustomException(ChatErrorCode.INVALID_ROOM_REQUEST);
         }
         if (!userId.equals(brandId) && !userId.equals(creatorId)) {
-            throw new ChatException(ChatErrorCode.NOT_ROOM_MEMBER);
+            throw new CustomException(ChatErrorCode.NOT_ROOM_MEMBER);
         }
     }
 
@@ -100,7 +100,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         } catch (DataIntegrityViolationException e) {
             // 다른 스레드가 이미 채팅방을 생성한 경우, 기존 방을 조회
             return chatRoomRepository.findByRoomKey(roomKey)
-                    .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR));
+                    .orElseThrow(() -> new CustomException(ChatErrorCode.INTERNAL_ERROR));
         }
     }
 
@@ -129,7 +129,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
             String messagePreview
     ) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));
 
         room.updateLastMessage(messageId, messageAt, messagePreview, messageType);
     }

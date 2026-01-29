@@ -12,7 +12,6 @@ import com.example.RealMatch.chat.application.mapper.ChatRoomCardAssembler;
 import com.example.RealMatch.chat.application.service.room.OpponentInfoService.OpponentInfo;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepositoryCustom.RoomCursorInfo;
@@ -22,6 +21,7 @@ import com.example.RealMatch.chat.presentation.dto.response.CampaignSummaryRespo
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -101,7 +101,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     @Override
     public ChatRoomDetailResponse getChatRoomDetailWithOpponent(Long userId, Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));
 
         // 내 멤버십 확인 (활성 상태)
         chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);

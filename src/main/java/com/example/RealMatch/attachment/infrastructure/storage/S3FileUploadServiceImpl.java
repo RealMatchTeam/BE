@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.util.FileValidator;
-import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -55,10 +55,10 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
 
         } catch (S3Exception e) {
             handleS3Exception("파일 업로드", key, e);
-            throw new AttachmentException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         } catch (Exception e) {
             LOG.error("S3 파일 업로드 중 예상치 못한 오류 발생. key={}", key, e);
-            throw new AttachmentException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         }
     }
 
@@ -80,10 +80,10 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
 
         } catch (S3Exception e) {
             handleS3Exception("Presigned URL 생성", key, e);
-            throw new AttachmentException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         } catch (Exception e) {
             LOG.error("Presigned URL 생성 중 예상치 못한 오류 발생. key={}", key, e);
-            throw new AttachmentException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         }
     }
 
@@ -121,7 +121,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
                 e);
         
         if (e.statusCode() == 403 || e.statusCode() == 401) {
-            throw new AttachmentException(AttachmentErrorCode.S3_ACCESS_DENIED);
+            throw new CustomException(AttachmentErrorCode.S3_ACCESS_DENIED);
         }
     }
 }

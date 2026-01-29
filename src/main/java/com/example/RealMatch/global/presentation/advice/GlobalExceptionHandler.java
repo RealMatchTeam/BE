@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
-import com.example.RealMatch.attachment.domain.exception.AttachmentException;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.BaseErrorCode;
@@ -72,22 +70,6 @@ public class GlobalExceptionHandler {
                 .body(CustomResponse.onFailure(GeneralErrorCode.NOT_FOUND, null));
     }
 
-    @ExceptionHandler(ChatException.class)
-    public ResponseEntity<CustomResponse<?>> handleChatException(ChatException e) {
-        log.warn("[ChatException] code={}, message={}", e.getErrorCode().getCode(), e.getMessage());
-        return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(CustomResponse.onFailure(e.getErrorCode(), null));
-    }
-
-    @ExceptionHandler(AttachmentException.class)
-    public ResponseEntity<CustomResponse<?>> handleAttachmentException(AttachmentException e) {
-        log.warn("[AttachmentException] code={}, message={}", e.getErrorCode().getCode(), e.getMessage());
-        return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(CustomResponse.onFailure(e.getErrorCode(), null));
-    }
-
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<CustomResponse<?>> handleIllegalState(IllegalStateException e) {
         log.error("[IllegalStateException] {}", e.getMessage(), e);
@@ -123,8 +105,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<CustomResponse<?>> handleCustomException(CustomException e) {
-
-        log.warn("[CustomException] {}", e.getMessage());
+        log.warn("[CustomException] code={}, message={}", e.getCode().getCode(), e.getMessage());
         BaseErrorCode errorCode = e.getCode();
         return ResponseEntity
                 .status(errorCode.getStatus())

@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +21,7 @@ public class ChatRoomMemberService {
     public ChatRoomMember getActiveMemberOrThrow(@NonNull Long roomId, @NonNull Long userId) {
         ChatRoomMember member = chatRoomMemberRepository
                 .findMemberByRoomIdAndUserIdWithRoomCheck(roomId, userId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
+                .orElseThrow(() -> new CustomException(ChatErrorCode.NOT_ROOM_MEMBER));
 
         ChatRoomMemberValidator.validateActiveMember(member);
         return member;

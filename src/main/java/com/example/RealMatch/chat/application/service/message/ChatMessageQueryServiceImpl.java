@@ -14,11 +14,11 @@ import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommand
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -41,7 +41,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
             int size
     ) {
         if (roomId == null) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+            throw new CustomException(ChatErrorCode.ROOM_NOT_FOUND);
         }
         
         // 멤버 검증 및 조회

@@ -4,9 +4,9 @@ import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.util.FileValidator;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
-import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +24,7 @@ public class AttachmentValidationService {
             AttachmentType attachmentType
     ) {
         if (originalFilename == null || originalFilename.isBlank()) {
-            throw new AttachmentException(AttachmentErrorCode.INVALID_FILE_NAME);
+            throw new CustomException(AttachmentErrorCode.INVALID_FILE_NAME);
         }
 
         fileValidator.validateFileName(originalFilename);

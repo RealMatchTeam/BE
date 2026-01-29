@@ -10,11 +10,11 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageAck;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
 import com.example.RealMatch.chat.presentation.resolver.ChatUserIdResolver;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
 import jakarta.validation.Valid;
@@ -36,10 +36,10 @@ public class ChatSocketController {
             Long senderId = chatUserIdResolver.resolve(principal);
             ChatMessageResponse response = chatMessageSocketService.sendMessage(command, senderId);
             return ChatSendMessageAck.success(command.clientMessageId(), response.messageId());
-        } catch (ChatException ex) {
+        } catch (CustomException ex) {
             LOG.warn("Chat domain exception. clientMessageId={}, errorCode={}", 
-                    command.clientMessageId(), ex.getErrorCode().getCode(), ex);
-            return ChatSendMessageAck.failure(command.clientMessageId(), ex.getErrorCode());
+                    command.clientMessageId(), ex.getCode().getCode(), ex);
+            return ChatSendMessageAck.failure(command.clientMessageId(), ex.getCode());
         } catch (RuntimeException ex) {
             LOG.error("Unexpected runtime exception in chat send request. clientMessageId={}", 
                     command.clientMessageId(), ex);

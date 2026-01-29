@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
-import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,10 +50,10 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
             return;
         }
         Attachment attachment = attachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new AttachmentException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND));
         
         if (!attachment.getUploaderId().equals(userId)) {
-            throw new AttachmentException(AttachmentErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
+            throw new CustomException(AttachmentErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
         }
     }
 }

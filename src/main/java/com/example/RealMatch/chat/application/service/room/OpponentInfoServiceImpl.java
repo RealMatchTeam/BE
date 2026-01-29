@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 import com.example.RealMatch.chat.application.util.ChatConstants;
 import com.example.RealMatch.chat.application.util.ChatRoomValidator;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
@@ -95,6 +95,6 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
         return activeMembers.stream()
                 .filter(m -> !m.getUserId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR, "Opponent member not found"));
+                .orElseThrow(() -> new CustomException(ChatErrorCode.INTERNAL_ERROR, "Opponent member not found"));
     }
 }

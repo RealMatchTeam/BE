@@ -18,12 +18,12 @@ import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -59,7 +59,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
     private void validateRoomId(Long roomId) {
         if (roomId == null) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+            throw new CustomException(ChatErrorCode.ROOM_NOT_FOUND);
         }
     }
 
@@ -173,12 +173,12 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
     private void validateIdempotentConsistency(ChatMessage stored, ChatSendMessageCommand command) {
         if (!Objects.equals(stored.getRoomId(), command.roomId())) {
-            throw new ChatException(ChatErrorCode.INVALID_ROOM_FOR_MESSAGE);
+            throw new CustomException(ChatErrorCode.INVALID_ROOM_FOR_MESSAGE);
         }
         if (!Objects.equals(stored.getAttachmentId(), command.attachmentId())
                 || !Objects.equals(stored.getMessageType(), command.messageType())
                 || !Objects.equals(stored.getContent(), command.content())) {
-            throw new ChatException(ChatErrorCode.IDEMPOTENCY_CONFLICT);
+            throw new CustomException(ChatErrorCode.IDEMPOTENCY_CONFLICT);
         }
     }
 
