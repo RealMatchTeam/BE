@@ -131,8 +131,9 @@ public class UserService {
 
     public MyLoginResponseDto getSocialLoginInfo(Long userId) {
         // 유저 조회
-        userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        if (!userRepository.existsById(userId)) {
+            throw new UserException(UserErrorCode.USER_NOT_FOUND);
+        }
 
         // 해당 유저의 모든 소셜 로그인 방법 조회
         List<AuthProvider> linkedProviders = authenticationMethodRepository.findByUserId(userId)

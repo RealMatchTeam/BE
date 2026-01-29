@@ -25,10 +25,11 @@ public record MyLoginResponseDto(
     }
 
     public static MyLoginResponseDto from(List<AuthProvider> linkedProviders) {
+        java.util.Set<AuthProvider> linkedProvidersSet = new java.util.HashSet<>(linkedProviders);
         List<SocialLoginInfo> socialLoginInfos = Arrays.stream(AuthProvider.values())
                 .map(provider -> SocialLoginInfo.of(
                         provider,
-                        linkedProviders.contains(provider)
+                        linkedProvidersSet.contains(provider)
                 ))
                 .toList();
 
