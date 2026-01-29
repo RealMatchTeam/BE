@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
+import com.example.RealMatch.tag.application.service.TagContentService;
 import com.example.RealMatch.tag.application.service.TagService;
+import com.example.RealMatch.tag.presentation.dto.response.ContentTagResponse;
 import com.example.RealMatch.tag.presentation.dto.response.TagResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class TagController {
 
     private final TagService tagService;
+    private final TagContentService tagContentService;
 
     @GetMapping("/fashion")
     @Operation(
@@ -57,6 +60,19 @@ public class TagController {
         return CustomResponse.onSuccess(
                 GeneralSuccessCode.FOUND,
                 tagService.getTagsByType(tagType)
+        );
+    }
+
+    @GetMapping("/content")
+    @Operation(
+            summary = "컨텐츠 태그 조회",
+            description = "컨텐츠 태그 목록을 조회합니다."
+    )
+    public CustomResponse<ContentTagResponse> getContentTags() {
+
+        return CustomResponse.onSuccess(
+                GeneralSuccessCode.FOUND,
+                tagContentService.getContentTags()
         );
     }
 }
