@@ -35,8 +35,12 @@ public class Tag extends DeleteBaseEntity {
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "user_id", nullable = false)
+//    private User user;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name = "category_name", nullable = false, length = 100)
