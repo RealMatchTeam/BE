@@ -16,8 +16,6 @@ import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorReposi
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
-import com.example.RealMatch.brand.domain.repository.BrandTagParentRepository;
-import com.example.RealMatch.brand.domain.repository.TagRepository;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
@@ -28,8 +26,9 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetai
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
-import com.example.RealMatch.tag.domain.entity.BrandTagParent;
-import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.entity.BrandTag;
+import com.example.RealMatch.tag.domain.enums.TagType;
+import com.example.RealMatch.tag.domain.repository.BrandTagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
@@ -41,13 +40,12 @@ import lombok.RequiredArgsConstructor;
 public class BrandService {
 
     private final BrandRepository brandRepository;
-    private final BrandTagParentRepository brandTagParentRepository;
+    private final BrandTagRepository brandTagRepository;
     private final BrandLikeRepository brandLikeRepository;
     private final BrandCategoryViewRepository brandCategoryViewRepository;
     private final CampaignRepository campaignRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
     private final UserRepository userRepository;
-    private final TagRepository tagRepository;
 
     public BrandDetailResponseDto getBrandDetail(Long brandId) {
         Long currentUserId = 1L;
@@ -55,12 +53,10 @@ public class BrandService {
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new IllegalArgumentException("Brand not found with id: " + brandId));
 
-        final String skinCareParentName = "brandSkinCareTag";
-        final String makeUpParentName = "brandMakeUpTag";
+        List<BrandTag> brandTags = brandTagRepository.findAllByBrandIdWithTag(brandId);
 
-        List<String> brandTags = brandTagParentRepository.findByBrandId(brandId).stream()
-                .map(BrandTagParent::getTagParentName)
-                .filter(name -> !skinCareParentName.equalsIgnoreCase(name) && !makeUpParentName.equalsIgnoreCase(name))
+        List<String> brandTagNames = brandTags.stream()
+                .map(bt -> bt.getTag().getTagName())
                 .collect(Collectors.toList());
 
         boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
@@ -104,31 +100,36 @@ public class BrandService {
                         .build())
                 .collect(Collectors.toList());
 
-        List<Tag> allTags = tagRepository.findAllByBrand_IdWithTagParent(brandId);
+        // 뷰티 타입 태그들 그룹화
+        Map<String, List<String>> skincareTagsMap = brandTags.stream()
+                .filter(bt -> TagType.BEAUTY.getDescription().equals(bt.getTag().getTagType()))
+                .filter(bt -> "스킨케어".equals(bt.getTag().getTagCategory()))
+                .collect(Collectors.groupingBy(
+                        bt -> bt.getTag().getTagCategory(),
+                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
+                ));
 
-        Map<String, List<String>> skincareTagsMap = allTags.stream()
-                .filter(tag -> skinCareParentName.equalsIgnoreCase(tag.getTagParent().getTagParentName()))
-                .collect(Collectors.groupingBy(Tag::getCategoryName,
-                        Collectors.mapping(Tag::getName, Collectors.toList())));
-
-        Map<String, List<String>> makeupTagsMap = allTags.stream()
-                .filter(tag -> makeUpParentName.equalsIgnoreCase(tag.getTagParent().getTagParentName()))
-                .collect(Collectors.groupingBy(Tag::getCategoryName,
-                        Collectors.mapping(Tag::getName, Collectors.toList())));
+        Map<String, List<String>> makeupTagsMap = brandTags.stream()
+                .filter(bt -> TagType.BEAUTY.getDescription().equals(bt.getTag().getTagType()))
+                .filter(bt -> "메이크업".equals(bt.getTag().getTagCategory()))
+                .collect(Collectors.groupingBy(
+                        bt -> bt.getTag().getTagCategory(),
+                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
+                ));
 
         BrandDetailResponseDto.BrandSkinCareTagDto skinCareTagDto = BrandDetailResponseDto.BrandSkinCareTagDto.builder()
-                .brandSkinType(skincareTagsMap.get("brandSkinType"))
-                .brandMainFunction(skincareTagsMap.get("brandMainFunction"))
+                .brandSkinType(skincareTagsMap.getOrDefault("스킨케어", List.of()))
+                .brandMainFunction(List.of())
                 .build();
 
         BrandDetailResponseDto.BrandMakeUpTagDto makeUpTagDto = BrandDetailResponseDto.BrandMakeUpTagDto.builder()
-                .brandSkinType(makeupTagsMap.get("brandSkinType"))
-                .brandMakeUpStyle(makeupTagsMap.get("brandMakeUpStyle"))
+                .brandSkinType(List.of())
+                .brandMakeUpStyle(makeupTagsMap.getOrDefault("메이크업", List.of()))
                 .build();
 
         return BrandDetailResponseDto.builder()
                 .brandName(brand.getBrandName())
-                .brandTag(brandTags)
+                .brandTag(brandTagNames)
                 .brandDescription(brand.getDetailIntro())
                 .brandMatchingRatio(brand.getMatchingRate())
                 .brandIsLiked(isLiked)

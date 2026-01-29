@@ -1,15 +1,12 @@
 package com.example.RealMatch.tag.domain.entity;
 
-import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -23,33 +20,32 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "user_content_tag",
+        name = "user_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "content_tag_id"})
+                @UniqueConstraint(columnNames = {"user_id", "tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserContentTag extends BaseEntity {
+public class UserTag extends BaseEntity {
 
     @Id
-    @UuidGenerator
-    @GeneratedValue
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
-
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "content_tag_id", nullable = false)
-    private TagContent tagContent;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tag_id", nullable = false)
+    private Tag tag;
 
     @Builder
-    public UserContentTag(
-            Long userId,
-            TagContent tagContent
+    public UserTag(
+            User user,
+            Tag tag
     ) {
-        this.userId = userId;
-        this.tagContent = tagContent;
+        this.user = user;
+        this.tag = tag;
     }
 }

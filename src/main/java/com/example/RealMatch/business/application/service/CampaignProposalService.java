@@ -2,7 +2,6 @@ package com.example.RealMatch.business.application.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -12,15 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
-import com.example.RealMatch.business.domain.entity.CampaignProposalContentTag;
+import com.example.RealMatch.business.domain.entity.CampaignProposalTag;
 import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.campaign.exception.CampaignErrorCode;
 import com.example.RealMatch.global.exception.CustomException;
-import com.example.RealMatch.tag.domain.entity.TagContent;
-import com.example.RealMatch.tag.domain.repository.TagContentRepository;
+import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.repository.TagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -33,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class CampaignProposalService {
 
     private final CampaignProposalRepository campaignProposalRepository;
-    private final TagContentRepository tagContentRepository;
+    private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
@@ -64,45 +63,40 @@ public class CampaignProposalService {
                 .endDate(request.getEndDate())
                 .build();
 
-        // 태그 매핑
-        saveTags(proposal, request.getFormats());
-        saveTags(proposal, request.getCategories());
-        saveTags(proposal, request.getTones());
-        saveTags(proposal, request.getInvolvements());
-        saveTags(proposal, request.getUsageRanges());
+        saveTags(proposal, request.getTags());
 
         campaignProposalRepository.save(proposal);
     }
 
     private void saveTags(
             CampaignProposal proposal,
-            List<CampaignProposalRequestDto.CampaignContentTagRequest> tagRequests
+            List<CampaignProposalRequestDto.TagRequest> tagRequests
     ) {
-        // 1. tagId(UUID) 수집
-        List<UUID> tagIds = tagRequests.stream()
-                .map(CampaignProposalRequestDto.CampaignContentTagRequest::id)
+        if (tagRequests == null || tagRequests.isEmpty()) {
+            return;
+        }
+
+        List<Long> tagIds = tagRequests.stream()
+                .map(CampaignProposalRequestDto.TagRequest::id)
                 .toList();
 
-        // 2. 한 번에 조회
-        List<TagContent> tagContents = tagContentRepository.findAllById(tagIds);
+        List<Tag> tags = tagRepository.findAllById(tagIds);
 
-        if (tagContents.size() != tagIds.size()) {
+        if (tags.size() != tagIds.size()) {
             throw new IllegalArgumentException("존재하지 않는 태그가 포함되어 있습니다.");
         }
 
-        // 3. Map<UUID, TagContent> 변환
-        Map<UUID, TagContent> tagMap = tagContents.stream()
+        Map<Long, Tag> tagMap = tags.stream()
                 .collect(Collectors.toMap(
-                        TagContent::getId,
+                        Tag::getId,
                         Function.identity()
                 ));
 
-        // 4. 매핑
-        for (CampaignProposalRequestDto.CampaignContentTagRequest tagRequest : tagRequests) {
-            TagContent tag = tagMap.get(tagRequest.id());
+        for (CampaignProposalRequestDto.TagRequest tagRequest : tagRequests) {
+            Tag tag = tagMap.get(tagRequest.id());
 
-            proposal.addContentTag(
-                    CampaignProposalContentTag.create(
+            proposal.addTag(
+                    CampaignProposalTag.create(
                             proposal,
                             tag,
                             tagRequest.customValue()
@@ -110,17 +104,4 @@ public class CampaignProposalService {
             );
         }
     }
-
-
-//    @Transactional(readOnly = true)
-//    public CampaignProposalDetailResponse getProposalDetail(UUID proposalId) {
-//
-//        CampaignProposal proposal = campaignProposalRepository.findById(proposalId)
-//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 캠페인 제안입니다."));
-//
-//        List<CampaignProposalContentTag> tags =
-//                proposal.getContentTags(); // LAZY라도 TX 안이니 OK
-//
-//        return CampaignProposalDetailResponse.from(proposal, tags);
-//    }
 }

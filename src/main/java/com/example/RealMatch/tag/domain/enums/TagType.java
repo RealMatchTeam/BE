@@ -5,9 +5,10 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum ContentsUseCoverage {
-    FIRST("1차 사용권"),
-    SECOND("2차 사용권");
+public enum TagType {
+    FASHION("패션"),
+    BEAUTY("뷰티"),
+    CONTENT("콘텐츠");
 
     private final String description;
 }

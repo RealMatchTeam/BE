@@ -3,14 +3,13 @@ package com.example.RealMatch.campaign.presentation.dto.response;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.entity.CampaignContentTag;
-import com.example.RealMatch.tag.domain.enums.ContentTagType;
-import com.example.RealMatch.tag.presentation.dto.response.ContentTagResponse;
+import com.example.RealMatch.tag.presentation.dto.response.TagResponse;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -19,20 +18,17 @@ import lombok.Getter;
 @Builder
 public class CampaignDetailResponse {
 
-    private Long  campaignId;
+    private Long campaignId;
     private String title;
     private String description;
     private String preferredSkills;
     private String schedule;
     private String videoSpec;
 
-    // 협찬품 (수정 필요)
     private String product;
 
-    // 원고료
     private Long rewardAmount;
 
-    // 제작 기간
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -41,7 +37,7 @@ public class CampaignDetailResponse {
 
     private Integer quota;
 
-    private ContentTagResponse contentTags;
+    private TagResponse contentTags;
 
     public static CampaignDetailResponse from(
             Campaign campaign,
@@ -61,49 +57,33 @@ public class CampaignDetailResponse {
                 .recruitStartDate(campaign.getRecruitStartDate())
                 .recruitEndDate(campaign.getRecruitEndDate())
                 .quota(campaign.getQuota())
-                .contentTags(toContentTagResponse(tags))
+                .contentTags(toTagResponse(tags))
                 .build();
     }
 
-    private static ContentTagResponse toContentTagResponse(
-            List<CampaignContentTag> tags
-    ) {
-        Map<ContentTagType, List<ContentTagResponse.TagItemResponse>> map =
-                new EnumMap<>(ContentTagType.class);
+    private static TagResponse toTagResponse(List<CampaignContentTag> tags) {
+        Map<String, List<TagResponse.TagItem>> categories = new HashMap<>();
 
-        for (CampaignContentTag tag : tags) {
-            ContentTagType type = tag.getTagContent().getTagType();
+        for (CampaignContentTag contentTag : tags) {
+            String category = contentTag.getTag().getTagCategory();
+            String tagName = resolveTagName(contentTag);
 
-            map.computeIfAbsent(type, k -> new ArrayList<>())
-                    .add(toTagItem(tag));
+            categories.computeIfAbsent(category, k -> new ArrayList<>())
+                    .add(new TagResponse.TagItem(
+                            contentTag.getTag().getId(),
+                            tagName
+                    ));
         }
 
-        return new ContentTagResponse(
-                map.getOrDefault(ContentTagType.FORMAT, List.of()),
-                map.getOrDefault(ContentTagType.CATEGORY, List.of()),
-                map.getOrDefault(ContentTagType.TONE, List.of()),
-                map.getOrDefault(ContentTagType.INVOLVEMENT, List.of()),
-                map.getOrDefault(ContentTagType.USAGE_RANGE, List.of())
-        );
-    }
-
-    private static ContentTagResponse.TagItemResponse toTagItem(
-            CampaignContentTag tag
-    ) {
-        return new ContentTagResponse.TagItemResponse(
-                tag.getTagContent().getId(),
-                resolveTagName(tag)
-        );
+        String tagType = tags.isEmpty() ? null : tags.get(0).getTag().getTagType();
+        return new TagResponse(tagType, categories);
     }
 
     private static String resolveTagName(CampaignContentTag tag) {
-        String baseName = tag.getTagContent().getKorName();
+        String baseName = tag.getTag().getTagName();
         if (tag.getCustomTagValue() != null && !tag.getCustomTagValue().isBlank()) {
             return baseName + " (" + tag.getCustomTagValue() + ")";
         }
         return baseName;
     }
-
-
 }
-
