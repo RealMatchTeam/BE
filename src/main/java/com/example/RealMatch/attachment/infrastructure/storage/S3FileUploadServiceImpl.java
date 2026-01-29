@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.util.FileValidator;
 import com.example.RealMatch.attachment.domain.exception.AttachmentException;
-import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 
 import lombok.RequiredArgsConstructor;
