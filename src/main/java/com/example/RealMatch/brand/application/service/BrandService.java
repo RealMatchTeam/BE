@@ -1,4 +1,4 @@
-package com.example.RealMatch.brand.application;
+package com.example.RealMatch.brand.application.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
