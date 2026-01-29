@@ -13,6 +13,7 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
@@ -71,5 +72,13 @@ public class UserController implements UserSwagger {
     ) {
         userService.updateMyInfo(userDetails.getUserId(), request);
         return CustomResponse.ok(null);
+    }
+
+    @Override
+    @GetMapping("/me/social-login")
+    public CustomResponse<MyLoginResponseDto> getSocialLoginInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return CustomResponse.ok(userService.getSocialLoginInfo(userDetails.getUserId()));
     }
 }
