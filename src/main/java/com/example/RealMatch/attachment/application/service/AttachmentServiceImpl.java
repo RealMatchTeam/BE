@@ -8,13 +8,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.attachment.application.util.FileValidator;
+import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
 import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
-import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
 import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
@@ -30,8 +29,10 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final S3FileUploadService s3FileUploadService;
-    private final S3Properties s3Properties;
     private final AttachmentCommandService attachmentCommandService;
+    private final AttachmentValidationService attachmentValidationService;
+    private final AttachmentUrlService attachmentUrlService;
+    private final AttachmentResponseMapper responseMapper;
 
     @Override
     @Transactional
@@ -45,20 +46,15 @@ public class AttachmentServiceImpl implements AttachmentService {
     ) {
         AttachmentType attachmentType = request.attachmentType();
 
-        long maxSize = attachmentType == AttachmentType.IMAGE
-                ? s3Properties.getMaxImageSizeBytes()
-                : s3Properties.getMaxFileSizeBytes();
+        // 파일 검증
+        attachmentValidationService.validateUploadRequest(
+                originalFilename,
+                contentType,
+                fileSize,
+                attachmentType
+        );
 
-        if (originalFilename == null || originalFilename.isBlank()) {
-            throw new AttachmentException(AttachmentErrorCode.INVALID_FILE_NAME);
-        }
-        FileValidator.validateFileName(originalFilename);
-        FileValidator.validateFileSize(fileSize, maxSize);
-
-        if (attachmentType == AttachmentType.IMAGE) {
-            FileValidator.validateImageFile(contentType, originalFilename);
-        }
-
+        // DB에 첨부파일 메타데이터 저장
         Attachment attachment = Attachment.create(
                 userId,
                 attachmentType,
@@ -69,19 +65,19 @@ public class AttachmentServiceImpl implements AttachmentService {
         );
         attachment = attachmentRepository.save(attachment);
 
+        // S3에 파일 업로드
         String s3Key = null;
-        String accessUrl = null;
-
         try {
             s3Key = s3FileUploadService.generateS3Key(userId, attachment.getId(), originalFilename);
 
-            accessUrl = s3FileUploadService.uploadFile(
+            String accessUrl = s3FileUploadService.uploadFile(
                     fileInputStream,
                     s3Key,
                     contentType,
                     fileSize
             );
 
+            // S3 업로드 성공 시 accessUrl 업데이트
             if (accessUrl != null) {
                 attachment.updateAccessUrl(accessUrl);
             } else {
@@ -94,37 +90,27 @@ public class AttachmentServiceImpl implements AttachmentService {
         } catch (Exception e) {
             LOG.error("파일 업로드 실패. attachmentId={}, userId={}, s3Key={}", 
                     attachment.getId(), userId, s3Key, e);
+            
+            // 별도 트랜잭션으로 실패 상태 업데이트 시도
             try {
                 attachmentCommandService.markAttachmentAsFailed(attachment.getId());
             } catch (Exception markFailedException) {
-                LOG.error("실패 상태 업데이트 실패. attachmentId={}", attachment.getId(), markFailedException);
+                LOG.error("실패 상태 업데이트 실패. attachmentId={}", 
+                        attachment.getId(), markFailedException);
             }
-            throw e;
+            
+            // 원래 예외를 래핑하여 더 명확한 메시지 제공
+            throw new AttachmentException(
+                    AttachmentErrorCode.S3_UPLOAD_FAILED,
+                    "파일 업로드에 실패했습니다: " + e.getMessage(),
+                    e
+            );
         }
 
-        String responseAccessUrl = attachment.getAccessUrl();
-        if (!s3Properties.isPublicBucket() && responseAccessUrl != null) {
-            try {
-                responseAccessUrl = s3FileUploadService.generatePresignedUrl(
-                        responseAccessUrl,
-                        s3Properties.getPresignedUrlExpirationSeconds()
-                );
-            } catch (Exception e) {
-                LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}", 
-                        attachment.getId(), responseAccessUrl, e);
-                responseAccessUrl = null;
-            }
-        }
+        // Presigned URL 생성
+        String responseAccessUrl = attachmentUrlService.getAccessUrl(attachment);
 
-        return new AttachmentUploadResponse(
-                attachment.getId(),
-                attachment.getAttachmentType(),
-                attachment.getContentType(),
-                attachment.getOriginalName(),
-                attachment.getFileSize(),
-                responseAccessUrl,
-                attachment.getStatus(),
-                attachment.getCreatedAt()
-        );
+        // 응답 DTO 생성
+        return responseMapper.toUploadResponse(attachment, responseAccessUrl);
     }
 }

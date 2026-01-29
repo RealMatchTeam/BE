@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
+import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class AttachmentQueryServiceImpl implements AttachmentQueryService {
 
     private final AttachmentRepository attachmentRepository;
+    private final AttachmentResponseMapper responseMapper;
 
     @Override
     public AttachmentDto findById(Long attachmentId) {
@@ -27,7 +29,7 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         }
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElse(null);
-        return attachment != null ? toDto(attachment) : null;
+        return attachment != null ? responseMapper.toDto(attachment) : null;
     }
 
     @Override
@@ -38,7 +40,7 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         return attachmentRepository.findAllById(attachmentIds).stream()
                 .collect(Collectors.toMap(
                         Attachment::getId,
-                        this::toDto
+                        responseMapper::toDto
                 ));
     }
 
@@ -53,17 +55,5 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         if (!attachment.getUploaderId().equals(userId)) {
             throw new AttachmentException(AttachmentErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
         }
-    }
-
-    private AttachmentDto toDto(Attachment attachment) {
-        return new AttachmentDto(
-                attachment.getId(),
-                attachment.getAttachmentType(),
-                attachment.getContentType(),
-                attachment.getOriginalName(),
-                attachment.getFileSize(),
-                attachment.getAccessUrl(),
-                attachment.getStatus()
-        );
     }
 }

@@ -34,6 +34,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
+    private final FileValidator fileValidator;
 
     @Override
     public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize) {
@@ -100,8 +101,8 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
 
     @Override
     public String generateS3Key(Long userId, Long attachmentId, String originalFilename) {
-        String sanitizedFilename = FileValidator.sanitizeFileName(originalFilename);
-        String extension = FileValidator.getFileExtension(originalFilename);
+        String sanitizedFilename = fileValidator.sanitizeFileName(originalFilename);
+        String extension = fileValidator.getFileExtension(originalFilename);
         String filename = sanitizedFilename;
         
         if (!extension.isEmpty() && !filename.toLowerCase().endsWith("." + extension.toLowerCase())) {

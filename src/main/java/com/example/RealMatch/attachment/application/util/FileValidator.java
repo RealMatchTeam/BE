@@ -2,16 +2,14 @@ package com.example.RealMatch.attachment.application.util;
 
 import java.util.Set;
 
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
 import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Component
 public class FileValidator {
 
     private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of(
@@ -26,7 +24,7 @@ public class FileValidator {
             "image/webp"
     );
 
-    public static void validateFile(
+    public void validateFile(
             MultipartFile file,
             AttachmentType attachmentType,
             long maxSizeBytes
@@ -43,7 +41,7 @@ public class FileValidator {
         }
     }
 
-    public static void validateFileName(String filename) {
+    public void validateFileName(String filename) {
         if (filename == null || filename.isBlank()) {
             throw new AttachmentException(AttachmentErrorCode.INVALID_FILE_NAME);
         }
@@ -57,7 +55,7 @@ public class FileValidator {
         }
     }
 
-    public static void validateFileSize(long fileSize, long maxSizeBytes) {
+    public void validateFileSize(long fileSize, long maxSizeBytes) {
         if (fileSize <= 0) {
             throw new AttachmentException(AttachmentErrorCode.INVALID_FILE_SIZE);
         }
@@ -67,11 +65,11 @@ public class FileValidator {
         }
     }
 
-    public static void validateImageFile(MultipartFile file) {
+    public void validateImageFile(MultipartFile file) {
         validateImageFile(file.getContentType(), file.getOriginalFilename());
     }
 
-    public static void validateImageFile(String contentType, String filename) {
+    public void validateImageFile(String contentType, String filename) {
         if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType.toLowerCase())) {
             throw new AttachmentException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
         }
@@ -84,7 +82,7 @@ public class FileValidator {
         }
     }
 
-    public static String getFileExtension(String filename) {
+    public String getFileExtension(String filename) {
         if (filename == null || filename.isEmpty()) {
             return "";
         }
@@ -97,7 +95,7 @@ public class FileValidator {
         return filename.substring(lastDotIndex + 1);
     }
 
-    public static String sanitizeFileName(String filename) {
+    public String sanitizeFileName(String filename) {
         if (filename == null || filename.isBlank()) {
             return "file";
         }

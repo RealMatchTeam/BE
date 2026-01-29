@@ -11,12 +11,11 @@ import com.example.RealMatch.attachment.application.service.AttachmentQueryServi
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
-import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
+import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
-import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
@@ -28,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
     private final ChatMessageRepository chatMessageRepository;
-    private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatRoomMemberService chatRoomMemberService;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatMessageResponseMapper responseMapper;
     private final ChatRoomMemberCommandService chatRoomMemberCommandService;
@@ -44,12 +43,9 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
         if (roomId == null) {
             throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
         }
-        ChatRoomMember member = chatRoomMemberRepository
-                .findMemberByRoomIdAndUserIdWithRoomCheck(roomId, userId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
         
-        // 활성 상태 검증
-        ChatRoomMemberValidator.validateActiveMember(member);
+        // 멤버 검증 및 조회
+        ChatRoomMember member = chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);
 
         Long cursorMessageId = messageCursor != null ? messageCursor.messageId() : null;
         List<ChatMessage> messages = chatMessageRepository.findMessagesByRoomId(roomId, cursorMessageId, size);

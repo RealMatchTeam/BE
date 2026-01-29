@@ -1,7 +1,7 @@
 package com.example.RealMatch.attachment.infrastructure.storage;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
@@ -16,11 +16,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-        prefix = "app.s3",
-        name = {"access-key-id", "secret-access-key"},
-        matchIfMissing = false
-)
+@Conditional(S3CredentialsCondition.class)
 public class S3Config {
 
     private final S3Properties s3Properties;
