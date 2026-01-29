@@ -2,8 +2,6 @@ package com.example.RealMatch.oauth.service;
 
 import java.util.Map;
 
-import com.example.RealMatch.global.exception.CustomException;
-import jakarta.security.auth.message.AuthException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -11,6 +9,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.oauth.code.OAuthErrorCode;
 import com.example.RealMatch.oauth.dto.CustomOAuth2User;
 import com.example.RealMatch.oauth.dto.GoogleUserInfo;

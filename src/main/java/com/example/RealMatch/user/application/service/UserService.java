@@ -2,10 +2,10 @@ package com.example.RealMatch.user.application.service;
 
 import java.util.List;
 
-import com.example.RealMatch.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;

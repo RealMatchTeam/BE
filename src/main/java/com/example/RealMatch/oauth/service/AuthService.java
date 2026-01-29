@@ -2,12 +2,11 @@ package com.example.RealMatch.oauth.service;
 
 import java.util.List;
 
-import com.example.RealMatch.global.exception.CustomException;
-import jakarta.security.auth.message.AuthException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.config.jwt.JwtProvider;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.oauth.code.OAuthErrorCode;
 import com.example.RealMatch.oauth.dto.OAuthTokenResponse;
 import com.example.RealMatch.oauth.dto.request.SignupCompleteRequest;
