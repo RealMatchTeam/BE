@@ -2,6 +2,7 @@ package com.example.RealMatch.attachment.presentation.controller;
 
 import java.io.IOException;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/attachments")
 @RequiredArgsConstructor
+@ConditionalOnBean(AttachmentService.class)
 public class AttachmentController implements AttachmentSwagger {
 
     private final AttachmentService attachmentService;
