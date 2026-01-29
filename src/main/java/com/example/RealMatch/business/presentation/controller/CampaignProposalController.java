@@ -43,7 +43,9 @@ public class CampaignProposalController implements CampaignProposalSwagger {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CampaignProposalRequestDto request
     ) {
-        campaignProposalService.requestCampaign(userDetails.getUserId(), request);
+        // API 테스트를 위해서 하드코딩 (추후 수정 필요!!)
+//        campaignProposalService.requestCampaign(userDetails.getUserId(), request);
+        campaignProposalService.requestCampaign(1L, request);
         return CustomResponse.ok("캠페인 제안에 성공했습니다.");
     }
 }
