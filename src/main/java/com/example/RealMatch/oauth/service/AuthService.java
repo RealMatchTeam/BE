@@ -125,18 +125,13 @@ public class AuthService {
 
         // DB에서 '필수(isRequired=true)'인 약관 목록을 가져와 검증
         List<Term> requiredTermsFromDb = termRepository.findByIsRequired(true);
-        for (Term requiredTerm : requiredTermsFromDb) {
-            Boolean isAgreed = termAgreedMap.get(requiredTerm.getName());
-            // 필수 약관이 누락되었거나 false인 경우 예외 발생
-            if (isAgreed == null || !isAgreed) {
-                throw new CustomException(OAuthErrorCode.REQUIRED_TERM_NOT_AGREED);
-            }
+        if (requiredTermsFromDb.stream()
+                .anyMatch(term -> !termAgreedMap.getOrDefault(term.getName(), false))) {
+            throw new CustomException(OAuthErrorCode.REQUIRED_TERM_NOT_AGREED);
         }
 
         // DB에서 요청된 약관 엔티티들을 모두 조회
-        List<com.example.RealMatch.user.domain.entity.enums.TermName> requestedNames = terms.stream()
-                .map(SignupCompleteRequest.TermAgreementDto::type)
-                .toList();
+        List<com.example.RealMatch.user.domain.entity.enums.TermName> requestedNames = new java.util.ArrayList<>(termAgreedMap.keySet());
 
         List<Term> allMatchingTerms = termRepository.findByNameIn(requestedNames);
 
