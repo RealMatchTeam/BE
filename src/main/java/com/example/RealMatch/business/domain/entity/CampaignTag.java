@@ -1,9 +1,8 @@
-package com.example.RealMatch.campaign.domain.entity;
+package com.example.RealMatch.tag.domain.entity;
 
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.tag.domain.entity.Tag;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -21,13 +20,13 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "campaign_content_tag",
+        name = "campaign_fashion_tag",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"campaign_id", "tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CampaignContentTag extends BaseEntity {
+public class CampaignTag extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,32 +40,12 @@ public class CampaignContentTag extends BaseEntity {
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
 
-    @Column(name = "custom_tag_value")
-    private String customTagValue;
-
     @Builder
-    public CampaignContentTag(
+    public CampaignTag(
             Campaign campaign,
-            Tag tag,
-            String customTagValue
+            Tag tag
     ) {
         this.campaign = campaign;
         this.tag = tag;
-        this.customTagValue = customTagValue;
-    }
-
-    public static CampaignContentTag of(Campaign campaign, Tag tag) {
-        return CampaignContentTag.builder()
-                .campaign(campaign)
-                .tag(tag)
-                .build();
-    }
-
-    public static CampaignContentTag ofCustom(Campaign campaign, Tag tag, String customValue) {
-        return CampaignContentTag.builder()
-                .campaign(campaign)
-                .tag(tag)
-                .customTagValue(customValue)
-                .build();
     }
 }
