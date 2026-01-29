@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
@@ -18,12 +18,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnBean(AttachmentUrlService.class)
 public class AttachmentQueryServiceImpl implements AttachmentQueryService {
 
     private final AttachmentRepository attachmentRepository;
     private final AttachmentResponseMapper responseMapper;
-    private final AttachmentUrlService attachmentUrlService;
+    
+    @Autowired(required = false)
+    private AttachmentUrlService attachmentUrlService;
 
     @Override
     public AttachmentDto findById(Long attachmentId) {
@@ -36,18 +37,20 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
             return null;
         }
         AttachmentDto dto = responseMapper.toDto(attachment);
-        // Presigned URL 생성
-        String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
-        if (presignedUrl != null) {
-            return new AttachmentDto(
-                    dto.attachmentId(),
-                    dto.attachmentType(),
-                    dto.contentType(),
-                    dto.originalName(),
-                    dto.fileSize(),
-                    presignedUrl,
-                    dto.status()
-            );
+        // Presigned URL 생성 (AttachmentUrlService가 있을 때만)
+        if (attachmentUrlService != null) {
+            String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
+            if (presignedUrl != null) {
+                return new AttachmentDto(
+                        dto.attachmentId(),
+                        dto.attachmentType(),
+                        dto.contentType(),
+                        dto.originalName(),
+                        dto.fileSize(),
+                        presignedUrl,
+                        dto.status()
+                );
+            }
         }
         return dto;
     }
@@ -62,18 +65,20 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
                         Attachment::getId,
                         attachment -> {
                             AttachmentDto dto = responseMapper.toDto(attachment);
-                            // Presigned URL 생성
-                            String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
-                            if (presignedUrl != null) {
-                                return new AttachmentDto(
-                                        dto.attachmentId(),
-                                        dto.attachmentType(),
-                                        dto.contentType(),
-                                        dto.originalName(),
-                                        dto.fileSize(),
-                                        presignedUrl,
-                                        dto.status()
-                                );
+                            // Presigned URL 생성 (AttachmentUrlService가 있을 때만)
+                            if (attachmentUrlService != null) {
+                                String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
+                                if (presignedUrl != null) {
+                                    return new AttachmentDto(
+                                            dto.attachmentId(),
+                                            dto.attachmentType(),
+                                            dto.contentType(),
+                                            dto.originalName(),
+                                            dto.fileSize(),
+                                            presignedUrl,
+                                            dto.status()
+                                    );
+                                }
                             }
                             return dto;
                         }
