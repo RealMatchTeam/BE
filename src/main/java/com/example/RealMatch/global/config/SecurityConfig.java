@@ -71,14 +71,14 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler))
 
                 // 1월 28일 API 테스트를 위해 잠시 주석처리함. 이후 풀어주세요.
+                // 마스터 jwt 테스트
+                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
+                         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
+                         .anyRequest().authenticated())
 
                 // .authorizeHttpRequests(auth -> auth
-                //         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
-                //         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
-                //         .anyRequest().authenticated())
-
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll())
+                //        .anyRequest().permitAll())
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
