@@ -1,16 +1,12 @@
 package com.example.RealMatch.tag.domain.entity;
 
-import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.global.common.BaseEntity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -24,34 +20,32 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "brand_beauty_tag",
+        name = "brand_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"brand_id", "beauty_tag_id"})
+                @UniqueConstraint(columnNames = {"brand_id", "tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandBeautyTag extends BaseEntity {
+public class BrandTag extends BaseEntity {
 
     @Id
-    @UuidGenerator
-    @GeneratedValue
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "beauty_tag_id", nullable = false)
-    private TagBeauty tagBeauty;
+    @JoinColumn(name = "tag_id", nullable = false)
+    private Tag tag;
 
     @Builder
-    public BrandBeautyTag(
+    public BrandTag(
             Brand brand,
-            TagBeauty tagBeauty
+            Tag tag
     ) {
         this.brand = brand;
-        this.tagBeauty = tagBeauty;
+        this.tag = tag;
     }
 }

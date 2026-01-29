@@ -13,10 +13,12 @@ public interface CampaignContentTagRepository extends JpaRepository<CampaignCont
     @Query("""
         select cct
         from CampaignContentTag cct
-        join fetch cct.tagContent tc
+        join fetch cct.tag t
         where cct.campaign.id = :campaignId
     """)
-    List<CampaignContentTag> findAllByCampaignIdWithTagContent(
+    List<CampaignContentTag> findAllByCampaignIdWithTag(
             @Param("campaignId") Long campaignId
     );
+
+    void deleteByCampaignId(Long campaignId);
 }

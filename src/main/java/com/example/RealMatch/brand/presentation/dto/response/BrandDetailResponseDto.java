@@ -41,8 +41,8 @@ public class BrandDetailResponseDto {
         private String brandName;
         private Integer recruitingTotalNumber;
         private Integer recruitedNumber;
-        private String campaignDescription;
-        private String campaignManuscriptFee;
+        private String campaginDescription;
+        private String campaginManuscriptFee;
     }
 
     @Getter

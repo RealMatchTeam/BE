@@ -1,7 +1,8 @@
-package com.example.RealMatch.brand.application;
+package com.example.RealMatch.brand.application.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -11,12 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
-import com.example.RealMatch.brand.domain.entity.BrandTagParent;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
-import com.example.RealMatch.brand.domain.repository.BrandTagParentRepository;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
@@ -27,6 +26,9 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetai
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
+import com.example.RealMatch.tag.domain.entity.BrandTag;
+import com.example.RealMatch.tag.domain.enums.TagType;
+import com.example.RealMatch.tag.domain.repository.BrandTagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
@@ -38,23 +40,23 @@ import lombok.RequiredArgsConstructor;
 public class BrandService {
 
     private final BrandRepository brandRepository;
-    private final BrandTagParentRepository brandTagParentRepository;
+    private final BrandTagRepository brandTagRepository;
     private final BrandLikeRepository brandLikeRepository;
     private final BrandCategoryViewRepository brandCategoryViewRepository;
     private final CampaignRepository campaignRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
     private final UserRepository userRepository;
-    // private final BrandSponsorImageRepository brandSponsorImageRepository; // Assuming this exists
 
     public BrandDetailResponseDto getBrandDetail(Long brandId) {
-        // TODO: Replace with actual user ID from security context
         Long currentUserId = 1L;
 
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new IllegalArgumentException("Brand not found with id: " + brandId));
 
-        List<String> brandTags = brandTagParentRepository.findByBrandId(brandId).stream()
-                .map(BrandTagParent::getTagParentName)
+        List<BrandTag> brandTags = brandTagRepository.findAllByBrandIdWithTag(brandId);
+
+        List<String> brandTagNames = brandTags.stream()
+                .map(bt -> bt.getTag().getTagName())
                 .collect(Collectors.toList());
 
         boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
@@ -63,7 +65,6 @@ public class BrandService {
                 .map(brandCategoryView -> brandCategoryView.getCategory().getName())
                 .collect(Collectors.toList());
 
-        // Assuming createdBy in Campaign refers to brandId
         List<Campaign> allCampaigns = campaignRepository.findByCreatedBy(brandId);
 
         List<BrandDetailResponseDto.BrandOnGoingCampaignDto> onGoingCampaigns = allCampaigns.stream()
@@ -72,9 +73,9 @@ public class BrandService {
                         .brandId(brandId)
                         .brandName(brand.getBrandName())
                         .recruitingTotalNumber(campaign.getQuota())
-                        .recruitedNumber(0) // TODO: Need to implement logic to count recruited number
-                        .campaignDescription(campaign.getDescription())
-                        .campaignManuscriptFee(String.valueOf(campaign.getRewardAmount()))
+                        .recruitedNumber(0)
+                        .campaginDescription(campaign.getDescription())
+                        .campaginManuscriptFee(String.valueOf(campaign.getRewardAmount()))
                         .build())
                 .collect(Collectors.toList());
 
@@ -91,21 +92,44 @@ public class BrandService {
         List<BrandAvailableSponsor> availableSponsors = brandAvailableSponsorRepository.findByBrandId(brandId);
         List<BrandDetailResponseDto.AvailableSponsorProdDto> availableSponsorProds = availableSponsors.stream()
                 .map(sponsor -> BrandDetailResponseDto.AvailableSponsorProdDto.builder()
-                        .productId(sponsor.getId()) // Assuming sponsor id is product id
+                        .productId(sponsor.getId())
                         .productName(sponsor.getName())
-                        .availableType("본품") // TODO: This seems to be hardcoded, check if it can be fetched from somewhere
-                        .availableQuantity(1) // TODO: Hardcoded
-                        .availableSize(0) // TODO: Hardcoded
+                        .availableType("본품")
+                        .availableQuantity(1)
+                        .availableSize(0)
                         .build())
                 .collect(Collectors.toList());
 
-        // TODO: Logic for skin care and makeup tags needs to be implemented
-        BrandDetailResponseDto.BrandSkinCareTagDto skinCareTagDto = BrandDetailResponseDto.BrandSkinCareTagDto.builder().build();
-        BrandDetailResponseDto.BrandMakeUpTagDto makeUpTagDto = BrandDetailResponseDto.BrandMakeUpTagDto.builder().build();
+        // 뷰티 타입 태그들 그룹화
+        Map<String, List<String>> skincareTagsMap = brandTags.stream()
+                .filter(bt -> TagType.BEAUTY.getDescription().equals(bt.getTag().getTagType()))
+                .filter(bt -> "스킨케어".equals(bt.getTag().getTagCategory()))
+                .collect(Collectors.groupingBy(
+                        bt -> bt.getTag().getTagCategory(),
+                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
+                ));
+
+        Map<String, List<String>> makeupTagsMap = brandTags.stream()
+                .filter(bt -> TagType.BEAUTY.getDescription().equals(bt.getTag().getTagType()))
+                .filter(bt -> "메이크업".equals(bt.getTag().getTagCategory()))
+                .collect(Collectors.groupingBy(
+                        bt -> bt.getTag().getTagCategory(),
+                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
+                ));
+
+        BrandDetailResponseDto.BrandSkinCareTagDto skinCareTagDto = BrandDetailResponseDto.BrandSkinCareTagDto.builder()
+                .brandSkinType(skincareTagsMap.getOrDefault("스킨케어", List.of()))
+                .brandMainFunction(List.of())
+                .build();
+
+        BrandDetailResponseDto.BrandMakeUpTagDto makeUpTagDto = BrandDetailResponseDto.BrandMakeUpTagDto.builder()
+                .brandSkinType(List.of())
+                .brandMakeUpStyle(makeupTagsMap.getOrDefault("메이크업", List.of()))
+                .build();
 
         return BrandDetailResponseDto.builder()
                 .brandName(brand.getBrandName())
-                .brandTag(brandTags)
+                .brandTag(brandTagNames)
                 .brandDescription(brand.getDetailIntro())
                 .brandMatchingRatio(brand.getMatchingRate())
                 .brandIsLiked(isLiked)
@@ -120,7 +144,6 @@ public class BrandService {
 
     @Transactional
     public Boolean likeBrand(Long brandId) {
-        // TODO: Replace with actual user ID from security context
         Long currentUserId = 1L;
 
         User user = userRepository.findById(currentUserId)
@@ -132,46 +155,18 @@ public class BrandService {
 
         if (brandLike.isPresent()) {
             brandLikeRepository.delete(brandLike.get());
-            return false; // 좋아요 취소
+            return false;
         } else {
             BrandLike newBrandLike = BrandLike.builder()
                     .user(user)
                     .brand(brand)
                     .build();
             brandLikeRepository.save(newBrandLike);
-            return true; // 좋아요 추가
+            return true;
         }
     }
 
     public BrandFilterResponseDto getBrandFilters() {
-        // List<CategoryDto> categories = categoryRepository.findAll().stream()
-        //         .map(c -> new CategoryDto(c.getId(), c.getName()))
-        //         .collect(Collectors.toList());
-
-        // List<FunctionDto> functions = functionRepository.findAll().stream()
-        //         .map(f -> new FunctionDto(f.getId(), f.getName()))
-        //         .collect(Collectors.toList());
-
-        // List<SkinTypeDto> skinTypes = skinTypeRepository.findAll().stream()
-        //         .map(s -> new SkinTypeDto(s.getId(), s.getName()))
-        //         .collect(Collectors.toList());
-
-        // List<MakeUpStyleDto> makeUpStyles = makeUpStyleRepository.findAll().stream()
-        //         .map(m -> new MakeUpStyleDto(m.getId(), m.getName()))
-        //         .collect(Collectors.toList());
-
-        // BeautyFilterDto beautyFilter = BeautyFilterDto.builder()
-        //         .category(categories)
-        //         .function(functions)
-        //         .skinType(skinTypes)
-        //         .makeUpStyle(makeUpStyles)
-        //         .build();
-
-        // return BrandFilterResponseDto.builder()
-        //         .beautyFilter(beautyFilter)
-        //         .build();
-
-        // For now, returning empty lists as the repositories are not yet available.
         BeautyFilterDto beautyFilter = BeautyFilterDto.builder()
                 .category(List.of())
                 .function(List.of())
@@ -191,12 +186,10 @@ public class BrandService {
         BrandAvailableSponsor product = brandAvailableSponsorRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("제품 정보를 찾을 수 없습니다."));
 
-        // Check if the product belongs to the brand
         if (!product.getBrand().getId().equals(brandId)) {
             throw new IllegalArgumentException("해당 브랜드의 제품이 아닙니다.");
         }
 
-        // Mock data for now, assuming repositories and entities need to be created/updated
         List<String> mockImageUrls = List.of(
                 "https://cdn.example.com/products/100/1.png",
                 "https://cdn.example.com/products/100/2.png",
@@ -225,9 +218,9 @@ public class BrandService {
                 .brandName(brand.getBrandName())
                 .productId(product.getId())
                 .productName(product.getName())
-                .productDescription(product.getCampaign().getDescription()) // Assuming description field exists
-                .productImageUrls(mockImageUrls) // Replace with actual image fetching logic
-                .categories(mockCategories) // Replace with actual category fetching logic
+                .productDescription(product.getCampaign().getDescription())
+                .productImageUrls(mockImageUrls)
+                .categories(mockCategories)
                 .sponsorInfo(sponsorInfo)
                 .action(action)
                 .build();

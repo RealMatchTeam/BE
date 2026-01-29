@@ -85,7 +85,7 @@ public class CampaignProposal extends BaseEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<CampaignProposalContentTag> contentTags = new ArrayList<>();
+    private List<CampaignProposalTag> tags = new ArrayList<>();
 
 
     @Builder
@@ -127,8 +127,8 @@ public class CampaignProposal extends BaseEntity {
         this.refusalReason = refusalReason;
     }
 
-    public void addContentTag(CampaignProposalContentTag contentTag) {
-        this.contentTags.add(contentTag);
+    public void addTag(CampaignProposalTag tag) {
+        this.tags.add(tag);
     }
 
     /**
