@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
@@ -17,10 +18,12 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(AttachmentUrlService.class)
 public class AttachmentQueryServiceImpl implements AttachmentQueryService {
 
     private final AttachmentRepository attachmentRepository;
     private final AttachmentResponseMapper responseMapper;
+    private final AttachmentUrlService attachmentUrlService;
 
     @Override
     public AttachmentDto findById(Long attachmentId) {
@@ -29,7 +32,24 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         }
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElse(null);
-        return attachment != null ? responseMapper.toDto(attachment) : null;
+        if (attachment == null) {
+            return null;
+        }
+        AttachmentDto dto = responseMapper.toDto(attachment);
+        // Presigned URL 생성
+        String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
+        if (presignedUrl != null) {
+            return new AttachmentDto(
+                    dto.attachmentId(),
+                    dto.attachmentType(),
+                    dto.contentType(),
+                    dto.originalName(),
+                    dto.fileSize(),
+                    presignedUrl,
+                    dto.status()
+            );
+        }
+        return dto;
     }
 
     @Override
@@ -40,7 +60,23 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         return attachmentRepository.findAllById(attachmentIds).stream()
                 .collect(Collectors.toMap(
                         Attachment::getId,
-                        responseMapper::toDto
+                        attachment -> {
+                            AttachmentDto dto = responseMapper.toDto(attachment);
+                            // Presigned URL 생성
+                            String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
+                            if (presignedUrl != null) {
+                                return new AttachmentDto(
+                                        dto.attachmentId(),
+                                        dto.attachmentType(),
+                                        dto.contentType(),
+                                        dto.originalName(),
+                                        dto.fileSize(),
+                                        presignedUrl,
+                                        dto.status()
+                                );
+                            }
+                            return dto;
+                        }
                 ));
     }
 
