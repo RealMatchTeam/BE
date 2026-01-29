@@ -17,6 +17,7 @@ import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
@@ -126,6 +127,21 @@ public class UserService {
                 request.address(),
                 request.detailAddress()
         );
+    }
 
+    public MyLoginResponseDto getSocialLoginInfo(Long userId) {
+        // 유저 조회
+        if (!userRepository.existsById(userId)) {
+            throw new UserException(UserErrorCode.USER_NOT_FOUND);
+        }
+
+        // 해당 유저의 모든 소셜 로그인 방법 조회
+        List<AuthProvider> linkedProviders = authenticationMethodRepository.findByUserId(userId)
+                .stream()
+                .map(AuthenticationMethod::getProvider)
+                .toList();
+
+        // DTO 변환 및 반환
+        return MyLoginResponseDto.from(linkedProviders);
     }
 }
