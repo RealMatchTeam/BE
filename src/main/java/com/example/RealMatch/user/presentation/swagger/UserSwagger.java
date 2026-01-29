@@ -8,6 +8,7 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
@@ -61,5 +62,13 @@ public interface UserSwagger {
     CustomResponse<Void> updateMyInfo(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody MyEditInfoRequestDto request
+    );
+
+    @Operation(
+            summary = "소셜 로그인 연동 정보 조회 API By 고경수",
+            description = "현재 사용자의 소셜 로그인 연동 상태를 조회합니다. 카카오, 네이버, 구글 계정의 연동 여부를 확인할 수 있습니다."
+    )
+    CustomResponse<MyLoginResponseDto> getSocialLoginInfo(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }

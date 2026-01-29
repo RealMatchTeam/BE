@@ -59,6 +59,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
+        // 마스터 JWT 체크 (개발/테스트용)
+        if (jwtProvider.isMasterJwt(token)) {
+            CustomUserDetails masterUser = new CustomUserDetails(
+                    0L,              // 마스터 사용자 ID
+                    "master",        // providerId
+                    "ADMIN"          // 관리자 권한
+            );
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            masterUser,
+                            null,
+                            masterUser.getAuthorities()
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (!jwtProvider.validateToken(token)) {
             filterChain.doFilter(request, response);
             return;

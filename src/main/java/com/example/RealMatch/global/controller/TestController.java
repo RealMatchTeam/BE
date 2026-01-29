@@ -2,6 +2,7 @@ package com.example.RealMatch.global.controller;
 
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -68,5 +69,19 @@ public class TestController {
             @RequestParam("refreshToken") String refreshToken
     ) {
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, Map.of("accessToken", accessToken, "refreshToken", refreshToken));
+    }
+
+    @Operation(summary = "마스터 jwt 인증 확인",
+            description = """
+                    마스터 jwt 테스트용 api입니다.
+                    Swagger에서 Authorize에 마스터 Jwt를 입력한 후 사용해야 정상 작동합니다.
+                    """)
+    @GetMapping("/api/user/info")
+    public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails.getUserId() == 0L) {
+            // 마스터 JWT로 인증된 경우
+            return ResponseEntity.ok("Master user authenticated");
+        }
+        return ResponseEntity.ok(userDetails);
     }
 }
