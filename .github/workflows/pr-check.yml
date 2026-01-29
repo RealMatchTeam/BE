@@ -59,6 +59,8 @@ jobs:
       JWT_ACCESS_EXPIRE_MS: 600000
       JWT_REFRESH_EXPIRE_MS: 1209600000
       JWT_REFRESH_EXPIRE_DAYS: 14
+      JWT_MASTER_SECRET: test
+
       # OAuth - Kakao
       KAKAO_ID: test_kakao_client
       KAKAO_SECRET: test_kakao_secret
