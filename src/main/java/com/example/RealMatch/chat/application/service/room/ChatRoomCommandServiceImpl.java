@@ -43,14 +43,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         String roomKey = generateRoomKey(brandId, creatorId);
 
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey)
-                .orElseGet(() -> {
-                    ChatRoom newRoom = createRoomWithMembers(roomKey, brandId, creatorId);
-                    // 새로 생성된 채팅방인 경우, 양쪽 사용자에게 채팅방 목록 업데이트 알림
-                    afterCommitExecutor.execute(() -> {
-                        eventPublisher.publishRoomListUpdated(newRoom.getId());
-                    });
-                    return newRoom;
-                });
+                .orElseGet(() -> createRoomWithMembers(roomKey, brandId, creatorId));
 
         return new ChatRoomCreateResponse(
                 room.getId(),
@@ -79,21 +72,36 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
             Long brandId,
             Long creatorId
     ) {
-        ChatRoom room;
-        try {
-            room = chatRoomRepository.saveAndFlush(
-                    ChatRoom.createDirectRoom(roomKey)
-            );
-        } catch (DataIntegrityViolationException e) {
-            // 다른 스레드가 이미 채팅방을 생성한 경우, 기존 방을 조회
-            room = chatRoomRepository.findByRoomKey(roomKey)
-                    .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR));
+        // 먼저 조회 시도 (대부분의 경우 기존 방이 있을 것)
+        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
+
+        if (room == null) {
+            // 방이 없는 경우에만 생성 시도
+            room = createRoomWithRetry(roomKey);
         }
 
+        // 멤버 생성 (멤버는 중복 생성 방지 로직이 있음)
         createMemberIfNotExists(room.getId(), brandId, ChatRoomMemberRole.BRAND);
         createMemberIfNotExists(room.getId(), creatorId, ChatRoomMemberRole.CREATOR);
 
         return room;
+    }
+
+    private ChatRoom createRoomWithRetry(String roomKey) {
+        try {
+            ChatRoom newRoom = chatRoomRepository.saveAndFlush(
+                    ChatRoom.createDirectRoom(roomKey)
+            );
+            // 새로 생성된 채팅방인 경우, 양쪽 사용자에게 채팅방 목록 업데이트 알림
+            afterCommitExecutor.execute(() -> {
+                eventPublisher.publishRoomListUpdated(newRoom.getId());
+            });
+            return newRoom;
+        } catch (DataIntegrityViolationException e) {
+            // 다른 스레드가 이미 채팅방을 생성한 경우, 기존 방을 조회
+            return chatRoomRepository.findByRoomKey(roomKey)
+                    .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR));
+        }
     }
 
     private void createMemberIfNotExists(Long roomId, Long userId, ChatRoomMemberRole role) {

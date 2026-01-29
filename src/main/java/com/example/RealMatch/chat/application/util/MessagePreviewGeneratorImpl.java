@@ -7,9 +7,6 @@ import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 @Component
 public class MessagePreviewGeneratorImpl implements MessagePreviewGenerator {
 
-    private static final int MAX_PREVIEW_LENGTH = 255;
-    private static final int TRUNCATE_LENGTH = 252;
-
     @Override
     public String generate(ChatMessageType messageType, String content) {
         if (messageType == ChatMessageType.TEXT) {
@@ -18,8 +15,8 @@ public class MessagePreviewGeneratorImpl implements MessagePreviewGenerator {
             }
             // 줄바꿈 및 연속 공백을 단일 공백으로 변환
             String preview = content.replaceAll("\\s+", " ").trim();
-            if (preview.length() > MAX_PREVIEW_LENGTH) {
-                preview = preview.substring(0, TRUNCATE_LENGTH) + "...";
+            if (preview.length() > ChatConstants.MAX_MESSAGE_PREVIEW_LENGTH) {
+                preview = preview.substring(0, ChatConstants.TRUNCATE_LENGTH) + "...";
             }
             return preview;
         } else if (messageType == ChatMessageType.IMAGE) {

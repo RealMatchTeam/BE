@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
+import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.CustomResponse;
@@ -74,6 +75,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ChatException.class)
     public ResponseEntity<CustomResponse<?>> handleChatException(ChatException e) {
         log.warn("[ChatException] code={}, message={}", e.getErrorCode().getCode(), e.getMessage());
+        return ResponseEntity
+                .status(e.getErrorCode().getStatus())
+                .body(CustomResponse.onFailure(e.getErrorCode(), null));
+    }
+
+    @ExceptionHandler(AttachmentException.class)
+    public ResponseEntity<CustomResponse<?>> handleAttachmentException(AttachmentException e) {
+        log.warn("[AttachmentException] code={}, message={}", e.getErrorCode().getCode(), e.getMessage());
         return ResponseEntity
                 .status(e.getErrorCode().getStatus())
                 .body(CustomResponse.onFailure(e.getErrorCode(), null));

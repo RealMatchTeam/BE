@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.example.RealMatch.chat.application.util.ChatConstants;
+import com.example.RealMatch.chat.application.util.ChatRoomValidator;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
@@ -21,20 +23,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OpponentInfoServiceImpl implements OpponentInfoService {
 
-    private static final String UNKNOWN_OPPONENT_NAME = "알 수 없음";
-
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final UserRepository userRepository;
 
     @Override
     public OpponentInfo getOpponentInfo(Long opponentUserId) {
         if (opponentUserId == null) {
-            return new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null);
+            return new OpponentInfo(null, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
         }
 
         User user = userRepository.findById(opponentUserId).orElse(null);
         if (user == null) {
-            return new OpponentInfo(opponentUserId, UNKNOWN_OPPONENT_NAME, null);
+            return new OpponentInfo(opponentUserId, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
         }
 
         return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
@@ -53,18 +53,7 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
         // 1:1 채팅방 검증
         for (Long roomId : roomIds) {
             List<ChatRoomMember> members = opponentByRoom.get(roomId);
-            if (members == null || members.isEmpty()) {
-                throw new ChatException(
-                        ChatErrorCode.INTERNAL_ERROR,
-                        "Chat room opponent not found (data integrity issue). roomId=" + roomId
-                );
-            }
-            if (members.size() != 1) {
-                throw new ChatException(
-                        ChatErrorCode.INTERNAL_ERROR,
-                        "Chat room is not 1:1. roomId=" + roomId + ", opponentCount=" + members.size()
-                );
-            }
+            ChatRoomValidator.validateDirectRoomOpponent(members, roomId);
         }
 
         Map<Long, Long> roomToOpponentUserIdMap = roomIds.stream()
@@ -78,7 +67,7 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
             return roomIds.stream()
                     .collect(Collectors.toMap(
                             roomId -> roomId,
-                            roomId -> new OpponentInfo(null, UNKNOWN_OPPONENT_NAME, null)
+                            roomId -> new OpponentInfo(null, ChatConstants.UNKNOWN_OPPONENT_NAME, null)
                     ));
         }
 
@@ -92,7 +81,7 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
                             Long opponentUserId = roomToOpponentUserIdMap.get(roomId);
                             User user = userMap.get(opponentUserId);
                             if (user == null) {
-                                return new OpponentInfo(opponentUserId, UNKNOWN_OPPONENT_NAME, null);
+                                return new OpponentInfo(opponentUserId, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
                             }
 
                             return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
