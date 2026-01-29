@@ -6,11 +6,12 @@ import java.util.List;
 import com.example.RealMatch.user.domain.entity.enums.Gender;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.entity.enums.TermName;
+
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record SignupCompleteRequest(
-        @Schema(description = "닉네임", example = "한유저")
+        @Schema(description = "닉네임", example = "홍길동")
         String nickname,
 
         @Schema(description = "생년월일", example = "1995-05-20")
