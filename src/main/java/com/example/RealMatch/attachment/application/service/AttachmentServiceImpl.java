@@ -4,7 +4,7 @@ import java.io.InputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +13,7 @@ import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
 import com.example.RealMatch.attachment.domain.exception.AttachmentException;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
+import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
@@ -22,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnBean(S3FileUploadService.class)
+@Conditional(S3CredentialsCondition.class)
 public class AttachmentServiceImpl implements AttachmentService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AttachmentServiceImpl.class);

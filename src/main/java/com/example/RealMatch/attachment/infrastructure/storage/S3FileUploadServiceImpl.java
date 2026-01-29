@@ -7,11 +7,12 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.util.FileValidator;
 import com.example.RealMatch.attachment.domain.exception.AttachmentException;
+import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnBean(S3Client.class)
+@Conditional(S3CredentialsCondition.class)
 public class S3FileUploadServiceImpl implements S3FileUploadService {
 
     private static final Logger LOG = LoggerFactory.getLogger(S3FileUploadServiceImpl.class);
