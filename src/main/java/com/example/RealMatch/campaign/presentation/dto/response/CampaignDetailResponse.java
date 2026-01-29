@@ -21,6 +21,7 @@ public class CampaignDetailResponse {
     private Long campaignId;
     private String title;
     private String description;
+    private String imageUrl;
     private String preferredSkills;
     private String schedule;
     private String videoSpec;
@@ -47,6 +48,7 @@ public class CampaignDetailResponse {
                 .campaignId(campaign.getId())
                 .title(campaign.getTitle())
                 .description(campaign.getDescription())
+                .imageUrl(campaign.getImageUrl())
                 .preferredSkills(campaign.getPreferredSkills())
                 .schedule(campaign.getSchedule())
                 .videoSpec(campaign.getVideoSpec())

@@ -21,6 +21,7 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.tag.domain.entity.Tag;
 import com.example.RealMatch.tag.domain.repository.TagRepository;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 
@@ -37,9 +38,9 @@ public class CampaignProposalService {
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
 
-    public void requestCampaign(Long creatorId, CampaignProposalRequestDto request) {
+    public void requestCampaign(Long userId, Role whoProposed, CampaignProposalRequestDto request) {
 
-        User creator = userRepository.findById(creatorId)
+        User creator = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         Brand brand = brandRepository.findById(request.getBrandId())
@@ -51,9 +52,11 @@ public class CampaignProposalService {
                     .orElseThrow(() -> new CustomException(CampaignErrorCode.CAMPAIGN_NOT_FOUND));
         }
 
+
         CampaignProposal proposal = CampaignProposal.builder()
                 .creator(creator)
                 .brand(brand)
+                .whoProposed(whoProposed)
                 .campaign(campaign)
                 .title(request.getCampaignName())
                 .campaignDescription(request.getDescription())
