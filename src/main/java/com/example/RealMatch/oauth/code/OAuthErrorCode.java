@@ -35,6 +35,11 @@ public enum OAuthErrorCode implements BaseErrorCode {
             "이미 회원가입이 완료된 유저입니다."
     ),
 
+    REQUIRED_TERM_NOT_AGREED(
+            HttpStatus.BAD_REQUEST,
+            "AUTH400_5",
+            "필수 약관에 동의하지 않았습니다."
+    ),
 
     INVALID_TOKEN(
             HttpStatus.UNAUTHORIZED,
