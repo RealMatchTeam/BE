@@ -1,17 +1,16 @@
 package com.example.RealMatch.chat.application.service.message;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
+import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
 import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
@@ -32,6 +31,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatMessageResponseMapper responseMapper;
+    private final ChatRoomMemberCommandService chatRoomMemberCommandService;
 
     @Override
     @Transactional(readOnly = true)
@@ -65,7 +65,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
         if (cursorMessageId == null) {
             ChatMessage latestMessage = messages.get(0);
-            updateLastReadMessageInSeparateTransaction(member.getId(), latestMessage.getId());
+            chatRoomMemberCommandService.updateLastReadMessage(member.getId(), latestMessage.getId());
         }
 
         List<Long> attachmentIds = messages.stream()
@@ -92,15 +92,6 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
         }
 
         return new ChatMessageListResponse(messageResponses, nextCursor, hasNext);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateLastReadMessageInSeparateTransaction(Long memberId, Long messageId) {
-        ChatRoomMember member = chatRoomMemberRepository.findById(memberId)
-                .orElse(null);
-        if (member != null && (member.getLastReadMessageId() == null || member.getLastReadMessageId() < messageId)) {
-            member.updateLastReadMessage(messageId, LocalDateTime.now());
-        }
     }
 
 }

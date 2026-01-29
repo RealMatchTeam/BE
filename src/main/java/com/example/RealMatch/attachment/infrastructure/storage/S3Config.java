@@ -19,8 +19,7 @@ public class S3Config {
 
     private final S3Properties s3Properties;
 
-    @Bean
-    public S3Client s3Client() {
+    private StaticCredentialsProvider createCredentialsProvider() {
         String accessKeyId = s3Properties.getAccessKeyId();
         String secretAccessKey = s3Properties.getSecretAccessKey();
         
@@ -28,32 +27,31 @@ public class S3Config {
             throw new IllegalStateException("S3 자격증명이 설정되지 않았습니다. application.yml에 access-key-id와 secret-access-key를 설정해주세요.");
         }
         
+        return StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(accessKeyId, secretAccessKey)
+        );
+    }
+
+    @Bean
+    public S3Client s3Client() {
+        String accessKeyId = s3Properties.getAccessKeyId();
         log.info("S3Client 생성 - accessKeyId: {}..., region: {}", 
-                accessKeyId.substring(0, Math.min(10, accessKeyId.length())),
+                accessKeyId != null && !accessKeyId.isEmpty() 
+                        ? accessKeyId.substring(0, Math.min(10, accessKeyId.length()))
+                        : "N/A",
                 s3Properties.getRegion());
 
         return S3Client.builder()
                 .region(Region.of(s3Properties.getRegion()))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKeyId, secretAccessKey)
-                ))
+                .credentialsProvider(createCredentialsProvider())
                 .build();
     }
 
     @Bean
     public S3Presigner s3Presigner() {
-        String accessKeyId = s3Properties.getAccessKeyId();
-        String secretAccessKey = s3Properties.getSecretAccessKey();
-        
-        if (!StringUtils.hasText(accessKeyId) || !StringUtils.hasText(secretAccessKey)) {
-            throw new IllegalStateException("S3 자격증명이 설정되지 않았습니다. application.yml에 access-key-id와 secret-access-key를 설정해주세요.");
-        }
-
         return S3Presigner.builder()
                 .region(Region.of(s3Properties.getRegion()))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKeyId, secretAccessKey)
-                ))
+                .credentialsProvider(createCredentialsProvider())
                 .build();
     }
 }

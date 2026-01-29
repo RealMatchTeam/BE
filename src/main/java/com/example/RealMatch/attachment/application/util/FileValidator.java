@@ -68,19 +68,7 @@ public class FileValidator {
     }
 
     public static void validateImageFile(MultipartFile file) {
-        String contentType = file.getContentType();
-        String filename = file.getOriginalFilename();
-
-        if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-            throw new AttachmentException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
-        }
-
-        if (filename != null) {
-            String extension = getFileExtension(filename).toLowerCase();
-            if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension)) {
-                throw new AttachmentException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
-            }
-        }
+        validateImageFile(file.getContentType(), file.getOriginalFilename());
     }
 
     public static void validateImageFile(String contentType, String filename) {

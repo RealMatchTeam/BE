@@ -29,6 +29,7 @@ public class AttachmentServiceImpl implements AttachmentService {
     private final AttachmentRepository attachmentRepository;
     private final S3FileUploadService s3FileUploadService;
     private final S3Properties s3Properties;
+    private final AttachmentCommandService attachmentCommandService;
 
     @Override
     @Transactional
@@ -89,9 +90,13 @@ public class AttachmentServiceImpl implements AttachmentService {
                     attachment.getId(), userId, s3Key);
 
         } catch (Exception e) {
-            attachment.markAsFailed();
             LOG.error("파일 업로드 실패. attachmentId={}, userId={}, s3Key={}", 
                     attachment.getId(), userId, s3Key, e);
+            try {
+                attachmentCommandService.markAttachmentAsFailed(attachment.getId());
+            } catch (Exception markFailedException) {
+                LOG.error("실패 상태 업데이트 실패. attachmentId={}", attachment.getId(), markFailedException);
+            }
             throw e;
         }
 
