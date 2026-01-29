@@ -22,16 +22,25 @@ public class JwtProvider {
     private final SecretKey secretKey;
     private final long accessTokenExpireMillis;
     private final long refreshTokenExpireMillis;
+    private final String masterJwt; // 마스터 JWT 필드
 
     public JwtProvider(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-expire-ms}") long accessTokenExpireMillis,
-            @Value("${jwt.refresh-expire-ms}") long refreshTokenExpireMillis
+            @Value("${jwt.refresh-expire-ms}") long refreshTokenExpireMillis,
+            @Value("${jwt.master-jwt:}") String masterJwt
     ) {
         byte[] keyBytes = Base64.getDecoder().decode(secret);
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpireMillis = accessTokenExpireMillis;
         this.refreshTokenExpireMillis = refreshTokenExpireMillis;
+        this.masterJwt = masterJwt; // 마스터 JWT 초기화
+    }
+    // =========================
+    //   마스터 JWT 검증
+    // =========================
+    public boolean isMasterJwt(String token) {
+        return masterJwt != null && !masterJwt.isEmpty() && masterJwt.equals(token);
     }
 
     // =========================
