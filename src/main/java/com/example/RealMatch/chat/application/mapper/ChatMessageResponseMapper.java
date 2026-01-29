@@ -27,28 +27,13 @@ public class ChatMessageResponseMapper {
     private final SystemMessagePayloadSerializer payloadSerializer;
 
     public ChatMessageResponse toResponse(ChatMessage message, AttachmentDto attachment) {
-        if (message == null) {
-            throw new IllegalStateException("Message must not be null when mapping to response.");
-        }
-        
-        Long messageId = message.getId();
-        if (messageId == null) {
-            throw new IllegalStateException(
-                    "Message must have id when mapping to response. This indicates a save() contract violation.");
-        }
-        
-        ChatMessageType messageType = message.getMessageType();
-        if (messageType == null) {
-            throw new IllegalStateException(
-                    String.format("Message type must not be null. messageId=%d", messageId));
-        }
-        
         AttachmentInfoResponse attachmentResponse = attachment != null 
                 ? toAttachmentInfoResponse(attachment) 
                 : null;
         
+        ChatMessageType messageType = message.getMessageType();
         return new ChatMessageResponse(
-                messageId,
+                message.getId(),
                 message.getRoomId(),
                 message.getSenderId(),
                 messageType == ChatMessageType.SYSTEM ? ChatSenderType.SYSTEM : ChatSenderType.USER,
@@ -74,14 +59,9 @@ public class ChatMessageResponseMapper {
     }
 
     private ChatSystemMessageResponse toSystemMessageResponse(ChatMessage message) {
-        Long messageId = message.getId();
         ChatSystemMessageKind kind = message.getSystemKind();
         String rawPayload = message.getSystemPayload();
 
-        // 시스템 메시지 검증
-        validateSystemMessage(messageId, kind, rawPayload);
-
-        // 페이로드 역직렬화
         try {
             ChatSystemMessagePayload payload = payloadSerializer.deserialize(kind, rawPayload);
             return new ChatSystemMessageResponse(
@@ -90,24 +70,8 @@ public class ChatMessageResponseMapper {
                     payload
             );
         } catch (Exception ex) {
-            logDeserializationError(messageId, kind, rawPayload, ex);
-            throw new IllegalStateException(
-                    String.format("Failed to deserialize system message payload. messageId=%d, kind=%s",
-                            messageId, kind),
-                    ex
-            );
-        }
-    }
-
-    private void validateSystemMessage(Long messageId, ChatSystemMessageKind kind, String rawPayload) {
-        if (kind == null) {
-            throw new IllegalStateException(
-                    String.format("SYSTEM message kind must not be null. messageId=%d", messageId));
-        }
-        if (rawPayload == null || rawPayload.isBlank()) {
-            throw new IllegalStateException(
-                    String.format("SYSTEM message payload must not be null or blank. messageId=%d, kind=%s",
-                            messageId, kind));
+            logDeserializationError(message.getId(), kind, rawPayload, ex);
+            return null;
         }
     }
 

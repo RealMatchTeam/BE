@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.chat.application.util.ChatConstants;
+import com.example.RealMatch.chat.application.util.ChatRoomValidator;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
@@ -52,18 +53,7 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
         // 1:1 채팅방 검증
         for (Long roomId : roomIds) {
             List<ChatRoomMember> members = opponentByRoom.get(roomId);
-            if (members == null || members.isEmpty()) {
-                throw new ChatException(
-                        ChatErrorCode.INTERNAL_ERROR,
-                        "Chat room opponent not found (data integrity issue). roomId=" + roomId
-                );
-            }
-            if (members.size() != 1) {
-                throw new ChatException(
-                        ChatErrorCode.INTERNAL_ERROR,
-                        "Chat room is not 1:1. roomId=" + roomId + ", opponentCount=" + members.size()
-                );
-            }
+            ChatRoomValidator.validateDirectRoomOpponent(members, roomId);
         }
 
         Map<Long, Long> roomToOpponentUserIdMap = roomIds.stream()

@@ -37,7 +37,7 @@ public class FileValidator {
         validateFileSize(file.getSize(), maxSizeBytes);
 
         if (attachmentType == AttachmentType.IMAGE) {
-            validateImageFile(file);
+            validateImageFile(file.getContentType(), file.getOriginalFilename());
         }
     }
 
@@ -63,10 +63,6 @@ public class FileValidator {
         if (fileSize > maxSizeBytes) {
             throw new AttachmentException(AttachmentErrorCode.FILE_SIZE_EXCEEDED);
         }
-    }
-
-    public void validateImageFile(MultipartFile file) {
-        validateImageFile(file.getContentType(), file.getOriginalFilename());
     }
 
     public void validateImageFile(String contentType, String filename) {

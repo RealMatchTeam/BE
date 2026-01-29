@@ -2,6 +2,7 @@ package com.example.RealMatch.attachment.application.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.domain.entity.Attachment;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(S3FileUploadService.class)
 public class AttachmentUrlService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AttachmentUrlService.class);

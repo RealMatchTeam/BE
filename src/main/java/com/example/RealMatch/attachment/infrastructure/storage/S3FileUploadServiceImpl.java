@@ -54,16 +54,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
             return null;
 
         } catch (S3Exception e) {
-            LOG.error("S3 파일 업로드 실패. key={}, errorCode={}, statusCode={}, requestId={}, bucket={}", 
-                    key, 
-                    e.awsErrorDetails().errorCode(), 
-                    e.statusCode(),
-                    e.requestId(),
-                    s3Properties.getBucketName(),
-                    e);
-            if (e.statusCode() == 403 || e.statusCode() == 401) {
-                throw new AttachmentException(AttachmentErrorCode.S3_ACCESS_DENIED);
-            }
+            handleS3Exception("파일 업로드", key, e);
             throw new AttachmentException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         } catch (Exception e) {
             LOG.error("S3 파일 업로드 중 예상치 못한 오류 발생. key={}", key, e);
@@ -88,10 +79,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
             return presignedRequest.url().toString();
 
         } catch (S3Exception e) {
-            LOG.error("Presigned URL 생성 실패. key={}, errorCode={}", key, e.awsErrorDetails().errorCode(), e);
-            if (e.statusCode() == 403 || e.statusCode() == 401) {
-                throw new AttachmentException(AttachmentErrorCode.S3_ACCESS_DENIED);
-            }
+            handleS3Exception("Presigned URL 생성", key, e);
             throw new AttachmentException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         } catch (Exception e) {
             LOG.error("Presigned URL 생성 중 예상치 못한 오류 발생. key={}", key, e);
@@ -120,5 +108,20 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
                 s3Properties.getBucketName(),
                 s3Properties.getRegion(),
                 key);
+    }
+
+    private void handleS3Exception(String operation, String key, S3Exception e) {
+        LOG.error("S3 {} 실패. key={}, errorCode={}, statusCode={}, requestId={}, bucket={}",
+                operation,
+                key,
+                e.awsErrorDetails().errorCode(),
+                e.statusCode(),
+                e.requestId(),
+                s3Properties.getBucketName(),
+                e);
+        
+        if (e.statusCode() == 403 || e.statusCode() == 401) {
+            throw new AttachmentException(AttachmentErrorCode.S3_ACCESS_DENIED);
+        }
     }
 }
