@@ -9,13 +9,13 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.oauth.code.OAuthErrorCode;
 import com.example.RealMatch.oauth.dto.CustomOAuth2User;
 import com.example.RealMatch.oauth.dto.GoogleUserInfo;
 import com.example.RealMatch.oauth.dto.KakaoUserInfo;
 import com.example.RealMatch.oauth.dto.NaverUserInfo;
 import com.example.RealMatch.oauth.dto.OAuth2UserInfo;
-import com.example.RealMatch.oauth.exception.AuthException;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
@@ -46,7 +46,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserInfo userInfo = getOAuth2UserInfo(provider, attributes);
 
         if (userInfo.getEmail() == null || userInfo.getEmail().isBlank()) {
-            throw new AuthException(OAuthErrorCode.EMAIL_NOT_PROVIDED);
+            throw new CustomException(OAuthErrorCode.EMAIL_NOT_PROVIDED);
         }
 
         // 이미 가입된 유저인지 확인
@@ -100,7 +100,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             case "google":
                 return new GoogleUserInfo(attributes);
             default:
-                throw new AuthException(OAuthErrorCode.UNSUPPORTED_PROVIDER);
+                throw new CustomException(OAuthErrorCode.UNSUPPORTED_PROVIDER);
         }
     }
 }

@@ -1,7 +1,5 @@
 package com.example.RealMatch.global.presentation.advice;
 
-import java.util.Collections;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -12,7 +10,6 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.BaseErrorCode;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
-import com.example.RealMatch.oauth.exception.AuthException;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -95,21 +92,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, null));
-    }
-
-    @ExceptionHandler(AuthException.class)
-    public ResponseEntity<CustomResponse<?>> handleAuthException(AuthException e) {
-        log.warn("[AuthException] code={}, message={}",
-                e.getErrorCode().getCode(),
-                e.getErrorCode().getMessage()
-        );
-        // result 필드가 null이면 일부 프론트에서 처리 문제 가능 -> 빈 객체로 반환
-        return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(CustomResponse.onFailure(
-                        e.getErrorCode(),
-                        Collections.emptyMap() // null 대신 빈 맵
-                ));
     }
 
     @ExceptionHandler(CustomException.class)
