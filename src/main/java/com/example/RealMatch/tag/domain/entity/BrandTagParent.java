@@ -1,5 +1,6 @@
-package com.example.RealMatch.brand.domain.entity;
+package com.example.RealMatch.tag.domain.entity;
 
+import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;

@@ -12,8 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
-import com.example.RealMatch.brand.domain.entity.BrandTagParent;
-import com.example.RealMatch.brand.domain.entity.Tag;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
@@ -30,6 +28,8 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetai
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
+import com.example.RealMatch.tag.domain.entity.BrandTagParent;
+import com.example.RealMatch.tag.domain.entity.Tag;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
@@ -78,7 +78,7 @@ public class BrandService {
                         .brandName(brand.getBrandName())
                         .recruitingTotalNumber(campaign.getQuota())
                         .recruitedNumber(0)
-                        .campaignDescription(campaign.getDescription())
+                        .campaginDescription(campaign.getDescription())
                         .campaginManuscriptFee(String.valueOf(campaign.getRewardAmount()))
                         .build())
                 .collect(Collectors.toList());

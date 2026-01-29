@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.RealMatch.brand.domain.entity.BrandTagParent;
+import com.example.RealMatch.tag.domain.entity.BrandTagParent;
 
 public interface BrandTagParentRepository extends JpaRepository<BrandTagParent, Long> {
 
