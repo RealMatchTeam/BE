@@ -111,28 +111,45 @@ public class AuthService {
     }
 
     private void saveTermAgreements(User user, List<SignupCompleteRequest.TermAgreementDto> terms) {
-        if (terms != null && !terms.isEmpty()) {
-            List<com.example.RealMatch.user.domain.entity.enums.TermName> termNames = terms.stream()
-                    .map(SignupCompleteRequest.TermAgreementDto::type)
-                    .toList();
+        // 요청 데이터 존재 여부 확인
+        if (terms == null || terms.isEmpty()) {
+            throw new CustomException(OAuthErrorCode.TERM_NOT_FOUND);
+        }
 
-            java.util.Map<com.example.RealMatch.user.domain.entity.enums.TermName, Term> termMap = termRepository.findByNameIn(termNames).stream()
-                    .collect(java.util.stream.Collectors.toMap(Term::getName, java.util.function.Function.identity()));
+        // 클라이언트가 보낸 약관 데이터를 Map으로 변환 (조회 최적화)
+        java.util.Map<com.example.RealMatch.user.domain.entity.enums.TermName, Boolean> termAgreedMap =
+                terms.stream().collect(java.util.stream.Collectors.toMap(
+                        SignupCompleteRequest.TermAgreementDto::type,
+                        SignupCompleteRequest.TermAgreementDto::agreed
+                ));
 
-            if (termMap.size() != termNames.size()) {
-                throw new CustomException(OAuthErrorCode.TERM_NOT_FOUND);
-            }
+        // DB에서 '필수(isRequired=true)'인 약관 목록을 가져와 검증
+        List<Term> requiredTermsFromDb = termRepository.findByIsRequired(true);
+        if (requiredTermsFromDb.stream()
+                .anyMatch(term -> !termAgreedMap.getOrDefault(term.getName(), false))) {
+            throw new CustomException(OAuthErrorCode.REQUIRED_TERM_NOT_AGREED);
+        }
 
-            List<UserTerm> userTermsToSave = terms.stream().map(dto -> {
-                Term term = termMap.get(dto.type());
-                return UserTerm.builder()
+        // DB에서 요청된 약관 엔티티들을 모두 조회
+        List<com.example.RealMatch.user.domain.entity.enums.TermName> requestedNames = new java.util.ArrayList<>(termAgreedMap.keySet());
+
+        List<Term> allMatchingTerms = termRepository.findByNameIn(requestedNames);
+
+        // DB에 존재하지 않는 약관 이름이 포함된 경우
+        if (allMatchingTerms.size() != terms.size()) {
+            throw new CustomException(OAuthErrorCode.TERM_NOT_FOUND);
+        }
+
+        // UserTerm 엔티티 생성 및 저장
+        List<UserTerm> userTermsToSave = allMatchingTerms.stream()
+                .map(term -> UserTerm.builder()
                         .user(user)
                         .term(term)
-                        .isAgreed(dto.agreed())
-                        .build();
-            }).toList();
-            userTermRepository.saveAll(userTermsToSave);
-        }
+                        .isAgreed(termAgreedMap.get(term.getName()))
+                        .build())
+                .toList();
+
+        userTermRepository.saveAll(userTermsToSave);
     }
 
     private void saveSignupPurposes(User user, List<Long> signupPurposeIds) {
