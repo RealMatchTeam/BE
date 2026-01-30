@@ -72,7 +72,6 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         }
         return attachmentUrlService
                 .map(service -> service.getAccessUrl(attachment))
-                .filter(presignedUrl -> presignedUrl != null)
                 .map(presignedUrl -> new AttachmentDto(
                         dto.attachmentId(),
                         dto.attachmentType(),
