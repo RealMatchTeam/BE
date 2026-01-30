@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +25,10 @@ import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignLikeRepository;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.match.application.util.MatchScoreCalculator;
+import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
+import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
+import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
+import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.match.infrastructure.redis.document.BrandTagDocument;
 import com.example.RealMatch.match.infrastructure.redis.document.CampaignTagDocument;
 import com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument;
@@ -41,10 +44,6 @@ import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.Ca
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.CreatorAnalysisDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingBrandListDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingCampaignListDto;
-import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
-import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
-import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
-import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.tag.domain.repository.BrandTagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
@@ -292,7 +291,9 @@ public class MatchServiceImpl implements MatchService {
 
         for (BrandTagDocument brandDoc : allBrandDocs) {
             Brand brand = brandMap.get(brandDoc.getBrandId());
-            if (brand == null) continue;
+            if (brand == null) {
+                continue;
+            }
 
             int matchScore = MatchScoreCalculator.calculateBrandMatchScore(userDoc, brandDoc);
 
@@ -339,7 +340,9 @@ public class MatchServiceImpl implements MatchService {
 
         for (CampaignTagDocument campaignDoc : allCampaignDocs) {
             Campaign campaign = campaignMap.get(campaignDoc.getCampaignId());
-            if (campaign == null) continue;
+            if (campaign == null) {
+                continue;
+            }
 
             if (campaign.getRecruitEndDate().isBefore(LocalDateTime.now())) {
                 continue;
@@ -389,7 +392,9 @@ public class MatchServiceImpl implements MatchService {
 
         for (BrandTagDocument brandDoc : allBrandDocs) {
             Brand brand = brandMap.get(brandDoc.getBrandId());
-            if (brand == null) continue;
+            if (brand == null) {
+                continue;
+            }
 
             int matchScore = MatchScoreCalculator.calculateBrandMatchScore(userDoc, brandDoc);
 
@@ -436,7 +441,9 @@ public class MatchServiceImpl implements MatchService {
 
         for (CampaignTagDocument campaignDoc : allCampaignDocs) {
             Campaign campaign = campaignMap.get(campaignDoc.getCampaignId());
-            if (campaign == null) continue;
+            if (campaign == null) {
+                continue;
+            }
 
             if (campaign.getRecruitEndDate().isBefore(LocalDateTime.now())) {
                 continue;
