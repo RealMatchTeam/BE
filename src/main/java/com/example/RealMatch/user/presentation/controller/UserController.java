@@ -1,7 +1,9 @@
 package com.example.RealMatch.user.presentation.controller;
 
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +15,8 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.response.MyCampaignDetailResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyCampaignListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -92,5 +96,27 @@ public class UserController implements UserSwagger {
     ) {
         MyFeatureResponseDto response = userFeatureService.getMyFeatures(userDetails.getUserId());
         return CustomResponse.ok(response);
+    }
+
+    @Override
+    @GetMapping("/me/campaigns")
+    public CustomResponse<Page<MyCampaignListResponseDto.CampaignItem>> getMyCampaigns(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "latest") String sort
+    ) {
+        return CustomResponse.ok(
+                userService.getMyCampaigns(userDetails.getUserId(), page, sort)
+        );
+    }
+
+    @Override
+    @GetMapping("/me/campaigns/{applicationId}")
+    public CustomResponse<MyCampaignDetailResponseDto> getMyCampaignDetail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String applicationId  // "apply-{uuid}" 또는 "proposal-{uuid}"
+    ) {
+        return CustomResponse.ok(userService.getMyCampaignDetail(
+                userDetails.getUserId(), applicationId));
     }
 }

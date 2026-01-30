@@ -78,6 +78,18 @@ public enum UserErrorCode implements BaseErrorCode {
             "매칭 상세 정보를 불러오는데 실패하였습니다."
     ),
 
+    CAMPAIGN_APPLICATION_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "USER404_12",
+            "캠페인 지원 정보를 불러오는데 실패하였습니다."
+    ),
+
+    CAMPAIGN_APPLICATION_ACCESS_DENIED(
+            HttpStatus.NOT_FOUND,
+            "USER404_13",
+            "해당 캠페인 지원 정보에 접근할 수 없습니다."
+    ),
+
     // 400 - 요청 오류
     USER_UPDATE_BAD_REQUEST(
             HttpStatus.BAD_REQUEST,
