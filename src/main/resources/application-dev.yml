@@ -4,12 +4,23 @@ cors:
 swagger:
   server-url: http://localhost:8080
 
+
+front:
+  domain-url: http://localhost:3000 # 임의의 값
+
 server:
   timezone: Asia/Seoul
 
 spring:
   application:
     name: Realmatch
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+      file-size-threshold: 1MB
 
   datasource:
     url: ${DATASOURCE_URL}
@@ -110,3 +121,15 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  s3:
+    bucket-name: ${S3_BUCKET_NAME:realmatch-s3}
+    region: ${S3_REGION:us-east-2}
+    public-bucket: ${S3_PUBLIC_BUCKET:false}
+    presigned-url-expiration-seconds: ${S3_PRESIGNED_URL_EXPIRATION:604800}
+    max-image-size-bytes: ${S3_MAX_IMAGE_SIZE:10485760}
+    max-file-size-bytes: ${S3_MAX_FILE_SIZE:52428800}
+    key-prefix: ${S3_KEY_PREFIX:attachment}
+    access-key-id: ${AWS_ACCESS_KEY_ID:}
+    secret-access-key: ${AWS_SECRET_ACCESS_KEY:}

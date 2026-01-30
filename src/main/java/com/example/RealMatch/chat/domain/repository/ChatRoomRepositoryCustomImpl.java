@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.QChatMessage;
@@ -12,8 +13,10 @@ import com.example.RealMatch.chat.domain.entity.QChatRoom;
 import com.example.RealMatch.chat.domain.entity.QChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.user.domain.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +36,8 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
             Long userId,
             ChatRoomFilterStatus filterStatus,
             RoomCursorInfo cursorInfo,
-            int size
+            int size,
+            String search
     ) {
         return queryFactory
                 .selectFrom(ROOM)
@@ -44,7 +48,8 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                         ROOM.isDeleted.isFalse(),
                         ROOM.lastMessageAt.isNotNull(),
                         applyFilterStatus(filterStatus, ROOM),
-                        applyCursor(cursorInfo, ROOM)
+                        applyCursor(cursorInfo, ROOM),
+                        applySearch(search, userId, ROOM)
                 )
                 .orderBy(
                         ROOM.lastMessageAt.desc(),
@@ -56,26 +61,24 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
 
     @Override
     public long countTotalUnreadMessages(Long userId) {
-        QChatRoomMember memberForCount = new QChatRoomMember("memberForCount");
-        QChatRoom roomForCount = new QChatRoom("roomForCount");
-
+        // 공통 쿼리 로직 재사용
         Long count = queryFactory
                 .select(MESSAGE.count())
                 .from(MESSAGE)
-                .innerJoin(memberForCount).on(
-                        MESSAGE.roomId.eq(memberForCount.roomId)
-                                .and(memberForCount.userId.eq(userId))
-                                .and(memberForCount.isDeleted.isFalse())
+                .innerJoin(MEMBER).on(
+                        MESSAGE.roomId.eq(MEMBER.roomId)
+                                .and(MEMBER.userId.eq(userId))
+                                .and(MEMBER.isDeleted.isFalse())
                 )
-                .innerJoin(roomForCount).on(
-                        MESSAGE.roomId.eq(roomForCount.id)
-                                .and(roomForCount.isDeleted.isFalse())
-                                .and(roomForCount.lastMessageAt.isNotNull())
+                .innerJoin(ROOM).on(
+                        MESSAGE.roomId.eq(ROOM.id)
+                                .and(ROOM.isDeleted.isFalse())
+                                .and(ROOM.lastMessageAt.isNotNull())
                 )
                 .where(
                         MESSAGE.senderId.isNotNull(),
                         MESSAGE.senderId.ne(userId),
-                        isUnreadMessage(MESSAGE.id, memberForCount.lastReadMessageId)
+                        isUnreadMessage(MESSAGE.id, MEMBER.lastReadMessageId)
                 )
                 .fetchOne();
         return count != null ? count : 0L;
@@ -90,21 +93,24 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
             return Map.of();
         }
 
-        QChatRoomMember m = new QChatRoomMember("m");
-
         List<Tuple> results = queryFactory
                 .select(MESSAGE.roomId, MESSAGE.count())
                 .from(MESSAGE)
-                .innerJoin(m).on(
-                        MESSAGE.roomId.eq(m.roomId)
-                                .and(m.userId.eq(userId))
-                                .and(m.isDeleted.isFalse())
+                .innerJoin(MEMBER).on(
+                        MESSAGE.roomId.eq(MEMBER.roomId)
+                                .and(MEMBER.userId.eq(userId))
+                                .and(MEMBER.isDeleted.isFalse())
+                )
+                .innerJoin(ROOM).on(
+                        MESSAGE.roomId.eq(ROOM.id)
+                                .and(ROOM.isDeleted.isFalse())
+                                .and(ROOM.lastMessageAt.isNotNull())
                 )
                 .where(
                         MESSAGE.roomId.in(roomIds),
                         MESSAGE.senderId.isNotNull(),
                         MESSAGE.senderId.ne(userId),
-                        isUnreadMessage(MESSAGE.id, m.lastReadMessageId)
+                        isUnreadMessage(MESSAGE.id, MEMBER.lastReadMessageId)
                 )
                 .groupBy(MESSAGE.roomId)
                 .fetch();
@@ -142,5 +148,38 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
         return r.lastMessageAt.lt(cursorInfo.lastMessageAt())
                 .or(r.lastMessageAt.eq(cursorInfo.lastMessageAt())
                         .and(r.id.lt(cursorInfo.roomId())));
+    }
+
+    private BooleanExpression applySearch(String search, Long userId, QChatRoom r) {
+        if (!StringUtils.hasText(search)) {
+            return null;
+        }
+        String normalized = search.trim();
+
+        var messageRoomIds = JPAExpressions
+                .select(MESSAGE.roomId)
+                .from(MESSAGE)
+                .where(
+                        MESSAGE.content.isNotNull(),
+                        MESSAGE.senderId.isNotNull(),
+                        MESSAGE.content.containsIgnoreCase(normalized)
+                )
+                .distinct();
+
+        QChatRoomMember memberOpp = new QChatRoomMember("member_opp");
+        QUser userOpp = new QUser("user_opp");
+        var opponentRoomIds = JPAExpressions
+                .select(memberOpp.roomId)
+                .from(memberOpp)
+                .innerJoin(userOpp).on(memberOpp.userId.eq(userOpp.id))
+                .where(
+                        memberOpp.userId.ne(userId),
+                        memberOpp.isDeleted.isFalse(),
+                        userOpp.isDeleted.isFalse(),
+                        userOpp.nickname.containsIgnoreCase(normalized)
+                )
+                .distinct();
+
+        return r.id.in(messageRoomIds).or(r.id.in(opponentRoomIds));
     }
 }

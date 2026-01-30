@@ -11,16 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
+import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
-import com.example.RealMatch.chat.domain.exception.ChatException;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,17 +41,10 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
     public ChatRoomCreateResponse createOrGetRoom(Long userId, Long brandId, Long creatorId) {
         validateRequest(userId, brandId, creatorId);
 
-        String roomKey = generateRoomKey(brandId, creatorId);
+        String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandId, creatorId);
 
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey)
-                .orElseGet(() -> {
-                    ChatRoom newRoom = createRoomWithMembers(roomKey, brandId, creatorId);
-                    // 새로 생성된 채팅방인 경우, 양쪽 사용자에게 채팅방 목록 업데이트 알림
-                    afterCommitExecutor.execute(() -> {
-                        eventPublisher.publishRoomListUpdated(newRoom.getId());
-                    });
-                    return newRoom;
-                });
+                .orElseGet(() -> createRoomWithMembers(roomKey, brandId, creatorId));
 
         return new ChatRoomCreateResponse(
                 room.getId(),
@@ -61,17 +55,11 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     private void validateRequest(Long userId, Long brandId, Long creatorId) {
         if (brandId == null || creatorId == null || brandId.equals(creatorId)) {
-            throw new ChatException(ChatErrorCode.INVALID_ROOM_REQUEST);
+            throw new CustomException(ChatErrorCode.INVALID_ROOM_REQUEST);
         }
         if (!userId.equals(brandId) && !userId.equals(creatorId)) {
-            throw new ChatException(ChatErrorCode.NOT_ROOM_MEMBER);
+            throw new CustomException(ChatErrorCode.NOT_ROOM_MEMBER);
         }
-    }
-
-    private String generateRoomKey(Long brandId, Long creatorId) {
-        long smallerId = Math.min(brandId, creatorId);
-        long largerId = Math.max(brandId, creatorId);
-        return String.format("direct:%d:%d", smallerId, largerId);
     }
 
     private ChatRoom createRoomWithMembers(
@@ -79,21 +67,36 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
             Long brandId,
             Long creatorId
     ) {
-        ChatRoom room;
-        try {
-            room = chatRoomRepository.saveAndFlush(
-                    ChatRoom.createDirectRoom(roomKey)
-            );
-        } catch (DataIntegrityViolationException e) {
-            // 다른 스레드가 이미 채팅방을 생성한 경우, 기존 방을 조회
-            room = chatRoomRepository.findByRoomKey(roomKey)
-                    .orElseThrow(() -> new ChatException(ChatErrorCode.INTERNAL_ERROR));
+        // 먼저 조회 시도 (대부분의 경우 기존 방이 있을 것)
+        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
+
+        if (room == null) {
+            // 방이 없는 경우에만 생성 시도
+            room = createRoomWithRetry(roomKey);
         }
 
+        // 멤버 생성 (멤버는 중복 생성 방지 로직이 있음)
         createMemberIfNotExists(room.getId(), brandId, ChatRoomMemberRole.BRAND);
         createMemberIfNotExists(room.getId(), creatorId, ChatRoomMemberRole.CREATOR);
 
         return room;
+    }
+
+    private ChatRoom createRoomWithRetry(String roomKey) {
+        try {
+            ChatRoom newRoom = chatRoomRepository.saveAndFlush(
+                    ChatRoom.createDirectRoom(roomKey)
+            );
+            // 새로 생성된 채팅방인 경우, 양쪽 사용자에게 채팅방 목록 업데이트 알림
+            afterCommitExecutor.execute(() -> {
+                eventPublisher.publishRoomListUpdated(newRoom.getId());
+            });
+            return newRoom;
+        } catch (DataIntegrityViolationException e) {
+            // 다른 스레드가 이미 채팅방을 생성한 경우, 기존 방을 조회
+            return chatRoomRepository.findByRoomKey(roomKey)
+                    .orElseThrow(() -> new CustomException(ChatErrorCode.INTERNAL_ERROR));
+        }
     }
 
     private void createMemberIfNotExists(Long roomId, Long userId, ChatRoomMemberRole role) {
@@ -121,7 +124,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
             String messagePreview
     ) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.ROOM_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));
 
         room.updateLastMessage(messageId, messageAt, messagePreview, messageType);
     }
@@ -133,7 +136,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
             @NonNull Long creatorUserId,
             @NonNull ChatProposalStatus status
     ) {
-        String roomKey = generateRoomKey(brandUserId, creatorUserId);
+        String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandUserId, creatorUserId);
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
 
         if (room == null) {

@@ -1,16 +1,23 @@
 package com.example.RealMatch.business.presentation.controller;
 
+import java.util.UUID;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.RealMatch.business.application.service.CampaignProposalQueryService;
 import com.example.RealMatch.business.application.service.CampaignProposalService;
 import com.example.RealMatch.business.presentation.docs.CampaignProposalSwagger;
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
+import com.example.RealMatch.business.presentation.dto.response.CampaignProposalDetailResponse;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.user.domain.entity.enums.Role;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,10 +26,11 @@ import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Business", description = "비즈니스 API")
 @RestController
-@RequestMapping("/api/v1/campaigns")
+@RequestMapping("/api/v1/campaigns/proposal")
 @RequiredArgsConstructor
 public class CampaignProposalController implements CampaignProposalSwagger {
     private final CampaignProposalService campaignProposalService;
+    private final CampaignProposalQueryService campaignProposalQueryService;
 
     @Override
     @PostMapping("/request")
@@ -43,10 +51,35 @@ public class CampaignProposalController implements CampaignProposalSwagger {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CampaignProposalRequestDto request
     ) {
-        // API 테스트를 위해서 하드코딩 (추후 수정 필요!!)
-//        campaignProposalService.requestCampaign(userDetails.getUserId(), request);
-        campaignProposalService.requestCampaign(1L, request);
+        campaignProposalService.requestCampaign(userDetails.getUserId(), Role.from(userDetails.getRole()), request);
         return CustomResponse.ok("캠페인 제안에 성공했습니다.");
+    }
+
+    @GetMapping("/{campaignProposalId}")
+    @Operation(
+            summary = "켐페인 제안 상세 조회 API by 박지영",
+            description = """
+                    한 건의 캠페인 제안 상세 정보를 조회합니다.
+                    
+                    <태그>   
+                    formats : 형식    
+                    categories : 종류    
+                    tones : 톤   
+                    involvements : 관여도    
+                    usageRanges : 활용 범위    
+                    """
+    )
+    public CustomResponse<CampaignProposalDetailResponse> getProposalDetail(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable UUID campaignProposalId
+    ) {
+        CampaignProposalDetailResponse response =
+                campaignProposalQueryService.getProposalDetail(
+                        principal.getUserId(),
+                        campaignProposalId
+                );
+
+        return CustomResponse.ok(response);
     }
 }
 

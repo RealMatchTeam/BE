@@ -2,6 +2,7 @@ package com.example.RealMatch.chat.presentation.dto.response;
 
 import java.time.LocalDateTime;
 
+import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatSenderType;
 
@@ -12,7 +13,7 @@ public record ChatMessageResponse(
         ChatSenderType senderType,
         ChatMessageType messageType,
         String content,
-        ChatAttachmentInfoResponse attachment,
+        AttachmentInfoResponse attachment,
         ChatSystemMessageResponse systemMessage,
         LocalDateTime createdAt,
         String clientMessageId

@@ -13,7 +13,7 @@ public interface CampaignContentTagRepository extends JpaRepository<CampaignCont
     @Query("""
         select cct
         from CampaignContentTag cct
-        join fetch cct.tag t
+        join fetch cct.tagContent tc
         where cct.campaign.id = :campaignId
     """)
     List<CampaignContentTag> findAllByCampaignIdWithTag(

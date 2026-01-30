@@ -37,11 +37,8 @@ public class WebSocketChatMessageEventPublisher implements ChatMessageEventPubli
             ChatMessageCreatedEvent event = new ChatMessageCreatedEvent(roomId, message);
             messagingTemplate.convertAndSend(ROOM_TOPIC_PREFIX + roomId, event);
         } catch (RuntimeException ex) {
-            // 브로드캐스트 실패는 DB 저장에 영향을 주지 않도록 로깅만 수행
-            LOG.error("Failed to broadcast message. roomId={}, messageId={}", 
+            LOG.error("Failed to broadcast message. roomId={}, messageId={}",
                     roomId, message.messageId(), ex);
-
-            // TODO: PM 설계 확정 후 브로드캐스트 실패 시 실시간성 보장 방안 구현 필요
         }
     }
 
