@@ -1,5 +1,9 @@
 package com.example.RealMatch.business.domain.repository;
 
+import static com.example.RealMatch.brand.domain.entity.QBrand.brand;
+import static com.example.RealMatch.business.domain.entity.QCampaignProposal.campaignProposal;
+import static com.example.RealMatch.campaign.domain.entity.QCampaign.campaign;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -12,9 +16,6 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
-import static com.example.RealMatch.brand.domain.entity.QBrand.brand;
-import static com.example.RealMatch.business.domain.entity.QCampaignProposal.campaignProposal;
-import static com.example.RealMatch.campaign.domain.entity.QCampaign.campaign;
 
 @Repository
 @RequiredArgsConstructor
