@@ -29,12 +29,12 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
     @Override
     public OpponentInfo getOpponentInfo(Long opponentUserId) {
         if (opponentUserId == null) {
-            return new OpponentInfo(null, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
+            return unknownOpponentInfo(null);
         }
 
         User user = userRepository.findById(opponentUserId).orElse(null);
         if (user == null) {
-            return new OpponentInfo(opponentUserId, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
+            return unknownOpponentInfo(opponentUserId);
         }
 
         return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
@@ -42,50 +42,18 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
 
     @Override
     public Map<Long, OpponentInfo> getOpponentInfoMapBatch(Long userId, List<Long> roomIds) {
-        List<ChatRoomMember> activeMembers = chatRoomMemberRepository.findActiveMembersByRoomIdIn(roomIds);
-        List<ChatRoomMember> opponentMembers = activeMembers.stream()
-                .filter(m -> !m.getUserId().equals(userId))
-                .toList();
-
-        Map<Long, List<ChatRoomMember>> opponentByRoom = opponentMembers.stream()
-                .collect(Collectors.groupingBy(ChatRoomMember::getRoomId));
-
-        // 1:1 채팅방 검증
-        for (Long roomId : roomIds) {
-            List<ChatRoomMember> members = opponentByRoom.get(roomId);
-            ChatRoomValidator.validateDirectRoomOpponent(members, roomId);
+        if (roomIds == null || roomIds.isEmpty()) {
+            return Map.of();
         }
 
-        Map<Long, Long> roomToOpponentUserIdMap = roomIds.stream()
-                .collect(Collectors.toMap(
-                        roomId -> roomId,
-                        roomId -> opponentByRoom.get(roomId).getFirst().getUserId()
-                ));
-
-        Set<Long> opponentUserIds = new HashSet<>(roomToOpponentUserIdMap.values());
-        if (opponentUserIds.isEmpty()) {
-            return roomIds.stream()
-                    .collect(Collectors.toMap(
-                            roomId -> roomId,
-                            roomId -> new OpponentInfo(null, ChatConstants.UNKNOWN_OPPONENT_NAME, null)
-                    ));
-        }
-
-        Map<Long, User> userMap = userRepository.findAllById(opponentUserIds).stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
+        Map<Long, List<ChatRoomMember>> opponentByRoom = findOpponentMembersByRoom(userId, roomIds);
+        Map<Long, Long> roomToOpponentUserIdMap = buildOpponentUserIdMap(roomIds, opponentByRoom);
+        Map<Long, User> userMap = loadOpponentUsers(roomToOpponentUserIdMap);
 
         return roomIds.stream()
                 .collect(Collectors.toMap(
                         roomId -> roomId,
-                        roomId -> {
-                            Long opponentUserId = roomToOpponentUserIdMap.get(roomId);
-                            User user = userMap.get(opponentUserId);
-                            if (user == null) {
-                                return new OpponentInfo(opponentUserId, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
-                            }
-
-                            return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
-                        }
+                        roomId -> toOpponentInfo(roomToOpponentUserIdMap.get(roomId), userMap)
                 ));
     }
 
@@ -96,5 +64,51 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
                 .filter(m -> !m.getUserId().equals(userId))
                 .findFirst()
                 .orElseThrow(() -> new CustomException(ChatErrorCode.INTERNAL_ERROR, "Opponent member not found"));
+    }
+
+    private Map<Long, List<ChatRoomMember>> findOpponentMembersByRoom(Long userId, List<Long> roomIds) {
+        List<ChatRoomMember> activeMembers = chatRoomMemberRepository.findActiveMembersByRoomIdIn(roomIds);
+        return activeMembers.stream()
+                .filter(member -> !member.getUserId().equals(userId))
+                .collect(Collectors.groupingBy(ChatRoomMember::getRoomId));
+    }
+
+    private Map<Long, Long> buildOpponentUserIdMap(
+            List<Long> roomIds,
+            Map<Long, List<ChatRoomMember>> opponentByRoom
+    ) {
+        return roomIds.stream()
+                .collect(Collectors.toMap(
+                        roomId -> roomId,
+                        roomId -> {
+                            List<ChatRoomMember> members = opponentByRoom.get(roomId);
+                            ChatRoomValidator.validateDirectRoomOpponent(members, roomId);
+                            return members.getFirst().getUserId();
+                        }
+                ));
+    }
+
+    private Map<Long, User> loadOpponentUsers(Map<Long, Long> roomToOpponentUserIdMap) {
+        Set<Long> opponentUserIds = new HashSet<>(roomToOpponentUserIdMap.values());
+        if (opponentUserIds.isEmpty()) {
+            return Map.of();
+        }
+        return userRepository.findAllById(opponentUserIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+    }
+
+    private OpponentInfo toOpponentInfo(Long opponentUserId, Map<Long, User> userMap) {
+        if (opponentUserId == null) {
+            return unknownOpponentInfo(null);
+        }
+        User user = userMap.get(opponentUserId);
+        if (user == null) {
+            return unknownOpponentInfo(opponentUserId);
+        }
+        return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
+    }
+
+    private OpponentInfo unknownOpponentInfo(Long opponentUserId) {
+        return new OpponentInfo(opponentUserId, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
     }
 }

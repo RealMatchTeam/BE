@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
+import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
@@ -40,7 +41,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
     public ChatRoomCreateResponse createOrGetRoom(Long userId, Long brandId, Long creatorId) {
         validateRequest(userId, brandId, creatorId);
 
-        String roomKey = generateRoomKey(brandId, creatorId);
+        String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandId, creatorId);
 
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey)
                 .orElseGet(() -> createRoomWithMembers(roomKey, brandId, creatorId));
@@ -59,12 +60,6 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         if (!userId.equals(brandId) && !userId.equals(creatorId)) {
             throw new CustomException(ChatErrorCode.NOT_ROOM_MEMBER);
         }
-    }
-
-    private String generateRoomKey(Long brandId, Long creatorId) {
-        long smallerId = Math.min(brandId, creatorId);
-        long largerId = Math.max(brandId, creatorId);
-        return String.format("direct:%d:%d", smallerId, largerId);
     }
 
     private ChatRoom createRoomWithMembers(
@@ -141,7 +136,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
             @NonNull Long creatorUserId,
             @NonNull ChatProposalStatus status
     ) {
-        String roomKey = generateRoomKey(brandUserId, creatorUserId);
+        String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandUserId, creatorUserId);
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
 
         if (room == null) {

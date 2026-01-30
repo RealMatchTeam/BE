@@ -2,6 +2,7 @@ package com.example.RealMatch.chat.application.service.room;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.mapper.ChatRoomCardAssembler;
 import com.example.RealMatch.chat.application.service.room.OpponentInfoService.OpponentInfo;
+import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
@@ -36,6 +38,15 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     private final OpponentInfoService opponentInfoService;
     private final CampaignSummaryService campaignSummaryService;
     private final ChatRoomCardAssembler roomCardAssembler;
+
+    @Override
+    public Optional<Long> getRoomIdByUserPair(Long brandUserId, Long creatorUserId) {
+        if (brandUserId == null || creatorUserId == null) {
+            return Optional.empty();
+        }
+        String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandUserId, creatorUserId);
+        return chatRoomRepository.findByRoomKey(roomKey).map(ChatRoom::getId);
+    }
 
     @Override
     public ChatRoomListResponse getRoomList(
