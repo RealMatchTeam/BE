@@ -4,6 +4,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -39,17 +40,11 @@ public class ChatWebSocketJwtInterceptor implements ChannelInterceptor {
         }
         String authHeader = resolveAuthorization(accessor);
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            // TODO: 인증 시스템 완성 후 연결 거부 처리 활성화
-            // 인증 헤더가 없거나 형식이 맞지 않으면 연결 거부
-
-            return message;
+            throw new MessageDeliveryException("Missing or invalid authorization header");
         }
         String token = authHeader.substring(BEARER_PREFIX.length());
         if (!jwtProvider.validateToken(token)) {
-            // TODO: 인증 시스템 완성 후 연결 거부 처리 활성화
-            // JWT 검증 실패 시 연결 거부
-
-            return message;
+            throw new MessageDeliveryException("Invalid or expired token");
         }
         Long userId = jwtProvider.getUserId(token);
         String providerId = jwtProvider.getProviderId(token);

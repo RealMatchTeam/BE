@@ -2,6 +2,7 @@ package com.example.RealMatch.chat.application.service.room;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -36,6 +37,17 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     private final OpponentInfoService opponentInfoService;
     private final CampaignSummaryService campaignSummaryService;
     private final ChatRoomCardAssembler roomCardAssembler;
+
+    @Override
+    public Optional<Long> getRoomIdByUserPair(Long brandUserId, Long creatorUserId) {
+        if (brandUserId == null || creatorUserId == null) {
+            return Optional.empty();
+        }
+        String roomKey = String.format("direct:%d:%d",
+                Math.min(brandUserId, creatorUserId),
+                Math.max(brandUserId, creatorUserId));
+        return chatRoomRepository.findByRoomKey(roomKey).map(ChatRoom::getId);
+    }
 
     @Override
     public ChatRoomListResponse getRoomList(
