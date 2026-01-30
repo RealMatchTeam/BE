@@ -1,6 +1,7 @@
 package com.example.RealMatch.business.domain.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,5 +49,14 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
             @Param("role") Role role,
             @Param("status") ProposalStatus status
     );
+
+    @Query("""
+        select distinct cp
+        from CampaignProposal cp
+        left join fetch cp.tags t
+        left join fetch t.tagContent
+        where cp.id = :proposalId
+    """)
+    Optional<CampaignProposal> findByIdWithTags(UUID proposalId);
 
 }

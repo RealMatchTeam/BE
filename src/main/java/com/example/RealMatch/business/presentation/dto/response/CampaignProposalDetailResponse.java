@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
-import com.example.RealMatch.campaign.domain.entity.CampaignContentTag;
+import com.example.RealMatch.business.domain.entity.CampaignProposalContentTag;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
 import com.example.RealMatch.tag.presentation.dto.response.ContentTagResponse;
 
@@ -41,10 +41,7 @@ public class CampaignProposalDetailResponse {
 
     private ContentTagResponse contentTags;
 
-    public static CampaignProposalDetailResponse from(
-            CampaignProposal proposal,
-            List<CampaignContentTag> tags
-    ) {
+    public static CampaignProposalDetailResponse from(CampaignProposal proposal) {
         return CampaignProposalDetailResponse.builder()
                 .proposalId(proposal.getId())
                 .brandId(proposal.getBrand().getId())
@@ -58,17 +55,17 @@ public class CampaignProposalDetailResponse {
                 .status(proposal.getStatus().name())
                 .refusalReason(proposal.getRefusalReason())
                 .createdAt(proposal.getCreatedAt())
-                .contentTags(toContentTagResponse(tags))
+                .contentTags(toContentTagResponse(proposal.getTags()))
                 .build();
     }
 
     private static ContentTagResponse toContentTagResponse(
-            List<CampaignContentTag> tags
+            List<CampaignProposalContentTag> tags
     ) {
         Map<ContentTagType, List<ContentTagResponse.TagItemResponse>> map =
                 new EnumMap<>(ContentTagType.class);
 
-        for (CampaignContentTag tag : tags) {
+        for (CampaignProposalContentTag tag : tags) {
             ContentTagType type = tag.getTagContent().getTagType();
 
             map.computeIfAbsent(type, k -> new ArrayList<>())
@@ -85,19 +82,16 @@ public class CampaignProposalDetailResponse {
     }
 
     private static ContentTagResponse.TagItemResponse toTagItem(
-            CampaignContentTag tag
+            CampaignProposalContentTag tag
     ) {
+        String baseName = tag.getTagContent().getKorName();
+        String name = tag.getCustomTagValue() != null && !tag.getCustomTagValue().isBlank()
+                ? baseName + " (" + tag.getCustomTagValue() + ")"
+                : baseName;
+
         return new ContentTagResponse.TagItemResponse(
                 tag.getTagContent().getId(),
-                resolveTagName(tag)
+                name
         );
-    }
-
-    private static String resolveTagName(CampaignContentTag tag) {
-        String baseName = tag.getTagContent().getKorName();
-        if (tag.getCustomTagValue() != null && !tag.getCustomTagValue().isBlank()) {
-            return baseName + " (" + tag.getCustomTagValue() + ")";
-        }
-        return baseName;
     }
 }
