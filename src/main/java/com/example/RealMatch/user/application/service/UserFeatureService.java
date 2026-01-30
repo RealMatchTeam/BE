@@ -24,13 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 public class UserFeatureService {
 
     private final UserMatchingDetailRepository userMatchingDetailRepository;
-    // 다른 필요한 리포지토리나 서비스 주입 예정
 
     public MyFeatureResponseDto getMyFeatures(Long userId) {
 
         // UserMatchingDetail 조회
         UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
-            .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND)); // 수정 예정
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
         log.info("사용자 프로필 조회 완료: userId={}", userId);
 
@@ -50,6 +49,9 @@ public class UserFeatureService {
             return null;  // 또는 예외를 던지거나, 빈 객체 반환
         }
 
+        log.info("뷰티 프로필 조회 - 피부타입: {}, 메이크업스타일: {}, 관심카테고리: {}",
+                detail.getSkinType(), detail.getMakeupStyle(), detail.getInterestCategories());
+
         return new MyFeatureResponseDto.BeautyType(
                 parseTagString(detail.getSkinType()),           // 피부타입
                 detail.getSkinBrightness(),                     // 피부 밝기
@@ -67,14 +69,17 @@ public class UserFeatureService {
             return null;
         }
 
+        log.info("패션 프로필 조회 - 키/몸무게: {}/{}, 체형: {}, 관심분야: {}",
+                detail.getHeight(), detail.getWeight(), detail.getBodyShape(), detail.getInterestFields());
+
         return new MyFeatureResponseDto.FashionType(
                 detail.getHeight() + "/" + detail.getWeight(),  // 키/몸무게
                 detail.getBodyShape(),                          // 체형
                 detail.getUpperSize(),                          // 상의 사이즈
                 detail.getLowerSize(),                          // 하의 사이즈
-                Collections.emptyList(),  // 관심분야 - user_matching_detail에 필드가 없음
-                Collections.emptyList(),  // 관심스타일 - user_matching_detail에 필드가 없음
-                Collections.emptyList()   // 관심브랜드 - user_matching_detail에 필드가 없음
+                parseTagString(detail.getInterestFields()),     // 관심분야 (추가!)
+                parseTagString(detail.getInterestStyles()),     // 관심스타일 (추가!)
+                parseTagString(detail.getInterestBrands())      // 관심브랜드 (추가!)
         );
     }
 
@@ -85,6 +90,9 @@ public class UserFeatureService {
             log.warn("콘텐츠 프로필 정보 없음: userId={}", detail.getUserId());
             return null;
         }
+
+        log.info("콘텐츠 프로필 조회 - 시청자성별: {}, 콘텐츠형식: {}, 콘텐츠톤: {}",
+                detail.getViewerGender(), detail.getContentFormats(), detail.getContentTones());
 
         return new MyFeatureResponseDto.ContentsType(
                 parseTagString(detail.getViewerGender()),      // 시청자 성별
@@ -110,6 +118,6 @@ public class UserFeatureService {
         return Arrays.stream(tagString.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableList());
     }
 }

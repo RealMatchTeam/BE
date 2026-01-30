@@ -72,6 +72,12 @@ public enum UserErrorCode implements BaseErrorCode {
             "콘텐츠 프로필 정보를 불러오는데 실패하였습니다."
     ),
 
+    USER_MATCHING_DETAIL_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "USER404_11",
+            "매칭 상세 정보를 불러오는데 실패하였습니다."
+    ),
+
     // 400 - 요청 오류
     USER_UPDATE_BAD_REQUEST(
             HttpStatus.BAD_REQUEST,

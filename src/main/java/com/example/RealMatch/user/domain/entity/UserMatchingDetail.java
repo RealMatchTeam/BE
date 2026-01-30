@@ -6,6 +6,7 @@ import com.example.RealMatch.global.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -18,7 +19,9 @@ import lombok.NoArgsConstructor;
 @Table(name = "user_matching_detail")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserMatchingDetail extends BaseEntity {
+
     @Id
+    @GeneratedValue
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
@@ -56,6 +59,15 @@ public class UserMatchingDetail extends BaseEntity {
 
     @Column(name = "lower_size")
     private String lowerSize;
+
+    @Column(name = "interest_fields")
+    private String interestFields;
+
+    @Column(name = "interest_styles")
+    private String interestStyles;
+
+    @Column(name = "interest_brands")
+    private String interestBrands;
 
     // 콘텐츠 관련
     @Column(name = "sns_url")
@@ -99,6 +111,9 @@ public class UserMatchingDetail extends BaseEntity {
             String bodyShape,
             String upperSize,
             String lowerSize,
+            String interestFields,
+            String interestStyles,
+            String interestBrands,
             String skinType,
             String skinBrightness,
             String makeupStyle,
@@ -122,6 +137,9 @@ public class UserMatchingDetail extends BaseEntity {
         this.bodyShape = bodyShape;
         this.upperSize = upperSize;
         this.lowerSize = lowerSize;
+        this.interestFields = interestFields;
+        this.interestStyles = interestStyles;
+        this.interestBrands = interestBrands;
         this.skinType = skinType;
         this.skinBrightness = skinBrightness;
         this.makeupStyle = makeupStyle;
