@@ -27,9 +27,6 @@ public class CampaignProposalQueryService {
         CampaignProposal proposal = campaignProposalRepository.findByIdWithTags(proposalId)
                 .orElseThrow(() -> new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND));
 
-        // TODO 권한 체크 (creator or brand)
-        // validateReadable(userId, proposal);
-
         return CampaignProposalDetailResponse.from(proposal);
     }
 }
