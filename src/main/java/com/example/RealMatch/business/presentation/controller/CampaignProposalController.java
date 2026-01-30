@@ -51,7 +51,7 @@ public class CampaignProposalController implements CampaignProposalSwagger {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CampaignProposalRequestDto request
     ) {
-        campaignProposalService.requestCampaign(userDetails.getUserId(),Role.from(userDetails.getRole()), request);
+        campaignProposalService.requestCampaign(userDetails.getUserId(), Role.from(userDetails.getRole()), request);
         return CustomResponse.ok("캠페인 제안에 성공했습니다.");
     }
 
@@ -59,15 +59,15 @@ public class CampaignProposalController implements CampaignProposalSwagger {
     @Operation(
             summary = "켐페인 제안 상세 조회 API by 박지영",
             description = """
-            한 건의 캠페인 제안 상세 정보를 조회합니다.
-            
-            <태그>   
-            formats : 형식    
-            categories : 종류    
-            tones : 톤   
-            involvements : 관여도    
-            usageRanges : 활용 범위    
-            """
+                    한 건의 캠페인 제안 상세 정보를 조회합니다.
+                    
+                    <태그>   
+                    formats : 형식    
+                    categories : 종류    
+                    tones : 톤   
+                    involvements : 관여도    
+                    usageRanges : 활용 범위    
+                    """
     )
     public CustomResponse<CampaignProposalDetailResponse> getProposalDetail(
             @AuthenticationPrincipal CustomUserDetails principal,
@@ -81,7 +81,5 @@ public class CampaignProposalController implements CampaignProposalSwagger {
 
         return CustomResponse.ok(response);
     }
-
-
 }
 
