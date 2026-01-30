@@ -38,17 +38,20 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         Long userId = oAuth2User.getUserId();
         AuthProvider provider = oAuth2User.getProvider();
         String role = oAuth2User.getRole();
+        String email = oAuth2User.getEmail();
 
         String accessToken = jwtProvider.createAccessToken(
                 userId,
                 provider.name(),
-                role  // ROLE_GUEST
+                role,  // ROLE_GUEST
+                email
         );
 
         String refreshToken = jwtProvider.createRefreshToken(
                 userId,
                 provider.name(),
-                role  // ROLE_GUEST
+                role,  // ROLE_GUEST
+                email
         );
 
         // provider별로 프론트엔드 콜백 경로 설정

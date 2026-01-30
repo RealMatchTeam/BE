@@ -16,6 +16,7 @@ public class CustomUserDetails implements UserDetails {
     private final Long userId;        // DB PK
     private final String providerId;  // 소셜 고유 ID
     private final String role;        // USER / ADMIN
+    private final String email;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

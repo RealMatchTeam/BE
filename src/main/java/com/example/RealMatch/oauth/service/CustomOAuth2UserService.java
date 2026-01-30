@@ -62,6 +62,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 authMethod.getUser().getId(),
                 authMethod.getUser().getRole().name(),
                 authMethod.getProvider(),
+                authMethod.getEmail(),
                 attributes
         );
     }
