@@ -5,6 +5,9 @@ cors:
 swagger:
   server-url: ${SWAGGER_SERVER_URL}
 
+front:
+  domain-url: ${FRONT_DOMAIN_URL}
+
 server:
   timezone: Asia/Seoul
 
