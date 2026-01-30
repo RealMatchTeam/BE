@@ -1,26 +1,24 @@
 package com.example.RealMatch.chat.application.service.message;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.dto.AttachmentDto;
+import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
-import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
-import com.example.RealMatch.chat.domain.entity.ChatAttachment;
+import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
-import com.example.RealMatch.chat.domain.exception.ChatException;
-import com.example.RealMatch.chat.domain.repository.ChatAttachmentRepository;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
-import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,12 +27,13 @@ import lombok.RequiredArgsConstructor;
 public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
     private final ChatMessageRepository chatMessageRepository;
-    private final ChatRoomMemberRepository chatRoomMemberRepository;
-    private final ChatAttachmentRepository chatAttachmentRepository;
+    private final ChatRoomMemberService chatRoomMemberService;
+    private final AttachmentQueryService attachmentQueryService;
     private final ChatMessageResponseMapper responseMapper;
+    private final ChatRoomMemberCommandService chatRoomMemberCommandService;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ChatMessageListResponse getMessages(
             Long userId,
             Long roomId,
@@ -42,14 +41,11 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
             int size
     ) {
         if (roomId == null) {
-            throw new ChatException(ChatErrorCode.ROOM_NOT_FOUND);
+            throw new CustomException(ChatErrorCode.ROOM_NOT_FOUND);
         }
-        ChatRoomMember member = chatRoomMemberRepository
-                .findMemberByRoomIdAndUserIdWithRoomCheck(roomId, userId)
-                .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_ROOM_MEMBER));
         
-        // 활성 상태 검증
-        ChatRoomMemberValidator.validateActiveMember(member);
+        // 멤버 검증 및 조회
+        ChatRoomMember member = chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);
 
         Long cursorMessageId = messageCursor != null ? messageCursor.messageId() : null;
         List<ChatMessage> messages = chatMessageRepository.findMessagesByRoomId(roomId, cursorMessageId, size);
@@ -65,7 +61,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
         if (cursorMessageId == null) {
             ChatMessage latestMessage = messages.get(0);
-            updateLastReadMessage(member, latestMessage.getId());
+            chatRoomMemberCommandService.updateLastReadMessage(member.getId(), latestMessage.getId());
         }
 
         List<Long> attachmentIds = messages.stream()
@@ -74,14 +70,11 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
                 .distinct()
                 .toList();
 
-        Map<Long, ChatAttachment> attachmentMap = attachmentIds.isEmpty()
-                ? Map.of()
-                : chatAttachmentRepository.findAllById(attachmentIds).stream()
-                        .collect(Collectors.toMap(ChatAttachment::getId, attachment -> attachment));
+        Map<Long, AttachmentDto> attachmentMap = attachmentQueryService.findAllById(attachmentIds);
 
         List<ChatMessageResponse> messageResponses = messages.stream()
                 .map(message -> {
-                    ChatAttachment attachment = message.getAttachmentId() != null
+                    AttachmentDto attachment = message.getAttachmentId() != null
                             ? attachmentMap.get(message.getAttachmentId())
                             : null;
                     return responseMapper.toResponse(message, attachment);
@@ -95,12 +88,6 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
         }
 
         return new ChatMessageListResponse(messageResponses, nextCursor, hasNext);
-    }
-
-    private void updateLastReadMessage(ChatRoomMember member, Long messageId) {
-        if (member.getLastReadMessageId() == null || member.getLastReadMessageId() < messageId) {
-            member.updateLastReadMessage(messageId, LocalDateTime.now());
-        }
     }
 
 }

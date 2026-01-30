@@ -82,6 +82,16 @@ jobs:
       RABBITMQ_MQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      # S3
+      S3_BUCKET_NAME: test-bucket-ci
+      S3_REGION: us-east-2
+      S3_PUBLIC_BUCKET: "false"
+      S3_PRESIGNED_URL_EXPIRATION: "604800"
+      S3_MAX_IMAGE_SIZE: "10485760"
+      S3_MAX_FILE_SIZE: "52428800"
+      S3_KEY_PREFIX: attachment
+      AWS_ACCESS_KEY_ID: AWSACCESSKEYIDISSECRET
+      AWS_SECRET_ACCESS_KEY: AWSSECRETACCESSKEYISSECRET
 
     steps:
     - name: Checkout code

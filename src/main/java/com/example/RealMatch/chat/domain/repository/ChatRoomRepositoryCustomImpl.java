@@ -56,26 +56,24 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
 
     @Override
     public long countTotalUnreadMessages(Long userId) {
-        QChatRoomMember memberForCount = new QChatRoomMember("memberForCount");
-        QChatRoom roomForCount = new QChatRoom("roomForCount");
-
+        // 공통 쿼리 로직 재사용
         Long count = queryFactory
                 .select(MESSAGE.count())
                 .from(MESSAGE)
-                .innerJoin(memberForCount).on(
-                        MESSAGE.roomId.eq(memberForCount.roomId)
-                                .and(memberForCount.userId.eq(userId))
-                                .and(memberForCount.isDeleted.isFalse())
+                .innerJoin(MEMBER).on(
+                        MESSAGE.roomId.eq(MEMBER.roomId)
+                                .and(MEMBER.userId.eq(userId))
+                                .and(MEMBER.isDeleted.isFalse())
                 )
-                .innerJoin(roomForCount).on(
-                        MESSAGE.roomId.eq(roomForCount.id)
-                                .and(roomForCount.isDeleted.isFalse())
-                                .and(roomForCount.lastMessageAt.isNotNull())
+                .innerJoin(ROOM).on(
+                        MESSAGE.roomId.eq(ROOM.id)
+                                .and(ROOM.isDeleted.isFalse())
+                                .and(ROOM.lastMessageAt.isNotNull())
                 )
                 .where(
                         MESSAGE.senderId.isNotNull(),
                         MESSAGE.senderId.ne(userId),
-                        isUnreadMessage(MESSAGE.id, memberForCount.lastReadMessageId)
+                        isUnreadMessage(MESSAGE.id, MEMBER.lastReadMessageId)
                 )
                 .fetchOne();
         return count != null ? count : 0L;
@@ -90,21 +88,24 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
             return Map.of();
         }
 
-        QChatRoomMember m = new QChatRoomMember("m");
-
         List<Tuple> results = queryFactory
                 .select(MESSAGE.roomId, MESSAGE.count())
                 .from(MESSAGE)
-                .innerJoin(m).on(
-                        MESSAGE.roomId.eq(m.roomId)
-                                .and(m.userId.eq(userId))
-                                .and(m.isDeleted.isFalse())
+                .innerJoin(MEMBER).on(
+                        MESSAGE.roomId.eq(MEMBER.roomId)
+                                .and(MEMBER.userId.eq(userId))
+                                .and(MEMBER.isDeleted.isFalse())
+                )
+                .innerJoin(ROOM).on(
+                        MESSAGE.roomId.eq(ROOM.id)
+                                .and(ROOM.isDeleted.isFalse())
+                                .and(ROOM.lastMessageAt.isNotNull())
                 )
                 .where(
                         MESSAGE.roomId.in(roomIds),
                         MESSAGE.senderId.isNotNull(),
                         MESSAGE.senderId.ne(userId),
-                        isUnreadMessage(MESSAGE.id, m.lastReadMessageId)
+                        isUnreadMessage(MESSAGE.id, MEMBER.lastReadMessageId)
                 )
                 .groupBy(MESSAGE.roomId)
                 .fetch();

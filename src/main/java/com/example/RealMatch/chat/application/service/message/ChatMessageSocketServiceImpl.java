@@ -26,10 +26,7 @@ public class ChatMessageSocketServiceImpl implements ChatMessageSocketService {
     @NonNull
     public ChatMessageResponse sendMessage(ChatSendMessageCommand command, Long senderId) {
         ChatMessageResponse response = chatMessageCommandService.saveMessage(command, senderId);
-        afterCommitExecutor.execute(() -> {
-            eventPublisher.publishMessageCreated(command.roomId(), response);
-            eventPublisher.publishRoomListUpdated(command.roomId());
-        });
+        publishMessageEvents(command.roomId(), response);
         return response;
     }
 
@@ -42,10 +39,14 @@ public class ChatMessageSocketServiceImpl implements ChatMessageSocketService {
             ChatSystemMessagePayload payload
     ) {
         ChatMessageResponse response = chatMessageCommandService.saveSystemMessage(roomId, kind, payload);
+        publishMessageEvents(roomId, response);
+        return response;
+    }
+
+    private void publishMessageEvents(Long roomId, ChatMessageResponse response) {
         afterCommitExecutor.execute(() -> {
             eventPublisher.publishMessageCreated(roomId, response);
             eventPublisher.publishRoomListUpdated(roomId);
         });
-        return response;
     }
 }
