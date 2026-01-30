@@ -8,6 +8,7 @@ import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponse
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -58,5 +59,10 @@ public interface BrandSwagger {
     CustomResponse<SponsorProductDetailResponseDto> getSponsorProductDetail(
             @Parameter(description = "브랜드 ID", required = true) @PathVariable Long brandId,
             @Parameter(description = "제품 ID", required = true) @PathVariable Long productId
+    );
+
+    @Operation(summary = "브랜드 협찬 가능 제품 리스트 조회", description = "특정 브랜드의 협찬 가능 제품 목록을 조회합니다.")
+    CustomResponse<List<SponsorProductListResponseDto>> getSponsorProducts(
+            @Parameter(description = "브랜드 ID", required = true) @PathVariable Long brandId
     );
 }
