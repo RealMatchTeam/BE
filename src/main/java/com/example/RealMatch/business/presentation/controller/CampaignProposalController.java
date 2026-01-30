@@ -51,20 +51,22 @@ public class CampaignProposalController implements CampaignProposalSwagger {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid CampaignProposalRequestDto request
     ) {
-        // API 테스트를 위해서 하드코딩 (추후 수정 필요!!)
-//        campaignProposalService.requestCampaign(userDetails.getUserId(), request);
-        campaignProposalService.requestCampaign(1L, Role.from(userDetails.getRole()), request);
+        campaignProposalService.requestCampaign(userDetails.getUserId(),Role.from(userDetails.getRole()), request);
         return CustomResponse.ok("캠페인 제안에 성공했습니다.");
     }
 
     @GetMapping("/{campaignProposalId}")
     @Operation(
-            summary = "캠페인 제안 상세 조회 API",
+            summary = "켐페인 제안 상세 조회 API by 박지영",
             description = """
-            캠페인 제안 단건의 상세 정보를 조회합니다.
+            한 건의 캠페인 제안 상세 정보를 조회합니다.
             
-            제안에 포함된 콘텐츠 태그 정보와
-            제안 상태(REVIEWING / MATCHED / REJECTED)를 함께 반환합니다.
+            <태그>   
+            formats : 형식    
+            categories : 종류    
+            tones : 톤   
+            involvements : 관여도    
+            usageRanges : 활용 범위    
             """
     )
     public CustomResponse<CampaignProposalDetailResponse> getProposalDetail(
