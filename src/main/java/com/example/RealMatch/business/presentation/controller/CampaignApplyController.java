@@ -41,9 +41,7 @@ public class CampaignApplyController {
     ) {
         campaignApplyService.applyCampaign(
                 campaignId,
-//                principal.getUserId(),
-                // !!! 아래는 임의의 값임, 반드시 위의 주석으로 수정 필요!!!
-                1L,
+                principal.getUserId(),
                 request.reason()
 
         );
