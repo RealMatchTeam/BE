@@ -12,7 +12,8 @@ public interface ChatRoomRepositoryCustom {
             Long userId,
             ChatRoomFilterStatus filterStatus,
             RoomCursorInfo cursorInfo,
-            int size
+            int size,
+            String search
     );
 
     long countTotalUnreadMessages(Long userId);

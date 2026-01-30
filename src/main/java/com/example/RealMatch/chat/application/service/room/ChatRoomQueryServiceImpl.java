@@ -7,13 +7,16 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.mapper.ChatRoomCardAssembler;
 import com.example.RealMatch.chat.application.service.room.OpponentInfoService.OpponentInfo;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
+import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
+import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepositoryCustom.RoomCursorInfo;
@@ -34,6 +37,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberService chatRoomMemberService;
     private final OpponentInfoService opponentInfoService;
     private final CampaignSummaryService campaignSummaryService;
@@ -53,14 +57,15 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
             Long userId,
             ChatRoomFilterStatus filterStatus,
             RoomCursor roomCursor,
-            int size
+            int size,
+            String search
     ) {
         RoomCursorInfo cursorInfo = roomCursor != null
                 ? new RoomCursorInfo(roomCursor.lastMessageAt(), roomCursor.roomId())
                 : null;
 
         List<ChatRoom> rooms = chatRoomRepository.findRoomsByUser(
-                userId, filterStatus, cursorInfo, size
+                userId, filterStatus, cursorInfo, size, search
         );
 
         boolean hasNext = rooms.size() > size;
@@ -97,8 +102,13 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
         Map<Long, OpponentInfo> opponentInfoMap = opponentInfoService.getOpponentInfoMapBatch(userId, roomIds);
 
+        Map<Long, ChatMessage> searchMatchByRoom = null;
+        if (StringUtils.hasText(search)) {
+            searchMatchByRoom = chatMessageRepository.findLatestMatchingMessageByRoomIds(roomIds, search.trim());
+        }
+
         List<ChatRoomCardResponse> roomCards = roomCardAssembler.assemble(
-                rooms, userId, myMemberMap, unreadCountMap, opponentInfoMap
+                rooms, userId, myMemberMap, unreadCountMap, opponentInfoMap, searchMatchByRoom
         );
 
         return new ChatRoomListResponse(

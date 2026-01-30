@@ -52,10 +52,11 @@ public class ChatController implements ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
             @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(name = "search", required = false) String search
     ) {
         Long userId = user.getUserId();
-        return CustomResponse.ok(chatRoomQueryService.getRoomList(userId, filterStatus, roomCursor, size));
+        return CustomResponse.ok(chatRoomQueryService.getRoomList(userId, filterStatus, roomCursor, size, search));
     }
 
     @GetMapping("/rooms/{roomId}")

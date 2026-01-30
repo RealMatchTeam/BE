@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.QChatMessage;
@@ -12,8 +13,10 @@ import com.example.RealMatch.chat.domain.entity.QChatRoom;
 import com.example.RealMatch.chat.domain.entity.QChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.user.domain.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +36,8 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
             Long userId,
             ChatRoomFilterStatus filterStatus,
             RoomCursorInfo cursorInfo,
-            int size
+            int size,
+            String search
     ) {
         return queryFactory
                 .selectFrom(ROOM)
@@ -44,7 +48,8 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                         ROOM.isDeleted.isFalse(),
                         ROOM.lastMessageAt.isNotNull(),
                         applyFilterStatus(filterStatus, ROOM),
-                        applyCursor(cursorInfo, ROOM)
+                        applyCursor(cursorInfo, ROOM),
+                        applySearch(search, userId, ROOM)
                 )
                 .orderBy(
                         ROOM.lastMessageAt.desc(),
@@ -143,5 +148,38 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
         return r.lastMessageAt.lt(cursorInfo.lastMessageAt())
                 .or(r.lastMessageAt.eq(cursorInfo.lastMessageAt())
                         .and(r.id.lt(cursorInfo.roomId())));
+    }
+
+    private BooleanExpression applySearch(String search, Long userId, QChatRoom r) {
+        if (!StringUtils.hasText(search)) {
+            return null;
+        }
+        String normalized = search.trim();
+
+        var messageRoomIds = JPAExpressions
+                .select(MESSAGE.roomId)
+                .from(MESSAGE)
+                .where(
+                        MESSAGE.content.isNotNull(),
+                        MESSAGE.senderId.isNotNull(),
+                        MESSAGE.content.containsIgnoreCase(normalized)
+                )
+                .distinct();
+
+        QChatRoomMember memberOpp = new QChatRoomMember("member_opp");
+        QUser userOpp = new QUser("user_opp");
+        var opponentRoomIds = JPAExpressions
+                .select(memberOpp.roomId)
+                .from(memberOpp)
+                .innerJoin(userOpp).on(memberOpp.userId.eq(userOpp.id))
+                .where(
+                        memberOpp.userId.ne(userId),
+                        memberOpp.isDeleted.isFalse(),
+                        userOpp.isDeleted.isFalse(),
+                        userOpp.nickname.containsIgnoreCase(normalized)
+                )
+                .distinct();
+
+        return r.id.in(messageRoomIds).or(r.id.in(opponentRoomIds));
     }
 }
