@@ -46,21 +46,22 @@ public class JwtProvider {
     // =========================
     //   토큰 생성
     // =========================
-    public String createAccessToken(Long userId, String providerId, String role) {
-        return createToken(userId, providerId, role, "access", accessTokenExpireMillis);
+    public String createAccessToken(Long userId, String providerId, String role, String email) {
+        return createToken(userId, providerId, role, email, "access", accessTokenExpireMillis);
     }
 
-    public String createRefreshToken(Long userId, String providerId, String role) {
-        return createToken(userId, providerId, role, "refresh", refreshTokenExpireMillis);
+    public String createRefreshToken(Long userId, String providerId, String role, String email) {
+        return createToken(userId, providerId, role, email, "refresh", refreshTokenExpireMillis);
     }
 
-    private String createToken(Long userId, String providerId, String role, String type, long expireMillis) {
+    private String createToken(Long userId, String providerId, String role, String email, String type, long expireMillis) {
         long now = System.currentTimeMillis();
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("providerId", providerId)
                 .claim("role", role)
+                .claim("email", email)
                 .claim("type", type)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + expireMillis))
@@ -99,6 +100,10 @@ public class JwtProvider {
 
     public String getRole(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    public String getEmail(String token) {
+        return getClaims(token).get("email", String.class);
     }
 
     public String getType(String token) {

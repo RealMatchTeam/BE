@@ -71,8 +71,8 @@ public class AuthService {
 
         String currentRole = user.getRole().name();
 
-        String accessToken = jwtProvider.createAccessToken(user.getId(), providerId, currentRole);
-        String refreshToken = jwtProvider.createRefreshToken(user.getId(), providerId, currentRole);
+        String accessToken = jwtProvider.createAccessToken(user.getId(), providerId, currentRole, user.getEmail());
+        String refreshToken = jwtProvider.createRefreshToken(user.getId(), providerId, currentRole, user.getEmail());
 
         return new OAuthTokenResponse(accessToken, refreshToken);
     }
@@ -98,7 +98,7 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(OAuthErrorCode.USER_NOT_FOUND));
 
         // 3. 토큰 갱신
-        String newAccessToken = jwtProvider.createAccessToken(user.getId(), providerId, role);
+        String newAccessToken = jwtProvider.createAccessToken(user.getId(), providerId, role, user.getEmail());
 
         return new OAuthTokenResponse(newAccessToken, refreshToken);
     }

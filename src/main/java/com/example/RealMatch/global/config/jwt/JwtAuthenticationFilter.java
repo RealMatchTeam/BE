@@ -64,7 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             CustomUserDetails masterUser = new CustomUserDetails(
                     0L,              // 마스터 사용자 ID
                     "master",        // providerId
-                    "ADMIN"          // 관리자 권한
+                    "ADMIN",          // 관리자 권한
+                    "master@admin.com"
             );
 
             UsernamePasswordAuthenticationToken authentication =
@@ -87,9 +88,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Long userId = jwtProvider.getUserId(token);
         String providerId = jwtProvider.getProviderId(token);
         String role = jwtProvider.getRole(token);
+        String email = jwtProvider.getEmail(token);
 
         CustomUserDetails userDetails =
-                new CustomUserDetails(userId, providerId, role);
+                new CustomUserDetails(userId, providerId, role, email);
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
