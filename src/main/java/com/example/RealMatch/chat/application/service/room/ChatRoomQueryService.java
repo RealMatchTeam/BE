@@ -15,7 +15,8 @@ public interface ChatRoomQueryService {
             Long userId,
             ChatRoomFilterStatus filterStatus,
             RoomCursor roomCursor,
-            int size
+            int size,
+            String search
     );
 
     ChatRoomDetailResponse getChatRoomDetailWithOpponent(Long userId, Long roomId);

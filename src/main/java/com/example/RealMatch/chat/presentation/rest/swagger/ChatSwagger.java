@@ -48,6 +48,7 @@ public interface ChatSwagger {
     @Operation(summary = "채팅방 목록 조회 API By 여채현",
             description = """
                     status 기준으로 채팅방 목록을 조회합니다.
+                    search가 있으면 상대방 이름(닉네임) 또는 메시지 내용으로 검색합니다 (부분 일치, 대소문자 무시).
                     정렬은 항상 lastMessageAt desc, roomId desc 기준입니다.
                     cursor는 lastMessageAt|roomId 포맷을 그대로 재사용하세요.
                     메시지가 없는 방은 목록에서 제외됩니다.
@@ -60,7 +61,8 @@ public interface ChatSwagger {
             @AuthenticationPrincipal CustomUserDetails user,
             @Parameter(description = "채팅방 필터 상태 (LATEST: 최신순, COLLABORATING: 협업중)") @RequestParam(name = "status", required = false) ChatRoomFilterStatus filterStatus,
             @Parameter(description = "페이지네이션 커서 (lastMessageAt|roomId 형식)") @RequestParam(name = "cursor", required = false) RoomCursor roomCursor,
-            @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20") int size
+            @Parameter(description = "페이지 크기 (기본값: 20)") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "검색어 (상대방 이름 또는 메시지 내용, 미입력 시 전체 목록)") @RequestParam(name = "search", required = false) String search
     );
 
     @Operation(summary = "채팅방 헤더 조회 API By 여채현",
