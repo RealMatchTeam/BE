@@ -2,17 +2,15 @@ package com.example.RealMatch.oauth.handler;
 
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.RealMatch.global.config.jwt.JwtProvider;
-import com.example.RealMatch.global.presentation.CustomResponse;
-import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
 import com.example.RealMatch.oauth.dto.CustomOAuth2User;
-import com.example.RealMatch.oauth.dto.OAuthTokenResponse;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,7 +21,9 @@ import lombok.RequiredArgsConstructor;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
-    private final ObjectMapper objectMapper;
+
+    @Value("${oauth.redirect.base-url:https://www.realmatch.co.kr}")
+    private String frontendBaseUrl;
 
     @Override
     public void onAuthenticationSuccess(
@@ -51,25 +51,24 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 role  // ROLE_GUEST
         );
 
-        // 응답 데이터 구성
-        OAuthTokenResponse tokenResponse =
-                OAuthTokenResponse.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
-                        .build();
+        // provider별로 프론트엔드 콜백 경로 설정
+        String callbackPath = getCallbackPath(provider);
 
-        // 공통 응답 래핑
-        CustomResponse<OAuthTokenResponse> responseBody =
-                CustomResponse.onSuccess(
-                        GeneralSuccessCode.AUTHORIZED,
-                        tokenResponse
-                );
+        String redirectUrl = UriComponentsBuilder.fromHttpUrl(frontendBaseUrl)
+                .path(callbackPath)
+                .queryParam("accessToken", accessToken)
+                .queryParam("refreshToken", refreshToken)
+                .build()
+                .toUriString();
 
-        // HTTP 응답
-        response.setStatus(GeneralSuccessCode.AUTHORIZED.getStatus().value());
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
+        response.sendRedirect(redirectUrl);
+    }
 
-        objectMapper.writeValue(response.getWriter(), responseBody);
+    private String getCallbackPath(AuthProvider provider) {
+        return switch (provider) {
+            case KAKAO -> "/auth/callback/kakao";
+            case NAVER -> "/auth/callback/naver";
+            case GOOGLE -> "/auth/callback/google";
+        };
     }
 }
