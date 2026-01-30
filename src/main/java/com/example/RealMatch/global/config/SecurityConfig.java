@@ -56,6 +56,9 @@ public class SecurityConfig {
     @Value("${cors.allowed-origin}")
     private String allowedOrigin;
 
+    @Value("${front.domain-url}")
+    private String frontDomainUrl;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         log.info("Configuring Security Filter Chain");
@@ -92,7 +95,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl));
+        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl, frontDomainUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
