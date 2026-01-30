@@ -67,18 +67,4 @@ public class BrandAvailableSponsor extends DeleteBaseEntity {
         this.content = content;
         this.totalCount = totalCount;
     }
-
-    // --- 질문하신 메소드 채우기 (Getter 구현) ---
-
-    public List<BrandSponsorImage> getImages() {
-        return this.images; // images 필드를 반환
-    }
-
-    public Integer getTotalCount() {
-        return this.totalCount; // totalCount 필드를 반환
-    }
-
-    public Integer getCurrentCount() {
-        return this.currentCount; // currentCount 필드를 반환
-    }
 }
