@@ -2,9 +2,9 @@ package com.example.RealMatch.attachment.application.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
@@ -22,9 +22,7 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
 
     private final AttachmentRepository attachmentRepository;
     private final AttachmentResponseMapper responseMapper;
-    
-    @Autowired(required = false)
-    private AttachmentUrlService attachmentUrlService;
+    private final Optional<AttachmentUrlService> attachmentUrlService;
 
     @Override
     public AttachmentDto findById(Long attachmentId) {
@@ -37,22 +35,7 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
             return null;
         }
         AttachmentDto dto = responseMapper.toDto(attachment);
-        // Presigned URL 생성 (AttachmentUrlService가 있을 때만)
-        if (attachmentUrlService != null) {
-            String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
-            if (presignedUrl != null) {
-                return new AttachmentDto(
-                        dto.attachmentId(),
-                        dto.attachmentType(),
-                        dto.contentType(),
-                        dto.originalName(),
-                        dto.fileSize(),
-                        presignedUrl,
-                        dto.status()
-                );
-            }
-        }
-        return dto;
+        return enrichWithPresignedUrl(dto, attachment);
     }
 
     @Override
@@ -65,22 +48,7 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
                         Attachment::getId,
                         attachment -> {
                             AttachmentDto dto = responseMapper.toDto(attachment);
-                            // Presigned URL 생성 (AttachmentUrlService가 있을 때만)
-                            if (attachmentUrlService != null) {
-                                String presignedUrl = attachmentUrlService.getAccessUrl(attachment);
-                                if (presignedUrl != null) {
-                                    return new AttachmentDto(
-                                            dto.attachmentId(),
-                                            dto.attachmentType(),
-                                            dto.contentType(),
-                                            dto.originalName(),
-                                            dto.fileSize(),
-                                            presignedUrl,
-                                            dto.status()
-                                    );
-                                }
-                            }
-                            return dto;
+                            return enrichWithPresignedUrl(dto, attachment);
                         }
                 ));
     }
@@ -96,5 +64,24 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         if (!attachment.getUploaderId().equals(userId)) {
             throw new CustomException(AttachmentErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
         }
+    }
+
+    private AttachmentDto enrichWithPresignedUrl(AttachmentDto dto, Attachment attachment) {
+        if (dto == null || attachment == null) {
+            return dto;
+        }
+        return attachmentUrlService
+                .map(service -> service.getAccessUrl(attachment))
+                .filter(presignedUrl -> presignedUrl != null)
+                .map(presignedUrl -> new AttachmentDto(
+                        dto.attachmentId(),
+                        dto.attachmentType(),
+                        dto.contentType(),
+                        dto.originalName(),
+                        dto.fileSize(),
+                        presignedUrl,
+                        dto.status()
+                ))
+                .orElse(dto);
     }
 }

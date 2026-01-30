@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.mapper.ChatRoomCardAssembler;
 import com.example.RealMatch.chat.application.service.room.OpponentInfoService.OpponentInfo;
+import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
@@ -43,9 +44,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         if (brandUserId == null || creatorUserId == null) {
             return Optional.empty();
         }
-        String roomKey = String.format("direct:%d:%d",
-                Math.min(brandUserId, creatorUserId),
-                Math.max(brandUserId, creatorUserId));
+        String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandUserId, creatorUserId);
         return chatRoomRepository.findByRoomKey(roomKey).map(ChatRoom::getId);
     }
 
