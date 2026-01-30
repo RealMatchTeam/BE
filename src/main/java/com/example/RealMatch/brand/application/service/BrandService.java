@@ -234,7 +234,7 @@ public class BrandService {
         // brandRepository.findById(brandId).orElseThrow(...);
 
         // 2. 해당 브랜드의 협찬 가능 제품 조회
-        List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandId(brandId);
+        List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithImages(brandId);
 
         // 3. DTO 변환 후 반환
         return products.stream()
