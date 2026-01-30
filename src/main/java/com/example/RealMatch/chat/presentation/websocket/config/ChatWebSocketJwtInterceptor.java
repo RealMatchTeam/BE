@@ -54,7 +54,8 @@ public class ChatWebSocketJwtInterceptor implements ChannelInterceptor {
         Long userId = jwtProvider.getUserId(token);
         String providerId = jwtProvider.getProviderId(token);
         String role = jwtProvider.getRole(token);
-        CustomUserDetails userDetails = new CustomUserDetails(userId, providerId, role);
+        String email = jwtProvider.getEmail(token);
+        CustomUserDetails userDetails = new CustomUserDetails(userId, providerId, role, email);
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         userDetails,

@@ -47,11 +47,11 @@ public class JwtProvider {
     //   토큰 생성
     // =========================
     public String createAccessToken(Long userId, String providerId, String role, String email) {
-        return createToken(userId, providerId, role, email,"access", accessTokenExpireMillis);
+        return createToken(userId, providerId, role, email, "access", accessTokenExpireMillis);
     }
 
     public String createRefreshToken(Long userId, String providerId, String role, String email) {
-        return createToken(userId, providerId, role, email,"refresh", refreshTokenExpireMillis);
+        return createToken(userId, providerId, role, email, "refresh", refreshTokenExpireMillis);
     }
 
     private String createToken(Long userId, String providerId, String role, String email, String type, long expireMillis) {
