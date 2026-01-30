@@ -26,6 +26,7 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetai
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
+import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 import com.example.RealMatch.tag.domain.entity.BrandTag;
 import com.example.RealMatch.tag.domain.enums.TagType;
 import com.example.RealMatch.tag.domain.repository.BrandTagRepository;
@@ -181,10 +182,10 @@ public class BrandService {
 
     public SponsorProductDetailResponseDto getSponsorProductDetail(Long brandId, Long productId) {
         Brand brand = brandRepository.findById(brandId)
-                .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(GeneralErrorCode.NOT_FOUND));
 
         BrandAvailableSponsor product = brandAvailableSponsorRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("제품 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException(GeneralErrorCode.NOT_FOUND));
 
         if (!product.getBrand().getId().equals(brandId)) {
             throw new IllegalArgumentException("해당 브랜드의 제품이 아닙니다.");
