@@ -7,7 +7,7 @@ import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
 
 public interface MatchService {
 
-    MatchResponseDto matchBrand(MatchRequestDto requestDto);
+    MatchResponseDto match(MatchRequestDto requestDto);
 
     MatchBrandResponseDto getMatchingBrands(String userId);
 
