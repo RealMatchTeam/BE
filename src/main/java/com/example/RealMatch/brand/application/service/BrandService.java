@@ -230,8 +230,9 @@ public class BrandService {
     // 협찬 가능 제품 리스트 조회
     @Transactional(readOnly = true)
     public List<SponsorProductListResponseDto> getSponsorProducts(Long brandId) {
-        // 1. 브랜드 존재 여부 확인 (필요 시)
-        // brandRepository.findById(brandId).orElseThrow(...);
+        // 1. 브랜드 존재 여부 확인
+        brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
 
         // 2. 해당 브랜드의 협찬 가능 제품 조회
         List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithImages(brandId);
