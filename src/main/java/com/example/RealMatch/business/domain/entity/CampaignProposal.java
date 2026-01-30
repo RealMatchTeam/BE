@@ -10,6 +10,7 @@ import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.enums.Role;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -46,6 +47,10 @@ public class CampaignProposal extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "who_proposed", nullable = false, length = 20)
+    private Role whoProposed;
 
     // 기존 캠페인 기반 제안이면 참조
     @ManyToOne(fetch = FetchType.LAZY)
@@ -85,13 +90,14 @@ public class CampaignProposal extends BaseEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<CampaignProposalTag> tags = new ArrayList<>();
+    private List<CampaignProposalContentTag> tags = new ArrayList<>();
 
 
     @Builder
     protected CampaignProposal(
             User creator,
             Brand brand,
+            Role whoProposed,
             Campaign campaign,
             String title,
             String campaignDescription,
@@ -102,6 +108,7 @@ public class CampaignProposal extends BaseEntity {
     ) {
         this.creator = creator;
         this.brand = brand;
+        this.whoProposed = whoProposed;
         this.campaign = campaign;
         this.title = title;
         this.campaignDescription = campaignDescription;
@@ -127,7 +134,7 @@ public class CampaignProposal extends BaseEntity {
         this.refusalReason = refusalReason;
     }
 
-    public void addTag(CampaignProposalTag tag) {
+    public void addTag(CampaignProposalContentTag tag) {
         this.tags.add(tag);
     }
 

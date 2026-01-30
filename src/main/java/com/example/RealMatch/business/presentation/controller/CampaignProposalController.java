@@ -11,6 +11,7 @@ import com.example.RealMatch.business.presentation.docs.CampaignProposalSwagger;
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.user.domain.entity.enums.Role;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,7 +46,7 @@ public class CampaignProposalController implements CampaignProposalSwagger {
     ) {
         // API 테스트를 위해서 하드코딩 (추후 수정 필요!!)
 //        campaignProposalService.requestCampaign(userDetails.getUserId(), request);
-        campaignProposalService.requestCampaign(1L, request);
+        campaignProposalService.requestCampaign(1L, Role.from(userDetails.getRole()), request);
         return CustomResponse.ok("캠페인 제안에 성공했습니다.");
     }
 }

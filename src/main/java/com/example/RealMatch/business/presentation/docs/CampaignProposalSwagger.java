@@ -35,6 +35,7 @@ public interface CampaignProposalSwagger {
                             value = """
                                     {
                                       "brandId": 1,
+                                      "creatorId": 1,
                                       "campaignId": null,
                                       "campaignName": "비플레인 선크림 리뷰 캠페인",
                                       "description": "비플레인 선크림을 체험하고 솔직한 리뷰 콘텐츠를 제작해주세요.",

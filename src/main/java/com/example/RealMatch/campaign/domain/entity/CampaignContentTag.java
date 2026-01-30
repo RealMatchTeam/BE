@@ -1,7 +1,7 @@
 package com.example.RealMatch.campaign.domain.entity;
 
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.entity.TagContent;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,20 +13,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
 @Table(
         name = "campaign_content_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"campaign_id", "tag_id"})
+                @UniqueConstraint(columnNames = {"campaign_id", "content_tag_id"})
         }
 )
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CampaignContentTag extends BaseEntity {
 
     @Id
@@ -38,35 +34,47 @@ public class CampaignContentTag extends BaseEntity {
     private Campaign campaign;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tag_id", nullable = false)
-    private Tag tag;
+    @JoinColumn(name = "content_tag_id", nullable = false)
+    private TagContent tagContent;
 
     @Column(name = "custom_tag_value")
     private String customTagValue;
 
-    @Builder
-    public CampaignContentTag(
+    protected CampaignContentTag() {
+    }
+
+    private CampaignContentTag(
             Campaign campaign,
-            Tag tag,
+            TagContent tagContent,
             String customTagValue
     ) {
         this.campaign = campaign;
-        this.tag = tag;
-        this.customTagValue = customTagValue;
+        this.tagContent = tagContent;
+
+        if (tagContent.getEngName().equals("ETC")) {
+            if (customTagValue == null || customTagValue.isBlank()) {
+                throw new IllegalArgumentException("ETC 태그에는 입력값이 필요합니다.");
+            }
+            this.customTagValue = customTagValue;
+        } else {
+            this.customTagValue = null;
+        }
     }
 
-    public static CampaignContentTag of(Campaign campaign, Tag tag) {
-        return CampaignContentTag.builder()
-                .campaign(campaign)
-                .tag(tag)
-                .build();
+    /* 일반 태그 */
+    public static CampaignContentTag of(
+            Campaign campaign,
+            TagContent tagContent
+    ) {
+        return new CampaignContentTag(campaign, tagContent, null);
     }
 
-    public static CampaignContentTag ofCustom(Campaign campaign, Tag tag, String customValue) {
-        return CampaignContentTag.builder()
-                .campaign(campaign)
-                .tag(tag)
-                .customTagValue(customValue)
-                .build();
+    /* 사용자 입력 태그 */
+    public static CampaignContentTag ofCustom(
+            Campaign campaign,
+            TagContent tagContent,
+            String customValue
+    ) {
+        return new CampaignContentTag(campaign, tagContent, customValue);
     }
 }
