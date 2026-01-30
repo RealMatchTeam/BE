@@ -16,6 +16,9 @@ public class CampaignProposalRequestDto {
     @NotNull
     private Long brandId;
 
+    @NotNull
+    private Long creatorId;
+
     /**
      * 기존 캠페인 기반 제안이면 campaignId 필수
      * 신규 캠페인 제안이면 null
@@ -64,4 +67,6 @@ public class CampaignProposalRequestDto {
             @NotNull UUID id,
             String customValue
     ) {}
+
+
 }

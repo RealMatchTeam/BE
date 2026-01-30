@@ -82,6 +82,4 @@ public class CampaignProposalContentTag extends BaseEntity {
         }
         return value.trim();
     }
-
-
 }

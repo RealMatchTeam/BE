@@ -40,7 +40,8 @@ public class CampaignContentTag extends BaseEntity {
     @Column(name = "custom_tag_value")
     private String customTagValue;
 
-    protected CampaignContentTag() {}
+    protected CampaignContentTag() {
+    }
 
     private CampaignContentTag(
             Campaign campaign,

@@ -58,4 +58,3 @@ public class TagContent extends DeleteBaseEntity {
         this.korName = korName;
     }
 }
-

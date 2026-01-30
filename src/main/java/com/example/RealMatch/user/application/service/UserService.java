@@ -5,12 +5,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 import com.example.RealMatch.user.domain.entity.enums.Role;
-import com.example.RealMatch.user.domain.exception.UserException;
 import com.example.RealMatch.user.domain.repository.AuthenticationMethodRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
@@ -37,7 +37,7 @@ public class UserService {
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         // 매칭 검사 여부 확인 (캠페인 매칭 검사 기록 존재 여부)
         boolean hasMatchingTest = matchCampaignHistoryRepository.existsByUserId(userId);
@@ -49,11 +49,11 @@ public class UserService {
     public MyProfileCardResponseDto getMyProfileCard(Long userId) {
         // 유저 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         // 프로필 카드를 볼 자격이 있는지 확인. GUEST 권한이거나, 매칭 테스트 기록이 없다면 예외 발생
         if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
-            throw new UserException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
+            throw new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
         }
 
         return MyProfileCardResponseDto.sample(user);
@@ -62,16 +62,16 @@ public class UserService {
     public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
         // 유저 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         // 내 찜 조회를 볼 자격이 있는지 확인
         if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
-            throw new UserException(UserErrorCode.SCRAP_NOT_FOUND);
+            throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         }
 
         // type이 null일 경우
         if (type == null) {
-            throw new UserException(UserErrorCode.SCRAP_NOT_FOUND);
+            throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         }
 
         // 하드코딩된 Mock 데이터 제공자를 통해 찜 목록 조회
@@ -85,14 +85,14 @@ public class UserService {
                 yield MyScrapResponseDto.ofCampaignType(campaignList);
             }
             // 정의되지 않은 type이 들어올 경우
-            default -> throw new UserException(UserErrorCode.SCRAP_NOT_FOUND);
+            default -> throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         };
     }
 
     public MyEditInfoResponseDto getMyEditInfo(Long userId) {
         // 유저 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         // 해당 유저의 모든 소셜 로그인 방법 조회
         List<AuthProvider> providers = authenticationMethodRepository.findByUserId(userId)
@@ -102,7 +102,7 @@ public class UserService {
 
         // 유저 로그인 정보를 불러오지 못했을 때
         if (providers.isEmpty()) {
-            throw new UserException(UserErrorCode.SOCIAL_INFO_NOT_FOUND);
+            throw new CustomException(UserErrorCode.SOCIAL_INFO_NOT_FOUND);
         }
 
         // DTO 변환 및 반환
@@ -113,12 +113,12 @@ public class UserService {
     public void updateMyInfo(Long userId, MyEditInfoRequestDto request) {
         // 유저 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         // 닉네임 중복 체크
         if (userRepository.existsByNickname(request.nickname()) &&
                 !user.getNickname().equals(request.nickname())) {
-            throw new UserException(UserErrorCode.DUPLICATE_NICKNAME);
+            throw new CustomException(UserErrorCode.DUPLICATE_NICKNAME);
         }
 
         // 정보 수정
@@ -132,7 +132,7 @@ public class UserService {
     public MyLoginResponseDto getSocialLoginInfo(Long userId) {
         // 유저 조회
         if (!userRepository.existsById(userId)) {
-            throw new UserException(UserErrorCode.USER_NOT_FOUND);
+            throw new CustomException(UserErrorCode.USER_NOT_FOUND);
         }
 
         // 해당 유저의 모든 소셜 로그인 방법 조회

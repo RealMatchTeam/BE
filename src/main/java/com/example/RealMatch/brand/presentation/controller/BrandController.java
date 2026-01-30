@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.RealMatch.brand.application.BrandService;
+import com.example.RealMatch.brand.application.service.BrandService;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;

@@ -2,14 +2,18 @@ package com.example.RealMatch.brand.domain.entity;
 
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -47,6 +51,14 @@ public class Brand extends DeleteBaseEntity {
 
     @Column(name = "matching_rate")
     private Integer matchingRate;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true   // ⭐ 1:1 보장
+    )
+    private User user;
 
     @Column(name = "updated_by")
     private Long updatedBy;

@@ -43,7 +43,8 @@ public class SecurityConfig {
             "/api/login/success",
             "/ws/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html",
-            "/api/v1/tags/**"};
+            "/api/v1/tags/**",
+            "/actuator/health"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
             "/api/test-auth"
@@ -70,15 +71,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
 
-                // 1월 28일 API 테스트를 위해 잠시 주석처리함. 이후 풀어주세요.
-                // 마스터 jwt 테스트
                  .authorizeHttpRequests(auth -> auth
                         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
                          .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
                          .anyRequest().authenticated())
-
-                // .authorizeHttpRequests(auth -> auth
-                //        .anyRequest().permitAll())
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2

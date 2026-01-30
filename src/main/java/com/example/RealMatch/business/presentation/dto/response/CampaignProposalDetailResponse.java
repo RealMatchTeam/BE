@@ -41,10 +41,7 @@ public class CampaignProposalDetailResponse {
 
     private ContentTagResponse contentTags;
 
-    public static CampaignProposalDetailResponse from(
-            CampaignProposal proposal,
-            List<CampaignProposalContentTag> tags
-    ) {
+    public static CampaignProposalDetailResponse from(CampaignProposal proposal) {
         return CampaignProposalDetailResponse.builder()
                 .proposalId(proposal.getId())
                 .brandId(proposal.getBrand().getId())
@@ -58,7 +55,7 @@ public class CampaignProposalDetailResponse {
                 .status(proposal.getStatus().name())
                 .refusalReason(proposal.getRefusalReason())
                 .createdAt(proposal.getCreatedAt())
-                .contentTags(toContentTagResponse(tags))
+                .contentTags(toContentTagResponse(proposal.getTags()))
                 .build();
     }
 
@@ -87,17 +84,14 @@ public class CampaignProposalDetailResponse {
     private static ContentTagResponse.TagItemResponse toTagItem(
             CampaignProposalContentTag tag
     ) {
+        String baseName = tag.getTagContent().getKorName();
+        String name = tag.getCustomTagValue() != null && !tag.getCustomTagValue().isBlank()
+                ? baseName + " (" + tag.getCustomTagValue() + ")"
+                : baseName;
+
         return new ContentTagResponse.TagItemResponse(
                 tag.getTagContent().getId(),
-                resolveTagName(tag)
+                name
         );
-    }
-
-    private static String resolveTagName(CampaignProposalContentTag tag) {
-        String baseName = tag.getTagContent().getKorName();
-        if (tag.getCustomTagValue() != null && !tag.getCustomTagValue().isBlank()) {
-            return baseName + " (" + tag.getCustomTagValue() + ")";
-        }
-        return baseName;
     }
 }

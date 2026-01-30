@@ -22,6 +22,7 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.tag.domain.entity.TagContent;
 import com.example.RealMatch.tag.domain.repository.TagContentRepository;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 
@@ -38,9 +39,9 @@ public class CampaignProposalService {
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
 
-    public void requestCampaign(Long creatorId, CampaignProposalRequestDto request) {
+    public void requestCampaign(Long userId, Role whoProposed, CampaignProposalRequestDto request) {
 
-        User creator = userRepository.findById(creatorId)
+        User creator = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         Brand brand = brandRepository.findById(request.getBrandId())
@@ -52,9 +53,11 @@ public class CampaignProposalService {
                     .orElseThrow(() -> new CustomException(CampaignErrorCode.CAMPAIGN_NOT_FOUND));
         }
 
+
         CampaignProposal proposal = CampaignProposal.builder()
                 .creator(creator)
                 .brand(brand)
+                .whoProposed(whoProposed)
                 .campaign(campaign)
                 .title(request.getCampaignName())
                 .campaignDescription(request.getDescription())
@@ -64,7 +67,6 @@ public class CampaignProposalService {
                 .endDate(request.getEndDate())
                 .build();
 
-        // 태그 매핑
         saveTags(proposal, request.getFormats());
         saveTags(proposal, request.getCategories());
         saveTags(proposal, request.getTones());
@@ -101,7 +103,7 @@ public class CampaignProposalService {
         for (CampaignProposalRequestDto.CampaignContentTagRequest tagRequest : tagRequests) {
             TagContent tag = tagMap.get(tagRequest.id());
 
-            proposal.addContentTag(
+            proposal.addTag(
                     CampaignProposalContentTag.create(
                             proposal,
                             tag,
@@ -110,17 +112,4 @@ public class CampaignProposalService {
             );
         }
     }
-
-
-//    @Transactional(readOnly = true)
-//    public CampaignProposalDetailResponse getProposalDetail(UUID proposalId) {
-//
-//        CampaignProposal proposal = campaignProposalRepository.findById(proposalId)
-//                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 캠페인 제안입니다."));
-//
-//        List<CampaignProposalContentTag> tags =
-//                proposal.getContentTags(); // LAZY라도 TX 안이니 OK
-//
-//        return CampaignProposalDetailResponse.from(proposal, tags);
-//    }
 }

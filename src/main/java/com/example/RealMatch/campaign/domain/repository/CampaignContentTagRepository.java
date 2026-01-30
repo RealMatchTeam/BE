@@ -16,7 +16,9 @@ public interface CampaignContentTagRepository extends JpaRepository<CampaignCont
         join fetch cct.tagContent tc
         where cct.campaign.id = :campaignId
     """)
-    List<CampaignContentTag> findAllByCampaignIdWithTagContent(
+    List<CampaignContentTag> findAllByCampaignIdWithTag(
             @Param("campaignId") Long campaignId
     );
+
+    void deleteByCampaignId(Long campaignId);
 }

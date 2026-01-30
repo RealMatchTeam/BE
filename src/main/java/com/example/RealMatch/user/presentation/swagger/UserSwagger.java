@@ -8,6 +8,7 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
@@ -69,6 +70,14 @@ public interface UserSwagger {
             description = "현재 사용자의 소셜 로그인 연동 상태를 조회합니다. 카카오, 네이버, 구글 계정의 연동 여부를 확인할 수 있습니다."
     )
     CustomResponse<MyLoginResponseDto> getSocialLoginInfo(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "내 특성 조회 API By 고경수",
+            description = "로그인한 사용자의 특성 정보를 조회합니다. (하드코딩)"
+    )
+    CustomResponse<MyFeatureResponseDto> getMyFeature(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }
