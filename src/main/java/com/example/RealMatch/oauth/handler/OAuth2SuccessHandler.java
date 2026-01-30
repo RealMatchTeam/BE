@@ -1,13 +1,12 @@
 package com.example.RealMatch.oauth.handler;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.RealMatch.global.config.jwt.JwtProvider;
 import com.example.RealMatch.oauth.dto.CustomOAuth2User;
@@ -52,17 +51,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 role  // ROLE_GUEST
         );
 
-
         // provider별로 프론트엔드 콜백 경로 설정
         String callbackPath = getCallbackPath(provider);
 
-        String redirectUrl = String.format(
-                "%s%s?accessToken=%s&refreshToken=%s",
-                frontendBaseUrl,
-                callbackPath,
-                URLEncoder.encode(accessToken, StandardCharsets.UTF_8),
-                URLEncoder.encode(refreshToken, StandardCharsets.UTF_8)
-        );
+        String redirectUrl = UriComponentsBuilder.fromHttpUrl(frontendBaseUrl)
+                .path(callbackPath)
+                .queryParam("accessToken", accessToken)
+                .queryParam("refreshToken", refreshToken)
+                .build()
+                .toUriString();
 
         response.sendRedirect(redirectUrl);
     }
