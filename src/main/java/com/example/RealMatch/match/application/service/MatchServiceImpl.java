@@ -41,7 +41,13 @@ import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.Ca
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.CreatorAnalysisDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingBrandListDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingCampaignListDto;
+import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
+import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
+import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
+import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.tag.domain.repository.BrandTagRepository;
+import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -63,11 +69,15 @@ public class MatchServiceImpl implements MatchService {
     private final CampaignLikeRepository campaignLikeRepository;
     private final CampaignApplyRepository campaignApplyRepository;
     private final BrandTagRepository brandTagRepository;
+    private final UserRepository userRepository;
+    private final MatchBrandHistoryRepository matchBrandHistoryRepository;
+    private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
     
     // ******* //
     // 매칭 요청 //
     // ******* //
     @Override
+    @Transactional
     public MatchResponseDto match(MatchRequestDto requestDto) {
         Long userId = Long.parseLong(requestDto.getUserId());
 
@@ -75,24 +85,64 @@ public class MatchServiceImpl implements MatchService {
 
         CreatorAnalysisDto creatorAnalysis = buildCreatorAnalysisFromRequest(requestDto, userDoc);
 
-        List<BrandDto> matchedBrands = findMatchingBrands(userDoc, userId);
+        List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
+        List<BrandDto> matchedBrands = brandResults.stream()
+                .map(this::toBrandDto)
+                .toList();
 
         HighMatchingBrandListDto brandListDto = HighMatchingBrandListDto.builder()
                 .count(matchedBrands.size())
                 .brands(matchedBrands)
                 .build();
 
-        List<CampaignDto> matchedCampaigns = findMatchingCampaigns(userDoc, userId);
+        List<CampaignMatchResult> campaignResults = findMatchingCampaignResults(userDoc, userId);
+        List<CampaignDto> matchedCampaigns = campaignResults.stream()
+                .map(this::toCampaignDto)
+                .toList();
+
         HighMatchingCampaignListDto campaignListDto = HighMatchingCampaignListDto.builder()
                 .count(matchedCampaigns.size())
                 .brands(matchedCampaigns)
                 .build();
+
+        saveMatchHistory(userId, brandResults, campaignResults);
 
         return MatchResponseDto.builder()
                 .creatorAnalysis(creatorAnalysis)
                 .highMatchingBrandList(brandListDto)
                 .highMatchingCampaignList(campaignListDto)
                 .build();
+    }
+
+    private void saveMatchHistory(Long userId, List<BrandMatchResult> brandResults, List<CampaignMatchResult> campaignResults) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            LOG.warn("User not found for saving match history. userId={}", userId);
+            return;
+        }
+
+        for (BrandMatchResult result : brandResults) {
+            if (!matchBrandHistoryRepository.existsByUserIdAndBrandId(userId, result.brand().getId())) {
+                MatchBrandHistory history = MatchBrandHistory.builder()
+                        .user(user)
+                        .brand(result.brand())
+                        .build();
+                matchBrandHistoryRepository.save(history);
+            }
+        }
+
+        for (CampaignMatchResult result : campaignResults) {
+            if (!matchCampaignHistoryRepository.existsByUserIdAndCampaignId(userId, result.campaign().getId())) {
+                MatchCampaignHistory history = MatchCampaignHistory.builder()
+                        .user(user)
+                        .campaign(result.campaign())
+                        .build();
+                matchCampaignHistoryRepository.save(history);
+            }
+        }
+
+        LOG.info("Match history saved. userId={}, brands={}, campaigns={}",
+                userId, brandResults.size(), campaignResults.size());
     }
 
     // Request -> Redis Document Converter
@@ -216,9 +266,20 @@ public class MatchServiceImpl implements MatchService {
     // **************** //
     // Redis에서 매칭 요청 //
     // **************** //
-    private List<BrandDto> findMatchingBrands(UserTagDocument userDoc, Long userId) {
-        
-        Iterable<BrandTagDocument> allBrandDocs = brandTagRedisRepository.findAll();
+    private List<BrandMatchResult> findMatchingBrandResults(UserTagDocument userDoc, Long userId) {
+        List<BrandTagDocument> allBrandDocs;
+        try {
+            allBrandDocs = StreamSupport.stream(brandTagRedisRepository.findAll().spliterator(), false)
+                    .toList();
+        } catch (Exception e) {
+            LOG.warn("Failed to fetch brand tags from Redis: {}", e.getMessage());
+            allBrandDocs = List.of();
+        }
+
+        if (allBrandDocs.isEmpty()) {
+            LOG.info("No brand tag documents found in Redis");
+            return List.of();
+        }
 
         Set<Long> likedBrandIds = brandLikeRepository.findByUserId(userId).stream()
                 .map(like -> like.getBrand().getId())
@@ -247,14 +308,23 @@ public class MatchServiceImpl implements MatchService {
         return results.stream()
                 .sorted(Comparator.comparingInt(BrandMatchResult::matchScore).reversed())
                 .limit(TOP_MATCH_COUNT)
-                .map(this::toBrandDto)
                 .toList();
     }
 
-    private List<CampaignDto> findMatchingCampaigns(UserTagDocument userDoc, Long userId) {
-        
-        // From Redis
-        Iterable<CampaignTagDocument> allCampaignDocs = campaignTagRedisRepository.findAll();
+    private List<CampaignMatchResult> findMatchingCampaignResults(UserTagDocument userDoc, Long userId) {
+        List<CampaignTagDocument> allCampaignDocs;
+        try {
+            allCampaignDocs = StreamSupport.stream(campaignTagRedisRepository.findAll().spliterator(), false)
+                    .toList();
+        } catch (Exception e) {
+            LOG.warn("Failed to fetch campaign tags from Redis: {}", e.getMessage());
+            allCampaignDocs = List.of();
+        }
+
+        if (allCampaignDocs.isEmpty()) {
+            LOG.info("No campaign tag documents found in Redis");
+            return List.of();
+        }
 
         Set<Long> likedCampaignIds = campaignLikeRepository.findByUserId(userId).stream()
                 .map(like -> like.getCampaign().getId())
@@ -289,12 +359,22 @@ public class MatchServiceImpl implements MatchService {
         return results.stream()
                 .sorted(Comparator.comparingInt(CampaignMatchResult::matchScore).reversed())
                 .limit(TOP_MATCH_COUNT)
-                .map(this::toCampaignDto)
                 .toList();
     }
     
     private List<MatchBrandResponseDto.BrandDto> findMatchingBrandsForList(UserTagDocument userDoc, Long userId) {
-        Iterable<BrandTagDocument> allBrandDocs = brandTagRedisRepository.findAll();
+        List<BrandTagDocument> allBrandDocs;
+        try {
+            allBrandDocs = StreamSupport.stream(brandTagRedisRepository.findAll().spliterator(), false)
+                    .toList();
+        } catch (Exception e) {
+            LOG.warn("Failed to fetch brand tags from Redis: {}", e.getMessage());
+            allBrandDocs = List.of();
+        }
+
+        if (allBrandDocs.isEmpty()) {
+            return List.of();
+        }
 
         Set<Long> likedBrandIds = brandLikeRepository.findByUserId(userId).stream()
                 .map(like -> like.getBrand().getId())
@@ -330,7 +410,18 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private List<MatchCampaignResponseDto.CampaignDto> findMatchingCampaignsForList(UserTagDocument userDoc, Long userId) {
-        Iterable<CampaignTagDocument> allCampaignDocs = campaignTagRedisRepository.findAll();
+        List<CampaignTagDocument> allCampaignDocs;
+        try {
+            allCampaignDocs = StreamSupport.stream(campaignTagRedisRepository.findAll().spliterator(), false)
+                    .toList();
+        } catch (Exception e) {
+            LOG.warn("Failed to fetch campaign tags from Redis: {}", e.getMessage());
+            allCampaignDocs = List.of();
+        }
+
+        if (allCampaignDocs.isEmpty()) {
+            return List.of();
+        }
 
         Set<Long> likedCampaignIds = campaignLikeRepository.findByUserId(userId).stream()
                 .map(like -> like.getCampaign().getId())
@@ -448,9 +539,16 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private String findBestFitBrandName(UserTagDocument userDoc) {
-        Iterable<BrandTagDocument> allBrandDocs = brandTagRedisRepository.findAll();
+        List<BrandTagDocument> allBrandDocs;
+        try {
+            allBrandDocs = StreamSupport.stream(brandTagRedisRepository.findAll().spliterator(), false)
+                    .toList();
+        } catch (Exception e) {
+            LOG.warn("Failed to fetch brand tags from Redis for best fit: {}", e.getMessage());
+            return "미정";
+        }
 
-        return StreamSupport.stream(allBrandDocs.spliterator(), false)
+        return allBrandDocs.stream()
                 .max(Comparator.comparingInt(brandDoc ->
                         MatchScoreCalculator.calculateBrandMatchScore(userDoc, brandDoc)))
                 .map(BrandTagDocument::getBrandName)
