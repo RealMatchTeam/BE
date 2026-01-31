@@ -6,13 +6,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
+import com.example.RealMatch.global.exception.CustomException;
+import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 
 @Component
 public class ChatUserIdResolver {
 
     public Long resolve(Principal principal) {
         if (principal == null) {
-            throw new IllegalArgumentException("Authenticated principal is required.");
+            throw new CustomException(GeneralErrorCode.UNAUTHORIZED);
         }
         Long userIdFromPrincipal = extractUserId(principal);
         if (userIdFromPrincipal != null) {
@@ -21,7 +23,7 @@ public class ChatUserIdResolver {
         try {
             return Long.parseLong(principal.getName());
         } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Principal name must be a numeric user id.");
+            throw new CustomException(GeneralErrorCode.UNAUTHORIZED);
         }
     }
 
