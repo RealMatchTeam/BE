@@ -14,6 +14,7 @@ import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponse
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
@@ -50,5 +51,13 @@ public class BrandController implements BrandSwagger {
     @GetMapping("/{brandId}/sponsor-products/{productId}")
     public CustomResponse<SponsorProductDetailResponseDto> getSponsorProductDetail(@PathVariable Long brandId, @PathVariable Long productId) {
         return CustomResponse.ok(brandService.getSponsorProductDetail(brandId, productId));
+    }
+
+    @Override
+    @GetMapping("/{brandId}/sponsor-products")
+    public CustomResponse<List<SponsorProductListResponseDto>> getSponsorProducts(
+            @PathVariable Long brandId
+    ) {
+        return CustomResponse.ok(brandService.getSponsorProducts(brandId));
     }
 }

@@ -23,6 +23,7 @@ import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponse
 import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
@@ -224,5 +225,21 @@ public class BrandService {
                 .sponsorInfo(sponsorInfo)
                 .action(action)
                 .build();
+    }
+
+    // 협찬 가능 제품 리스트 조회
+    @Transactional(readOnly = true)
+    public List<SponsorProductListResponseDto> getSponsorProducts(Long brandId) {
+        // 1. 브랜드 존재 여부 확인
+        brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
+
+        // 2. 해당 브랜드의 협찬 가능 제품 조회
+        List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithImages(brandId);
+
+        // 3. DTO 변환 후 반환
+        return products.stream()
+                .map(SponsorProductListResponseDto::from)
+                .collect(Collectors.toList());
     }
 }
