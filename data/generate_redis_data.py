@@ -138,7 +138,7 @@ class RedisDataGenerator:
 
         with self.mysql_conn.cursor() as cursor:
             cursor.execute("""
-                SELECT id, title, start_date, end_date, quota
+                SELECT id, title, description, reward_amount, recruit_end_date, start_date, end_date, quota
                 FROM campaign
                 WHERE is_deleted = FALSE
             """)
@@ -157,6 +157,10 @@ class RedisDataGenerator:
 
             doc = {
                 'campaignId': campaign_id,
+                'campaignName': campaign['title'],
+                'description': campaign['description'],
+                'rewardAmount': float(campaign['reward_amount']) if campaign['reward_amount'] else None,
+                'recruitEndDate': campaign['recruit_end_date'].isoformat() if campaign['recruit_end_date'] else None,
                 'categories': categories,
                 'preferredFashionTags': self._random_subset(TAG_DATA['fashion_styles'] + TAG_DATA['fashion_items'], 2, 5),
                 'preferredBeautyTags': self._random_subset(TAG_DATA['beauty_interests'] + TAG_DATA['beauty_functions'], 2, 5),
