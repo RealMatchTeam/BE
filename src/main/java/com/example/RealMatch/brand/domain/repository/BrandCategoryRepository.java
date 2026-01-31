@@ -10,4 +10,5 @@ public interface BrandCategoryRepository extends JpaRepository<BrandCategory, Lo
 
     Optional<BrandCategory> findById(Long id);
 
+    Optional<BrandCategory> findByName(String name);
 }

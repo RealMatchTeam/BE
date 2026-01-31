@@ -48,4 +48,8 @@ public class BrandTag extends BaseEntity {
         this.brand = brand;
         this.tag = tag;
     }
+
+    public void setBrand(Brand brand) {
+        this.brand = brand;
+    }
 }

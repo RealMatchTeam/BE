@@ -30,4 +30,6 @@ public class SignupPurpose extends BaseEntity {
     public SignupPurpose(String purposeName) {
         this.purposeName = purposeName;
     }
+
+
 }
