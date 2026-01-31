@@ -26,8 +26,8 @@ public class MatchController implements MatchSwagger {
 
     @Override
     @PostMapping
-    public CustomResponse<MatchResponseDto> matchBrand(@RequestBody MatchRequestDto requestDto) {
-        MatchResponseDto result = matchService.matchBrand(requestDto);
+    public CustomResponse<MatchResponseDto> match(@RequestBody MatchRequestDto requestDto) {
+        MatchResponseDto result = matchService.match(requestDto);
         return CustomResponse.ok(result);
     }
 

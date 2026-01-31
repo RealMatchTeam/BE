@@ -1,6 +1,8 @@
 package com.example.RealMatch.match.infrastructure.redis.document;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import org.springframework.data.annotation.Id;
@@ -22,6 +24,18 @@ public class CampaignTagDocument {
 
     @Indexed
     private Long campaignId;
+
+    @Indexed
+    private String campaignName;
+
+    @Indexed
+    private String description;
+
+    @Indexed
+    private BigDecimal rewardAmount;
+
+    @Indexed
+    private LocalDateTime recruitEndDate;
 
     @Indexed
     private Set<String> categories;  // "FASHION", "BEAUTY" or both
@@ -91,7 +105,9 @@ public class CampaignTagDocument {
     private Integer quota;
 
     @Builder
-    public CampaignTagDocument(Long campaignId, Set<String> categories,
+    public CampaignTagDocument(Long campaignId, String campaignName, String description,
+                               BigDecimal rewardAmount, LocalDateTime recruitEndDate,
+                               Set<String> categories,
                                Set<String> preferredFashionTags, Set<String> preferredBeautyTags,
                                Set<String> preferredContentTags,
                                Integer minCreatorHeight, Integer maxCreatorHeight,
@@ -104,6 +120,10 @@ public class CampaignTagDocument {
                                LocalDate startDate, LocalDate endDate, Integer quota) {
         this.id = "campaign:" + campaignId;
         this.campaignId = campaignId;
+        this.campaignName = campaignName;
+        this.description = description;
+        this.rewardAmount = rewardAmount;
+        this.recruitEndDate = recruitEndDate;
         this.categories = categories;
         this.preferredFashionTags = preferredFashionTags;
         this.preferredBeautyTags = preferredBeautyTags;
