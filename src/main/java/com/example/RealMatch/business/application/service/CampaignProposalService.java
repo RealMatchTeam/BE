@@ -52,6 +52,8 @@ public class CampaignProposalService {
         Brand brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 브랜드입니다."));
 
+        validateRequesterAuthority(userDetails, creator, brand);
+
         Campaign campaign = null;
         if (request.getCampaignId() != null) {
             campaign = campaignRepository.findById(request.getCampaignId())
@@ -124,41 +126,6 @@ public class CampaignProposalService {
         }
     }
 
-    private void validateExistFields(CampaignProposalRequestDto request) {
-        brandRepository.findById(request.getBrandId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 브랜드입니다."));
-
-        userRepository.findById(request.getCreatorId())
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-
-        if (request.getCampaignId() != null) {
-            campaignRepository.findById(request.getCampaignId())
-                    .orElseThrow(() -> new CustomException(CampaignErrorCode.CAMPAIGN_NOT_FOUND));
-        }
-    }
-
-    private static void validateImmutableFields(CampaignProposalRequestDto request, CampaignProposal proposal) {
-        if (!proposal.getCreator().getId().equals(request.getCreatorId())) {
-            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_CREATOR_IMMUTABLE);
-        }
-
-        if (!proposal.getBrand().getId().equals(request.getBrandId())) {
-            throw new CustomException(
-                    BusinessErrorCode.CAMPAIGN_PROPOSAL_BRAND_IMMUTABLE
-            );
-        }
-
-        if (proposal.getCampaign() != null) {
-            if (!proposal.getCampaign().getId().equals(request.getCampaignId())) {
-                throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_CAMPAIGN_IMMUTABLE);
-            }
-        } else {
-            if (request.getCampaignId() != null) {
-                throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_CAMPAIGN_IMMUTABLE);
-            }
-        }
-    }
-
 
     private void saveAllContentTags(CampaignProposalRequestDto request, CampaignProposal proposal) {
         saveContentTags(proposal, request.getFormats());
@@ -205,6 +172,41 @@ public class CampaignProposalService {
         }
     }
 
+    private void validateExistFields(CampaignProposalRequestDto request) {
+        brandRepository.findById(request.getBrandId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 브랜드입니다."));
+
+        userRepository.findById(request.getCreatorId())
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        if (request.getCampaignId() != null) {
+            campaignRepository.findById(request.getCampaignId())
+                    .orElseThrow(() -> new CustomException(CampaignErrorCode.CAMPAIGN_NOT_FOUND));
+        }
+    }
+
+    private static void validateImmutableFields(CampaignProposalRequestDto request, CampaignProposal proposal) {
+        if (!proposal.getCreator().getId().equals(request.getCreatorId())) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_CREATOR_IMMUTABLE);
+        }
+
+        if (!proposal.getBrand().getId().equals(request.getBrandId())) {
+            throw new CustomException(
+                    BusinessErrorCode.CAMPAIGN_PROPOSAL_BRAND_IMMUTABLE
+            );
+        }
+
+        if (proposal.getCampaign() != null) {
+            if (!proposal.getCampaign().getId().equals(request.getCampaignId())) {
+                throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_CAMPAIGN_IMMUTABLE);
+            }
+        } else {
+            if (request.getCampaignId() != null) {
+                throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_CAMPAIGN_IMMUTABLE);
+            }
+        }
+    }
+
     private void validateDateRange(CampaignProposalRequestDto request) {
         if (request.getStartDate() != null && request.getEndDate() != null) {
             if (request.getEndDate().isBefore(request.getStartDate())) {
@@ -214,5 +216,23 @@ public class CampaignProposalService {
             }
         }
     }
+
+    private void validateRequesterAuthority(
+            CustomUserDetails userDetails,
+            User creator,
+            Brand brand
+    ) {
+        Long requesterId = userDetails.getUserId();
+
+        boolean isCreator = creator.getId().equals(requesterId);
+        boolean isBrandOwner = brand.getUser().getId().equals(requesterId);
+
+        if (!isCreator && !isBrandOwner) {
+            throw new CustomException(
+                    GeneralErrorCode.FORBIDDEN
+            );
+        }
+    }
+
 
 }
