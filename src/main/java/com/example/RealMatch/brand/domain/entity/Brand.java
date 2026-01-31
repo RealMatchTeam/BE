@@ -81,6 +81,7 @@ public class Brand extends DeleteBaseEntity {
         this.homepageUrl = homepageUrl;
         this.matchingRate = matchingRate;
         this.createdBy = createdBy;
+        this.user = user;
     }
 
     public void update(String brandName, String logoUrl, String simpleIntro,
