@@ -3,14 +3,15 @@ package com.example.RealMatch.chat.application.service.message;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
+import com.example.RealMatch.chat.application.event.ChatMessagesViewedEvent;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
-import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
@@ -30,7 +31,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
     private final ChatRoomMemberService chatRoomMemberService;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatMessageResponseMapper responseMapper;
-    private final ChatRoomMemberCommandService chatRoomMemberCommandService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -61,7 +62,9 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
 
         if (cursorMessageId == null) {
             ChatMessage latestMessage = messages.get(0);
-            chatRoomMemberCommandService.updateLastReadMessage(member.getId(), latestMessage.getId());
+            eventPublisher.publishEvent(
+                    new ChatMessagesViewedEvent(member.getId(), latestMessage.getId())
+            );
         }
 
         List<Long> attachmentIds = messages.stream()

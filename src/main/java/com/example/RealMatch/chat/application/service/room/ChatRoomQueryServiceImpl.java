@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.example.RealMatch.chat.application.cache.ChatRoomDetailCache;
+import com.example.RealMatch.chat.application.cache.ChatRoomListCache;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.mapper.ChatRoomCardAssembler;
 import com.example.RealMatch.chat.application.service.room.OpponentInfoService.OpponentInfo;
@@ -16,12 +18,12 @@ import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
+import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepositoryCustom.RoomCursorInfo;
 import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.response.CampaignSummaryResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
@@ -42,6 +44,8 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     private final OpponentInfoService opponentInfoService;
     private final CampaignSummaryService campaignSummaryService;
     private final ChatRoomCardAssembler roomCardAssembler;
+    private final ChatRoomListCache chatRoomListCache;
+    private final ChatRoomDetailCache chatRoomDetailCache;
 
     @Override
     public Optional<Long> getRoomIdByUserPair(Long brandUserId, Long creatorUserId) {
@@ -54,6 +58,23 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     @Override
     public ChatRoomListResponse getRoomList(
+            Long userId,
+            ChatRoomFilterStatus filterStatus,
+            RoomCursor roomCursor,
+            int size,
+            String search
+    ) {
+        return chatRoomListCache.get(userId, filterStatus, roomCursor, size, search)
+                .orElseGet(() -> {
+                    ChatRoomListResponse response = loadChatRoomList(
+                            userId, filterStatus, roomCursor, size, search
+                    );
+                    chatRoomListCache.put(userId, filterStatus, roomCursor, size, search, response);
+                    return response;
+                });
+    }
+
+    private ChatRoomListResponse loadChatRoomList(
             Long userId,
             ChatRoomFilterStatus filterStatus,
             RoomCursor roomCursor,
@@ -121,11 +142,19 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     @Override
     public ChatRoomDetailResponse getChatRoomDetailWithOpponent(Long userId, Long roomId) {
+        chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);
+
+        return chatRoomDetailCache.get(roomId, userId)
+                .orElseGet(() -> {
+                    ChatRoomDetailResponse response = loadChatRoomDetail(userId, roomId);
+                    chatRoomDetailCache.put(roomId, userId, response);
+                    return response;
+                });
+    }
+
+    private ChatRoomDetailResponse loadChatRoomDetail(Long userId, Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));
-
-        // 내 멤버십 확인 (활성 상태)
-        chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);
 
         // 상대방 멤버 조회 (1:1 채팅방이므로 상대방은 1명)
         ChatRoomMember opponentMember = opponentInfoService.getOpponentMember(roomId, userId);

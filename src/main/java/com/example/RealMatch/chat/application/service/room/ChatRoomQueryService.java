@@ -3,7 +3,7 @@ package com.example.RealMatch.chat.application.service.room;
 import java.util.Optional;
 
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
 

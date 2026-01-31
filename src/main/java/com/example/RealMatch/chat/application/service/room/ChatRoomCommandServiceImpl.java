@@ -9,6 +9,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.chat.application.cache.ChatCacheEvictor;
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
@@ -35,6 +36,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatMessageEventPublisher eventPublisher;
     private final AfterCommitExecutor afterCommitExecutor;
+    private final ChatCacheEvictor chatCacheEvictor;
 
     @Override
     @Transactional
@@ -43,8 +45,10 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
         String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandId, creatorId);
 
-        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey)
-                .orElseGet(() -> createRoomWithMembers(roomKey, brandId, creatorId));
+        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
+        if (room == null) {
+            room = createRoomWithMembers(roomKey, brandId, creatorId);
+        }
 
         return new ChatRoomCreateResponse(
                 room.getId(),
@@ -67,17 +71,16 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
             Long brandId,
             Long creatorId
     ) {
-        // 먼저 조회 시도 (대부분의 경우 기존 방이 있을 것)
-        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
-
-        if (room == null) {
-            // 방이 없는 경우에만 생성 시도
-            room = createRoomWithRetry(roomKey);
-        }
+        ChatRoom room = createRoomWithRetry(roomKey);
 
         // 멤버 생성 (멤버는 중복 생성 방지 로직이 있음)
         createMemberIfNotExists(room.getId(), brandId, ChatRoomMemberRole.BRAND);
         createMemberIfNotExists(room.getId(), creatorId, ChatRoomMemberRole.CREATOR);
+
+        afterCommitExecutor.execute(() -> {
+            chatCacheEvictor.evictRoomListByUser(brandId);
+            chatCacheEvictor.evictRoomListByUser(creatorId);
+        });
 
         return room;
     }
@@ -147,5 +150,11 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
         room.updateProposalStatus(status);
         LOG.debug("Chat room proposal status updated. roomId={}, status={}", room.getId(), status);
+
+        afterCommitExecutor.execute(() -> {
+            chatCacheEvictor.evictRoomDetailByRoom(room.getId());
+            chatCacheEvictor.evictRoomListByUser(brandUserId);
+            chatCacheEvictor.evictRoomListByUser(creatorUserId);
+        });
     }
 }

@@ -1,5 +1,6 @@
 package com.example.RealMatch.chat.application.service.message;
 
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -10,9 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
+import com.example.RealMatch.chat.application.cache.ChatCacheEvictor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
+import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatExceptionConverter;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
@@ -31,6 +34,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChatMessageCommandServiceImpl implements ChatMessageCommandService {
 
+    private static final EnumSet<ChatSystemMessageKind> DETAIL_INVALIDATION_KINDS =
+            EnumSet.of(
+                    ChatSystemMessageKind.PROPOSAL_CARD,
+                    ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE,
+                    ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD
+            );
+
     private final ChatMessageRepository chatMessageRepository;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatRoomMemberService chatRoomMemberService;
@@ -38,6 +48,8 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
     private final SystemMessagePayloadSerializer payloadSerializer;
+    private final ChatCacheEvictor chatCacheEvictor;
+    private final AfterCommitExecutor afterCommitExecutor;
 
     @Override
     @Transactional
@@ -107,6 +119,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
         // 채팅방 마지막 메시지 업데이트
         updateChatRoomLastMessage(saved);
+        evictCachesAfterMessage(command.roomId(), null);
 
         // 응답 생성
         AttachmentDto savedAttachment = attachment != null
@@ -159,6 +172,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         // 메시지 저장
         ChatMessage saved = chatMessageRepository.save(message);
         updateChatRoomLastMessage(saved);
+        evictCachesAfterMessage(roomId, kind);
 
         return responseMapper.toResponse(saved, null);
     }
@@ -191,5 +205,17 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 message.getMessageType(),
                 preview
         );
+    }
+
+    private void evictCachesAfterMessage(Long roomId, ChatSystemMessageKind kind) {
+        if (roomId == null) {
+            return;
+        }
+        afterCommitExecutor.execute(() -> {
+            chatCacheEvictor.evictRoomListByRoom(roomId);
+            if (kind != null && DETAIL_INVALIDATION_KINDS.contains(kind)) {
+                chatCacheEvictor.evictRoomDetailByRoom(roomId);
+            }
+        });
     }
 }

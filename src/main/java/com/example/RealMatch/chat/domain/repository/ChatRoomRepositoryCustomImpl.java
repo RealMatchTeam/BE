@@ -12,7 +12,7 @@ import com.example.RealMatch.chat.domain.entity.QChatMessage;
 import com.example.RealMatch.chat.domain.entity.QChatRoom;
 import com.example.RealMatch.chat.domain.entity.QChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.user.domain.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;

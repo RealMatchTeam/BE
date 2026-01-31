@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.chat.application.cache.ChatCacheEvictor;
+import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 
@@ -17,14 +19,21 @@ import lombok.RequiredArgsConstructor;
 public class ChatRoomMemberCommandServiceImpl implements ChatRoomMemberCommandService {
 
     private final ChatRoomMemberRepository chatRoomMemberRepository;
+    private final ChatCacheEvictor chatCacheEvictor;
+    private final AfterCommitExecutor afterCommitExecutor;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateLastReadMessage(@NonNull Long memberId, @NonNull Long messageId) {
         ChatRoomMember member = chatRoomMemberRepository.findById(memberId)
                 .orElse(null);
-        if (member != null && (member.getLastReadMessageId() == null || member.getLastReadMessageId() < messageId)) {
+        if (member == null) {
+            return;
+        }
+        Long currentLastRead = member.getLastReadMessageId();
+        if (currentLastRead == null || currentLastRead < messageId) {
             member.updateLastReadMessage(messageId, LocalDateTime.now());
+            afterCommitExecutor.execute(() -> chatCacheEvictor.evictRoomListByUser(member.getUserId()));
         }
     }
 }

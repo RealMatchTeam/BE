@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.infrastructure.websocket;
+package com.example.RealMatch.chat.presentation.websocket;
 
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberQueryService;
-import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatRoomListUpdatedEvent;
@@ -47,23 +46,19 @@ public class WebSocketChatMessageEventPublisher implements ChatMessageEventPubli
         Objects.requireNonNull(roomId, "roomId must not be null");
 
         try {
-            // 채팅방의 모든 활성 멤버 조회
-            List<ChatRoomMember> activeMembers = chatRoomMemberQueryService.findActiveMembers(roomId);
-
+            List<Long> userIds = chatRoomMemberQueryService.findActiveMemberUserIds(roomId);
             ChatRoomListUpdatedEvent event = new ChatRoomListUpdatedEvent(roomId);
 
-            // 각 멤버에게 개별적으로 채팅방 목록 업데이트 알림 발행
-            for (ChatRoomMember member : activeMembers) {
+            for (Long userId : userIds) {
                 try {
-                    String userTopic = USER_ROOM_LIST_TOPIC_PREFIX + member.getUserId() + "/rooms";
+                    String userTopic = USER_ROOM_LIST_TOPIC_PREFIX + userId + "/rooms";
                     messagingTemplate.convertAndSend(userTopic, event);
                 } catch (RuntimeException ex) {
-                    LOG.warn("Failed to send room list update to user. roomId={}, userId={}", 
-                            roomId, member.getUserId(), ex);
+                    LOG.warn("Failed to send room list update to user. roomId={}, userId={}",
+                            roomId, userId, ex);
                 }
             }
         } catch (RuntimeException ex) {
-            // 브로드캐스트 실패는 DB 저장에 영향을 주지 않도록 로깅만 수행
             LOG.error("Failed to broadcast room list update. roomId={}", roomId, ex);
         }
     }
