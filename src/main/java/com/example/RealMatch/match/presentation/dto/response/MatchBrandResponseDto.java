@@ -21,11 +21,11 @@ public class MatchBrandResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BrandDto {
-        private Long id;
-        private String name;
-        private Integer matchingRatio;
-        private Boolean isLiked;
-        private Boolean isRecruiting;
-        private List<String> tags;
+        private Long brandId;
+        private String brandName;
+        private Integer brandMatchingRatio;
+        private Boolean brandIsLiked;
+        private Boolean brandIsRecruiting;
+        private List<String> brandTags;
     }
 }
