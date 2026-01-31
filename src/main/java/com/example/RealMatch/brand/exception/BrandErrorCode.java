@@ -16,5 +16,4 @@ public enum BrandErrorCode implements BaseErrorCode {
     private final HttpStatus status;
     private final String code;
     private final String message;
-
 }
