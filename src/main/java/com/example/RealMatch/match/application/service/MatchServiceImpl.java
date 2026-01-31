@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +28,10 @@ import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
 import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
+import com.example.RealMatch.match.infrastructure.redis.RedisDocumentHelper;
 import com.example.RealMatch.match.infrastructure.redis.document.BrandTagDocument;
 import com.example.RealMatch.match.infrastructure.redis.document.CampaignTagDocument;
 import com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument;
-import com.example.RealMatch.match.infrastructure.redis.repository.BrandTagRedisRepository;
-import com.example.RealMatch.match.infrastructure.redis.repository.CampaignTagRedisRepository;
-import com.example.RealMatch.match.infrastructure.redis.repository.UserTagRedisRepository;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchBrandResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchCampaignResponseDto;
@@ -58,9 +55,7 @@ public class MatchServiceImpl implements MatchService {
     private static final Logger LOG = LoggerFactory.getLogger(MatchServiceImpl.class);
     private static final int TOP_MATCH_COUNT = 10;
 
-    private final UserTagRedisRepository userTagRedisRepository;
-    private final BrandTagRedisRepository brandTagRedisRepository;
-    private final CampaignTagRedisRepository campaignTagRedisRepository;
+    private final RedisDocumentHelper redisDocumentHelper;
 
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
@@ -266,14 +261,7 @@ public class MatchServiceImpl implements MatchService {
     // Redis에서 매칭 요청 //
     // **************** //
     private List<BrandMatchResult> findMatchingBrandResults(UserTagDocument userDoc, Long userId) {
-        List<BrandTagDocument> allBrandDocs;
-        try {
-            allBrandDocs = StreamSupport.stream(brandTagRedisRepository.findAll().spliterator(), false)
-                    .toList();
-        } catch (Exception e) {
-            LOG.warn("Failed to fetch brand tags from Redis: {}", e.getMessage());
-            allBrandDocs = List.of();
-        }
+        List<BrandTagDocument> allBrandDocs = redisDocumentHelper.findAllBrandTagDocuments();
 
         if (allBrandDocs.isEmpty()) {
             LOG.info("No brand tag documents found in Redis");
@@ -313,14 +301,7 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private List<CampaignMatchResult> findMatchingCampaignResults(UserTagDocument userDoc, Long userId) {
-        List<CampaignTagDocument> allCampaignDocs;
-        try {
-            allCampaignDocs = StreamSupport.stream(campaignTagRedisRepository.findAll().spliterator(), false)
-                    .toList();
-        } catch (Exception e) {
-            LOG.warn("Failed to fetch campaign tags from Redis: {}", e.getMessage());
-            allCampaignDocs = List.of();
-        }
+        List<CampaignTagDocument> allCampaignDocs = redisDocumentHelper.findAllCampaignTagDocuments();
 
         if (allCampaignDocs.isEmpty()) {
             LOG.info("No campaign tag documents found in Redis");
@@ -366,14 +347,7 @@ public class MatchServiceImpl implements MatchService {
     }
     
     private List<MatchBrandResponseDto.BrandDto> findMatchingBrandsForList(UserTagDocument userDoc, Long userId) {
-        List<BrandTagDocument> allBrandDocs;
-        try {
-            allBrandDocs = StreamSupport.stream(brandTagRedisRepository.findAll().spliterator(), false)
-                    .toList();
-        } catch (Exception e) {
-            LOG.warn("Failed to fetch brand tags from Redis: {}", e.getMessage());
-            allBrandDocs = List.of();
-        }
+        List<BrandTagDocument> allBrandDocs = redisDocumentHelper.findAllBrandTagDocuments();
 
         if (allBrandDocs.isEmpty()) {
             return List.of();
@@ -415,14 +389,7 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private List<MatchCampaignResponseDto.CampaignDto> findMatchingCampaignsForList(UserTagDocument userDoc, Long userId) {
-        List<CampaignTagDocument> allCampaignDocs;
-        try {
-            allCampaignDocs = StreamSupport.stream(campaignTagRedisRepository.findAll().spliterator(), false)
-                    .toList();
-        } catch (Exception e) {
-            LOG.warn("Failed to fetch campaign tags from Redis: {}", e.getMessage());
-            allCampaignDocs = List.of();
-        }
+        List<CampaignTagDocument> allCampaignDocs = redisDocumentHelper.findAllCampaignTagDocuments();
 
         if (allCampaignDocs.isEmpty()) {
             return List.of();
@@ -474,8 +441,7 @@ public class MatchServiceImpl implements MatchService {
     public MatchBrandResponseDto getMatchingBrands(String userId) {
         Long userIdLong = Long.parseLong(userId);
 
-        UserTagDocument userDoc = userTagRedisRepository.findByUserId(userIdLong)
-                .orElse(null);
+        UserTagDocument userDoc = redisDocumentHelper.findUserTagDocumentById(userIdLong);
 
         if (userDoc == null) {
             LOG.warn("User tag document not found in Redis. userId={}", userId);
@@ -497,8 +463,7 @@ public class MatchServiceImpl implements MatchService {
     public MatchCampaignResponseDto getMatchingCampaigns(String userId) {
         Long userIdLong = Long.parseLong(userId);
 
-        UserTagDocument userDoc = userTagRedisRepository.findByUserId(userIdLong)
-                .orElse(null);
+        UserTagDocument userDoc = redisDocumentHelper.findUserTagDocumentById(userIdLong);
 
         if (userDoc == null) {
             LOG.warn("User tag document not found in Redis. userId={}", userId);
@@ -546,14 +511,7 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private String findBestFitBrandName(UserTagDocument userDoc) {
-        List<BrandTagDocument> allBrandDocs;
-        try {
-            allBrandDocs = StreamSupport.stream(brandTagRedisRepository.findAll().spliterator(), false)
-                    .toList();
-        } catch (Exception e) {
-            LOG.warn("Failed to fetch brand tags from Redis for best fit: {}", e.getMessage());
-            return "미정";
-        }
+        List<BrandTagDocument> allBrandDocs = redisDocumentHelper.findAllBrandTagDocuments();
 
         return allBrandDocs.stream()
                 .max(Comparator.comparingInt(brandDoc ->
