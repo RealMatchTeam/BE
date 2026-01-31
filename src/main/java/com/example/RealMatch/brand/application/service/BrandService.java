@@ -18,6 +18,7 @@ import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorReposi
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
+import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.brand.presentation.dto.request.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
@@ -30,6 +31,7 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetai
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.tag.domain.entity.BrandTag;
 import com.example.RealMatch.tag.domain.enums.TagType;
@@ -250,6 +252,9 @@ public class BrandService {
     // 브랜드의 캠페인 리스트 조회
     @Transactional(readOnly = true)
     public BrandCampaignSliceResponse getBrandCampaigns(Long brandId, Long cursor, int size) {
+        brandRepository.findById(brandId)
+                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
+
         Pageable pageable = PageRequest.of(0, size + 1);
         List<Campaign> campaigns = campaignRepository.findBrandCampaignsWithCursor(brandId, cursor, pageable);
 

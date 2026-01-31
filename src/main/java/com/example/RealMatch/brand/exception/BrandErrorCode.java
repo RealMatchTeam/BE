@@ -1,0 +1,20 @@
+package com.example.RealMatch.brand.exception;
+
+import org.springframework.http.HttpStatus;
+
+import com.example.RealMatch.global.presentation.code.BaseErrorCode;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
+public enum BrandErrorCode implements BaseErrorCode {
+
+    BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "CAMPAIGN_404_1", "존재하지 않는 브랜드입니다.");
+
+    private final HttpStatus status;
+    private final String code;
+    private final String message;
+
+}

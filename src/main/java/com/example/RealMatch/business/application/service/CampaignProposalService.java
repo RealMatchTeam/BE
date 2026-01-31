@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
+import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.entity.CampaignProposalContentTag;
 import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
@@ -50,7 +51,7 @@ public class CampaignProposalService {
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         Brand brand = brandRepository.findById(request.getBrandId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 브랜드입니다."));
+                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
 
         validateRequesterAuthority(userDetails, creator, brand);
 
@@ -174,7 +175,7 @@ public class CampaignProposalService {
 
     private void validateExistFields(CampaignProposalRequestDto request) {
         brandRepository.findById(request.getBrandId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 브랜드입니다."));
+                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
 
         userRepository.findById(request.getCreatorId())
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
