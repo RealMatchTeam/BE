@@ -18,6 +18,7 @@ import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +40,7 @@ public class CampaignApplyController {
     )
     @PostMapping("/{campaignId}/apply")
     public CustomResponse<String> applyCampaign(
+            @Parameter(description = "캠페인 ID", example = "1")
             @PathVariable Long campaignId,
             @AuthenticationPrincipal CustomUserDetails principal,
             @Validated @RequestBody CampaignApplyRequest request
@@ -65,12 +67,13 @@ public class CampaignApplyController {
                     """
     )
     @GetMapping("/{campaignId}/apply/me")
-    public ResponseEntity<CampaignApplyDetailResponse> getMyApplyCampainDetails(
+    public ResponseEntity<CampaignApplyDetailResponse> getMyApplyCampaignDetails(
+            @Parameter(description = "캠페인 ID", example = "1")
             @PathVariable Long campaignId,
             @AuthenticationPrincipal CustomUserDetails principal
     ) {
         CampaignApplyDetailResponse response =
-                campaignApplyQueryService.getMyApplyCampainDetails(campaignId, principal.getUserId());
+                campaignApplyQueryService.getMyApplyCampaignDetails(campaignId, principal.getUserId());
 
         return ResponseEntity.ok(response);
     }
