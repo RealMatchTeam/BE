@@ -1,4 +1,3 @@
-
 cors:
   allowed-origin: http://${SERVER_IP}
 

@@ -4,7 +4,6 @@ cors:
 swagger:
   server-url: http://localhost:8080
 
-
 front:
   domain-url: http://localhost:3000 # 임의의 값
 
