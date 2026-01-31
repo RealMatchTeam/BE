@@ -16,6 +16,7 @@ import com.example.RealMatch.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -100,6 +101,23 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
         String uniqueFilename = uuid + "_" + filename;
         String datePath = LocalDate.now().format(DATE_FORMATTER);
         return String.format("%s/%d/%s/%s", s3Properties.getKeyPrefix(), userId, datePath, uniqueFilename);
+    }
+
+    @Override
+    public void deleteFile(String key) {
+        try {
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(s3Properties.getBucketName())
+                    .key(key)
+                    .build();
+            s3Client.deleteObject(deleteObjectRequest);
+        } catch (S3Exception e) {
+            handleS3Exception("파일 삭제", key, e);
+            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
+        } catch (Exception e) {
+            LOG.error("S3 파일 삭제 중 예상치 못한 오류 발생. key={}", key, e);
+            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
+        }
     }
 
     private String buildS3Url(String key) {

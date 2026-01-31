@@ -11,6 +11,7 @@ import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
+import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.global.exception.CustomException;
 
@@ -72,6 +73,9 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         
         if (!attachment.getUploaderId().equals(userId)) {
             throw new CustomException(AttachmentErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
+        }
+        if (attachment.getStatus() != AttachmentStatus.READY) {
+            throw new CustomException(AttachmentErrorCode.ATTACHMENT_NOT_READY);
         }
     }
 

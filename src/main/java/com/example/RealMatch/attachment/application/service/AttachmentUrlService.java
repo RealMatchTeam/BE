@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.domain.entity.Attachment;
+import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
 
@@ -22,21 +23,26 @@ public class AttachmentUrlService {
     private final S3Properties s3Properties;
 
     public String getAccessUrl(Attachment attachment) {
-        if (attachment == null || attachment.getAccessUrl() == null) {
+        if (attachment == null || attachment.getStatus() != AttachmentStatus.READY) {
             return null;
         }
 
         String accessUrl = attachment.getAccessUrl();
+        String storageKey = attachment.getStorageKey();
 
         if (!s3Properties.isPublicBucket()) {
+            if (storageKey == null || storageKey.isBlank()) {
+                LOG.error("READY 상태인데 storageKey가 없습니다. attachmentId={}", attachment.getId());
+                return null;
+            }
             try {
                 accessUrl = s3FileUploadService.generatePresignedUrl(
-                        accessUrl,
+                        storageKey,
                         s3Properties.getPresignedUrlExpirationSeconds()
                 );
             } catch (Exception e) {
                 LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}", 
-                        attachment.getId(), accessUrl, e);
+                        attachment.getId(), storageKey, e);
                 accessUrl = null;
             }
         }

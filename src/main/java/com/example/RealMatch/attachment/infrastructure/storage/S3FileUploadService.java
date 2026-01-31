@@ -9,4 +9,6 @@ public interface S3FileUploadService {
     String generatePresignedUrl(String key, int expirationSeconds);
 
     String generateS3Key(Long userId, Long attachmentId, String originalFilename);
+
+    void deleteFile(String key);
 }

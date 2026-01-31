@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
+import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.global.exception.CustomException;
 
@@ -22,6 +23,9 @@ public class AttachmentCommandServiceImpl implements AttachmentCommandService {
     public void markAttachmentAsFailed(Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new CustomException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND));
+        if (attachment.getStatus() == AttachmentStatus.READY) {
+            return;
+        }
         attachment.markAsFailed();
     }
 }

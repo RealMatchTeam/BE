@@ -46,6 +46,9 @@ public class Attachment extends DeleteBaseEntity {
     @Column(name = "file_size", nullable = false)
     private Long fileSize;
 
+    @Column(name = "storage_key", length = 1024)
+    private String storageKey;
+
     @Column(name = "access_url", length = 1024)
     private String accessUrl;
 
@@ -59,6 +62,7 @@ public class Attachment extends DeleteBaseEntity {
             String contentType,
             String originalName,
             Long fileSize,
+            String storageKey,
             String accessUrl,
             AttachmentStatus status
     ) {
@@ -67,6 +71,7 @@ public class Attachment extends DeleteBaseEntity {
         this.contentType = contentType;
         this.originalName = originalName;
         this.fileSize = fileSize;
+        this.storageKey = storageKey;
         this.accessUrl = accessUrl;
         this.status = status;
     }
@@ -85,9 +90,19 @@ public class Attachment extends DeleteBaseEntity {
                 contentType,
                 originalName,
                 fileSize,
+                null,
                 accessUrl,
                 AttachmentStatus.UPLOADED
         );
+    }
+
+    public void updateStorageKey(String storageKey) {
+        this.storageKey = storageKey;
+    }
+
+    public void markAsReady(String accessUrl) {
+        this.accessUrl = accessUrl;
+        this.status = AttachmentStatus.READY;
     }
 
     public void markAsFailed() {

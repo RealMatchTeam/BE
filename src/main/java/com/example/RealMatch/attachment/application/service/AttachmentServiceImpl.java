@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
+import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
@@ -68,6 +69,16 @@ public class AttachmentServiceImpl implements AttachmentService {
         String s3Key = null;
         try {
             s3Key = s3FileUploadService.generateS3Key(userId, attachment.getId(), originalFilename);
+            int storageUpdated = attachmentRepository.updateStorageKeyIfStatus(
+                    attachment.getId(),
+                    AttachmentStatus.UPLOADED,
+                    s3Key
+            );
+            if (storageUpdated != 1) {
+                LOG.error("첨부파일 storageKey 업데이트 실패. attachmentId={}, userId={}, s3Key={}, updated={}",
+                        attachment.getId(), userId, s3Key, storageUpdated);
+                throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            }
 
             String accessUrl = s3FileUploadService.uploadFile(
                     fileInputStream,
@@ -76,14 +87,33 @@ public class AttachmentServiceImpl implements AttachmentService {
                     fileSize
             );
 
-            // S3 업로드 성공 시 accessUrl 업데이트
-            if (accessUrl != null) {
-                attachment.updateAccessUrl(accessUrl);
-            } else {
-                attachment.updateAccessUrl(s3Key);
+            // S3 업로드 성공 시 accessUrl/상태 원자적 업데이트
+            String storedAccessUrl = accessUrl;
+            int updated = attachmentRepository.updateStatusAndAccessUrlIfStatus(
+                    attachment.getId(),
+                    AttachmentStatus.UPLOADED,
+                    AttachmentStatus.READY,
+                    storedAccessUrl
+            );
+            if (updated != 1) {
+                Attachment current = attachmentRepository.findById(attachment.getId()).orElse(null);
+                if (current == null) {
+                    LOG.error("첨부파일 상태 업데이트 실패(미조회). attachmentId={}, userId={}, s3Key={}, updated={}",
+                            attachment.getId(), userId, s3Key, updated);
+                    throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+                }
+                if (current.getStatus() != AttachmentStatus.READY) {
+                    LOG.error("첨부파일 상태 업데이트 실패. attachmentId={}, userId={}, s3Key={}, updated={}, status={}, storageKey={}, accessUrl={}",
+                            attachment.getId(), userId, s3Key, updated,
+                            current.getStatus(), current.getStorageKey(), current.getAccessUrl());
+                    throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+                }
+                LOG.info("첨부파일 상태가 이미 READY입니다. attachmentId={}, userId={}, s3Key={}, updated={}, status={}, storageKey={}, accessUrl={}",
+                        attachment.getId(), userId, s3Key, updated,
+                        current.getStatus(), current.getStorageKey(), current.getAccessUrl());
             }
-
-            attachment = attachmentRepository.save(attachment);
+            attachment = attachmentRepository.findById(attachment.getId())
+                    .orElseThrow(() -> new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED));
 
             LOG.info("파일 업로드 성공. attachmentId={}, userId={}, s3Key={}", 
                     attachment.getId(), userId, s3Key);
