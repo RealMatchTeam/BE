@@ -7,9 +7,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.brand.application.service.BrandService;
+import com.example.RealMatch.brand.presentation.dto.request.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
@@ -19,6 +21,7 @@ import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -60,4 +63,19 @@ public class BrandController implements BrandSwagger {
     ) {
         return CustomResponse.ok(brandService.getSponsorProducts(brandId));
     }
+
+
+    @Override
+    @GetMapping("/{brandId}/campaigns")
+    public CustomResponse<BrandCampaignSliceResponse> getBrandCampaigns(
+            @Parameter(description = "브랜드 ID", example = "1")
+            @PathVariable Long brandId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        BrandCampaignSliceResponse response = brandService.getBrandCampaigns(brandId, cursor, size);
+        return CustomResponse.ok(response);
+    }
+
+
 }
