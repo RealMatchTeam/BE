@@ -2,10 +2,10 @@ package com.example.RealMatch.attachment.application.service;
 
 import org.springframework.stereotype.Service;
 
+import com.example.RealMatch.attachment.application.policy.AttachmentUploadPolicy;
 import com.example.RealMatch.attachment.application.util.FileValidator;
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
-import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
-import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AttachmentValidationService {
 
-    private final S3Properties s3Properties;
+    private final AttachmentUploadPolicy uploadPolicy;
     private final FileValidator fileValidator;
 
     public void validateUploadRequest(
@@ -30,12 +30,17 @@ public class AttachmentValidationService {
         fileValidator.validateFileName(originalFilename);
 
         long maxSize = attachmentType == AttachmentType.IMAGE
-                ? s3Properties.getMaxImageSizeBytes()
-                : s3Properties.getMaxFileSizeBytes();
+                ? uploadPolicy.getMaxImageSizeBytes()
+                : uploadPolicy.getMaxFileSizeBytes();
         fileValidator.validateFileSize(fileSize, maxSize);
 
         if (attachmentType == AttachmentType.IMAGE) {
-            fileValidator.validateImageFile(contentType, originalFilename);
+            fileValidator.validateImageFile(
+                    contentType,
+                    originalFilename,
+                    uploadPolicy.getAllowedImageContentTypes(),
+                    uploadPolicy.getAllowedImageExtensions()
+            );
         }
     }
 }

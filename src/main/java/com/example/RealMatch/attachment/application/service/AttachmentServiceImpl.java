@@ -6,15 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
-import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
 import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
 import com.example.RealMatch.global.exception.CustomException;
@@ -36,7 +35,6 @@ public class AttachmentServiceImpl implements AttachmentService {
     private final AttachmentResponseMapper responseMapper;
 
     @Override
-    @Transactional
     public AttachmentUploadResponse uploadAttachment(
             Long userId,
             AttachmentUploadRequest request,
@@ -85,6 +83,8 @@ public class AttachmentServiceImpl implements AttachmentService {
                 attachment.updateAccessUrl(s3Key);
             }
 
+            attachment = attachmentRepository.save(attachment);
+
             LOG.info("파일 업로드 성공. attachmentId={}, userId={}, s3Key={}", 
                     attachment.getId(), userId, s3Key);
 
@@ -100,12 +100,7 @@ public class AttachmentServiceImpl implements AttachmentService {
                         attachment.getId(), markFailedException);
             }
             
-            // 원래 예외를 래핑하여 더 명확한 메시지 제공
-            throw new CustomException(
-                    AttachmentErrorCode.S3_UPLOAD_FAILED,
-                    "파일 업로드에 실패했습니다: " + e.getMessage(),
-                    e
-            );
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, e);
         }
 
         // Presigned URL 생성

@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
-import com.example.RealMatch.attachment.application.util.FileValidator;
-import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -34,7 +33,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
-    private final FileValidator fileValidator;
+    private final S3FileNameSanitizer fileNameSanitizer;
 
     @Override
     public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize) {
@@ -89,8 +88,8 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
 
     @Override
     public String generateS3Key(Long userId, Long attachmentId, String originalFilename) {
-        String sanitizedFilename = fileValidator.sanitizeFileName(originalFilename);
-        String extension = fileValidator.getFileExtension(originalFilename);
+        String sanitizedFilename = fileNameSanitizer.sanitizeFileName(originalFilename);
+        String extension = fileNameSanitizer.getFileExtension(originalFilename);
         String filename = sanitizedFilename;
         
         if (!extension.isEmpty() && !filename.toLowerCase().endsWith("." + extension.toLowerCase())) {

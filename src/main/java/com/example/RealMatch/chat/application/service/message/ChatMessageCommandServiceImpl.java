@@ -13,8 +13,8 @@ import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.chat.application.cache.ChatCacheEvictor;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
-import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatExceptionConverter;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
@@ -44,7 +44,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     private final ChatMessageRepository chatMessageRepository;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatRoomMemberService chatRoomMemberService;
-    private final ChatRoomCommandService chatRoomCommandService;
+    private final ChatRoomUpdateService chatRoomUpdateService;
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
     private final SystemMessagePayloadSerializer payloadSerializer;
@@ -124,7 +124,9 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         // 응답 생성
         AttachmentDto savedAttachment = attachment != null
                 ? attachment
-                : attachmentQueryService.findById(saved.getAttachmentId());
+                : (saved.getAttachmentId() == null
+                        ? null
+                        : attachmentQueryService.findByIdOrThrow(saved.getAttachmentId()));
         return responseMapper.toResponse(saved, savedAttachment);
     }
 
@@ -182,7 +184,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
             return null;
         }
         attachmentQueryService.validateOwnership(attachmentId, userId);
-        return attachmentQueryService.findById(attachmentId);
+        return attachmentQueryService.findByIdOrThrow(attachmentId);
     }
 
     private void validateIdempotentConsistency(ChatMessage stored, ChatSendMessageCommand command) {
@@ -198,7 +200,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
     private void updateChatRoomLastMessage(ChatMessage message) {
         String preview = messagePreviewGenerator.generate(message.getMessageType(), message.getContent());
-        chatRoomCommandService.updateLastMessage(
+        chatRoomUpdateService.updateLastMessage(
                 message.getRoomId(),
                 message.getId(),
                 message.getCreatedAt(),

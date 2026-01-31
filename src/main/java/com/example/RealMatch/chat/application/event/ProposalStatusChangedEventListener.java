@@ -8,12 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.application.service.room.MatchedCampaignPayloadProvider;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
@@ -27,21 +26,20 @@ public class ProposalStatusChangedEventListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProposalStatusChangedEventListener.class);
 
-    private final ChatRoomCommandService chatRoomCommandService;
+    private final ChatRoomUpdateService chatRoomUpdateService;
     private final ChatRoomQueryService chatRoomQueryService;
     private final ChatMessageSocketService chatMessageSocketService;
     private final MatchedCampaignPayloadProvider matchedCampaignPayloadProvider;
 
     @EventListener
     @Async
-    @Transactional
     public void handleProposalStatusChanged(ProposalStatusChangedEvent event) {
         try {
             LOG.info("Proposal status changed event received. proposalId={}, newStatus={}, brandUserId={}, creatorUserId={}",
                     event.proposalId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
 
             ChatProposalStatus chatStatus = convertToChatProposalStatus(event.newStatus());
-            chatRoomCommandService.updateProposalStatusByUsers(
+            chatRoomUpdateService.updateProposalStatusByUsers(
                     event.brandUserId(),
                     event.creatorUserId(),
                     chatStatus

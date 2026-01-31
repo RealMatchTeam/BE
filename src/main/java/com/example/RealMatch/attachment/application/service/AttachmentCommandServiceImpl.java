@@ -4,9 +4,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
-import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;

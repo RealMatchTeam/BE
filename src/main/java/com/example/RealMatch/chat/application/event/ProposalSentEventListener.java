@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
@@ -22,7 +21,6 @@ public class ProposalSentEventListener {
 
     @EventListener
     @Async
-    @Transactional
     public void handleProposalSent(ProposalSentEvent event) {
         try {
             if (event.roomId() == null || event.payload() == null) {

@@ -1,4 +1,4 @@
-package com.example.RealMatch.attachment.presentation.code;
+package com.example.RealMatch.attachment.code;
 
 import org.springframework.http.HttpStatus;
 

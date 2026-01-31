@@ -3,43 +3,12 @@ package com.example.RealMatch.attachment.application.util;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
-import com.example.RealMatch.attachment.domain.enums.AttachmentType;
-import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.global.exception.CustomException;
 
 @Component
 public class FileValidator {
-
-    private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of(
-            "jpg", "jpeg", "png", "gif", "webp"
-    );
-
-    private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "image/gif",
-            "image/webp"
-    );
-
-    public void validateFile(
-            MultipartFile file,
-            AttachmentType attachmentType,
-            long maxSizeBytes
-    ) {
-        if (file == null || file.isEmpty()) {
-            throw new CustomException(AttachmentErrorCode.INVALID_FILE);
-        }
-
-        validateFileName(file.getOriginalFilename());
-        validateFileSize(file.getSize(), maxSizeBytes);
-
-        if (attachmentType == AttachmentType.IMAGE) {
-            validateImageFile(file.getContentType(), file.getOriginalFilename());
-        }
-    }
 
     public void validateFileName(String filename) {
         if (filename == null || filename.isBlank()) {
@@ -65,20 +34,27 @@ public class FileValidator {
         }
     }
 
-    public void validateImageFile(String contentType, String filename) {
-        if (contentType == null || !ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+    public void validateImageFile(
+            String contentType,
+            String filename,
+            Set<String> allowedContentTypes,
+            Set<String> allowedExtensions
+    ) {
+        Set<String> contentTypes = allowedContentTypes == null ? Set.of() : allowedContentTypes;
+        if (contentType == null || !contentTypes.contains(contentType.toLowerCase())) {
             throw new CustomException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
         }
 
         if (filename != null) {
             String extension = getFileExtension(filename).toLowerCase();
-            if (!ALLOWED_IMAGE_EXTENSIONS.contains(extension)) {
+            Set<String> extensions = allowedExtensions == null ? Set.of() : allowedExtensions;
+            if (!extensions.contains(extension)) {
                 throw new CustomException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
             }
         }
     }
 
-    public String getFileExtension(String filename) {
+    private String getFileExtension(String filename) {
         if (filename == null || filename.isEmpty()) {
             return "";
         }
@@ -89,23 +65,5 @@ public class FileValidator {
         }
 
         return filename.substring(lastDotIndex + 1);
-    }
-
-    public String sanitizeFileName(String filename) {
-        if (filename == null || filename.isBlank()) {
-            return "file";
-        }
-
-        String sanitized = filename
-                .replace("..", "")
-                .replace("/", "_")
-                .replace("\\", "_")
-                .replaceAll("[^a-zA-Z0-9._-]", "_");
-
-        if (sanitized.isBlank() || sanitized.length() < 3) {
-            sanitized = "file_" + System.currentTimeMillis();
-        }
-
-        return sanitized;
     }
 }
