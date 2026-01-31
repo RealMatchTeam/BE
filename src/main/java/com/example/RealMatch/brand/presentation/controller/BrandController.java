@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.brand.application.service.BrandService;
-import com.example.RealMatch.brand.presentation.dto.request.BrandCampaignSliceResponse;
+import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;

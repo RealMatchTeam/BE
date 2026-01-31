@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum BrandErrorCode implements BaseErrorCode {
 
-    BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "CAMPAIGN_404_1", "존재하지 않는 브랜드입니다.");
+    BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "BRAND_404_1", "존재하지 않는 브랜드입니다.");
 
     private final HttpStatus status;
     private final String code;

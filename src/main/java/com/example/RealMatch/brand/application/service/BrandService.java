@@ -19,10 +19,10 @@ import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
-import com.example.RealMatch.brand.presentation.dto.request.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
