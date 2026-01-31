@@ -16,9 +16,6 @@ public class BrandDetailResponseDto {
     private List<String> brandCategory;
     private BrandSkinCareTagDto brandSkinCareTag;
     private BrandMakeUpTagDto brandMakeUpTag;
-    private List<BrandOnGoingCampaignDto> brandOnGoingCampaign;
-    private List<AvailableSponsorProdDto> availableSponsorProd;
-    private List<CampaignHistoryDto> campaignHistory;
 
     @Getter
     @Builder
@@ -32,35 +29,5 @@ public class BrandDetailResponseDto {
     public static class BrandMakeUpTagDto {
         private List<String> brandSkinType;
         private List<String> brandMakeUpStyle;
-    }
-
-    @Getter
-    @Builder
-    public static class BrandOnGoingCampaignDto {
-        private Long brandId;
-        private String brandName;
-        private Integer recruitingTotalNumber;
-        private Integer recruitedNumber;
-        private String campaginDescription;
-        private String campaginManuscriptFee;
-    }
-
-    @Getter
-    @Builder
-    public static class AvailableSponsorProdDto {
-        private Long productId;
-        private String productName;
-        private String availableType;
-        private Integer availableQuantity;
-        private Integer availableSize;
-    }
-
-    @Getter
-    @Builder
-    public static class CampaignHistoryDto {
-        private Long campaignId;
-        private String campaignTitle;
-        private String startDate;
-        private String endDate;
     }
 }

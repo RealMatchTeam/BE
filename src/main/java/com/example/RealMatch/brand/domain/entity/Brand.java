@@ -69,10 +69,11 @@ public class Brand extends DeleteBaseEntity {
     @Column(name = "deleted_by")
     private Long deletedBy;
 
+
     @Builder
     public Brand(String brandName, IndustryType industryType, String logoUrl,
                  String simpleIntro, String detailIntro, String homepageUrl,
-                 Integer matchingRate, Long createdBy) {
+                 Integer matchingRate, Long createdBy, User user) {
         this.brandName = brandName;
         this.industryType = industryType;
         this.logoUrl = logoUrl;
@@ -86,15 +87,36 @@ public class Brand extends DeleteBaseEntity {
 
     public void update(String brandName, String logoUrl, String simpleIntro,
                        String detailIntro, String homepageUrl, Long updatedBy) {
-        this.brandName = brandName;
-        this.logoUrl = logoUrl;
-        this.simpleIntro = simpleIntro;
-        this.detailIntro = detailIntro;
-        this.homepageUrl = homepageUrl;
+        if (brandName != null) {
+            this.brandName = brandName;
+        }
+        if (logoUrl != null) {
+            this.logoUrl = logoUrl;
+        }
+        if (simpleIntro != null) {
+            this.simpleIntro = simpleIntro;
+        }
+        if (detailIntro != null) {
+            this.detailIntro = detailIntro;
+        }
+        if (homepageUrl != null) {
+            this.homepageUrl = homepageUrl;
+        }
         this.updatedBy = updatedBy;
     }
 
     public void softDelete(Long deletedBy) {
         this.deletedBy = deletedBy;
+        super.softDelete();
+    }
+
+    public void clearContent(Long updatedBy) {
+        this.brandName = ""; // 또는 다른 기본값
+        this.logoUrl = null;
+        this.simpleIntro = null;
+        this.detailIntro = null;
+        this.homepageUrl = null;
+        this.matchingRate = null;
+        this.updatedBy = updatedBy;
     }
 }
