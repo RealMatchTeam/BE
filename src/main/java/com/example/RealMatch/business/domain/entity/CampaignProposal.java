@@ -132,7 +132,7 @@ public class CampaignProposal extends BaseEntity {
             LocalDate startDate,
             LocalDate endDate
     ) {
-        if (this.campaign != null) {
+        if (this.campaign == null) {
             this.title = title;
         }
         this.campaignDescription = description;

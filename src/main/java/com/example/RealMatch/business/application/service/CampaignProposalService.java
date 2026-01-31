@@ -21,6 +21,7 @@ import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.campaign.exception.CampaignErrorCode;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.exception.CustomException;
+import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 import com.example.RealMatch.tag.domain.entity.TagContent;
 import com.example.RealMatch.tag.domain.repository.TagContentRepository;
 import com.example.RealMatch.user.domain.entity.User;
@@ -57,6 +58,8 @@ public class CampaignProposalService {
                     .orElseThrow(() -> new CustomException(CampaignErrorCode.CAMPAIGN_NOT_FOUND));
         }
 
+        validateDateRange(request);
+
         CampaignProposal proposal = CampaignProposal.builder()
                 .creator(creator)
                 .brand(brand)
@@ -88,6 +91,7 @@ public class CampaignProposalService {
         validateExistFields(request);
         validateImmutableFields(request, proposal);
         validateModifyAvailable(userDetails, proposal);
+        validateDateRange(request);
 
         proposal.clearContentTags();
         campaignProposalRepository.flush();
@@ -201,8 +205,14 @@ public class CampaignProposalService {
         }
     }
 
-    private void validateNotChangedDate(UUID campaignProposalId, CampaignProposalRequestDto request) {
-
+    private void validateDateRange(CampaignProposalRequestDto request) {
+        if (request.getStartDate() != null && request.getEndDate() != null) {
+            if (request.getEndDate().isBefore(request.getStartDate())) {
+                throw new CustomException(
+                        GeneralErrorCode.INVALID_DATA
+                );
+            }
+        }
     }
 
 }

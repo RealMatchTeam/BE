@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.CustomResponse;
@@ -92,5 +93,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(CustomResponse.onFailure(errorCode, null));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<CustomResponse<?>> handleTypeMismatch(
+            MethodArgumentTypeMismatchException e
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(CustomResponse.onFailure(
+                        GeneralErrorCode.INVALID_DATA,
+                        "날짜 형식은 yyyy-MM-dd 형식이어야 합니다."
+                ));
     }
 }
