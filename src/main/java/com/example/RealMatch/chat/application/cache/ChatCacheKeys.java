@@ -6,7 +6,6 @@ import java.util.Locale;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
-import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
 
 import lombok.AccessLevel;
@@ -16,40 +15,39 @@ import lombok.NoArgsConstructor;
 public class ChatCacheKeys {
 
     private static final String ROOM_LIST_PREFIX = "chat:room-list:";
+    private static final String ROOM_LIST_VERSION_PREFIX = "chat:room-list:version:";
     private static final String ROOM_DETAIL_PREFIX = "chat:room-detail:";
+    private static final String ROOM_DETAIL_VERSION_PREFIX = "chat:room-detail:version:";
 
     public static String roomListKey(
             Long userId,
+            long version,
             ChatRoomFilterStatus filterStatus,
-            RoomCursor roomCursor,
             int size,
             String search
     ) {
-        return roomListPrefix(userId)
+        return ROOM_LIST_PREFIX
+                + userId + ":"
+                + version + ":"
                 + filterKey(filterStatus) + ":"
-                + cursorKey(roomCursor) + ":"
                 + size + ":"
                 + searchKey(search);
     }
 
-    public static String roomListPrefix(Long userId) {
-        return ROOM_LIST_PREFIX + userId + ":";
+    public static String roomListVersionKey(Long userId) {
+        return ROOM_LIST_VERSION_PREFIX + userId;
     }
 
-    public static String roomDetailKey(Long roomId, Long userId) {
-        return roomDetailPrefix(roomId) + userId;
+    public static String roomDetailKey(Long roomId, long version, Long userId) {
+        return ROOM_DETAIL_PREFIX + roomId + ":" + version + ":" + userId;
     }
 
-    public static String roomDetailPrefix(Long roomId) {
-        return ROOM_DETAIL_PREFIX + roomId + ":";
+    public static String roomDetailVersionKey(Long roomId) {
+        return ROOM_DETAIL_VERSION_PREFIX + roomId;
     }
 
     private static String filterKey(ChatRoomFilterStatus filterStatus) {
         return filterStatus == null ? "LATEST" : filterStatus.name();
-    }
-
-    private static String cursorKey(RoomCursor roomCursor) {
-        return roomCursor == null ? "NONE" : roomCursor.encode();
     }
 
     private static String searchKey(String search) {

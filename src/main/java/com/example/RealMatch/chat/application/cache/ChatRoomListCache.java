@@ -23,10 +23,11 @@ public class ChatRoomListCache {
             int size,
             String search
     ) {
-        if (userId == null) {
+        if (userId == null || roomCursor != null) {
             return Optional.empty();
         }
-        String key = ChatCacheKeys.roomListKey(userId, filterStatus, roomCursor, size, search);
+        long version = chatCacheStore.getVersion(ChatCacheKeys.roomListVersionKey(userId));
+        String key = ChatCacheKeys.roomListKey(userId, version, filterStatus, size, search);
         return chatCacheStore.get(key, ChatRoomListResponse.class);
     }
 
@@ -38,10 +39,11 @@ public class ChatRoomListCache {
             String search,
             ChatRoomListResponse response
     ) {
-        if (userId == null || response == null) {
+        if (userId == null || response == null || roomCursor != null) {
             return;
         }
-        String key = ChatCacheKeys.roomListKey(userId, filterStatus, roomCursor, size, search);
+        long version = chatCacheStore.getVersion(ChatCacheKeys.roomListVersionKey(userId));
+        String key = ChatCacheKeys.roomListKey(userId, version, filterStatus, size, search);
         chatCacheStore.set(key, response, ChatCachePolicy.ROOM_LIST_TTL);
     }
 }

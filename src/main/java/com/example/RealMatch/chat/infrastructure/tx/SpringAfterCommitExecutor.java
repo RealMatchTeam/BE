@@ -39,18 +39,9 @@ public class SpringAfterCommitExecutor implements AfterCommitExecutor {
             return;
         }
 
-        // 트랜잭션이 없거나 동기화가 비활성화된 경우 즉시 실행 (운영 감지용 로그)
-        LOG.warn("Executing task immediately without transaction synchronization. " +
-                "hasTransaction={}, hasSynchronization={}. " +
-                "This may indicate an unexpected call path.",
-                hasTransaction, hasSynchronization);
-
-        try {
-            task.run();
-        } catch (Exception ex) {
-            // 비트랜잭션 케이스에서도 예외를 로깅하여 장애 추적 가능하도록 함
-            LOG.error("Exception occurred in immediate task execution (no transaction synchronization).", ex);
-            throw ex;
-        }
+        String message = "AfterCommitExecutor must be used within an active transaction. " +
+                "hasTransaction=%s, hasSynchronization=%s".formatted(hasTransaction, hasSynchronization);
+        LOG.error(message);
+        throw new IllegalStateException(message);
     }
 }

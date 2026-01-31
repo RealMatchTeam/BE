@@ -38,4 +38,25 @@ public class ChatCacheStore {
     public void set(String key, Object value, Duration ttl) {
         redisTemplate.opsForValue().set(key, value, ttl);
     }
+
+    public long getVersion(String key) {
+        Object value = redisTemplate.opsForValue().get(key);
+        if (value == null) {
+            return 1L;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException ex) {
+            LOG.warn("Failed to parse version key. key={}, value={}", key, value);
+            return 1L;
+        }
+    }
+
+    public long bumpVersion(String key) {
+        Long newVersion = redisTemplate.opsForValue().increment(key);
+        return newVersion != null ? newVersion : 1L;
+    }
 }

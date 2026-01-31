@@ -18,7 +18,8 @@ public class ChatRoomDetailCache {
         if (roomId == null || userId == null) {
             return Optional.empty();
         }
-        String key = ChatCacheKeys.roomDetailKey(roomId, userId);
+        long version = chatCacheStore.getVersion(ChatCacheKeys.roomDetailVersionKey(roomId));
+        String key = ChatCacheKeys.roomDetailKey(roomId, version, userId);
         return chatCacheStore.get(key, ChatRoomDetailResponse.class);
     }
 
@@ -26,7 +27,8 @@ public class ChatRoomDetailCache {
         if (roomId == null || userId == null || response == null) {
             return;
         }
-        String key = ChatCacheKeys.roomDetailKey(roomId, userId);
+        long version = chatCacheStore.getVersion(ChatCacheKeys.roomDetailVersionKey(roomId));
+        String key = ChatCacheKeys.roomDetailKey(roomId, version, userId);
         chatCacheStore.set(key, response, ChatCachePolicy.ROOM_DETAIL_TTL);
     }
 }

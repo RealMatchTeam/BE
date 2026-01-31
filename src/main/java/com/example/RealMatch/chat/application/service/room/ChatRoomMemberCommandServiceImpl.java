@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.chat.application.cache.ChatCacheEvictor;
+import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class ChatRoomMemberCommandServiceImpl implements ChatRoomMemberCommandService {
 
     private final ChatRoomMemberRepository chatRoomMemberRepository;
-    private final ChatCacheEvictor chatCacheEvictor;
+    private final ChatCacheInvalidationService cacheInvalidationService;
     private final AfterCommitExecutor afterCommitExecutor;
 
     @Override
@@ -33,7 +33,7 @@ public class ChatRoomMemberCommandServiceImpl implements ChatRoomMemberCommandSe
         Long currentLastRead = member.getLastReadMessageId();
         if (currentLastRead == null || currentLastRead < messageId) {
             member.updateLastReadMessage(messageId, LocalDateTime.now());
-            afterCommitExecutor.execute(() -> chatCacheEvictor.evictRoomListByUser(member.getUserId()));
+            afterCommitExecutor.execute(() -> cacheInvalidationService.invalidateAfterMemberRead(member.getUserId()));
         }
     }
 }

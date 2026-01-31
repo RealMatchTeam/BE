@@ -6,7 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.chat.application.cache.ChatCacheEvictor;
+import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
@@ -31,7 +31,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatMessageEventPublisher eventPublisher;
     private final AfterCommitExecutor afterCommitExecutor;
-    private final ChatCacheEvictor chatCacheEvictor;
+    private final ChatCacheInvalidationService cacheInvalidationService;
 
     @Override
     @Transactional
@@ -73,8 +73,7 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
         createMemberIfNotExists(room.getId(), creatorId, ChatRoomMemberRole.CREATOR);
 
         afterCommitExecutor.execute(() -> {
-            chatCacheEvictor.evictRoomListByUser(brandId);
-            chatCacheEvictor.evictRoomListByUser(creatorId);
+            cacheInvalidationService.invalidateAfterRoomCreated(brandId, creatorId);
         });
 
         return room;

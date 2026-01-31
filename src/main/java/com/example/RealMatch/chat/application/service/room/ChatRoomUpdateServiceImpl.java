@@ -8,7 +8,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.chat.application.cache.ChatCacheEvictor;
+import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
@@ -28,7 +28,7 @@ public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final AfterCommitExecutor afterCommitExecutor;
-    private final ChatCacheEvictor chatCacheEvictor;
+    private final ChatCacheInvalidationService cacheInvalidationService;
 
     @Override
     @Transactional
@@ -65,9 +65,9 @@ public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
         LOG.debug("Chat room proposal status updated. roomId={}, status={}", room.getId(), status);
 
         afterCommitExecutor.execute(() -> {
-            chatCacheEvictor.evictRoomDetailByRoom(room.getId());
-            chatCacheEvictor.evictRoomListByUser(brandUserId);
-            chatCacheEvictor.evictRoomListByUser(creatorUserId);
+            cacheInvalidationService.invalidateAfterProposalStatusChanged(
+                    room.getId(), brandUserId, creatorUserId
+            );
         });
     }
 }
