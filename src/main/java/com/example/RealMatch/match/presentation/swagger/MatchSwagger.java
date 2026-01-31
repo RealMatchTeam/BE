@@ -2,10 +2,11 @@ package com.example.RealMatch.match.presentation.swagger;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.match.domain.entity.enums.CategoryType;
 import com.example.RealMatch.match.domain.entity.enums.SortType;
@@ -94,7 +95,7 @@ public interface MatchSwagger {
 
     @Operation(summary = "매칭 브랜드 목록 조회",
             description = """
-                    사용자 ID를 기반으로 매칭률이 높은 브랜드 목록을 조회합니다.
+                    JWT 토큰의 사용자 ID를 기반으로 매칭률이 높은 브랜드 목록을 조회합니다.
                     정렬 옵션: MATCH_SCORE(매칭률 순), POPULARITY(인기순), NEWEST(신규순)
                     카테고리 필터: ALL(전체), FASHION(패션), BEAUTY(뷰티)
                     태그 필터: 뷰티/패션 관련 태그로 필터링
@@ -103,14 +104,14 @@ public interface MatchSwagger {
             @ApiResponse(responseCode = "200", description = "브랜드 목록 조회 성공")
     })
     CustomResponse<MatchBrandResponseDto> getMatchingBrands(
-            @Parameter(description = "사용자 ID") @PathVariable String userId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
             @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
             @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
 
     @Operation(summary = "매칭 캠페인 목록 조회",
             description = """
-                    사용자 ID를 기반으로 매칭률이 높은 캠페인 목록을 조회합니다.
+                    JWT 토큰의 사용자 ID를 기반으로 매칭률이 높은 캠페인 목록을 조회합니다.
                     정렬 옵션: MATCH_SCORE(매칭률 순), POPULARITY(인기순), NEWEST(신규순)
                     카테고리 필터: ALL(전체), FASHION(패션), BEAUTY(뷰티)
                     태그 필터: 뷰티/패션 관련 태그로 필터링
@@ -119,7 +120,7 @@ public interface MatchSwagger {
             @ApiResponse(responseCode = "200", description = "캠페인 목록 조회 성공")
     })
     CustomResponse<MatchCampaignResponseDto> getMatchingCampaigns(
-            @Parameter(description = "사용자 ID") @PathVariable String userId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
             @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
             @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
