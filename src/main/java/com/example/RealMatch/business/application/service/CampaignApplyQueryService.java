@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class CampaignApplyQueryService {
     private final CampaignApplyRepository campaignApplyRepository;
 
-    public CampaignApplyDetailResponse getMyApplyCampainDetails(Long campaignId, Long userId) {
+    public CampaignApplyDetailResponse getMyApplyCampaignDetails(Long campaignId, Long userId) {
         CampaignApply apply = campaignApplyRepository
                 .findByCampaignIdAndUserId(campaignId, userId)
                 .orElseThrow(() ->
