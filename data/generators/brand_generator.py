@@ -1,8 +1,50 @@
+import random
 from datetime import datetime, timedelta
 from .base_generator import BaseGenerator
 
 
 class BrandGenerator(BaseGenerator):
+    # 한국어 브랜드명 템플릿
+    FASHION_BRAND_NAMES = [
+        "스타일리시", "어반룩", "모던웨어", "트렌디샵", "패션포인트",
+        "엘레강스", "시크스타일", "뉴웨이브", "클래식룩", "프리미엄웨어",
+        "스트릿패션", "캐주얼하우스", "럭셔리룩", "빈티지스타일", "유니크웨어",
+        "심플리즘", "오가닉패션", "네오클래식", "모던시크", "퓨어스타일"
+    ]
+
+    BEAUTY_BRAND_NAMES = [
+        "글로우뷰티", "스킨랩", "퓨어코스메틱", "뷰티플러스", "네이처글로우",
+        "클린뷰티", "에센셜케어", "블루밍스킨", "데일리뷰티", "프레시룩",
+        "아로마틱", "오가닉스킨", "비건뷰티", "글래머러스", "샤이닝스킨",
+        "뷰티랩", "코스메틱존", "스킨포커스", "내추럴글로우", "프리미엄스킨"
+    ]
+
+    SIMPLE_INTROS = [
+        "트렌디하고 감각적인 스타일을 제안합니다",
+        "자연에서 영감을 받은 순수한 아름다움",
+        "당신만의 특별한 스타일을 완성하세요",
+        "품질과 스타일의 완벽한 조화",
+        "일상을 특별하게 만드는 브랜드",
+        "감각적인 디자인과 편안한 착용감",
+        "세련된 감성과 실용성의 만남",
+        "당신의 아름다움을 빛나게 합니다",
+        "프리미엄 품질로 완성된 라이프스타일",
+        "자신감을 높여주는 특별한 경험"
+    ]
+
+    DETAIL_INTROS = [
+        "안녕하세요, 저희 브랜드는 고객님의 일상에 특별함을 더하기 위해 탄생했습니다. 최고 품질의 원료와 정성을 담아 제품을 만들고 있으며, 트렌드를 선도하는 디자인과 실용성을 동시에 추구합니다. 고객님의 만족이 저희의 최우선 가치입니다.",
+        "저희는 지속 가능한 패션과 뷰티를 추구합니다. 환경을 생각하는 친환경 소재와 윤리적인 생산 방식을 통해 제품을 만들며, 고객님께 건강하고 아름다운 라이프스타일을 제안합니다. 자연과 함께하는 아름다움을 경험해 보세요.",
+        "20년 이상의 노하우를 바탕으로 고품질 제품을 선보이고 있습니다. 전문 연구진의 끊임없는 연구와 개발을 통해 고객님께 최상의 결과를 드리기 위해 노력합니다. 신뢰할 수 있는 브랜드로서 함께 성장해 나가겠습니다.",
+        "젊고 역동적인 감성을 담은 브랜드입니다. MZ세대의 취향을 반영한 트렌디한 디자인과 합리적인 가격대로 많은 사랑을 받고 있습니다. SNS에서 화제가 되는 핫한 아이템들을 만나보세요.",
+        "클래식한 우아함과 현대적인 감각을 결합한 프리미엄 브랜드입니다. 섬세한 디테일과 고급스러운 소재로 특별한 순간을 더욱 빛나게 만들어 드립니다. 품격 있는 라이프스타일의 시작입니다.",
+        "자연에서 얻은 순수한 원료로 제품을 만듭니다. 피부에 부담 없이 사용할 수 있는 저자극 포뮬러와 비건 인증을 받은 제품들로 건강한 아름다움을 추구합니다. 자연 그대로의 아름다움을 담았습니다.",
+        "혁신적인 기술과 창의적인 디자인으로 새로운 트렌드를 만들어갑니다. 고객님의 다양한 니즈를 반영하여 맞춤형 솔루션을 제공하며, 언제나 한발 앞선 스타일을 제안합니다.",
+        "편안함과 스타일을 동시에 잡은 데일리 브랜드입니다. 일상에서 쉽게 활용할 수 있는 실용적인 아이템들과 합리적인 가격으로 많은 고객님들께 사랑받고 있습니다. 매일이 특별해지는 경험을 선사합니다.",
+        "글로벌 트렌드를 빠르게 반영하여 세련된 제품을 선보입니다. 해외 유명 디자이너들과의 콜라보레이션을 통해 독특하고 차별화된 스타일을 제안합니다. 세계적인 감각을 경험해 보세요.",
+        "고객님의 개성을 존중하는 브랜드입니다. 다양한 스타일과 옵션을 제공하여 자신만의 유니크한 룩을 완성할 수 있도록 도와드립니다. 나만의 스타일을 찾아보세요."
+    ]
+
     def generate_brands(self, count=20):
         print(f"\n[브랜드] {count}개의 브랜드 생성 중...")
 
@@ -19,14 +61,23 @@ class BrandGenerator(BaseGenerator):
         brands = []
         for i in range(min(count, len(user_ids))):
             industry = self.fake.random_element(industry_types)
-            brand_name = f"{self.fake.company()}" if industry == 'FASHION' else f"{self.fake.word().title()} Cosmetics"
+
+            # 한국어 브랜드명 생성
+            if industry == 'FASHION':
+                brand_name = random.choice(self.FASHION_BRAND_NAMES)
+            else:
+                brand_name = random.choice(self.BEAUTY_BRAND_NAMES)
+
+            # 한국어 소개글 생성
+            simple_intro = random.choice(self.SIMPLE_INTROS)
+            detail_intro = random.choice(self.DETAIL_INTROS)
 
             brand = {
                 'brand_name': brand_name,
                 'industry_type': industry,
                 'logo_url': f"https://api.dicebear.com/7.x/shapes/svg?seed={self.fake.uuid4()}",
-                'simple_intro': self.fake.catch_phrase()[:200],
-                'detail_intro': self.fake.text(max_nb_chars=500),
+                'simple_intro': simple_intro,
+                'detail_intro': detail_intro,
                 'homepage_url': self.fake.url(),
                 'matching_rate': self.fake.random_int(50, 100),
                 'user_id': user_ids[i],

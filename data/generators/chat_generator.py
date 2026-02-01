@@ -1,9 +1,49 @@
+import random
 import uuid
 from datetime import datetime, timedelta
 from .base_generator import BaseGenerator
 
 
 class ChatGenerator(BaseGenerator):
+    # 한국어 채팅 메시지 템플릿
+    CHAT_MESSAGES = [
+        # 인사/소개
+        "안녕하세요! 연락 감사합니다.",
+        "반갑습니다! 좋은 기회가 되길 바랍니다.",
+        "안녕하세요, 제안 주셔서 감사합니다!",
+        "연락 기다리고 있었어요!",
+        # 협업 관련
+        "캠페인 관련해서 문의드립니다.",
+        "제안해 주신 내용 검토해 봤어요.",
+        "협업 조건에 대해 상담 가능할까요?",
+        "일정 조율이 가능할까요?",
+        "촬영 일정 확인 부탁드립니다.",
+        "컨펌 부탁드릴게요!",
+        # 제품/콘텐츠 관련
+        "제품 받았습니다! 잘 확인했어요.",
+        "콘텐츠 초안 보내드렸습니다.",
+        "피드백 주시면 수정 반영하겠습니다.",
+        "수정본 확인해 주세요!",
+        "업로드 완료했습니다!",
+        # 긍정적 응답
+        "네, 좋습니다!",
+        "알겠습니다!",
+        "확인했습니다, 감사합니다.",
+        "좋은 제안이네요!",
+        "진행하면 될 것 같아요!",
+        # 질문
+        "혹시 리워드는 언제쯤 지급되나요?",
+        "제품 발송은 언제쯤 될까요?",
+        "콘텐츠 가이드라인이 있을까요?",
+        "업로드 기한이 어떻게 되나요?",
+        "추가 협찬 가능한가요?",
+        # 일반 대화
+        "네, 확인해 보고 다시 연락드릴게요.",
+        "잠시만요, 확인 중이에요.",
+        "말씀하신 대로 진행하겠습니다.",
+        "다음에 또 좋은 기회로 뵙겠습니다!",
+        "감사합니다, 좋은 하루 되세요!"
+    ]
 
     def _get_table_columns(self, table_name):
         """테이블 컬럼 목록 조회"""
@@ -204,9 +244,9 @@ class ChatGenerator(BaseGenerator):
                 if 'user_id' in columns:
                     data['user_id'] = self.fake.random_element(user_ids)
                 if 'content' in columns:
-                    data['content'] = self.fake.sentence()
+                    data['content'] = random.choice(self.CHAT_MESSAGES)
                 if 'message' in columns:
-                    data['message'] = self.fake.sentence()
+                    data['message'] = random.choice(self.CHAT_MESSAGES)
                 if 'message_type' in columns:
                     msg_types = self._get_enum_values('chat_message', 'message_type') or message_types
                     data['message_type'] = self.fake.random_element(msg_types)
