@@ -55,10 +55,10 @@ public class UserMatchingDetail extends BaseEntity {
     private String bodyShape;
 
     @Column(name = "upper_size")
-    private String upperSize;
+    private String topSize;
 
     @Column(name = "lower_size")
-    private String lowerSize;
+    private String bottomSize;
 
     @Column(name = "interest_fields")
     private String interestFields;
@@ -80,10 +80,10 @@ public class UserMatchingDetail extends BaseEntity {
     private String viewerAge;
 
     @Column(name = "video_length")
-    private String videoLength;
+    private String avgVideoLength;
 
     @Column(name = "views")
-    private String views;
+    private String avgViews;
 
     @Column(name = "content_formats")
     private String contentFormats;
@@ -109,8 +109,8 @@ public class UserMatchingDetail extends BaseEntity {
             String height,
             String weight,
             String bodyShape,
-            String upperSize,
-            String lowerSize,
+            String topSize,
+            String bottomSize,
             String interestFields,
             String interestStyles,
             String interestBrands,
@@ -120,8 +120,8 @@ public class UserMatchingDetail extends BaseEntity {
             String interestCategories,
             String interestFunctions,
             String snsUrl,
-            String videoLength,
-            String views,
+            String avgVideoLength,
+            String avgViews,
             String viewerGender,
             String viewerAge,
             String contentFormats,
@@ -135,8 +135,8 @@ public class UserMatchingDetail extends BaseEntity {
         this.height = height;
         this.weight = weight;
         this.bodyShape = bodyShape;
-        this.upperSize = upperSize;
-        this.lowerSize = lowerSize;
+        this.topSize = topSize;
+        this.bottomSize = bottomSize;
         this.interestFields = interestFields;
         this.interestStyles = interestStyles;
         this.interestBrands = interestBrands;
@@ -146,8 +146,8 @@ public class UserMatchingDetail extends BaseEntity {
         this.interestCategories = interestCategories;
         this.interestFunctions = interestFunctions;
         this.snsUrl = snsUrl;
-        this.videoLength = videoLength;
-        this.views = views;
+        this.avgVideoLength = avgVideoLength;
+        this.avgViews = avgViews;
         this.viewerGender = viewerGender;
         this.viewerAge = viewerAge;
         this.contentFormats = contentFormats;
@@ -194,8 +194,8 @@ public class UserMatchingDetail extends BaseEntity {
             String height,
             String weight,
             String bodyShape,
-            String upperSize,
-            String lowerSize,
+            String topSize,
+            String bottomSize,
             String interestFields,
             String interestStyles,
             String interestBrands
@@ -209,11 +209,11 @@ public class UserMatchingDetail extends BaseEntity {
         if (bodyShape != null) {
             this.bodyShape = bodyShape;
         }
-        if (upperSize != null) {
-            this.upperSize = upperSize;
+        if (topSize != null) {
+            this.topSize = topSize;
         }
-        if (lowerSize != null) {
-            this.lowerSize = lowerSize;
+        if (bottomSize != null) {
+            this.bottomSize = bottomSize;
         }
         if (interestFields != null) {
             this.interestFields = interestFields;
@@ -232,8 +232,8 @@ public class UserMatchingDetail extends BaseEntity {
     public void updateContentsFeatures(
             String viewerGender,
             String viewerAge,
-            String videoLength,
-            String views,
+            String avgVideoLength,
+            String avgViews,
             String contentFormats,
             String contentTones,
             String desiredInvolvement,
@@ -245,11 +245,11 @@ public class UserMatchingDetail extends BaseEntity {
         if (viewerAge != null) {
             this.viewerAge = viewerAge;
         }
-        if (videoLength != null) {
-            this.videoLength = videoLength;
+        if (avgVideoLength != null) {
+            this.avgVideoLength = avgVideoLength;
         }
-        if (views != null) {
-            this.views = views;
+        if (avgViews != null) {
+            this.avgViews = avgViews;
         }
         if (contentFormats != null) {
             this.contentFormats = contentFormats;

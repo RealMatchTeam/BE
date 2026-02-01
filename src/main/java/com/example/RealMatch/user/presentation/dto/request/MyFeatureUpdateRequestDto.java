@@ -32,7 +32,7 @@ public record MyFeatureUpdateRequestDto(
             String avgViews,
             List<String> contentFormats,
             List<String> contentTones,
-            String desiredInvolvement, // 중복 선택 가능?
-            String desiredUsageScope
+            List<String> desiredInvolvement,
+            List<String> desiredUsageScope
     ) {}
 }

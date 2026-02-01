@@ -1,17 +1,14 @@
 package com.example.RealMatch.user.application.service;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
-import com.example.RealMatch.tag.domain.entity.Tag;
-import com.example.RealMatch.tag.domain.entity.UserTag;
-import com.example.RealMatch.tag.domain.repository.UserTagRepository;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -28,30 +25,19 @@ import lombok.extern.slf4j.Slf4j;
 public class UserFeatureService {
 
     private final UserMatchingDetailRepository userMatchingDetailRepository;
-    private final UserTagRepository userTagRepository;
 
     public MyFeatureResponseDto getMyFeatures(Long userId) {
 
+        // UserMatchingDetail 조회
         UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        List<UserTag> userTags = userTagRepository.findAllByUserIdWithTag(userId);
+        log.info("사용자 프로필 조회 완료: userId={}", userId);
 
-        Map<String, Map<String, List<String>>> tagsByTypeAndCategory = userTags.stream()
-                .map(UserTag::getTag)
-                .collect(Collectors.groupingBy(
-                        Tag::getTagType,
-                        Collectors.groupingBy(
-                                Tag::getTagCategory,
-                                Collectors.mapping(Tag::getTagName, Collectors.toList())
-                        )
-                ));
-
-        log.info("사용자 프로필 조회 완료: userId={}, 태그 수={}", userId, userTags.size());
-
-        MyFeatureResponseDto.BeautyType beautyType = buildBeautyType(detail, tagsByTypeAndCategory.get("뷰티"));
-        MyFeatureResponseDto.FashionType fashionType = buildFashionType(detail, tagsByTypeAndCategory.get("패션"));
-        MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail, tagsByTypeAndCategory.get("콘텐츠"));
+        // 각 영역별로 데이터 존재 여부 확인 및 조회
+        MyFeatureResponseDto.BeautyType beautyType = buildBeautyType(detail);
+        MyFeatureResponseDto.FashionType fashionType = buildFashionType(detail);
+        MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail);
 
         return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
     }
@@ -66,71 +52,57 @@ public class UserFeatureService {
         UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        try {
-            // 뷰티 특성 업데이트
-            if (request.beautyType() != null) {
-                MyFeatureUpdateRequestDto.BeautyTypeUpdate beautyType = request.beautyType();
-                detail.updateBeautyFeatures(
-                        joinTagList(beautyType.skinType()),
-                        beautyType.skinBrightness(),
-                        joinTagList(beautyType.makeupStyle()),
-                        joinTagList(beautyType.interestCategories()),
-                        joinTagList(beautyType.interestFunctions())
-                );
-                log.debug("뷰티 특성 업데이트 완료: userId={}", userId);
-            }
-
-            // 패션 특성 업데이트
-            if (request.fashionType() != null) {
-                MyFeatureUpdateRequestDto.FashionTypeUpdate fashionType = request.fashionType();
-
-                // bodyStats 파싱 (예: "165cm/50kg" -> height, weight)
-                String height = null;
-                String weight = null;
-                if (fashionType.bodyStats() != null) {
-                    String[] stats = fashionType.bodyStats().split("/");
-                    if (stats.length == 2) {
-                        height = stats[0].trim();
-                        weight = stats[1].trim();
-                    }
-                }
-
-                detail.updateFashionFeatures(
-                        height,
-                        weight,
-                        fashionType.bodyShape(),
-                        fashionType.topSize(),
-                        fashionType.bottomSize(),
-                        joinTagList(fashionType.interestFields()),
-                        joinTagList(fashionType.interestStyles()),
-                        joinTagList(fashionType.interestBrands())
-                );
-                log.debug("패션 특성 업데이트 완료: userId={}", userId);
-            }
-
-            // 콘텐츠 특성 업데이트
-            if (request.contentsType() != null) {
-                MyFeatureUpdateRequestDto.ContentsTypeUpdate contentsType = request.contentsType();
-                detail.updateContentsFeatures(
-                        joinTagList(contentsType.viewerGender()),
-                        joinTagList(contentsType.viewerAge()),
-                        contentsType.avgVideoLength(),
-                        contentsType.avgViews(),
-                        joinTagList(contentsType.contentFormats()),
-                        joinTagList(contentsType.contentTones()),
-                        contentsType.desiredInvolvement(),
-                        contentsType.desiredUsageScope()
-                );
-                log.debug("콘텐츠 특성 업데이트 완료: userId={}", userId);
-            }
-
-            // JPA 더티 체킹으로 자동 저장
-            log.info("사용자 특성 정보 업데이트 완료: userId={}", userId);
-
-        } catch (Exception e) {
-            log.error("사용자 특성 정보 업데이트 실패: userId={}, error={}", userId, e.getMessage(), e);
-            throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
+        // 뷰티 특성 업데이트
+        if (request.beautyType() != null) {
+            MyFeatureUpdateRequestDto.BeautyTypeUpdate beautyType = request.beautyType();
+            detail.updateBeautyFeatures(
+                    joinTagList(beautyType.skinType()),
+                    beautyType.skinBrightness(),
+                    joinTagList(beautyType.makeupStyle()),
+                    joinTagList(beautyType.interestCategories()),
+                    joinTagList(beautyType.interestFunctions())
+            );
+            log.debug("뷰티 특성 업데이트 완료: userId={}", userId);
         }
+
+        // 패션 특성 업데이트
+        if (request.fashionType() != null) {
+            MyFeatureUpdateRequestDto.FashionTypeUpdate fashionType = request.fashionType();
+
+            // bodyStats 파싱 (예: "165cm/50kg" -> height, weight)
+            BodyStats bodyStats = parseBodyStats(fashionType.bodyStats());
+
+            detail.updateFashionFeatures(
+                    bodyStats.height(),
+                    bodyStats.weight(),
+                    fashionType.bodyShape(),
+                    fashionType.topSize(),
+                    fashionType.bottomSize(),
+                    joinTagList(fashionType.interestFields()),
+                    joinTagList(fashionType.interestStyles()),
+                    joinTagList(fashionType.interestBrands())
+            );
+            log.debug("패션 특성 업데이트 완료: userId={}", userId);
+        }
+
+        // 콘텐츠 특성 업데이트
+        if (request.contentsType() != null) {
+            MyFeatureUpdateRequestDto.ContentsTypeUpdate contentsType = request.contentsType();
+            detail.updateContentsFeatures(
+                    joinTagList(contentsType.viewerGender()),
+                    joinTagList(contentsType.viewerAge()),
+                    contentsType.avgVideoLength(),
+                    contentsType.avgViews(),
+                    joinTagList(contentsType.contentFormats()),
+                    joinTagList(contentsType.contentTones()),
+                    joinTagList(contentsType.desiredInvolvement()),
+                    joinTagList(contentsType.desiredUsageScope())
+            );
+            log.debug("콘텐츠 특성 업데이트 완료: userId={}", userId);
+        }
+
+        // JPA 더티 체킹으로 자동 저장
+        log.info("사용자 특성 정보 업데이트 완료: userId={}", userId);
     }
 
     private MyFeatureResponseDto.BeautyType buildBeautyType(UserMatchingDetail detail) {
@@ -138,68 +110,95 @@ public class UserFeatureService {
         if (detail.getSkinType() == null && detail.getSkinBrightness() == null
                 && detail.getMakeupStyle() == null) {
             log.warn("뷰티 프로필 정보 없음: userId={}", detail.getUserId());
-            return null;
+            return null;  // 또는 예외를 던지거나, 빈 객체 반환
         }
 
-        log.info("뷰티 프로필 조회 - userId={}, 태그 카테고리: {}", detail.getUserId(), tags.keySet());
+        log.info("뷰티 프로필 조회 - 피부타입: {}, 메이크업스타일: {}, 관심카테고리: {}",
+                detail.getSkinType(), detail.getMakeupStyle(), detail.getInterestCategories());
 
         return new MyFeatureResponseDto.BeautyType(
-                getTagsOrEmpty(tags, "피부타입"),
-                detail.getSkinBrightness(),
-                getTagsOrEmpty(tags, "메이크업스타일"),
-                getTagsOrEmpty(tags, "관심카테고리"),
-                getTagsOrEmpty(tags, "관심기능")
+                parseTagString(detail.getSkinType()),           // 피부타입
+                detail.getSkinBrightness(),                     // 피부 밝기
+                parseTagString(detail.getMakeupStyle()),        // 메이크업 스타일
+                parseTagString(detail.getInterestCategories()), // 관심 카테고리
+                parseTagString(detail.getInterestFunctions())   // 관심 기능
         );
     }
 
-    private MyFeatureResponseDto.FashionType buildFashionType(UserMatchingDetail detail, Map<String, List<String>> tagsByCategory) {
-        Map<String, List<String>> tags = tagsByCategory != null ? tagsByCategory : Collections.emptyMap();
-
+    private MyFeatureResponseDto.FashionType buildFashionType(UserMatchingDetail detail) {
+        // 패션 데이터가 있는지 확인
         if (detail.getHeight() == null && detail.getWeight() == null
-                && detail.getBodyShape() == null && tags.isEmpty()) {
+                && detail.getBodyShape() == null) {
             log.warn("패션 프로필 정보 없음: userId={}", detail.getUserId());
             return null;
         }
 
-        log.info("패션 프로필 조회 - 키/몸무게: {}/{}, 체형: {}, 태그 카테고리: {}",
-                detail.getHeight(), detail.getWeight(), detail.getBodyShape(), tags.keySet());
+        log.info("패션 프로필 조회 - 키/몸무게: {}/{}, 체형: {}, 관심분야: {}",
+                detail.getHeight(), detail.getWeight(), detail.getBodyShape(), detail.getInterestFields());
 
         return new MyFeatureResponseDto.FashionType(
-                detail.getHeight() + "/" + detail.getWeight(),
-                detail.getBodyShape(),
-                detail.getUpperSize(),
-                detail.getLowerSize(),
-                getTagsOrEmpty(tags, "관심분야"),
-                getTagsOrEmpty(tags, "관심스타일"),
-                getTagsOrEmpty(tags, "관심브랜드")
+                detail.getHeight() + "/" + detail.getWeight(),  // 키/몸무게
+                detail.getBodyShape(),                          // 체형
+                detail.getUpperSize(),                          // 상의 사이즈
+                detail.getLowerSize(),                          // 하의 사이즈
+                parseTagString(detail.getInterestFields()),     // 관심분야
+                parseTagString(detail.getInterestStyles()),     // 관심스타일
+                parseTagString(detail.getInterestBrands())      // 관심브랜드
         );
     }
 
-    private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail, Map<String, List<String>> tagsByCategory) {
-        Map<String, List<String>> tags = tagsByCategory != null ? tagsByCategory : Collections.emptyMap();
-
-        if (detail.getVideoLength() == null && detail.getViews() == null && tags.isEmpty()) {
+    private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail) {
+        // 콘텐츠 데이터가 있는지 확인
+        if (detail.getViewerGender() == null && detail.getVideoLength() == null
+                && detail.getViews() == null) {
             log.warn("콘텐츠 프로필 정보 없음: userId={}", detail.getUserId());
             return null;
         }
 
-        log.info("콘텐츠 프로필 조회 - 영상길이: {}, 조회수: {}, 태그 카테고리: {}",
-                detail.getVideoLength(), detail.getViews(), tags.keySet());
+        log.info("콘텐츠 프로필 조회 - 시청자성별: {}, 콘텐츠형식: {}, 콘텐츠톤: {}",
+                detail.getViewerGender(), detail.getContentFormats(), detail.getContentTones());
 
         return new MyFeatureResponseDto.ContentsType(
-                getTagsOrEmpty(tags, "시청자성별"),
-                getTagsOrEmpty(tags, "시청자연령대"),
-                detail.getVideoLength(),
-                detail.getViews(),
-                getTagsOrEmpty(tags, "콘텐츠형식"),
-                getTagsOrEmpty(tags, "콘텐츠톤"),
-                detail.getDesiredInvolvement(),
-                detail.getDesiredUsageScope()
+                parseTagString(detail.getViewerGender()),      // 시청자 성별
+                parseTagString(detail.getViewerAge()),         // 시청자 연령대
+                detail.getVideoLength(),                       // 영상 길이
+                detail.getViews(),                             // 조회수
+                parseTagString(detail.getContentFormats()),    // 콘텐츠 형식
+                parseTagString(detail.getContentTones()),      // 콘텐츠 톤
+                detail.getDesiredInvolvement(),                // 원하는 관여도
+                detail.getDesiredUsageScope()                  // 원하는 활용 범위
         );
     }
 
-    private List<String> getTagsOrEmpty(Map<String, List<String>> tags, String category) {
-        return tags.getOrDefault(category, Collections.emptyList());
+    /**
+     * bodyStats 파싱 (예: "165cm/50kg" -> height, weight)
+     */
+    private BodyStats parseBodyStats(String bodyStats) {
+        if (bodyStats == null) {
+            return new BodyStats(null, null);
+        }
+
+        String[] stats = bodyStats.split("/");
+        if (stats.length == 2) {
+            return new BodyStats(stats[0].trim(), stats[1].trim());
+        }
+
+        return new BodyStats(null, null);
+    }
+
+    /**
+     * 쉼표로 구분된 문자열을 List로 변환
+     * 예: "스킨케어,메이크업,향수" -> ["스킨케어", "메이크업", "향수"]
+     */
+    private List<String> parseTagString(String tagString) {
+        if (tagString == null || tagString.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(tagString.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**
@@ -216,4 +215,9 @@ public class UserFeatureService {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.joining(","));
     }
+
+    /**
+     * Internal record for body stats parsing result
+     */
+    private record BodyStats(String height, String weight) {}
 }
