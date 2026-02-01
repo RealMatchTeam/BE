@@ -28,31 +28,29 @@ public class AttachmentUrlService {
         if (attachment == null || attachment.getStatus() != AttachmentStatus.READY) {
             return null;
         }
-        if (!s3FileUploadService.isAvailable()) {
-            throw new CustomException(AttachmentErrorCode.STORAGE_UNAVAILABLE);
-        }
-
         String storageKey = attachment.getStorageKey();
         if (storageKey == null || storageKey.isBlank()) {
             LOG.error("READY 상태인데 storageKey가 없습니다. attachmentId={}", attachment.getId());
             return null;
         }
-        try {
-            return getAccessUrl(storageKey);
-        } catch (Exception e) {
-            LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}",
-                    attachment.getId(), storageKey, e);
-            return null;
-        }
+        return getAccessUrl(storageKey);
     }
 
     public String getAccessUrl(String storageKey) {
         if (storageKey == null || storageKey.isBlank()) {
             return null;
         }
-        return s3FileUploadService.generatePresignedUrl(
-                storageKey,
-                s3Properties.getPresignedUrlExpirationSeconds()
-        );
+        if (!s3FileUploadService.isAvailable()) {
+            throw new CustomException(AttachmentErrorCode.STORAGE_UNAVAILABLE);
+        }
+        try {
+            return s3FileUploadService.generatePresignedUrl(
+                    storageKey,
+                    s3Properties.getPresignedUrlExpirationSeconds()
+            );
+        } catch (Exception e) {
+            LOG.warn("Presigned URL 생성 실패. s3Key={}", storageKey, e);
+            return null;
+        }
     }
 }
