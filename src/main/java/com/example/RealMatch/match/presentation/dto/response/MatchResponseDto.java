@@ -33,6 +33,7 @@ public class MatchResponseDto {
     public static class BrandDto {
         private Long brandId;
         private String brandName;
+        private String logoUrl;
         private Integer matchingRatio;
     }
 }

@@ -76,8 +76,15 @@ public class MatchServiceImpl implements MatchService {
         List<String> typeTag = determineTypeTags(userDoc);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
+
+        List<Long> brandIds = brandResults.stream()
+                .map(result -> result.brandDoc().getBrandId())
+                .toList();
+        Map<Long, Brand> brandMap = brandRepository.findAllById(brandIds).stream()
+                .collect(Collectors.toMap(Brand::getId, brand -> brand));
+
         List<BrandDto> matchedBrands = brandResults.stream()
-                .map(this::toBrandDto)
+                .map(result -> toBrandDto(result, brandMap.get(result.brandDoc().getBrandId())))
                 .toList();
 
         HighMatchingBrandListDto brandListDto = HighMatchingBrandListDto.builder()
@@ -592,10 +599,11 @@ public class MatchServiceImpl implements MatchService {
                 .build();
     }
 
-    private BrandDto toBrandDto(BrandMatchResult result) {
+    private BrandDto toBrandDto(BrandMatchResult result, Brand brand) {
         return BrandDto.builder()
                 .brandId(result.brandDoc().getBrandId())
                 .brandName(result.brandDoc().getBrandName())
+                .logoUrl(brand != null ? brand.getLogoUrl() : null)
                 .matchingRatio(result.matchScore())
                 .build();
     }
