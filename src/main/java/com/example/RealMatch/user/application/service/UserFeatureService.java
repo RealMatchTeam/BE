@@ -139,8 +139,8 @@ public class UserFeatureService {
         return new MyFeatureResponseDto.FashionType(
                 detail.getHeight() + "/" + detail.getWeight(),  // 키/몸무게
                 detail.getBodyShape(),                          // 체형
-                detail.getUpperSize(),                          // 상의 사이즈
-                detail.getLowerSize(),                          // 하의 사이즈
+                detail.getTopSize(),                          // 상의 사이즈
+                detail.getBottomSize(),                          // 하의 사이즈
                 parseTagString(detail.getInterestFields()),     // 관심분야
                 parseTagString(detail.getInterestStyles()),     // 관심스타일
                 parseTagString(detail.getInterestBrands())      // 관심브랜드
@@ -149,8 +149,8 @@ public class UserFeatureService {
 
     private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail) {
         // 콘텐츠 데이터가 있는지 확인
-        if (detail.getViewerGender() == null && detail.getVideoLength() == null
-                && detail.getViews() == null) {
+        if (detail.getViewerGender() == null && detail.getAvgVideoLength() == null
+                && detail.getAvgViews() == null) {
             log.warn("콘텐츠 프로필 정보 없음: userId={}", detail.getUserId());
             return null;
         }
@@ -161,8 +161,8 @@ public class UserFeatureService {
         return new MyFeatureResponseDto.ContentsType(
                 parseTagString(detail.getViewerGender()),      // 시청자 성별
                 parseTagString(detail.getViewerAge()),         // 시청자 연령대
-                detail.getVideoLength(),                       // 영상 길이
-                detail.getViews(),                             // 조회수
+                detail.getAvgVideoLength(),                    // 영상 길이
+                detail.getAvgViews(),                          // 조회수
                 parseTagString(detail.getContentFormats()),    // 콘텐츠 형식
                 parseTagString(detail.getContentTones()),      // 콘텐츠 톤
                 detail.getDesiredInvolvement(),                // 원하는 관여도
