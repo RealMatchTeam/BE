@@ -69,10 +69,8 @@ public class MatchServiceImpl implements MatchService {
     // ******* //
     @Override
     @Transactional
-    public MatchResponseDto match(MatchRequestDto requestDto) {
-        Long userId = Long.parseLong(requestDto.getUserId());
-
-        UserTagDocument userDoc = convertToUserTagDocument(requestDto);
+    public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
+        UserTagDocument userDoc = convertToUserTagDocument(userId, requestDto);
 
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
@@ -137,94 +135,112 @@ public class MatchServiceImpl implements MatchService {
     }
 
     // Request -> Redis Document Converter
-    private UserTagDocument convertToUserTagDocument(MatchRequestDto dto) {
-        Set<String> fashionTags = new HashSet<>();
-        Set<String> beautyTags = new HashSet<>();
-        Set<String> contentTags = new HashSet<>();
+    private UserTagDocument convertToUserTagDocument(Long userId, MatchRequestDto dto) {
+        Set<Integer> fashionTags = new HashSet<>();
+        Set<Integer> beautyTags = new HashSet<>();
+        Set<Integer> contentTags = new HashSet<>();
 
+        // Fashion 태그 수집
         if (dto.getFashion() != null) {
-            if (dto.getFashion().getStyles() != null) {
-                fashionTags.addAll(dto.getFashion().getStyles());
+            if (dto.getFashion().getInterestStyleTags() != null) {
+                fashionTags.addAll(dto.getFashion().getInterestStyleTags());
             }
-            if (dto.getFashion().getItems() != null) {
-                fashionTags.addAll(dto.getFashion().getItems());
+            if (dto.getFashion().getPreferredItemTags() != null) {
+                fashionTags.addAll(dto.getFashion().getPreferredItemTags());
+            }
+            if (dto.getFashion().getPreferredBrandTags() != null) {
+                fashionTags.addAll(dto.getFashion().getPreferredBrandTags());
             }
         }
 
+        // Beauty 태그 수집
         if (dto.getBeauty() != null) {
-            if (dto.getBeauty().getInterests() != null) {
-                beautyTags.addAll(dto.getBeauty().getInterests());
+            if (dto.getBeauty().getInterestStyleTags() != null) {
+                beautyTags.addAll(dto.getBeauty().getInterestStyleTags());
             }
-            if (dto.getBeauty().getFunctions() != null) {
-                beautyTags.addAll(dto.getBeauty().getFunctions());
+            if (dto.getBeauty().getPrefferedFunctionTags() != null) {
+                beautyTags.addAll(dto.getBeauty().getPrefferedFunctionTags());
             }
-            if (dto.getBeauty().getSkinType() != null) {
-                beautyTags.add(dto.getBeauty().getSkinType());
+            if (dto.getBeauty().getSkinTypeTags() != null) {
+                beautyTags.add(dto.getBeauty().getSkinTypeTags());
             }
-            if (dto.getBeauty().getMakeupStyle() != null) {
-                beautyTags.add(dto.getBeauty().getMakeupStyle());
+            if (dto.getBeauty().getSkinToneTags() != null) {
+                beautyTags.add(dto.getBeauty().getSkinToneTags());
             }
-        }
-
-        if (dto.getSns() != null && dto.getSns().getContentStyle() != null) {
-            MatchRequestDto.ContentStyleDto contentStyle = dto.getSns().getContentStyle();
-            if (contentStyle.getFormat() != null) {
-                contentTags.add(contentStyle.getFormat());
-            }
-            if (contentStyle.getType() != null) {
-                contentTags.add(contentStyle.getType());
+            if (dto.getBeauty().getMakeupStyleTags() != null) {
+                beautyTags.add(dto.getBeauty().getMakeupStyleTags());
             }
         }
 
-        String topSize = null;
-        String bottomSize = null;
-        if (dto.getSize() != null) {
-            if (dto.getSize().getUpper() != null) {
-                topSize = String.valueOf(dto.getSize().getUpper());
+        // Content 태그 수집
+        if (dto.getContent() != null) {
+            if (dto.getContent().getTypeTags() != null) {
+                contentTags.addAll(dto.getContent().getTypeTags());
             }
-            if (dto.getSize().getBottom() != null) {
-                bottomSize = String.valueOf(dto.getSize().getBottom());
+            if (dto.getContent().getToneTags() != null) {
+                contentTags.addAll(dto.getContent().getToneTags());
             }
-        }
-
-        Long avgViews = null;
-        if (dto.getSns() != null && dto.getSns().getContentStyle() != null
-                && dto.getSns().getContentStyle().getAvgViews() != null) {
-            try {
-                avgViews = Long.parseLong(dto.getSns().getContentStyle().getAvgViews().replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException e) {
-                LOG.debug("Could not parse avgViews: {}", dto.getSns().getContentStyle().getAvgViews());
+            if (dto.getContent().getPrefferedInvolvementTags() != null) {
+                contentTags.addAll(dto.getContent().getPrefferedInvolvementTags());
+            }
+            if (dto.getContent().getPrefferedCoverageTags() != null) {
+                contentTags.addAll(dto.getContent().getPrefferedCoverageTags());
             }
         }
 
-        Set<String> contentsAge = new HashSet<>();
-        Set<String> contentsGender = new HashSet<>();
-        if (dto.getSns() != null && dto.getSns().getMainAudience() != null) {
-            if (dto.getSns().getMainAudience().getAge() != null) {
-                contentsAge.addAll(dto.getSns().getMainAudience().getAge());
-            }
-            if (dto.getSns().getMainAudience().getSex() != null) {
-                contentsGender.addAll(dto.getSns().getMainAudience().getSex());
-            }
+        // Fashion 관련 필드
+        Integer heightTag = null;
+        Integer bodyTypeTag = null;
+        Integer topSizeTag = null;
+        Integer bottomSizeTag = null;
+        if (dto.getFashion() != null) {
+            heightTag = dto.getFashion().getHeightTag();
+            bodyTypeTag = dto.getFashion().getWeightTypeTag();
+            topSizeTag = dto.getFashion().getTopSizeTag();
+            bottomSizeTag = dto.getFashion().getBottomSizeTag();
         }
 
-        String contentsLength = null;
-        if (dto.getSns() != null && dto.getSns().getContentStyle() != null) {
-            contentsLength = dto.getSns().getContentStyle().getAvgVideoLength();
+        // Content SNS 관련 필드
+        Set<Integer> contentsAgeTags = new HashSet<>();
+        Set<Integer> contentsGenderTags = new HashSet<>();
+        Set<Integer> contentsLengthTags = new HashSet<>();
+        Set<Integer> averageContentsViewsTags = new HashSet<>();
+
+        if (dto.getContent() != null && dto.getContent().getSns() != null) {
+            MatchRequestDto.SnsDto sns = dto.getContent().getSns();
+
+            if (sns.getMainAudience() != null) {
+                if (sns.getMainAudience().getAgeTags() != null) {
+                    contentsAgeTags.addAll(sns.getMainAudience().getAgeTags());
+                }
+                if (sns.getMainAudience().getGenderTags() != null) {
+                    contentsGenderTags.addAll(sns.getMainAudience().getGenderTags());
+                }
+            }
+
+            if (sns.getAverageAudience() != null) {
+                if (sns.getAverageAudience().getVideoLengthTags() != null) {
+                    contentsLengthTags.addAll(sns.getAverageAudience().getVideoLengthTags());
+                }
+                if (sns.getAverageAudience().getVideoViewsTags() != null) {
+                    averageContentsViewsTags.addAll(sns.getAverageAudience().getVideoViewsTags());
+                }
+            }
         }
 
         return UserTagDocument.builder()
-                .userId(Long.parseLong(dto.getUserId()))
+                .userId(userId)
                 .fashionTags(fashionTags)
                 .beautyTags(beautyTags)
                 .contentTags(contentTags)
-                .height(dto.getHeight())
-                .topSize(topSize)
-                .bottomSize(bottomSize)
-                .averageContentsViews(avgViews)
-                .contentsAge(contentsAge)
-                .contentsGender(contentsGender)
-                .contentsLength(contentsLength)
+                .heightTag(heightTag)
+                .bodyTypeTag(bodyTypeTag)
+                .topSizeTag(topSizeTag)
+                .bottomSizeTag(bottomSizeTag)
+                .averageContentsViewsTags(averageContentsViewsTags)
+                .contentsAgeTags(contentsAgeTags)
+                .contentsGenderTags(contentsGenderTags)
+                .contentsLengthTags(contentsLengthTags)
                 .build();
     }
 
@@ -397,14 +413,23 @@ public class MatchServiceImpl implements MatchService {
         if (filterTags == null || filterTags.isEmpty()) {
             return true;
         }
-        Set<String> allTags = new HashSet<>();
+        Set<Integer> allTags = new HashSet<>();
         if (brandDoc.getPreferredFashionTags() != null) {
             allTags.addAll(brandDoc.getPreferredFashionTags());
         }
         if (brandDoc.getPreferredBeautyTags() != null) {
             allTags.addAll(brandDoc.getPreferredBeautyTags());
         }
-        return filterTags.stream().anyMatch(allTags::contains);
+        return filterTags.stream()
+                .map(tag -> {
+                    try {
+                        return Integer.parseInt(tag);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .filter(tag -> tag != null)
+                .anyMatch(allTags::contains);
     }
 
     private boolean filterByCategoryCampaign(CampaignTagDocument campaignDoc, CategoryType category) {
@@ -422,14 +447,23 @@ public class MatchServiceImpl implements MatchService {
         if (filterTags == null || filterTags.isEmpty()) {
             return true;
         }
-        Set<String> allTags = new HashSet<>();
+        Set<Integer> allTags = new HashSet<>();
         if (campaignDoc.getPreferredFashionTags() != null) {
             allTags.addAll(campaignDoc.getPreferredFashionTags());
         }
         if (campaignDoc.getPreferredBeautyTags() != null) {
             allTags.addAll(campaignDoc.getPreferredBeautyTags());
         }
-        return filterTags.stream().anyMatch(allTags::contains);
+        return filterTags.stream()
+                .map(tag -> {
+                    try {
+                        return Integer.parseInt(tag);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .filter(tag -> tag != null)
+                .anyMatch(allTags::contains);
     }
 
     // ************* //
@@ -531,7 +565,7 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private MatchBrandResponseDto.BrandDto toMatchBrandDto(BrandMatchResult result) {
-        List<String> tags = new ArrayList<>();
+        List<Integer> tags = new ArrayList<>();
         if (result.brandDoc().getPreferredFashionTags() != null) {
             tags.addAll(result.brandDoc().getPreferredFashionTags());
         }
@@ -545,7 +579,7 @@ public class MatchServiceImpl implements MatchService {
                 .brandMatchingRatio(result.matchScore())
                 .brandIsLiked(result.isLiked())
                 .brandIsRecruiting(result.isRecruiting())
-                .brandTags(tags.stream().limit(3).toList())
+                .brandTags(tags.stream().limit(3).map(String::valueOf).toList())
                 .build();
     }
 
