@@ -104,30 +104,44 @@ public class MatchServiceImpl implements MatchService {
 
         for (BrandMatchResult result : brandResults) {
             Long brandId = result.brandDoc().getBrandId();
-            if (!matchBrandHistoryRepository.existsByUserIdAndBrandId(userId, brandId)) {
-                Brand brand = brandRepository.findById(brandId).orElse(null);
-                if (brand != null) {
-                    MatchBrandHistory history = MatchBrandHistory.builder()
-                            .user(user)
-                            .brand(brand)
-                            .build();
-                    matchBrandHistoryRepository.save(history);
-                }
-            }
+            Long matchingRatio = (long) result.matchScore();
+
+            matchBrandHistoryRepository.findByUserIdAndBrandId(userId, brandId)
+                    .ifPresentOrElse(
+                            history -> history.updateMatchingRatio(matchingRatio),
+                            () -> {
+                                Brand brand = brandRepository.findById(brandId).orElse(null);
+                                if (brand != null) {
+                                    MatchBrandHistory history = MatchBrandHistory.builder()
+                                            .user(user)
+                                            .brand(brand)
+                                            .matchingRatio(matchingRatio)
+                                            .build();
+                                    matchBrandHistoryRepository.save(history);
+                                }
+                            }
+                    );
         }
 
         for (CampaignMatchResult result : campaignResults) {
             Long campaignId = result.campaignDoc().getCampaignId();
-            if (!matchCampaignHistoryRepository.existsByUserIdAndCampaignId(userId, campaignId)) {
-                Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
-                if (campaign != null) {
-                    MatchCampaignHistory history = MatchCampaignHistory.builder()
-                            .user(user)
-                            .campaign(campaign)
-                            .build();
-                    matchCampaignHistoryRepository.save(history);
-                }
-            }
+            Long matchingRatio = (long) result.matchScore();
+
+            matchCampaignHistoryRepository.findByUserIdAndCampaignId(userId, campaignId)
+                    .ifPresentOrElse(
+                            history -> history.updateMatchingRatio(matchingRatio),
+                            () -> {
+                                Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
+                                if (campaign != null) {
+                                    MatchCampaignHistory history = MatchCampaignHistory.builder()
+                                            .user(user)
+                                            .campaign(campaign)
+                                            .matchingRatio(matchingRatio)
+                                            .build();
+                                    matchCampaignHistoryRepository.save(history);
+                                }
+                            }
+                    );
         }
 
         LOG.info("Match history saved. userId={}, brands={}, campaigns={}",

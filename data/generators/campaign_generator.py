@@ -10,8 +10,15 @@ class CampaignGenerator(BaseGenerator):
             cursor.execute("SELECT id FROM users WHERE role = 'BRAND'")
             user_ids = [row['id'] for row in cursor.fetchall()]
 
+            cursor.execute("SELECT id FROM brand")
+            brand_ids = [row['id'] for row in cursor.fetchall()]
+
         if not user_ids:
             print("[경고] BRAND 역할의 사용자가 없습니다.")
+            return
+
+        if not brand_ids:
+            print("[경고] 브랜드가 없습니다.")
             return
 
         campaigns = []
@@ -34,6 +41,7 @@ class CampaignGenerator(BaseGenerator):
                 'recruit_start_date': recruit_start,
                 'recruit_end_date': recruit_end,
                 'quota': self.fake.random_int(5, 30),
+                'brand_id': self.fake.random_element(brand_ids),
                 'created_by': self.fake.random_element(user_ids),
                 'is_deleted': False,
                 'created_at': datetime.now() - timedelta(days=self.fake.random_int(10, 60)),
@@ -45,11 +53,11 @@ class CampaignGenerator(BaseGenerator):
             INSERT INTO campaign (title, description, preferred_skills, schedule,
                                   video_spec, product, reward_amount, start_date,
                                   end_date, recruit_start_date, recruit_end_date,
-                                  quota, created_by, is_deleted, created_at, updated_at)
+                                  quota, brand_id, created_by, is_deleted, created_at, updated_at)
             VALUES (%(title)s, %(description)s, %(preferred_skills)s, %(schedule)s,
                     %(video_spec)s, %(product)s, %(reward_amount)s, %(start_date)s,
                     %(end_date)s, %(recruit_start_date)s, %(recruit_end_date)s,
-                    %(quota)s, %(created_by)s, %(is_deleted)s, %(created_at)s, %(updated_at)s)
+                    %(quota)s, %(brand_id)s, %(created_by)s, %(is_deleted)s, %(created_at)s, %(updated_at)s)
         """
         self.execute_many(sql, campaigns, "캠페인")
 

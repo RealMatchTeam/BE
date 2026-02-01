@@ -6,6 +6,8 @@ from .tag_generator import TagGenerator
 from .business_generator import BusinessGenerator
 from .chat_generator import ChatGenerator
 from .match_generator import MatchGenerator
+from .redis_matching_generator import RedisDataGenerator
+from .seed_generator import SeedGenerator
 
 __all__ = [
     'BaseGenerator',
@@ -16,4 +18,6 @@ __all__ = [
     'BusinessGenerator',
     'ChatGenerator',
     'MatchGenerator',
+    'RedisDataGenerator',
+    'SeedGenerator',
 ]

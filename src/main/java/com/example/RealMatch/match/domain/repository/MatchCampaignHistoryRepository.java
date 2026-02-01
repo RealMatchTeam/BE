@@ -1,6 +1,7 @@
 package com.example.RealMatch.match.domain.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,5 +16,9 @@ public interface MatchCampaignHistoryRepository extends JpaRepository<MatchCampa
     boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
 
     boolean existsByUserId(Long userId);
+
+    Optional<MatchCampaignHistory> findByUserIdAndCampaignId(Long userId, Long campaignId);
+
+    List<MatchCampaignHistory> findByUserIdOrderByMatchingRatioDesc(Long userId);
 }
 
