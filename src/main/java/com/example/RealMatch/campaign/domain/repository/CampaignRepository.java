@@ -64,4 +64,5 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
         order by c.recruitEndDate asc
     """)
     List<Campaign> findRecruitingCampaignsByBrandId(Long brandId);
+
 }

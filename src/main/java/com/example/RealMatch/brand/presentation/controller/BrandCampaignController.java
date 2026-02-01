@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.RealMatch.brand.application.service.BrandCampaignService;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandExistingCampaignResponse;
+import com.example.RealMatch.brand.presentation.dto.response.BrandRecruitingCampaignResponse;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -71,6 +72,25 @@ public class BrandCampaignController {
                 brandCampaignService.getExistingCampaigns(brandId);
         return CustomResponse.ok(response);
     }
+
+    @Operation(
+            summary = "브랜드의 진행 중인 캠페인 조회 API",
+            description = """
+                해당 브랜드의 현재 모집 중인 캠페인 목록을 조회합니다. (Day 남은 일수 포함)
+                
+                - 모집 상태가 RECRUITING 인 캠페인만 조회됩니다.
+                - 브랜드 홈 상단 '진행 중인 캠페인' 영역에 사용됩니다.
+                """
+    )
+    @GetMapping("/{brandId}/campaigns/recruiting")
+    public CustomResponse<BrandRecruitingCampaignResponse> getRecruitingCampaigns(
+            @Parameter(description = "브랜드 ID", example = "1")
+            @PathVariable Long brandId
+    ) {
+        BrandRecruitingCampaignResponse response = brandCampaignService.getRecruitingCampaigns(brandId);
+        return CustomResponse.ok(response);
+    }
+
 
 
 }
