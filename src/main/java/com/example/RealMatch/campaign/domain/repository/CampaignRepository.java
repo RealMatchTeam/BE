@@ -27,6 +27,10 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
         FROM Campaign c
         WHERE c.brand.id = :brandId
           AND (:cursor IS NULL OR c.id < :cursor)
+          AND (
+               CURRENT_TIMESTAMP < c.recruitStartDate
+            OR CURRENT_TIMESTAMP > c.recruitEndDate
+          )
         ORDER BY
           CASE
             WHEN CURRENT_TIMESTAMP > c.recruitEndDate THEN c.recruitEndDate

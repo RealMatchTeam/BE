@@ -23,3 +23,4 @@ public class BrandRecruitingCampaignResponse {
         private String imageUrl;            // 캠페인 썸네일 (또는 브랜드 로고)
     }
 }
+
