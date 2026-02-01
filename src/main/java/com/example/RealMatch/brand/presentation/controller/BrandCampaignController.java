@@ -37,11 +37,8 @@ public class BrandCampaignController {
                     
                     캠페인 모집 상태는 다음 중 하나로 응답됩니다.   
                     - UPCOMING   : 모집 예정   
-                    - RECRUITING : 모집 중   
-                    - CLOSED     : 완료 (모집 마감) 
-                    
-                    캠페인 모집 상태를 파라미터로 받을 수 있습니다. 현재 진행중인 브랜드의 캠페인은 RECRUITING 파리미터를 사용해주세요.
-                    ex. /api/v1/brands/{brandId}/campaigns?size=5&status="RECRUITING"
+                    - CLOSED     : 완료   
+                    ❗️ (수정사항 260201 : 진행중은 따로 조회한다고 PM 님께 답변 받아서, 진행 중 상태를 제외했습니다.  ❗️
                     """
     )
     @GetMapping("/{brandId}/campaigns")
@@ -56,7 +53,7 @@ public class BrandCampaignController {
     }
 
     @Operation(
-            summary = "브랜드의 기존 캠페인 제안 목록 조회 API",
+            summary = "브랜드의 기존 캠페인 제안 목록 조회 API by 박지영",
             description = """
                 브랜드의 기존 캠페인 목록을 조회합니다.
                 
@@ -74,7 +71,7 @@ public class BrandCampaignController {
     }
 
     @Operation(
-            summary = "브랜드의 진행 중인 캠페인 조회 API",
+            summary = "브랜드의 진행 중인 캠페인 조회 API by 박지영",
             description = """
                 해당 브랜드의 현재 모집 중인 캠페인 목록을 조회합니다. (Day 남은 일수 포함)
                 
