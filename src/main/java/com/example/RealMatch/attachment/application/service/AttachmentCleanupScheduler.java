@@ -45,9 +45,9 @@ public class AttachmentCleanupScheduler {
         if (pendingRetentionMinutes > 0) {
             LocalDateTime pendingCutoff = now.minusMinutes(pendingRetentionMinutes);
             CleanupSummary pendingSummary = processPendingFailures(pendingCutoff);
-            if (pendingSummary.claimedCount > 0 || pendingSummary.deleteFailed > 0) {
-                LOG.info("Attachment pending cleanup completed. pendingRetentionMinutes={}, claimed={}, deleteFailed={}",
-                        pendingRetentionMinutes, pendingSummary.claimedCount, pendingSummary.deleteFailed);
+            if (pendingSummary.claimedCount > 0 || pendingSummary.softDeleted > 0 || pendingSummary.deleteFailed > 0) {
+                LOG.info("Attachment pending cleanup completed. pendingRetentionMinutes={}, claimed={}, softDeleted={}, deleteFailed={}",
+                        pendingRetentionMinutes, pendingSummary.claimedCount, pendingSummary.softDeleted, pendingSummary.deleteFailed);
             }
         }
 
@@ -70,8 +70,14 @@ public class AttachmentCleanupScheduler {
             }
             summary.claimedCount += targets.size();
             DeleteOutcome deleteOutcome = deleteStorageTargets(targets);
-            summary.deleteFailed += deleteOutcome.failedIds.size();
-            cleanupService.markDeletePendingAsFailed(extractIds(targets));
+            if (!deleteOutcome.successIds.isEmpty()) {
+                cleanupService.softDeleteByIds(deleteOutcome.successIds, LocalDateTime.now());
+                summary.softDeleted += deleteOutcome.successIds.size();
+            }
+            if (!deleteOutcome.failedIds.isEmpty()) {
+                cleanupService.markDeletePendingAsFailed(deleteOutcome.failedIds);
+                summary.deleteFailed += deleteOutcome.failedIds.size();
+            }
         }
         return summary;
     }
