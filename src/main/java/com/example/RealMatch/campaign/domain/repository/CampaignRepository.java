@@ -3,6 +3,7 @@ package com.example.RealMatch.campaign.domain.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -65,4 +66,6 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     """)
     List<Campaign> findRecruitingCampaignsByBrandId(Long brandId);
 
+    @Query("SELECT DISTINCT c.brand.id FROM Campaign c WHERE c.recruitEndDate > :now")
+    Set<Long> findRecruitingBrandIds(@Param("now") LocalDateTime now);
 }
