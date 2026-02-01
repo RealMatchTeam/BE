@@ -10,12 +10,12 @@ import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
+import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
-import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
 import com.example.RealMatch.global.exception.CustomException;
 

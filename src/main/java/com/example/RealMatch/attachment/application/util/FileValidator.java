@@ -41,7 +41,8 @@ public class FileValidator {
             Set<String> allowedExtensions
     ) {
         Set<String> contentTypes = allowedContentTypes == null ? Set.of() : allowedContentTypes;
-        if (contentType == null || !contentTypes.contains(contentType.toLowerCase())) {
+        String mainContentType = getMainContentType(contentType);
+        if (mainContentType == null || !contentTypes.contains(mainContentType)) {
             throw new CustomException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
         }
 
@@ -52,6 +53,15 @@ public class FileValidator {
                 throw new CustomException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
             }
         }
+    }
+
+    private String getMainContentType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return null;
+        }
+        int semicolon = contentType.indexOf(';');
+        String main = semicolon < 0 ? contentType.trim() : contentType.substring(0, semicolon).trim();
+        return main.isEmpty() ? null : main.toLowerCase(java.util.Locale.ROOT);
     }
 
     private String getFileExtension(String filename) {

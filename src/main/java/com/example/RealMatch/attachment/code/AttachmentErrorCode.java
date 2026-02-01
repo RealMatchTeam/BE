@@ -25,6 +25,9 @@ public enum AttachmentErrorCode implements BaseErrorCode {
     INVALID_FILE(HttpStatus.BAD_REQUEST,
             "ATTACHMENT400_1",
             "유효하지 않은 파일입니다."),
+    INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST,
+            "ATTACHMENT400_6",
+            "유효하지 않은 Content-Type입니다."),
     INVALID_FILE_NAME(HttpStatus.BAD_REQUEST,
             "ATTACHMENT400_2",
             "유효하지 않은 파일명입니다."),
@@ -45,7 +48,10 @@ public enum AttachmentErrorCode implements BaseErrorCode {
             "파일 삭제에 실패했습니다."),
     S3_ACCESS_DENIED(HttpStatus.FORBIDDEN,
             "ATTACHMENT403_2",
-            "파일 스토리지 접근 권한이 없습니다.");
+            "파일 스토리지 접근 권한이 없습니다."),
+    STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE,
+            "ATTACHMENT503_1",
+            "스토리지가 설정되지 않았거나 사용할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

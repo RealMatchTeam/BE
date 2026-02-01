@@ -102,7 +102,7 @@ public class AttachmentCleanupScheduler {
         if (targets == null || targets.isEmpty()) {
             return outcome;
         }
-        if (s3FileUploadService.isEmpty()) {
+        if (s3FileUploadService.isEmpty() || !s3FileUploadService.get().isAvailable()) {
             outcome.successIds.addAll(extractIds(targets));
             return outcome;
         }

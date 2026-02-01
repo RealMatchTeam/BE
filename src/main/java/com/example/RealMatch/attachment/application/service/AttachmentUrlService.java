@@ -5,10 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +27,9 @@ public class AttachmentUrlService {
     public String getAccessUrl(Attachment attachment) {
         if (attachment == null || attachment.getStatus() != AttachmentStatus.READY) {
             return null;
+        }
+        if (!s3FileUploadService.isAvailable()) {
+            throw new CustomException(AttachmentErrorCode.STORAGE_UNAVAILABLE);
         }
 
         String accessUrl = attachment.getAccessUrl();

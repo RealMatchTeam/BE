@@ -102,6 +102,19 @@ public class ChatMessage extends BaseEntity {
         }
     }
 
+    private static void validateSystemMessageInvariants(
+            ChatSystemMessageKind systemKind,
+            String systemPayload
+    ) {
+        if (systemKind == null) {
+            throw new IllegalArgumentException("System message kind must not be null.");
+        }
+        if (systemKind.isPayloadRequired() && (systemPayload == null || systemPayload.isBlank())) {
+            throw new IllegalArgumentException(
+                    "System message payload is required for kind: " + systemKind.name());
+        }
+    }
+
     public static ChatMessage createUserMessage(
             Long roomId,
             Long senderId,
@@ -118,6 +131,7 @@ public class ChatMessage extends BaseEntity {
             ChatSystemMessageKind systemKind,
             String systemPayload
     ) {
+        validateSystemMessageInvariants(systemKind, systemPayload);
         ChatMessage message = new ChatMessage(
                 roomId,
                 null,

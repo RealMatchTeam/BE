@@ -41,7 +41,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             String contentType,
             long fileSize
     ) {
-        attachmentValidationService.validateUploadRequest(
+        String normalizedContentType = attachmentValidationService.validateUploadRequest(
                 originalFilename,
                 contentType,
                 fileSize,
@@ -52,7 +52,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         AttachmentUploadTxService.CreateResult created = uploadTxService.createAttachmentAndSetStorageKey(
                 userId,
                 request.attachmentType(),
-                contentType,
+                normalizedContentType,
                 originalFilename,
                 fileSize
         );
@@ -64,7 +64,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             String accessUrl = s3FileUploadService.uploadFile(
                     fileInputStream,
                     s3Key,
-                    contentType,
+                    normalizedContentType,
                     fileSize
             );
 

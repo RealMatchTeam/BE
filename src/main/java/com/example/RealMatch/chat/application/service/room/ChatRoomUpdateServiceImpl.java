@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
+import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
-import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;

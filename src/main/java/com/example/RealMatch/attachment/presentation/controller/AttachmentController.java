@@ -1,6 +1,7 @@
 package com.example.RealMatch.attachment.presentation.controller;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.http.MediaType;
@@ -41,13 +42,15 @@ public class AttachmentController implements AttachmentSwagger {
     ) throws IOException {
         Long userId = user.getUserId();
         AttachmentUploadRequest request = new AttachmentUploadRequest(attachmentType);
-        return CustomResponse.ok(attachmentService.uploadAttachment(
-                userId,
-                request,
-                file.getInputStream(),
-                file.getOriginalFilename(),
-                file.getContentType(),
-                file.getSize()
-        ));
+        try (InputStream inputStream = file.getInputStream()) {
+            return CustomResponse.ok(attachmentService.uploadAttachment(
+                    userId,
+                    request,
+                    inputStream,
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getSize()
+            ));
+        }
     }
 }
