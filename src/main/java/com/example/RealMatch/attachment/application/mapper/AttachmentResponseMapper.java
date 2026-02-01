@@ -20,7 +20,7 @@ public class AttachmentResponseMapper {
                 attachment.getContentType(),
                 attachment.getOriginalName(),
                 attachment.getFileSize(),
-                attachment.getAccessUrl(),
+                null,
                 attachment.getStatus()
         );
     }

@@ -5,9 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
+import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
+import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,25 +25,27 @@ public class AttachmentUrlService {
     private final S3Properties s3Properties;
 
     public String getAccessUrl(Attachment attachment) {
-        if (attachment == null || attachment.getAccessUrl() == null) {
+        if (attachment == null || attachment.getStatus() != AttachmentStatus.READY) {
             return null;
         }
-
-        String accessUrl = attachment.getAccessUrl();
-
-        if (!s3Properties.isPublicBucket()) {
-            try {
-                accessUrl = s3FileUploadService.generatePresignedUrl(
-                        accessUrl,
-                        s3Properties.getPresignedUrlExpirationSeconds()
-                );
-            } catch (Exception e) {
-                LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}", 
-                        attachment.getId(), accessUrl, e);
-                accessUrl = null;
-            }
+        if (!s3FileUploadService.isAvailable()) {
+            throw new CustomException(AttachmentErrorCode.STORAGE_UNAVAILABLE);
         }
 
-        return accessUrl;
+        String storageKey = attachment.getStorageKey();
+        if (storageKey == null || storageKey.isBlank()) {
+            LOG.error("READY 상태인데 storageKey가 없습니다. attachmentId={}", attachment.getId());
+            return null;
+        }
+        try {
+            return s3FileUploadService.generatePresignedUrl(
+                    storageKey,
+                    s3Properties.getPresignedUrlExpirationSeconds()
+            );
+        } catch (Exception e) {
+            LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}",
+                    attachment.getId(), storageKey, e);
+            return null;
+        }
     }
 }

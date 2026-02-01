@@ -9,6 +9,8 @@ public interface AttachmentQueryService {
 
     AttachmentDto findById(Long attachmentId);
 
+    AttachmentDto findByIdOrThrow(Long attachmentId);
+
     Map<Long, AttachmentDto> findAllById(List<Long> attachmentIds);
 
     void validateOwnership(Long attachmentId, Long userId);

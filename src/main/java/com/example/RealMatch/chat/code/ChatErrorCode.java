@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.code;
+package com.example.RealMatch.chat.code;
 
 import org.springframework.http.HttpStatus;
 

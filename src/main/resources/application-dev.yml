@@ -4,7 +4,6 @@ cors:
 swagger:
   server-url: http://localhost:8080
 
-
 front:
   domain-url: http://localhost:3000 # 임의의 값
 
@@ -126,7 +125,6 @@ app:
   s3:
     bucket-name: ${S3_BUCKET_NAME:realmatch-s3}
     region: ${S3_REGION:us-east-2}
-    public-bucket: ${S3_PUBLIC_BUCKET:false}
     presigned-url-expiration-seconds: ${S3_PRESIGNED_URL_EXPIRATION:604800}
     max-image-size-bytes: ${S3_MAX_IMAGE_SIZE:10485760}
     max-file-size-bytes: ${S3_MAX_FILE_SIZE:52428800}

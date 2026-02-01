@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.presentation.dto.enums;
+package com.example.RealMatch.chat.domain.enums;
 
 public enum ChatRoomFilterStatus {
     LATEST,      // 최신순

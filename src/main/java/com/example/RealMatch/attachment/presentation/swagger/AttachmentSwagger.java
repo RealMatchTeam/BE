@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
@@ -40,6 +41,7 @@ public interface AttachmentSwagger {
     CustomResponse<AttachmentUploadResponse> uploadAttachment(
             @AuthenticationPrincipal CustomUserDetails user,
             @Parameter(description = "첨부 파일 타입 (IMAGE 또는 FILE)") @Valid @RequestParam("attachmentType") AttachmentType attachmentType,
+            @Parameter(description = "용도 (CHAT: 채팅첨부, PUBLIC: 브랜드/캠페인 등 공개자산)") @Valid @RequestParam("usage") AttachmentUsage usage,
             @Parameter(description = "업로드할 파일") @RequestPart(value = "file", required = true) MultipartFile file
     ) throws IOException;
 }

@@ -10,13 +10,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
-import com.example.RealMatch.attachment.application.util.FileValidator;
-import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -34,7 +35,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
-    private final FileValidator fileValidator;
+    private final S3FileNameSanitizer fileNameSanitizer;
 
     @Override
     public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize) {
@@ -47,10 +48,6 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, fileSize));
-
-            if (s3Properties.isPublicBucket()) {
-                return buildS3Url(key);
-            }
             return null;
 
         } catch (S3Exception e) {
@@ -88,11 +85,11 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     }
 
     @Override
-    public String generateS3Key(Long userId, Long attachmentId, String originalFilename) {
-        String sanitizedFilename = fileValidator.sanitizeFileName(originalFilename);
-        String extension = fileValidator.getFileExtension(originalFilename);
+    public String generateS3Key(AttachmentUsage usage, Long userId, Long attachmentId, String originalFilename) {
+        String sanitizedFilename = fileNameSanitizer.sanitizeFileName(originalFilename);
+        String extension = fileNameSanitizer.getFileExtension(originalFilename);
         String filename = sanitizedFilename;
-        
+
         if (!extension.isEmpty() && !filename.toLowerCase().endsWith("." + extension.toLowerCase())) {
             filename = filename + "." + extension;
         }
@@ -100,14 +97,26 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
         String uuid = UUID.randomUUID().toString();
         String uniqueFilename = uuid + "_" + filename;
         String datePath = LocalDate.now().format(DATE_FORMATTER);
-        return String.format("%s/%d/%s/%s", s3Properties.getKeyPrefix(), userId, datePath, uniqueFilename);
+        String usagePrefix = usage.name().toLowerCase();
+        return String.format("%s/%s/%d/%s/%s",
+                s3Properties.getKeyPrefix(), usagePrefix, userId, datePath, uniqueFilename);
     }
 
-    private String buildS3Url(String key) {
-        return String.format("https://%s.s3.%s.amazonaws.com/%s",
-                s3Properties.getBucketName(),
-                s3Properties.getRegion(),
-                key);
+    @Override
+    public void deleteFile(String key) {
+        try {
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(s3Properties.getBucketName())
+                    .key(key)
+                    .build();
+            s3Client.deleteObject(deleteObjectRequest);
+        } catch (S3Exception e) {
+            handleS3Exception("파일 삭제", key, e);
+            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
+        } catch (Exception e) {
+            LOG.error("S3 파일 삭제 중 예상치 못한 오류 발생. key={}", key, e);
+            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
+        }
     }
 
     private void handleS3Exception(String operation, String key, S3Exception e) {
