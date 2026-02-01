@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.brand.application.service.BrandCampaignService;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
+import com.example.RealMatch.brand.presentation.dto.response.BrandExistingCampaignResponse;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,5 +53,24 @@ public class BrandCampaignController {
         BrandCampaignSliceResponse response = brandCampaignService.getBrandCampaigns(brandId, cursor, size);
         return CustomResponse.ok(response);
     }
+
+    @Operation(
+            summary = "브랜드의 기존 캠페인 제안 목록 조회 API",
+            description = """
+                브랜드의 기존 캠페인 목록을 조회합니다.
+                
+                캠페인 제안(기존 캠페인 선택) 시 사용되는 API입니다.
+                """
+    )
+    @GetMapping("/{brandId}/existing-campaigns")
+    public CustomResponse<BrandExistingCampaignResponse> getExistingCampaigns(
+            @Parameter(description = "브랜드 ID", example = "1")
+            @PathVariable Long brandId
+    ) {
+        BrandExistingCampaignResponse response =
+                brandCampaignService.getExistingCampaigns(brandId);
+        return CustomResponse.ok(response);
+    }
+
 
 }

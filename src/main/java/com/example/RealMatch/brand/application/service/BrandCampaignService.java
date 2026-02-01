@@ -8,10 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
+import com.example.RealMatch.brand.presentation.dto.response.BrandExistingCampaignResponse;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.global.exception.CustomException;
@@ -50,6 +52,25 @@ public class BrandCampaignService {
                 ))
                 .toList();
         return new BrandCampaignSliceResponse(items, hasNext);
+    }
+
+    public BrandExistingCampaignResponse getExistingCampaigns(Long brandId) {
+
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
+
+        List<Campaign> campaigns =
+                campaignRepository.findRecruitingCampaignsByBrandId(brand.getId());
+
+        // 3️⃣ DTO 변환
+        List<BrandExistingCampaignResponse.CampaignItem> items = campaigns.stream()
+                .map(campaign -> new BrandExistingCampaignResponse.CampaignItem(
+                        campaign.getId(),
+                        campaign.getTitle()
+                ))
+                .toList();
+
+        return new BrandExistingCampaignResponse(items);
     }
 
 }

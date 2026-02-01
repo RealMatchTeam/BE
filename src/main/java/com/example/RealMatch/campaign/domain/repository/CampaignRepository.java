@@ -54,4 +54,14 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
             Pageable pageable
     );
 
+    @Query("""
+        select c
+        from Campaign c
+        where c.brand.id = :brandId
+          and c.isDeleted = false
+          and c.recruitStartDate <= current_timestamp
+          and c.recruitEndDate >= current_timestamp
+        order by c.recruitEndDate asc
+    """)
+    List<Campaign> findRecruitingCampaignsByBrandId(Long brandId);
 }
