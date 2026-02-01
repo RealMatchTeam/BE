@@ -13,15 +13,23 @@ import lombok.RequiredArgsConstructor;
 public class S3AttachmentUploadPolicy implements AttachmentUploadPolicy {
 
     private static final Set<String> ALLOWED_IMAGE_EXTENSIONS = Set.of(
-            "jpg", "jpeg", "png", "gif", "webp"
+            "jpg", "jpeg", "png"
     );
 
     private static final Set<String> ALLOWED_IMAGE_CONTENT_TYPES = Set.of(
             "image/jpeg",
             "image/jpg",
-            "image/png",
-            "image/gif",
-            "image/webp"
+            "image/png"
+    );
+
+    private static final Set<String> ALLOWED_FILE_EXTENSIONS = Set.of(
+            "pdf", "doc", "docx"
+    );
+
+    private static final Set<String> ALLOWED_FILE_CONTENT_TYPES = Set.of(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     );
 
     private final S3Properties s3Properties;
@@ -44,5 +52,15 @@ public class S3AttachmentUploadPolicy implements AttachmentUploadPolicy {
     @Override
     public Set<String> getAllowedImageContentTypes() {
         return ALLOWED_IMAGE_CONTENT_TYPES;
+    }
+
+    @Override
+    public Set<String> getAllowedFileExtensions() {
+        return ALLOWED_FILE_EXTENSIONS;
+    }
+
+    @Override
+    public Set<String> getAllowedFileContentTypes() {
+        return ALLOWED_FILE_CONTENT_TYPES;
     }
 }
