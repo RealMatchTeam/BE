@@ -82,7 +82,7 @@ public class CampaignProposalService {
     }
 
     @Transactional
-    public void modifyCampaignProposal(CustomUserDetails userDetails, UUID campaignProposalId, CampaignProposalRequestDto request) {
+    public void modifyCampaignProposal(CustomUserDetails userDetails, Long campaignProposalId, CampaignProposalRequestDto request) {
         userRepository.findById(userDetails.getUserId())
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 

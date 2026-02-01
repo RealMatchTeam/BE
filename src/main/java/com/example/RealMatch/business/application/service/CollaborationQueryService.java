@@ -3,7 +3,6 @@ package com.example.RealMatch.business.application.service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -57,7 +56,7 @@ public class CollaborationQueryService {
     private void getReceivedProposal(Long userId, Role role, CollaborationType type, ProposalStatus status, List<CollaborationResponse> result) {
         // 2️⃣ 내가 받은 제안
         if (type == null || type == CollaborationType.RECEIVED) {
-            List<UUID> receivedIds =
+            List<Long> receivedIds =
                     campaignProposalRepository.findReceivedProposalIds(userId, role, status);
 
             if (!receivedIds.isEmpty()) {
@@ -73,7 +72,7 @@ public class CollaborationQueryService {
     private void getSentProposal(Long userId, Role role, CollaborationType type, ProposalStatus status, List<CollaborationResponse> result) {
         // 3️⃣ 내가 보낸 제안
         if (type == null || type == CollaborationType.SENT) {
-            List<UUID> sentIds =
+            List<Long> sentIds =
                     campaignProposalRepository.findSentProposalIds(userId, role, status);
 
             if (!sentIds.isEmpty()) {

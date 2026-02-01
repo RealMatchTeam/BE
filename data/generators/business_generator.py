@@ -199,9 +199,9 @@ class BusinessGenerator(BaseGenerator):
                 if 'brand_id' in columns:
                     data['brand_id'] = source_id
                 if 'image_url' in columns:
-                    data['image_url'] = f"https://picsum.photos/400/300?random={self.fake.uuid4()}"
+                    data['image_url'] = f"https://picsum.photos/400/300?random={self.fake.random_int(1, 999999)}"
                 if 'url' in columns:
-                    data['url'] = f"https://picsum.photos/400/300?random={self.fake.uuid4()}"
+                    data['url'] = f"https://picsum.photos/400/300?random={self.fake.random_int(1, 999999)}"
                 if 'is_deleted' in columns:
                     data['is_deleted'] = False
                 if 'created_at' in columns:

@@ -1,7 +1,5 @@
 package com.example.RealMatch.business.application.service;
 
-import java.util.UUID;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +20,7 @@ public class CampaignProposalQueryService {
 
     public CampaignProposalDetailResponse getProposalDetail(
             Long userId,
-            UUID proposalId
+            Long proposalId
     ) {
         CampaignProposal proposal = campaignProposalRepository.findByIdWithTags(proposalId)
                 .orElseThrow(() -> new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND));
