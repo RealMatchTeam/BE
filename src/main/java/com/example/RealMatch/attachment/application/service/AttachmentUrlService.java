@@ -38,14 +38,21 @@ public class AttachmentUrlService {
             return null;
         }
         try {
-            return s3FileUploadService.generatePresignedUrl(
-                    storageKey,
-                    s3Properties.getPresignedUrlExpirationSeconds()
-            );
+            return getAccessUrl(storageKey);
         } catch (Exception e) {
             LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}",
                     attachment.getId(), storageKey, e);
             return null;
         }
+    }
+
+    public String getAccessUrl(String storageKey) {
+        if (storageKey == null || storageKey.isBlank()) {
+            return null;
+        }
+        return s3FileUploadService.generatePresignedUrl(
+                storageKey,
+                s3Properties.getPresignedUrlExpirationSeconds()
+        );
     }
 }
