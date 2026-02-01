@@ -40,17 +40,44 @@ public class FileValidator {
             Set<String> allowedContentTypes,
             Set<String> allowedExtensions
     ) {
+        validateFileFormat(
+                contentType, filename,
+                allowedContentTypes, allowedExtensions,
+                AttachmentErrorCode.INVALID_IMAGE_TYPE
+        );
+    }
+
+    public void validateAttachmentFile(
+            String contentType,
+            String filename,
+            Set<String> allowedContentTypes,
+            Set<String> allowedExtensions
+    ) {
+        validateFileFormat(
+                contentType, filename,
+                allowedContentTypes, allowedExtensions,
+                AttachmentErrorCode.INVALID_FILE_TYPE
+        );
+    }
+
+    private void validateFileFormat(
+            String contentType,
+            String filename,
+            Set<String> allowedContentTypes,
+            Set<String> allowedExtensions,
+            AttachmentErrorCode errorCode
+    ) {
         Set<String> contentTypes = allowedContentTypes == null ? Set.of() : allowedContentTypes;
         String mainContentType = getMainContentType(contentType);
         if (mainContentType == null || !contentTypes.contains(mainContentType)) {
-            throw new CustomException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
+            throw new CustomException(errorCode);
         }
 
-        if (filename != null) {
+        if (filename != null && !filename.isBlank()) {
             String extension = getFileExtension(filename).toLowerCase();
             Set<String> extensions = allowedExtensions == null ? Set.of() : allowedExtensions;
             if (!extensions.contains(extension)) {
-                throw new CustomException(AttachmentErrorCode.INVALID_IMAGE_TYPE);
+                throw new CustomException(errorCode);
             }
         }
     }
