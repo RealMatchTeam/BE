@@ -23,6 +23,7 @@ public class MatchCampaignResponseDto {
     public static class CampaignDto {
         private Long brandId;
         private String brandName;
+        private String brandLogoUrl;
         private Integer brandMatchingRatio;
         private Boolean brandIsLiked;
         private Boolean brandIsRecruiting;

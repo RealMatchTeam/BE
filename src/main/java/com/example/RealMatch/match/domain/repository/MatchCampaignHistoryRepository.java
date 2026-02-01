@@ -20,5 +20,9 @@ public interface MatchCampaignHistoryRepository extends JpaRepository<MatchCampa
     Optional<MatchCampaignHistory> findByUserIdAndCampaignId(Long userId, Long campaignId);
 
     List<MatchCampaignHistory> findByUserIdOrderByMatchingRatioDesc(Long userId);
+
+    List<MatchCampaignHistory> findByUserIdAndIsDeprecatedFalse(Long userId);
+
+    List<MatchCampaignHistory> findByUserIdAndIsDeprecatedFalseOrderByMatchingRatioDesc(Long userId);
 }
 

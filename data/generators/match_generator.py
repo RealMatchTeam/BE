@@ -75,6 +75,8 @@ class MatchGenerator(BaseGenerator):
                     data['brand_id'] = brand_id
                 if 'matching_ratio' in columns:
                     data['matching_ratio'] = self.fake.random_int(50, 100)
+                if 'is_deprecated' in columns:
+                    data['is_deprecated'] = False
                 if 'is_deleted' in columns:
                     data['is_deleted'] = False
                 if 'created_at' in columns:
@@ -130,6 +132,8 @@ class MatchGenerator(BaseGenerator):
                     data['campaign_id'] = campaign_id
                 if 'matching_ratio' in columns:
                     data['matching_ratio'] = self.fake.random_int(50, 100)
+                if 'is_deprecated' in columns:
+                    data['is_deprecated'] = False
                 if 'is_deleted' in columns:
                     data['is_deleted'] = False
                 if 'created_at' in columns:
