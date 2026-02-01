@@ -12,6 +12,7 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
+import com.example.RealMatch.user.presentation.dto.request.MyFeatureUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,83 @@ public class UserFeatureService {
         MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail);
 
         return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
+    }
+
+    /**
+     * 사용자 특성 정보 부분 업데이트
+     * - 엔티티의 비즈니스 메서드를 통해 업데이트
+     * - 보낸 필드만 업데이트, 보내지 않은 필드는 기존 값 유지
+     */
+    @Transactional
+    public void updateMyFeatures(Long userId, MyFeatureUpdateRequestDto request) {
+        UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
+
+        try {
+            // 뷰티 특성 업데이트
+            if (request.beautyType() != null) {
+                MyFeatureUpdateRequestDto.BeautyTypeUpdate beautyType = request.beautyType();
+                detail.updateBeautyFeatures(
+                        joinTagList(beautyType.skinType()),
+                        beautyType.skinBrightness(),
+                        joinTagList(beautyType.makeupStyle()),
+                        joinTagList(beautyType.interestCategories()),
+                        joinTagList(beautyType.interestFunctions())
+                );
+                log.debug("뷰티 특성 업데이트 완료: userId={}", userId);
+            }
+
+            // 패션 특성 업데이트
+            if (request.fashionType() != null) {
+                MyFeatureUpdateRequestDto.FashionTypeUpdate fashionType = request.fashionType();
+
+                // bodyStats 파싱 (예: "165cm/50kg" -> height, weight)
+                String height = null;
+                String weight = null;
+                if (fashionType.bodyStats() != null) {
+                    String[] stats = fashionType.bodyStats().split("/");
+                    if (stats.length == 2) {
+                        height = stats[0].trim();
+                        weight = stats[1].trim();
+                    }
+                }
+
+                detail.updateFashionFeatures(
+                        height,
+                        weight,
+                        fashionType.bodyShape(),
+                        fashionType.topSize(),
+                        fashionType.bottomSize(),
+                        joinTagList(fashionType.interestFields()),
+                        joinTagList(fashionType.interestStyles()),
+                        joinTagList(fashionType.interestBrands())
+                );
+                log.debug("패션 특성 업데이트 완료: userId={}", userId);
+            }
+
+            // 콘텐츠 특성 업데이트
+            if (request.contentsType() != null) {
+                MyFeatureUpdateRequestDto.ContentsTypeUpdate contentsType = request.contentsType();
+                detail.updateContentsFeatures(
+                        joinTagList(contentsType.viewerGender()),
+                        joinTagList(contentsType.viewerAge()),
+                        contentsType.avgVideoLength(),
+                        contentsType.avgViews(),
+                        joinTagList(contentsType.contentFormats()),
+                        joinTagList(contentsType.contentTones()),
+                        contentsType.desiredInvolvement(),
+                        contentsType.desiredUsageScope()
+                );
+                log.debug("콘텐츠 특성 업데이트 완료: userId={}", userId);
+            }
+
+            // JPA 더티 체킹으로 자동 저장
+            log.info("사용자 특성 정보 업데이트 완료: userId={}", userId);
+
+        } catch (Exception e) {
+            log.error("사용자 특성 정보 업데이트 실패: userId={}, error={}", userId, e.getMessage(), e);
+            throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
+        }
     }
 
     private MyFeatureResponseDto.BeautyType buildBeautyType(UserMatchingDetail detail) {
@@ -119,5 +197,20 @@ public class UserFeatureService {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toUnmodifiableList());
+    }
+
+    /**
+     * List를 쉼표로 구분된 문자열로 변환
+     * 예: ["스킨케어", "메이크업", "향수"] -> "스킨케어,메이크업,향수"
+     */
+    private String joinTagList(List<String> tagList) {
+        if (tagList == null || tagList.isEmpty()) {
+            return null;
+        }
+
+        return tagList.stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining(","));
     }
 }

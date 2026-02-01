@@ -157,4 +157,111 @@ public class UserMatchingDetail extends BaseEntity {
         this.desiredInvolvement = desiredInvolvement;
         this.desiredUsageScope = desiredUsageScope;
     }
+
+    // ========== 비즈니스 메서드 (도메인 로직) ==========
+
+    /**
+     * 뷰티 특성 업데이트
+     */
+    public void updateBeautyFeatures(
+            String skinType,
+            String skinBrightness,
+            String makeupStyle,
+            String interestCategories,
+            String interestFunctions
+    ) {
+        if (skinType != null) {
+            this.skinType = skinType;
+        }
+        if (skinBrightness != null) {
+            this.skinBrightness = skinBrightness;
+        }
+        if (makeupStyle != null) {
+            this.makeupStyle = makeupStyle;
+        }
+        if (interestCategories != null) {
+            this.interestCategories = interestCategories;
+        }
+        if (interestFunctions != null) {
+            this.interestFunctions = interestFunctions;
+        }
+    }
+
+    /**
+     * 패션 특성 업데이트
+     */
+    public void updateFashionFeatures(
+            String height,
+            String weight,
+            String bodyShape,
+            String upperSize,
+            String lowerSize,
+            String interestFields,
+            String interestStyles,
+            String interestBrands
+    ) {
+        if (height != null) {
+            this.height = height;
+        }
+        if (weight != null) {
+            this.weight = weight;
+        }
+        if (bodyShape != null) {
+            this.bodyShape = bodyShape;
+        }
+        if (upperSize != null) {
+            this.upperSize = upperSize;
+        }
+        if (lowerSize != null) {
+            this.lowerSize = lowerSize;
+        }
+        if (interestFields != null) {
+            this.interestFields = interestFields;
+        }
+        if (interestStyles != null) {
+            this.interestStyles = interestStyles;
+        }
+        if (interestBrands != null) {
+            this.interestBrands = interestBrands;
+        }
+    }
+
+    /**
+     * 콘텐츠 특성 업데이트
+     */
+    public void updateContentsFeatures(
+            String viewerGender,
+            String viewerAge,
+            String videoLength,
+            String views,
+            String contentFormats,
+            String contentTones,
+            String desiredInvolvement,
+            String desiredUsageScope
+    ) {
+        if (viewerGender != null) {
+            this.viewerGender = viewerGender;
+        }
+        if (viewerAge != null) {
+            this.viewerAge = viewerAge;
+        }
+        if (videoLength != null) {
+            this.videoLength = videoLength;
+        }
+        if (views != null) {
+            this.views = views;
+        }
+        if (contentFormats != null) {
+            this.contentFormats = contentFormats;
+        }
+        if (contentTones != null) {
+            this.contentTones = contentTones;
+        }
+        if (desiredInvolvement != null) {
+            this.desiredInvolvement = desiredInvolvement;
+        }
+        if (desiredUsageScope != null) {
+            this.desiredUsageScope = desiredUsageScope;
+        }
+    }
 }
