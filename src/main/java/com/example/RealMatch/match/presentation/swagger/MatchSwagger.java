@@ -51,37 +51,37 @@ public interface MatchSwagger {
                                             value = """
                                                     {
                                                       "beauty": {
-                                                        "interestStyleTags": [101, 102],
-                                                        "prefferedFunctionTags": [201, 202],
-                                                        "skinTypeTags": 301,
-                                                        "skinToneTags": 311,
-                                                        "makeupStyleTags": 401
+                                                        "interestStyleTags": [1, 2],
+                                                        "prefferedFunctionTags": [6, 7],
+                                                        "skinTypeTags": 12,
+                                                        "skinToneTags": 13,
+                                                        "makeupStyleTags": 2
                                                       },
                                                       "fashion": {
-                                                        "interestStyleTags": [501, 502],
-                                                        "preferredItemTags": [601, 602],
-                                                        "preferredBrandTags": [701, 702],
-                                                        "heightTag": 180,
-                                                        "weightTypeTag": 101,
-                                                        "topSizeTag": 101,
-                                                        "bottomSizeTag": 101
+                                                        "interestStyleTags": [16, 17],
+                                                        "preferredItemTags": [22, 23],
+                                                        "preferredBrandTags": [27, 28],
+                                                        "heightTag": 72,
+                                                        "weightTypeTag": 94,
+                                                        "topSizeTag": 108,
+                                                        "bottomSizeTag": 178
                                                       },
                                                       "content": {
                                                         "sns": {
                                                           "url": "https://www.instagram.com/vivi",
                                                           "mainAudience": {
-                                                            "genderTags": [101, 102],
-                                                            "ageTags": [101, 102]
+                                                            "genderTags": [221, 222],
+                                                            "ageTags": [223, 224]
                                                           },
                                                           "averageAudience": {
-                                                            "videoLengthTags": [101, 102],
-                                                            "videoViewsTags": [101, 102]
+                                                            "videoLengthTags": [228, 229],
+                                                            "videoViewsTags": [232, 233]
                                                           }
                                                         },
-                                                        "typeTags": [101, 102],
-                                                        "toneTags": [101, 102],
-                                                        "prefferedInvolvementTags": [101, 102],
-                                                        "prefferedCoverageTags": [101, 102]
+                                                        "typeTags": [236, 237],
+                                                        "toneTags": [245, 246],
+                                                        "prefferedInvolvementTags": [251, 252],
+                                                        "prefferedCoverageTags": [255, 256]
                                                       }
                                                     }
                                                     """

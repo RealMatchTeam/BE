@@ -34,11 +34,6 @@ class RedisDataGenerator:
         # Redis 연결
         try:
             redis_host = os.getenv('REDIS_HOST', 'localhost')
-            # http:// 또는 https:// 프로토콜 제거
-            if redis_host.startswith('http://'):
-                redis_host = redis_host.replace('http://', '')
-            elif redis_host.startswith('https://'):
-                redis_host = redis_host.replace('https://', '')
 
             self.redis_client = redis.Redis(
                 host=redis_host,
@@ -170,19 +165,19 @@ class RedisDataGenerator:
                 'brandId': brand_id,
                 'brandName': brand['brand_name'],
                 'categories': categories,
-                'preferredFashionTagIds': fashion_tags,
-                'preferredBeautyTagIds': beauty_tags,
-                'preferredContentTagIds': content_tags,
+                'preferredFashionTags': fashion_tags,
+                'preferredBeautyTags': beauty_tags,
+                'preferredContentTags': content_tags,
                 'minCreatorHeight': random.choice([None, 150, 155, 160]),
                 'maxCreatorHeight': random.choice([None, 175, 180, 185]),
-                'preferredBodyTypeTagIds': body_type_tags,
-                'preferredTopSizes': [str(s) for s in random.sample(range(44, 110, 2), 3)],
-                'preferredBottomSizes': [str(s) for s in random.sample(range(24, 36), 3)],
+                'preferredBodyTypeTags': body_type_tags,
+                'preferredTopSizeTags': [s for s in random.sample(range(44, 110, 2), 3)],
+                'preferredBottomSizeTags': [s for s in random.sample(range(24, 36), 3)],
                 'minContentsAverageViews': random.choice([None, 10000, 50000, 100000]),
                 'maxContentsAverageViews': random.choice([None, 500000, 1000000]),
-                'preferredContentsAgeTagIds': audience_age_tags,
-                'preferredContentsGenderTagIds': audience_gender_tags,
-                'preferredContentsLengthTagIds': video_length_tags,
+                'preferredContentsAgeTags': audience_age_tags,
+                'preferredContentsGenderTags': audience_gender_tags,
+                'preferredContentsLengthTags': video_length_tags,
             }
 
             key = f"com.example.RealMatch.match.infrastructure.redis.document.BrandTagDocument:brand:{brand_id}"
@@ -230,21 +225,21 @@ class RedisDataGenerator:
                 'rewardAmount': float(campaign['reward_amount']) if campaign['reward_amount'] else None,
                 'recruitEndDate': campaign['recruit_end_date'].isoformat() if campaign['recruit_end_date'] else None,
                 'categories': categories,
-                'preferredFashionTagIds': fashion_tags,
-                'preferredBeautyTagIds': beauty_tags,
-                'preferredContentTagIds': content_tags,
+                'preferredFashionTags': fashion_tags,
+                'preferredBeautyTags': beauty_tags,
+                'preferredContentTags': content_tags,
                 'minCreatorHeight': random.choice([None, 150, 155, 160]),
                 'maxCreatorHeight': random.choice([None, 175, 180, 185]),
-                'preferredBodyTypeTagIds': body_type_tags,
+                'preferredBodyTypeTags': body_type_tags,
                 'minCreatorTopSizes': random.choice([None, 44, 50, 55]),
                 'maxCreatorTopSizes': random.choice([None, 100, 105, 110]),
                 'minCreatorBottomSizes': random.choice([None, 24, 26, 28]),
                 'maxCreatorBottomSizes': random.choice([None, 32, 34, 36]),
                 'minContentsAverageViews': random.choice([None, 10000, 50000, 100000]),
                 'maxContentsAverageViews': random.choice([None, 500000, 1000000]),
-                'preferredContentsAgeTagIds': audience_age_tags,
-                'preferredContentsGenderTagIds': audience_gender_tags,
-                'preferredContentsLengthTagIds': video_length_tags,
+                'preferredContentsAgeTags': audience_age_tags,
+                'preferredContentsGenderTags': audience_gender_tags,
+                'preferredContentsLengthTags': video_length_tags,
                 'startDate': campaign['start_date'].isoformat() if campaign['start_date'] else None,
                 'endDate': campaign['end_date'].isoformat() if campaign['end_date'] else None,
                 'quota': campaign['quota'],
@@ -322,17 +317,17 @@ class RedisDataGenerator:
 
             doc = {
                 'userId': user_id,
-                'fashionTagIds': fashion_tags,
-                'beautyTagIds': beauty_tags,
-                'contentTagIds': content_tags,
-                'height': height,
-                'bodyTypeTagId': body_type_tag[0] if body_type_tag else None,
-                'topSize': top_size,
-                'bottomSize': bottom_size,
-                'averageContentsViews': random.choice([10000, 50000, 100000, 300000, 500000, 1000000]),
-                'contentsAgeTagIds': audience_age_tags,
-                'contentsGenderTagIds': audience_gender_tags,
-                'contentsLengthTagId': video_length_tag[0] if video_length_tag else None,
+                'fashionTags': fashion_tags,
+                'beautyTags': beauty_tags,
+                'contentTags': content_tags,
+                'heightTag': height,
+                'bodyTypeTag': body_type_tag[0] if body_type_tag else None,
+                'topSizeTag': int(top_size),
+                'bottomSizeTag': int(bottom_size),
+                'averageContentsViewsTags': self._get_random_tag_ids(['영상 조회수'], 1, 2),
+                'contentsAgeTags': audience_age_tags,
+                'contentsGenderTags': audience_gender_tags,
+                'contentsLengthTags': video_length_tag,
             }
 
             key = f"com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument:user:{user_id}"
@@ -376,9 +371,9 @@ class RedisDataGenerator:
                     NumericField('$.brandId', as_name='brandId'),
                     TagField('$.brandName', as_name='brandName'),
                     TagField('$.categories[*]', as_name='categories'),
-                    TagField('$.preferredFashionTagIds[*]', as_name='preferredFashionTagIds'),
-                    TagField('$.preferredBeautyTagIds[*]', as_name='preferredBeautyTagIds'),
-                    TagField('$.preferredContentTagIds[*]', as_name='preferredContentTagIds'),
+                    TagField('$.preferredFashionTags[*]', as_name='preferredFashionTags'),
+                    TagField('$.preferredBeautyTags[*]', as_name='preferredBeautyTags'),
+                    TagField('$.preferredContentTags[*]', as_name='preferredContentTags'),
                 )
             },
             {
@@ -387,9 +382,9 @@ class RedisDataGenerator:
                 'schema': (
                     NumericField('$.campaignId', as_name='campaignId'),
                     TagField('$.categories[*]', as_name='categories'),
-                    TagField('$.preferredFashionTagIds[*]', as_name='preferredFashionTagIds'),
-                    TagField('$.preferredBeautyTagIds[*]', as_name='preferredBeautyTagIds'),
-                    TagField('$.preferredContentTagIds[*]', as_name='preferredContentTagIds'),
+                    TagField('$.preferredFashionTags[*]', as_name='preferredFashionTags'),
+                    TagField('$.preferredBeautyTags[*]', as_name='preferredBeautyTags'),
+                    TagField('$.preferredContentTags[*]', as_name='preferredContentTags'),
                 )
             },
             {
@@ -397,10 +392,10 @@ class RedisDataGenerator:
                 'prefix': 'com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument:',
                 'schema': (
                     NumericField('$.userId', as_name='userId'),
-                    TagField('$.fashionTagIds[*]', as_name='fashionTagIds'),
-                    TagField('$.beautyTagIds[*]', as_name='beautyTagIds'),
-                    TagField('$.contentTagIds[*]', as_name='contentTagIds'),
-                    NumericField('$.height', as_name='height'),
+                    TagField('$.fashionTags[*]', as_name='fashionTags'),
+                    TagField('$.beautyTags[*]', as_name='beautyTags'),
+                    TagField('$.contentTags[*]', as_name='contentTags'),
+                    NumericField('$.heightTag', as_name='heightTag'),
                 )
             },
         ]
