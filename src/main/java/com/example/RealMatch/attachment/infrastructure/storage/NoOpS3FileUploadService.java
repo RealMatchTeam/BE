@@ -2,7 +2,7 @@ package com.example.RealMatch.attachment.infrastructure.storage;
 
 import java.io.InputStream;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,7 @@ import com.example.RealMatch.global.exception.CustomException;
 
 @Service
 @Profile("!prod")
-@ConditionalOnMissingBean(S3FileUploadService.class)
+@Conditional(S3CredentialsMissingCondition.class)
 public class NoOpS3FileUploadService implements S3FileUploadService {
 
     @Override

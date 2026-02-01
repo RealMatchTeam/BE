@@ -49,6 +49,13 @@ public class AttachmentValidationService {
                     uploadPolicy.getAllowedImageContentTypes(),
                     uploadPolicy.getAllowedImageExtensions()
             );
+        } else if (attachmentType == AttachmentType.FILE) {
+            fileValidator.validateAttachmentFile(
+                    normalizedContentType,
+                    originalFilename,
+                    uploadPolicy.getAllowedFileContentTypes(),
+                    uploadPolicy.getAllowedFileExtensions()
+            );
         }
         return normalizedContentType;
     }
