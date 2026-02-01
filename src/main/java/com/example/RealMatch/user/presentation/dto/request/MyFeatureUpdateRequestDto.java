@@ -1,13 +1,13 @@
-package com.example.RealMatch.user.presentation.dto.response;
+package com.example.RealMatch.user.presentation.dto.request;
 
 import java.util.List;
 
-public record MyFeatureResponseDto(
-        BeautyType beautyType,
-        FashionType fashionType,
-        ContentsType contentsType
+public record MyFeatureUpdateRequestDto(
+        BeautyTypeUpdate beautyType,
+        FashionTypeUpdate fashionType,
+        ContentsTypeUpdate contentsType
 ) {
-    public record BeautyType(
+    public record BeautyTypeUpdate(
             List<String> skinType,
             String skinBrightness,
             List<String> makeupStyle,
@@ -15,7 +15,7 @@ public record MyFeatureResponseDto(
             List<String> interestFunctions
     ) {}
 
-    public record FashionType(
+    public record FashionTypeUpdate(
             String bodyStats,
             String bodyShape,
             String topSize,
@@ -25,7 +25,7 @@ public record MyFeatureResponseDto(
             List<String> interestBrands
     ) {}
 
-    public record ContentsType(
+    public record ContentsTypeUpdate(
             List<String> viewerGender,
             List<String> viewerAge,
             String avgVideoLength,
