@@ -32,8 +32,11 @@ public class MatchController implements MatchSwagger {
 
     @Override
     @PostMapping
-    public CustomResponse<MatchResponseDto> match(@RequestBody MatchRequestDto requestDto) {
-        MatchResponseDto result = matchService.match(requestDto);
+    public CustomResponse<MatchResponseDto> match(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody MatchRequestDto requestDto) {
+        Long userId = userDetails.getUserId();
+        MatchResponseDto result = matchService.match(userId, requestDto);
         return CustomResponse.ok(result);
     }
 

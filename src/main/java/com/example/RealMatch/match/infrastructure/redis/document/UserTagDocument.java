@@ -26,13 +26,13 @@ public class UserTagDocument {
     // 이산형 태그 조건 //
     // ************ //
     @Indexed
-    private Set<String> fashionTags;
+    private Set<Integer> fashionTags;
 
     @Indexed
-    private Set<String> beautyTags;
+    private Set<Integer> beautyTags;
 
     @Indexed
-    private Set<String> contentTags;
+    private Set<Integer> contentTags;
 
     // ************ //
     // 연속형 태그 조건 //
@@ -46,29 +46,29 @@ public class UserTagDocument {
     private String bodyType;
 
     @Indexed
-    private String topSize;
+    private Integer topSize;
 
     @Indexed
-    private String bottomSize;
+    private Integer bottomSize;
 
     // 컨텐츠 관련
     @Indexed
-    private Long averageContentsViews;
+    private Set<Integer> averageContentsViews;
 
     @Indexed
-    private Set<String> contentsAge;
+    private Set<Integer> contentsAge;
 
     @Indexed
-    private Set<String> contentsGender;
+    private Set<Integer> contentsGender;
 
     @Indexed
-    private String contentsLength;
+    private Set<Integer> contentsLength;
 
     @Builder
-    public UserTagDocument(Long userId, Set<String> fashionTags, Set<String> beautyTags,
-                           Set<String> contentTags, Integer height, String bodyType,
-                           String topSize, String bottomSize, Long averageContentsViews,
-                           Set<String> contentsAge, Set<String> contentsGender, String contentsLength) {
+    public UserTagDocument(Long userId, Set<Integer> fashionTags, Set<Integer> beautyTags,
+                           Set<Integer> contentTags, Integer height, String bodyType,
+                           Integer topSize, Integer bottomSize, Set<Integer> averageContentsViews,
+                           Set<Integer> contentsAge, Set<Integer> contentsGender, Set<Integer> contentsLength) {
         this.id = "user:" + userId;
         this.userId = userId;
         this.fashionTags = fashionTags;

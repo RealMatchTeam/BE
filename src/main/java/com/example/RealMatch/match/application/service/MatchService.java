@@ -11,7 +11,7 @@ import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
 
 public interface MatchService {
 
-    MatchResponseDto match(MatchRequestDto requestDto);
+    MatchResponseDto match(Long userId, MatchRequestDto requestDto);
 
     MatchBrandResponseDto getMatchingBrands(String userId, SortType sortBy, CategoryType category, List<String> tags);
 

@@ -9,40 +9,49 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MatchRequestDto {
 
-    private String userId;
-    private String brandId;
-    private String sex;
-    private Integer age;
-    private Integer height;
-    private Integer weight;
-    private SizeDto size;
     private BeautyDto beauty;
     private FashionDto fashion;
-    private SnsDto sns;
+    private ContentDto content;
 
-    @Getter
-    @NoArgsConstructor
-    public static class SizeDto {
-        private Integer upper;
-        private Integer bottom;
-    }
-
+    // ******* //
+    // 뷰티 정보 //
+    // ******* //
     @Getter
     @NoArgsConstructor
     public static class BeautyDto {
-        private List<String> interests;
-        private List<String> functions;
-        private String skinType;
-        private String skinTone;
-        private String makeupStyle;
+        private List<Integer> interestStyleTags;
+        private List<Integer> prefferedFunctionTags;
+        private Integer skinTypeTags;
+        private Integer skinToneTags;
+        private Integer makeupStyleTags;
     }
-
+    
+    // ******* //
+    // 패션 정보 //
+    // ******* //
     @Getter
     @NoArgsConstructor
     public static class FashionDto {
-        private List<String> styles;
-        private List<String> items;
-        private List<String> preferredBrands;
+        private List<Integer> interestStyleTags;
+        private List<Integer> preferredItemTags;
+        private List<Integer> preferredBrandTags;
+        private Integer heightTags;
+        private Integer weightTypeTags;
+        private Integer topSizeTags;
+        private Integer bottomSizeTags;
+    }
+
+    // ******** //
+    // 컨텐츠 정보 //
+    // ******** //
+    @Getter
+    @NoArgsConstructor
+    public static class ContentDto {
+        private SnsDto sns;
+        private List<Integer> typeTags;
+        private List<Integer> toneTags;
+        private List<Integer> prefferedInvolvementTags;
+        private List<Integer> prefferedCoverageTags;
     }
 
     @Getter
@@ -50,24 +59,20 @@ public class MatchRequestDto {
     public static class SnsDto {
         private String url;
         private MainAudienceDto mainAudience;
-        private ContentStyleDto contentStyle;
+        private AverageAudienceDto averageAudience;
     }
 
     @Getter
     @NoArgsConstructor
     public static class MainAudienceDto {
-        private List<String> sex;
-        private List<String> age;
+        private List<Integer> genderTags;
+        private List<Integer> ageTags;
     }
 
     @Getter
     @NoArgsConstructor
-    public static class ContentStyleDto {
-        private String avgVideoLength;
-        private String avgViews;
-        private String format;
-        private String type;
-        private String contributionLevel;
-        private String usageCoverage;
+    public static class AverageAudienceDto {
+        private List<Integer> videoLengthTags;
+        private List<Integer> videoViewsTags;
     }
 }
