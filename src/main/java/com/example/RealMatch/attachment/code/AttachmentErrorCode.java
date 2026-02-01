@@ -42,7 +42,7 @@ public enum AttachmentErrorCode implements BaseErrorCode {
             "지원하지 않는 이미지 형식입니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST,
             "ATTACHMENT400_7",
-            "지원하지 않는 첨부파일 형식입니다. (pdf, doc, docx만 허용)"),
+            "지원하지 않는 첨부파일 형식입니다."),
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
             "ATTACHMENT500_1",
             "파일 업로드에 실패했습니다."),
