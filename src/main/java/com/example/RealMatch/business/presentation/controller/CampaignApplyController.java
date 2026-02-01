@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.business.application.service.CampaignApplyQueryService;
 import com.example.RealMatch.business.application.service.CampaignApplyService;
-import com.example.RealMatch.business.presentation.swagger.CampaignApplySwagger;
 import com.example.RealMatch.business.presentation.dto.request.CampaignApplyRequest;
 import com.example.RealMatch.business.presentation.dto.response.CampaignApplyDetailResponse;
+import com.example.RealMatch.business.presentation.swagger.CampaignApplySwagger;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 

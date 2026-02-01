@@ -1,7 +1,6 @@
 package com.example.RealMatch.tag.presentation.dto.response;
 
 import java.util.List;
-import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,7 +15,7 @@ public class ContentTagResponse {
     private List<TagItemResponse> usageRanges;  // USAGE_RANGE
 
     public record TagItemResponse(
-            UUID id,
+            Long id,
             String name        // kor_name
     ) {}
 }

@@ -1,7 +1,5 @@
 package com.example.RealMatch.campaign.presentation.dto.response;
 
-import java.util.UUID;
-
 import com.example.RealMatch.campaign.domain.entity.CampaignContentTag;
 
 import lombok.Builder;
@@ -11,7 +9,7 @@ import lombok.Getter;
 @Builder
 public class ContentTagResponse {
 
-    private UUID tagId;
+    private Long tagId;
     private String tagType;      // FORMAT, CATEGORY, TONE ...
     private String engName;
     private String korName;
