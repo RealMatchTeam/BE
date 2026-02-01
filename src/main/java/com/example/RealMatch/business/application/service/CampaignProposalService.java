@@ -2,7 +2,6 @@ package com.example.RealMatch.business.application.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -82,7 +81,7 @@ public class CampaignProposalService {
     }
 
     @Transactional
-    public void modifyCampaignProposal(CustomUserDetails userDetails, UUID campaignProposalId, CampaignProposalRequestDto request) {
+    public void modifyCampaignProposal(CustomUserDetails userDetails, Long campaignProposalId, CampaignProposalRequestDto request) {
         userRepository.findById(userDetails.getUserId())
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
@@ -141,8 +140,8 @@ public class CampaignProposalService {
             CampaignProposal proposal,
             List<CampaignProposalRequestDto.CampaignContentTagRequest> tagRequests
     ) {
-        // 1. tagId(UUID) 수집
-        List<UUID> tagIds = tagRequests.stream()
+        // 1. tagId(Long) 수집
+        List<Long> tagIds = tagRequests.stream()
                 .map(CampaignProposalRequestDto.CampaignContentTagRequest::id)
                 .toList();
 
@@ -152,8 +151,8 @@ public class CampaignProposalService {
         if (tagContents.size() != tagIds.size()) {
             throw new IllegalArgumentException("존재하지 않는 태그가 포함되어 있습니다.");
         }
-        // 3. Map<UUID, TagContent> 변환
-        Map<UUID, TagContent> tagMap = tagContents.stream()
+        // 3. Map<Long, TagContent> 변환
+        Map<Long, TagContent> tagMap = tagContents.stream()
                 .collect(Collectors.toMap(
                         TagContent::getId,
                         Function.identity()

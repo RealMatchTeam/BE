@@ -2,7 +2,6 @@ package com.example.RealMatch.business.presentation.dto.request;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -64,7 +63,7 @@ public class CampaignProposalRequestDto {
     private LocalDate endDate;
 
     public record CampaignContentTagRequest(
-            @NotNull UUID id,
+            @NotNull Long id,
             String customValue
     ) {}
 

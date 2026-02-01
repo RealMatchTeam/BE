@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.entity.CampaignProposalContentTag;
@@ -20,7 +19,7 @@ import lombok.Getter;
 @Builder
 public class CampaignProposalDetailResponse {
 
-    private UUID proposalId;
+    private Long proposalId;
 
     private Long brandId;
     private Long creatorId;

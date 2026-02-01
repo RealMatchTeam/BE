@@ -1,7 +1,5 @@
 package com.example.RealMatch.business.domain.entity;
 
-import java.util.UUID;
-
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
@@ -39,8 +37,8 @@ import lombok.NoArgsConstructor;
 public class CampaignApply extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

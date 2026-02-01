@@ -2,7 +2,6 @@ package com.example.RealMatch.business.domain.repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,7 +11,7 @@ import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 
-public interface CampaignProposalRepository extends JpaRepository<CampaignProposal, UUID>, CampaignProposalRepositoryCustom {
+public interface CampaignProposalRepository extends JpaRepository<CampaignProposal, Long>, CampaignProposalRepositoryCustom {
 
     @Query("""
     select cp.id
@@ -26,7 +25,7 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
         )
         and (:status is null or cp.status = :status)
     """)
-    List<UUID> findSentProposalIds(
+    List<Long> findSentProposalIds(
             @Param("userId") Long userId,
             @Param("role") Role role,
             @Param("status") ProposalStatus status
@@ -44,7 +43,7 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
         )
         and (:status is null or cp.status = :status)
     """)
-    List<UUID> findReceivedProposalIds(
+    List<Long> findReceivedProposalIds(
             @Param("userId") Long userId,
             @Param("role") Role role,
             @Param("status") ProposalStatus status
@@ -57,6 +56,6 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
         left join fetch t.tagContent
         where cp.id = :proposalId
     """)
-    Optional<CampaignProposal> findByIdWithTags(UUID proposalId);
+    Optional<CampaignProposal> findByIdWithTags(Long proposalId);
 
 }
