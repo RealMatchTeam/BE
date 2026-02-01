@@ -39,14 +39,22 @@ public class MatchBrandHistory extends DeleteBaseEntity {
     @Column(name = "matching_ratio")
     private Long matchingRatio;
 
+    @Column(name = "is_deprecated", nullable = false)
+    private Boolean isDeprecated = false;
+
     @Builder
     public MatchBrandHistory(User user, Brand brand, Long matchingRatio) {
         this.user = user;
         this.brand = brand;
         this.matchingRatio = matchingRatio;
+        this.isDeprecated = false;
     }
 
     public void updateMatchingRatio(Long matchingRatio) {
         this.matchingRatio = matchingRatio;
+    }
+
+    public void deprecate() {
+        this.isDeprecated = true;
     }
 }
