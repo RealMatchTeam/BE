@@ -57,7 +57,7 @@ public class Attachment extends DeleteBaseEntity {
 
     // S3 prefix 분리용. CHAT/PUBLIC에 따라 경로가 나뉘며, 향후 용도별 TTL 분기 가능
     @Enumerated(EnumType.STRING)
-    @Column(name = "usage", length = 20)
+    @Column(name = "attachment_usage", length = 20)
     private AttachmentUsage usage;
 
     private Attachment(
