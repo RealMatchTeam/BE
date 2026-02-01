@@ -38,4 +38,20 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
             @Param("cursor") Long cursor,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT c
+    FROM Campaign c
+    WHERE c.brand.id = :brandId
+      AND c.recruitStartDate <= CURRENT_TIMESTAMP
+      AND c.recruitEndDate >= CURRENT_TIMESTAMP
+      AND (:cursor IS NULL OR c.id < :cursor)
+    ORDER BY c.recruitStartDate DESC, c.id DESC
+""")
+    List<Campaign> findRecruitingCampaigns(
+            @Param("brandId") Long brandId,
+            @Param("cursor") Long cursor,
+            Pageable pageable
+    );
+
 }
