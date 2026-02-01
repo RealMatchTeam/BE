@@ -139,8 +139,8 @@ public class UserFeatureService {
         return new MyFeatureResponseDto.FashionType(
                 detail.getHeight() + "/" + detail.getWeight(),  // 키/몸무게
                 detail.getBodyShape(),                          // 체형
-                detail.getTopSize(),                          // 상의 사이즈
-                detail.getBottomSize(),                          // 하의 사이즈
+                detail.getTopSize(),                            // 상의 사이즈
+                detail.getBottomSize(),                         // 하의 사이즈
                 parseTagString(detail.getInterestFields()),     // 관심분야
                 parseTagString(detail.getInterestStyles()),     // 관심스타일
                 parseTagString(detail.getInterestBrands())      // 관심브랜드
@@ -159,14 +159,14 @@ public class UserFeatureService {
                 detail.getViewerGender(), detail.getContentFormats(), detail.getContentTones());
 
         return new MyFeatureResponseDto.ContentsType(
-                parseTagString(detail.getViewerGender()),      // 시청자 성별
-                parseTagString(detail.getViewerAge()),         // 시청자 연령대
-                detail.getAvgVideoLength(),                    // 영상 길이
-                detail.getAvgViews(),                          // 조회수
-                parseTagString(detail.getContentFormats()),    // 콘텐츠 형식
-                parseTagString(detail.getContentTones()),      // 콘텐츠 톤
-                detail.getDesiredInvolvement(),                // 원하는 관여도
-                detail.getDesiredUsageScope()                  // 원하는 활용 범위
+                parseTagString(detail.getViewerGender()),         // 시청자 성별
+                parseTagString(detail.getViewerAge()),            // 시청자 연령대
+                detail.getAvgVideoLength(),                       // 평균 영상 길이
+                detail.getAvgViews(),                             // 평균 조회수
+                parseTagString(detail.getContentFormats()),       // 콘텐츠 형식
+                parseTagString(detail.getContentTones()),         // 콘텐츠 톤
+                parseTagString(detail.getDesiredInvolvement()),   // 원하는 관여도
+                parseTagString(detail.getDesiredUsageScope())     // 원하는 활용 범위
         );
     }
 
