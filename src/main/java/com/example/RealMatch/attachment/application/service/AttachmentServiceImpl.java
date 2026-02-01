@@ -10,9 +10,6 @@ import org.springframework.stereotype.Service;
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
-import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
-import com.example.RealMatch.attachment.domain.enums.AttachmentType;
-import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
@@ -28,7 +25,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AttachmentServiceImpl.class);
 
-    private final AttachmentRepository attachmentRepository;
+    private final AttachmentUploadTxService uploadTxService;
     private final S3FileUploadService s3FileUploadService;
     private final AttachmentCommandService attachmentCommandService;
     private final AttachmentValidationService attachmentValidationService;
@@ -44,42 +41,26 @@ public class AttachmentServiceImpl implements AttachmentService {
             String contentType,
             long fileSize
     ) {
-        AttachmentType attachmentType = request.attachmentType();
-
-        // 파일 검증
         attachmentValidationService.validateUploadRequest(
                 originalFilename,
                 contentType,
                 fileSize,
-                attachmentType
+                request.attachmentType()
         );
 
-        // DB에 첨부파일 메타데이터 저장
-        Attachment attachment = Attachment.create(
+        // TX#1: 메타 생성(UPLOADED) + storageKey 저장
+        AttachmentUploadTxService.CreateResult created = uploadTxService.createAttachmentAndSetStorageKey(
                 userId,
-                attachmentType,
+                request.attachmentType(),
                 contentType,
                 originalFilename,
-                fileSize,
-                null
+                fileSize
         );
-        attachment = attachmentRepository.save(attachment);
+        Attachment attachment = created.attachment();
+        String s3Key = created.s3Key();
 
-        // S3에 파일 업로드
-        String s3Key = null;
         try {
-            s3Key = s3FileUploadService.generateS3Key(userId, attachment.getId(), originalFilename);
-            int storageUpdated = attachmentRepository.updateStorageKeyIfStatus(
-                    attachment.getId(),
-                    AttachmentStatus.UPLOADED,
-                    s3Key
-            );
-            if (storageUpdated != 1) {
-                LOG.error("첨부파일 storageKey 업데이트 실패. attachmentId={}, userId={}, s3Key={}, updated={}",
-                        attachment.getId(), userId, s3Key, storageUpdated);
-                throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
-            }
-
+            // TX 밖: S3 업로드 (DB 커넥션 점유 없음)
             String accessUrl = s3FileUploadService.uploadFile(
                     fileInputStream,
                     s3Key,
@@ -87,56 +68,45 @@ public class AttachmentServiceImpl implements AttachmentService {
                     fileSize
             );
 
-            // S3 업로드 성공 시 accessUrl/상태 원자적 업데이트
-            String storedAccessUrl = accessUrl;
-            int updated = attachmentRepository.updateStatusAndAccessUrlIfStatus(
-                    attachment.getId(),
-                    AttachmentStatus.UPLOADED,
-                    AttachmentStatus.READY,
-                    storedAccessUrl
-            );
-            if (updated != 1) {
-                Attachment current = attachmentRepository.findById(attachment.getId()).orElse(null);
-                if (current == null) {
-                    LOG.error("첨부파일 상태 업데이트 실패(미조회). attachmentId={}, userId={}, s3Key={}, updated={}",
-                            attachment.getId(), userId, s3Key, updated);
-                    throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
-                }
-                if (current.getStatus() != AttachmentStatus.READY) {
-                    LOG.error("첨부파일 상태 업데이트 실패. attachmentId={}, userId={}, s3Key={}, updated={}, status={}, storageKey={}, accessUrl={}",
-                            attachment.getId(), userId, s3Key, updated,
-                            current.getStatus(), current.getStorageKey(), current.getAccessUrl());
-                    throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
-                }
-                LOG.info("첨부파일 상태가 이미 READY입니다. attachmentId={}, userId={}, s3Key={}, updated={}, status={}, storageKey={}, accessUrl={}",
-                        attachment.getId(), userId, s3Key, updated,
-                        current.getStatus(), current.getStorageKey(), current.getAccessUrl());
-            }
-            attachment = attachmentRepository.findById(attachment.getId())
-                    .orElseThrow(() -> new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED));
-
-            LOG.info("파일 업로드 성공. attachmentId={}, userId={}, s3Key={}", 
-                    attachment.getId(), userId, s3Key);
-
-        } catch (Exception e) {
-            LOG.error("파일 업로드 실패. attachmentId={}, userId={}, s3Key={}", 
-                    attachment.getId(), userId, s3Key, e);
-            
-            // 별도 트랜잭션으로 실패 상태 업데이트 시도
+            // TX#2: UPLOADED → READY (조건부). markReady만 별도 catch → "S3 성공 + READY 전환 실패"일 때만 FAILED + S3 삭제 시도.
             try {
-                attachmentCommandService.markAttachmentAsFailed(attachment.getId());
-            } catch (Exception markFailedException) {
-                LOG.error("실패 상태 업데이트 실패. attachmentId={}", 
-                        attachment.getId(), markFailedException);
+                attachment = uploadTxService.markAttachmentAsReady(attachment.getId(), accessUrl);
+            } catch (CustomException readyEx) {
+                // S3 성공 + READY 전환 실패 (DB 경합/상태 이상) → 여기서만 FAILED + S3 삭제, 그 다음 rethrow로 종료
+                safeMarkFailed(attachment.getId());
+                safeDeleteS3(s3Key, attachment.getId());
+                throw readyEx;
             }
-            
+
+            LOG.info("파일 업로드 성공. attachmentId={}, userId={}, s3Key={}",
+                    attachment.getId(), userId, s3Key);
+        } catch (CustomException ce) {
+            // 위에서 던진 도메인 예외(markReady 실패 등)는 그대로 전달.
+            throw ce;
+        } catch (Exception e) {
+            LOG.error("파일 업로드 실패. attachmentId={}, userId={}, s3Key={}",
+                    attachment.getId(), userId, s3Key, e);
+            safeMarkFailed(attachment.getId());
             throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, e);
         }
 
-        // Presigned URL 생성
         String responseAccessUrl = attachmentUrlService.getAccessUrl(attachment);
-
-        // 응답 DTO 생성
         return responseMapper.toUploadResponse(attachment, responseAccessUrl);
+    }
+
+    private void safeMarkFailed(Long attachmentId) {
+        try {
+            attachmentCommandService.markAttachmentAsFailed(attachmentId);
+        } catch (Exception ex) {
+            LOG.error("FAILED 처리 실패. attachmentId={}", attachmentId, ex);
+        }
+    }
+
+    private void safeDeleteS3(String s3Key, Long attachmentId) {
+        try {
+            s3FileUploadService.deleteFile(s3Key);
+        } catch (Exception ex) {
+            LOG.warn("S3 즉시 삭제 실패. attachmentId={}, s3Key={} (배치에서 정리됨)", attachmentId, s3Key, ex);
+        }
     }
 }
