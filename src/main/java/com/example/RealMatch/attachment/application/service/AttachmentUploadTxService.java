@@ -8,6 +8,7 @@ import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
@@ -29,19 +30,20 @@ public class AttachmentUploadTxService {
             AttachmentType attachmentType,
             String contentType,
             String originalFilename,
-            long fileSize
+            long fileSize,
+            AttachmentUsage usage
     ) {
-        Attachment attachment = Attachment.create(
+        Attachment attachment = Attachment.createUploading(
                 userId,
                 attachmentType,
                 contentType,
                 originalFilename,
                 fileSize,
-                null
+                usage
         );
         attachment = attachmentRepository.save(attachment);
 
-        String s3Key = s3FileUploadService.generateS3Key(userId, attachment.getId(), originalFilename);
+        String s3Key = s3FileUploadService.generateS3Key(usage, userId, attachment.getId(), originalFilename);
         int updated = attachmentRepository.updateStorageKeyIfStatus(
                 attachment.getId(),
                 AttachmentStatus.UPLOADED,

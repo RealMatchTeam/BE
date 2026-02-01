@@ -196,8 +196,8 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 message.getRoomId(),
                 message.getId(),
                 message.getCreatedAt(),
-                message.getMessageType(),
-                preview
+                preview,
+                message.getMessageType()
         );
     }
 

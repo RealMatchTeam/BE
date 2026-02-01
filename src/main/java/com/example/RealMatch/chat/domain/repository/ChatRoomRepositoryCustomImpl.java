@@ -89,7 +89,7 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
             List<Long> roomIds,
             Long userId
     ) {
-        if (roomIds.isEmpty()) {
+        if (roomIds == null || roomIds.isEmpty()) {
             return Map.of();
         }
 

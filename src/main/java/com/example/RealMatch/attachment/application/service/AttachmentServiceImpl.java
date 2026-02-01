@@ -54,7 +54,8 @@ public class AttachmentServiceImpl implements AttachmentService {
                 request.attachmentType(),
                 normalizedContentType,
                 originalFilename,
-                fileSize
+                fileSize,
+                request.usage()
         );
         Attachment attachment = created.attachment();
         String s3Key = created.s3Key();

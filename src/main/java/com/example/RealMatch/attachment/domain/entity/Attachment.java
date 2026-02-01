@@ -2,8 +2,10 @@ package com.example.RealMatch.attachment.domain.entity;
 
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -56,6 +58,11 @@ public class Attachment extends DeleteBaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private AttachmentStatus status;
 
+    // S3 prefix 분리용. CHAT/PUBLIC에 따라 경로가 나뉘며, 향후 용도별 TTL 분기 가능
+    @Enumerated(EnumType.STRING)
+    @Column(name = "usage", length = 20)
+    private AttachmentUsage usage;
+
     private Attachment(
             Long uploaderId,
             AttachmentType attachmentType,
@@ -64,7 +71,8 @@ public class Attachment extends DeleteBaseEntity {
             Long fileSize,
             String storageKey,
             String accessUrl,
-            AttachmentStatus status
+            AttachmentStatus status,
+            AttachmentUsage usage
     ) {
         this.uploaderId = uploaderId;
         this.attachmentType = attachmentType;
@@ -74,15 +82,39 @@ public class Attachment extends DeleteBaseEntity {
         this.storageKey = storageKey;
         this.accessUrl = accessUrl;
         this.status = status;
+        this.usage = usage;
     }
 
-    public static Attachment create(
+    public static Attachment createReady(
             Long uploaderId,
             AttachmentType attachmentType,
             String contentType,
             String originalName,
             Long fileSize,
-            String accessUrl
+            @Nullable String accessUrl,
+            @Nullable String storageKey,
+            AttachmentUsage usage
+    ) {
+        return new Attachment(
+                uploaderId,
+                attachmentType,
+                contentType,
+                originalName,
+                fileSize,
+                storageKey,
+                accessUrl,
+                AttachmentStatus.READY,
+                usage
+        );
+    }
+
+    public static Attachment createUploading(
+            Long uploaderId,
+            AttachmentType attachmentType,
+            String contentType,
+            String originalName,
+            Long fileSize,
+            AttachmentUsage usage
     ) {
         return new Attachment(
                 uploaderId,
@@ -91,8 +123,9 @@ public class Attachment extends DeleteBaseEntity {
                 originalName,
                 fileSize,
                 null,
-                accessUrl,
-                AttachmentStatus.UPLOADED
+                null,
+                AttachmentStatus.UPLOADED,
+                usage
         );
     }
 

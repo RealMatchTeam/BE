@@ -82,6 +82,25 @@ public class ChatMessage extends BaseEntity {
         this.clientMessageId = clientMessageId;
     }
 
+    private ChatMessage(
+            Long roomId,
+            ChatSystemMessageKind systemKind,
+            String systemPayload
+    ) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room id must not be null.");
+        }
+        validateSystemMessageInvariants(systemKind, systemPayload);
+        this.roomId = roomId;
+        this.senderId = null;
+        this.messageType = ChatMessageType.SYSTEM;
+        this.content = null;
+        this.attachmentId = null;
+        this.clientMessageId = null;
+        this.systemKind = systemKind;
+        this.systemPayload = systemPayload;
+    }
+
     private static void validateInvariants(
             Long roomId,
             ChatMessageType messageType,
@@ -93,6 +112,9 @@ public class ChatMessage extends BaseEntity {
         }
         if (messageType == null) {
             throw new IllegalArgumentException("Message type must not be null.");
+        }
+        if (messageType == ChatMessageType.SYSTEM) {
+            throw new IllegalArgumentException("Use createSystemMessage for SYSTEM messages.");
         }
         if (messageType == ChatMessageType.TEXT && (content == null || content.isBlank())) {
             throw new IllegalArgumentException("Content is required for TEXT messages.");
@@ -131,17 +153,6 @@ public class ChatMessage extends BaseEntity {
             ChatSystemMessageKind systemKind,
             String systemPayload
     ) {
-        validateSystemMessageInvariants(systemKind, systemPayload);
-        ChatMessage message = new ChatMessage(
-                roomId,
-                null,
-                ChatMessageType.SYSTEM,
-                null,
-                null,
-                null
-        );
-        message.systemKind = systemKind;
-        message.systemPayload = systemPayload;
-        return message;
+        return new ChatMessage(roomId, systemKind, systemPayload);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.global.exception.CustomException;
 
 @Service
@@ -25,7 +26,7 @@ public class NoOpS3FileUploadService implements S3FileUploadService {
     }
 
     @Override
-    public String generateS3Key(Long userId, Long attachmentId, String originalFilename) {
+    public String generateS3Key(AttachmentUsage usage, Long userId, Long attachmentId, String originalFilename) {
         throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, "S3 is not configured.");
     }
 

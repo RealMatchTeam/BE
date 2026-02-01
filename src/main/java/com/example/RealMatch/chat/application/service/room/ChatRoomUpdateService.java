@@ -12,8 +12,8 @@ public interface ChatRoomUpdateService {
             @NonNull Long roomId,
             @NonNull Long messageId,
             LocalDateTime messageAt,
-            ChatMessageType messageType,
-            String messagePreview
+            String messagePreview,
+            ChatMessageType messageType
     );
 
     void updateProposalStatusByUsers(

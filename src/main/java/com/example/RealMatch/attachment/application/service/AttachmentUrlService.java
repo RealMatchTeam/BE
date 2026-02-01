@@ -32,26 +32,20 @@ public class AttachmentUrlService {
             throw new CustomException(AttachmentErrorCode.STORAGE_UNAVAILABLE);
         }
 
-        String accessUrl = attachment.getAccessUrl();
         String storageKey = attachment.getStorageKey();
-
-        if (!s3Properties.isPublicBucket()) {
-            if (storageKey == null || storageKey.isBlank()) {
-                LOG.error("READY 상태인데 storageKey가 없습니다. attachmentId={}", attachment.getId());
-                return null;
-            }
-            try {
-                accessUrl = s3FileUploadService.generatePresignedUrl(
-                        storageKey,
-                        s3Properties.getPresignedUrlExpirationSeconds()
-                );
-            } catch (Exception e) {
-                LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}", 
-                        attachment.getId(), storageKey, e);
-                accessUrl = null;
-            }
+        if (storageKey == null || storageKey.isBlank()) {
+            LOG.error("READY 상태인데 storageKey가 없습니다. attachmentId={}", attachment.getId());
+            return null;
         }
-
-        return accessUrl;
+        try {
+            return s3FileUploadService.generatePresignedUrl(
+                    storageKey,
+                    s3Properties.getPresignedUrlExpirationSeconds()
+            );
+        } catch (Exception e) {
+            LOG.warn("Presigned URL 생성 실패. attachmentId={}, s3Key={}",
+                    attachment.getId(), storageKey, e);
+            return null;
+        }
     }
 }

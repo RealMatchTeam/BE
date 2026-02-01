@@ -36,8 +36,8 @@ public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
             @NonNull Long roomId,
             @NonNull Long messageId,
             LocalDateTime messageAt,
-            ChatMessageType messageType,
-            String messagePreview
+            String messagePreview,
+            ChatMessageType messageType
     ) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));

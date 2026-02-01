@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -47,10 +48,6 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, fileSize));
-
-            if (s3Properties.isPublicBucket()) {
-                return buildS3Url(key);
-            }
             return null;
 
         } catch (S3Exception e) {
@@ -88,11 +85,11 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     }
 
     @Override
-    public String generateS3Key(Long userId, Long attachmentId, String originalFilename) {
+    public String generateS3Key(AttachmentUsage usage, Long userId, Long attachmentId, String originalFilename) {
         String sanitizedFilename = fileNameSanitizer.sanitizeFileName(originalFilename);
         String extension = fileNameSanitizer.getFileExtension(originalFilename);
         String filename = sanitizedFilename;
-        
+
         if (!extension.isEmpty() && !filename.toLowerCase().endsWith("." + extension.toLowerCase())) {
             filename = filename + "." + extension;
         }
@@ -100,7 +97,9 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
         String uuid = UUID.randomUUID().toString();
         String uniqueFilename = uuid + "_" + filename;
         String datePath = LocalDate.now().format(DATE_FORMATTER);
-        return String.format("%s/%d/%s/%s", s3Properties.getKeyPrefix(), userId, datePath, uniqueFilename);
+        String usagePrefix = usage.name().toLowerCase();
+        return String.format("%s/%s/%d/%s/%s",
+                s3Properties.getKeyPrefix(), usagePrefix, userId, datePath, uniqueFilename);
     }
 
     @Override
@@ -118,13 +117,6 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
             LOG.error("S3 파일 삭제 중 예상치 못한 오류 발생. key={}", key, e);
             throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
         }
-    }
-
-    private String buildS3Url(String key) {
-        return String.format("https://%s.s3.%s.amazonaws.com/%s",
-                s3Properties.getBucketName(),
-                s3Properties.getRegion(),
-                key);
     }
 
     private void handleS3Exception(String operation, String key, S3Exception e) {
