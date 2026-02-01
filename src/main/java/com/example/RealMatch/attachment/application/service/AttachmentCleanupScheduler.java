@@ -90,7 +90,7 @@ public class AttachmentCleanupScheduler {
                 summary.softDeleted += deleteOutcome.successIds.size();
             }
             if (!deleteOutcome.failedIds.isEmpty()) {
-                cleanupService.revertDeletePendingToFailed(deleteOutcome.failedIds);
+                cleanupService.markDeletePendingAsFailed(deleteOutcome.failedIds);
                 summary.deleteFailed += deleteOutcome.failedIds.size();
             }
         }

@@ -51,9 +51,6 @@ public class Attachment extends DeleteBaseEntity {
     @Column(name = "storage_key", length = 1024)
     private String storageKey;
 
-    @Column(name = "access_url", length = 1024)
-    private String accessUrl;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private AttachmentStatus status;
@@ -70,7 +67,6 @@ public class Attachment extends DeleteBaseEntity {
             String originalName,
             Long fileSize,
             String storageKey,
-            String accessUrl,
             AttachmentStatus status,
             AttachmentUsage usage
     ) {
@@ -80,7 +76,6 @@ public class Attachment extends DeleteBaseEntity {
         this.originalName = originalName;
         this.fileSize = fileSize;
         this.storageKey = storageKey;
-        this.accessUrl = accessUrl;
         this.status = status;
         this.usage = usage;
     }
@@ -91,7 +86,6 @@ public class Attachment extends DeleteBaseEntity {
             String contentType,
             String originalName,
             Long fileSize,
-            @Nullable String accessUrl,
             @Nullable String storageKey,
             AttachmentUsage usage
     ) {
@@ -102,7 +96,6 @@ public class Attachment extends DeleteBaseEntity {
                 originalName,
                 fileSize,
                 storageKey,
-                accessUrl,
                 AttachmentStatus.READY,
                 usage
         );
@@ -123,7 +116,6 @@ public class Attachment extends DeleteBaseEntity {
                 originalName,
                 fileSize,
                 null,
-                null,
                 AttachmentStatus.UPLOADED,
                 usage
         );
@@ -133,16 +125,11 @@ public class Attachment extends DeleteBaseEntity {
         this.storageKey = storageKey;
     }
 
-    public void markAsReady(String accessUrl) {
-        this.accessUrl = accessUrl;
+    public void markAsReady() {
         this.status = AttachmentStatus.READY;
     }
 
     public void markAsFailed() {
         this.status = AttachmentStatus.FAILED;
-    }
-
-    public void updateAccessUrl(String accessUrl) {
-        this.accessUrl = accessUrl;
     }
 }

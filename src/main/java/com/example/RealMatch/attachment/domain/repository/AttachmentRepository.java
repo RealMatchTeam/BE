@@ -13,7 +13,6 @@ import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
-    List<Attachment> findByStatusAndCreatedAtBefore(AttachmentStatus status, LocalDateTime before);
 
     @Query("""
             select a.id
@@ -39,22 +38,6 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     List<AttachmentCleanupTarget> findCleanupTargetsByIdInAndStatus(
             @Param("ids") List<Long> ids,
             @Param("status") AttachmentStatus status
-    );
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            update Attachment a
-               set a.status = :toStatus,
-                   a.accessUrl = :accessUrl
-             where a.id = :id
-               and a.status = :fromStatus
-               and a.isDeleted = false
-            """)
-    int updateStatusAndAccessUrlIfStatus(
-            @Param("id") Long id,
-            @Param("fromStatus") AttachmentStatus fromStatus,
-            @Param("toStatus") AttachmentStatus toStatus,
-            @Param("accessUrl") String accessUrl
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

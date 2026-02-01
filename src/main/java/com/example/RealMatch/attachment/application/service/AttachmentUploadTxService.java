@@ -56,12 +56,11 @@ public class AttachmentUploadTxService {
     }
 
     @Transactional
-    public Attachment markAttachmentAsReady(Long attachmentId, String accessUrl) {
-        int updated = attachmentRepository.updateStatusAndAccessUrlIfStatus(
+    public Attachment markAttachmentAsReady(Long attachmentId) {
+        int updated = attachmentRepository.updateStatusByIdAndStatus(
                 attachmentId,
                 AttachmentStatus.UPLOADED,
-                AttachmentStatus.READY,
-                accessUrl
+                AttachmentStatus.READY
         );
         if (updated != 1) {
             Attachment current = attachmentRepository.findById(attachmentId)

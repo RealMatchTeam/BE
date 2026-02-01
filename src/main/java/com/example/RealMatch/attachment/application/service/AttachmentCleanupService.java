@@ -39,14 +39,6 @@ public class AttachmentCleanupService {
     }
 
     @Transactional
-    public void revertDeletePendingToFailed(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return;
-        }
-        attachmentRepository.updateStatusByIdsAndStatus(ids, AttachmentStatus.DELETE_PENDING, AttachmentStatus.FAILED);
-    }
-
-    @Transactional
     public void softDeleteByIds(List<Long> ids, LocalDateTime deletedAt) {
         if (ids == null || ids.isEmpty()) {
             return;

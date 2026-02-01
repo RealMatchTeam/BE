@@ -62,16 +62,16 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         try {
             // TX 밖: S3 업로드 (DB 커넥션 점유 없음)
-            String accessUrl = s3FileUploadService.uploadFile(
+            s3FileUploadService.uploadFile(
                     fileInputStream,
                     s3Key,
                     normalizedContentType,
                     fileSize
             );
 
-            // TX#2: UPLOADED → READY (조건부). markReady만 별도 catch → "S3 성공 + READY 전환 실패"일 때만 FAILED + S3 삭제 시도.
+            // TX#2: UPLOADED → READY (상태 전환만). markReady만 별도 catch → "S3 성공 + READY 전환 실패"일 때만 FAILED + S3 삭제 시도.
             try {
-                attachment = uploadTxService.markAttachmentAsReady(attachment.getId(), accessUrl);
+                attachment = uploadTxService.markAttachmentAsReady(attachment.getId());
             } catch (CustomException readyEx) {
                 // S3 성공 + READY 전환 실패 (DB 경합/상태 이상) → 여기서만 FAILED + S3 삭제, 그 다음 rethrow로 종료
                 safeMarkFailed(attachment.getId());
