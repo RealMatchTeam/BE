@@ -2,6 +2,7 @@ package com.example.RealMatch.business.domain.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,7 @@ import com.example.RealMatch.business.domain.enums.ProposalStatus;
 
 public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Long> {
     boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
+    Optional<CampaignApply> findByCampaignIdAndUserId(Long campaignId, Long userId);
 
     @Query("""
     select ca
