@@ -26,7 +26,11 @@ import jakarta.validation.Valid;
 public interface AttachmentSwagger {
 
     @Operation(summary = "첨부파일 업로드 API",
-            description = "첨부 파일을 업로드하고 메타 정보를 반환합니다.")
+            description = """
+                    첨부 파일을 업로드하고 메타 정보를 반환합니다.
+                    - IMAGE: png, jpeg(jpg)만 허용
+                    - FILE: pdf, doc, docx만 허용
+                    """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "첨부파일 업로드 성공"),
             @ApiResponse(responseCode = "COMMON400_1", description = "잘못된 요청입니다."),
@@ -35,7 +39,8 @@ public interface AttachmentSwagger {
             @ApiResponse(responseCode = "ATTACHMENT400_2", description = "유효하지 않은 파일명입니다."),
             @ApiResponse(responseCode = "ATTACHMENT400_3", description = "유효하지 않은 파일 크기입니다."),
             @ApiResponse(responseCode = "ATTACHMENT400_4", description = "파일 크기가 제한을 초과했습니다."),
-            @ApiResponse(responseCode = "ATTACHMENT400_5", description = "지원하지 않는 이미지 형식입니다."),
+            @ApiResponse(responseCode = "ATTACHMENT400_5", description = "지원하지 않는 이미지 형식입니다. (png, jpeg만 허용)"),
+            @ApiResponse(responseCode = "ATTACHMENT400_7", description = "지원하지 않는 첨부파일 형식입니다. (pdf, doc, docx만 허용)"),
             @ApiResponse(responseCode = "ATTACHMENT500_1", description = "파일 업로드에 실패했습니다.")
     })
     CustomResponse<AttachmentUploadResponse> uploadAttachment(
