@@ -44,13 +44,13 @@ public class CampaignTagDocument {
     // 이산형 태그 조건 //
     // ************ //
     @Indexed
-    private Set<String> preferredFashionTags;
+    private Set<Integer> preferredFashionTags;
 
     @Indexed
-    private Set<String> preferredBeautyTags;
+    private Set<Integer> preferredBeautyTags;
 
     @Indexed
-    private Set<String> preferredContentTags;
+    private Set<Integer> preferredContentTags;
 
     // ************ //
     // 연속형 태그 조건 //
@@ -64,35 +64,26 @@ public class CampaignTagDocument {
     private Integer maxCreatorHeight;
 
     @Indexed
-    private Set<String> preferredBodyTypes;
+    private Set<Integer> preferredBodyTypeTags;
 
     @Indexed
-    private Integer minCreatorTopSizes;
+    private Set<Integer> preferredTopSizeTags;
 
     @Indexed
-    private Integer maxCreatorTopSizes;
-
-    @Indexed
-    private Integer minCreatorBottomSizes;
-
-    @Indexed
-    private Integer maxCreatorBottomSizes;
+    private Set<Integer> preferredBottomSizeTags;
 
     // 컨텐츠 관련
     @Indexed
-    private Long minContentsAverageViews;
+    private Set<Integer> preferredContentsAverageViewsTags;
 
     @Indexed
-    private Long maxContentsAverageViews;
+    private Set<Integer> preferredContentsAgeTags;
 
     @Indexed
-    private Set<String> preferredContentsAges;
+    private Set<Integer> preferredContentsGenderTags;
 
     @Indexed
-    private Set<String> preferredContentsGenders;
-
-    @Indexed
-    private Set<String> preferredContentsLengths;
+    private Set<Integer> preferredContentsLengthTags;
 
     // 캠페인 기본 정보
     @Indexed
@@ -108,15 +99,14 @@ public class CampaignTagDocument {
     public CampaignTagDocument(Long campaignId, String campaignName, String description,
                                BigDecimal rewardAmount, LocalDateTime recruitEndDate,
                                Set<String> categories,
-                               Set<String> preferredFashionTags, Set<String> preferredBeautyTags,
-                               Set<String> preferredContentTags,
+                               Set<Integer> preferredFashionTags, Set<Integer> preferredBeautyTags,
+                               Set<Integer> preferredContentTags,
                                Integer minCreatorHeight, Integer maxCreatorHeight,
-                               Set<String> preferredBodyTypes,
-                               Integer minCreatorTopSizes, Integer maxCreatorTopSizes,
-                               Integer minCreatorBottomSizes, Integer maxCreatorBottomSizes,
-                               Long minContentsAverageViews, Long maxContentsAverageViews,
-                               Set<String> preferredContentsAges, Set<String> preferredContentsGenders,
-                               Set<String> preferredContentsLengths,
+                               Set<Integer> preferredBodyTypeTags,
+                               Set<Integer> preferredTopSizeTags, Set<Integer> preferredBottomSizeTags,
+                               Set<Integer> preferredContentsAverageViewsTags,
+                               Set<Integer> preferredContentsAgeTags, Set<Integer> preferredContentsGenderTags,
+                               Set<Integer> preferredContentsLengthTags,
                                LocalDate startDate, LocalDate endDate, Integer quota) {
         this.id = "campaign:" + campaignId;
         this.campaignId = campaignId;
@@ -130,16 +120,13 @@ public class CampaignTagDocument {
         this.preferredContentTags = preferredContentTags;
         this.minCreatorHeight = minCreatorHeight;
         this.maxCreatorHeight = maxCreatorHeight;
-        this.preferredBodyTypes = preferredBodyTypes;
-        this.minCreatorTopSizes = minCreatorTopSizes;
-        this.maxCreatorTopSizes = maxCreatorTopSizes;
-        this.minCreatorBottomSizes = minCreatorBottomSizes;
-        this.maxCreatorBottomSizes = maxCreatorBottomSizes;
-        this.minContentsAverageViews = minContentsAverageViews;
-        this.maxContentsAverageViews = maxContentsAverageViews;
-        this.preferredContentsAges = preferredContentsAges;
-        this.preferredContentsGenders = preferredContentsGenders;
-        this.preferredContentsLengths = preferredContentsLengths;
+        this.preferredBodyTypeTags = preferredBodyTypeTags;
+        this.preferredTopSizeTags = preferredTopSizeTags;
+        this.preferredBottomSizeTags = preferredBottomSizeTags;
+        this.preferredContentsAverageViewsTags = preferredContentsAverageViewsTags;
+        this.preferredContentsAgeTags = preferredContentsAgeTags;
+        this.preferredContentsGenderTags = preferredContentsGenderTags;
+        this.preferredContentsLengthTags = preferredContentsLengthTags;
         this.startDate = startDate;
         this.endDate = endDate;
         this.quota = quota;
