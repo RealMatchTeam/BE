@@ -1,9 +1,10 @@
 package com.example.RealMatch.chat.presentation.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record ChatProposalStatusNoticePayloadResponse(
-        Long proposalId,
+        UUID proposalId,
         Long actorUserId,
         LocalDateTime processedAt
 ) implements ChatSystemMessagePayload {

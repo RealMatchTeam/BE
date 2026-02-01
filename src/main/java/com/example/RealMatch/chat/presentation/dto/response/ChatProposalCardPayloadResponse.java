@@ -1,12 +1,13 @@
 package com.example.RealMatch.chat.presentation.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalDecisionStatus;
 
 public record ChatProposalCardPayloadResponse(
-        Long proposalId,
+        UUID proposalId,
         Long campaignId,
         String campaignName,
         String campaignSummary,
