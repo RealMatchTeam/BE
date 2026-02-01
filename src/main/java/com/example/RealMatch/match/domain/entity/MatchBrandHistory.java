@@ -4,6 +4,7 @@ import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -35,11 +36,17 @@ public class MatchBrandHistory extends DeleteBaseEntity {
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
+    @Column(name = "matching_ratio")
+    private Long matchingRatio;
+
     @Builder
-    public MatchBrandHistory(User user, Brand brand) {
+    public MatchBrandHistory(User user, Brand brand, Long matchingRatio) {
         this.user = user;
         this.brand = brand;
+        this.matchingRatio = matchingRatio;
     }
 
-
+    public void updateMatchingRatio(Long matchingRatio) {
+        this.matchingRatio = matchingRatio;
+    }
 }

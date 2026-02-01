@@ -29,6 +29,7 @@ class BrandGenerator(BaseGenerator):
                 'detail_intro': self.fake.text(max_nb_chars=500),
                 'homepage_url': self.fake.url(),
                 'matching_rate': self.fake.random_int(50, 100),
+                'user_id': user_ids[i],
                 'created_by': user_ids[i],
                 'is_deleted': False,
                 'created_at': datetime.now() - timedelta(days=self.fake.random_int(30, 365)),
@@ -38,10 +39,10 @@ class BrandGenerator(BaseGenerator):
 
         sql = """
             INSERT INTO brand (brand_name, industry_type, logo_url, simple_intro,
-                               detail_intro, homepage_url, matching_rate, created_by,
+                               detail_intro, homepage_url, matching_rate, user_id, created_by,
                                is_deleted, created_at, updated_at)
             VALUES (%(brand_name)s, %(industry_type)s, %(logo_url)s, %(simple_intro)s,
-                    %(detail_intro)s, %(homepage_url)s, %(matching_rate)s, %(created_by)s,
+                    %(detail_intro)s, %(homepage_url)s, %(matching_rate)s, %(user_id)s, %(created_by)s,
                     %(is_deleted)s, %(created_at)s, %(updated_at)s)
         """
         self.execute_many(sql, brands, "브랜드")
