@@ -35,10 +35,10 @@ public class MatchRequestDto {
         private List<Integer> interestStyleTags;
         private List<Integer> preferredItemTags;
         private List<Integer> preferredBrandTags;
-        private Integer heightTags;
-        private Integer weightTypeTags;
-        private Integer topSizeTags;
-        private Integer bottomSizeTags;
+        private Integer heightTag;
+        private Integer weightTypeTag;
+        private Integer topSizeTag;
+        private Integer bottomSizeTag;
     }
 
     // ******** //

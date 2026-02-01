@@ -189,43 +189,41 @@ public class MatchServiceImpl implements MatchService {
         }
 
         // Fashion 관련 필드
-        Integer height = null;
-        String bodyType = null;
-        Integer topSize = null;
-        Integer bottomSize = null;
+        Integer heightTag = null;
+        Integer bodyTypeTag = null;
+        Integer topSizeTag = null;
+        Integer bottomSizeTag = null;
         if (dto.getFashion() != null) {
-            height = dto.getFashion().getHeightTags();
-            if (dto.getFashion().getWeightTypeTags() != null) {
-                bodyType = String.valueOf(dto.getFashion().getWeightTypeTags());
-            }
-            topSize = dto.getFashion().getTopSizeTags();
-            bottomSize = dto.getFashion().getBottomSizeTags();
+            heightTag = dto.getFashion().getHeightTag();
+            bodyTypeTag = dto.getFashion().getWeightTypeTag();
+            topSizeTag = dto.getFashion().getTopSizeTag();
+            bottomSizeTag = dto.getFashion().getBottomSizeTag();
         }
 
         // Content SNS 관련 필드
-        Set<Integer> contentsAge = new HashSet<>();
-        Set<Integer> contentsGender = new HashSet<>();
-        Set<Integer> contentsLength = new HashSet<>();
-        Set<Integer> averageContentsViews = new HashSet<>();
+        Set<Integer> contentsAgeTags = new HashSet<>();
+        Set<Integer> contentsGenderTags = new HashSet<>();
+        Set<Integer> contentsLengthTags = new HashSet<>();
+        Set<Integer> averageContentsViewsTags = new HashSet<>();
 
         if (dto.getContent() != null && dto.getContent().getSns() != null) {
             MatchRequestDto.SnsDto sns = dto.getContent().getSns();
 
             if (sns.getMainAudience() != null) {
                 if (sns.getMainAudience().getAgeTags() != null) {
-                    contentsAge.addAll(sns.getMainAudience().getAgeTags());
+                    contentsAgeTags.addAll(sns.getMainAudience().getAgeTags());
                 }
                 if (sns.getMainAudience().getGenderTags() != null) {
-                    contentsGender.addAll(sns.getMainAudience().getGenderTags());
+                    contentsGenderTags.addAll(sns.getMainAudience().getGenderTags());
                 }
             }
 
             if (sns.getAverageAudience() != null) {
                 if (sns.getAverageAudience().getVideoLengthTags() != null) {
-                    contentsLength.addAll(sns.getAverageAudience().getVideoLengthTags());
+                    contentsLengthTags.addAll(sns.getAverageAudience().getVideoLengthTags());
                 }
                 if (sns.getAverageAudience().getVideoViewsTags() != null) {
-                    averageContentsViews.addAll(sns.getAverageAudience().getVideoViewsTags());
+                    averageContentsViewsTags.addAll(sns.getAverageAudience().getVideoViewsTags());
                 }
             }
         }
@@ -235,14 +233,14 @@ public class MatchServiceImpl implements MatchService {
                 .fashionTags(fashionTags)
                 .beautyTags(beautyTags)
                 .contentTags(contentTags)
-                .height(height)
-                .bodyType(bodyType)
-                .topSize(topSize)
-                .bottomSize(bottomSize)
-                .averageContentsViews(averageContentsViews)
-                .contentsAge(contentsAge)
-                .contentsGender(contentsGender)
-                .contentsLength(contentsLength)
+                .heightTag(heightTag)
+                .bodyTypeTag(bodyTypeTag)
+                .topSizeTag(topSizeTag)
+                .bottomSizeTag(bottomSizeTag)
+                .averageContentsViewsTags(averageContentsViewsTags)
+                .contentsAgeTags(contentsAgeTags)
+                .contentsGenderTags(contentsGenderTags)
+                .contentsLengthTags(contentsLengthTags)
                 .build();
     }
 

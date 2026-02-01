@@ -61,10 +61,10 @@ public interface MatchSwagger {
                                                         "interestStyleTags": [501, 502],
                                                         "preferredItemTags": [601, 602],
                                                         "preferredBrandTags": [701, 702],
-                                                        "heightTags": 180,
-                                                        "weightTypeTags": 101,
-                                                        "topSizeTags": 101,
-                                                        "bottomSizeTags": 101
+                                                        "heightTag": 180,
+                                                        "weightTypeTag": 101,
+                                                        "topSizeTag": 101,
+                                                        "bottomSizeTag": 101
                                                       },
                                                       "content": {
                                                         "sns": {

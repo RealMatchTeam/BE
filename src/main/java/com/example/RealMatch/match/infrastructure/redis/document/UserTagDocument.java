@@ -40,47 +40,47 @@ public class UserTagDocument {
 
     // 패션 관련
     @Indexed
-    private Integer height;
+    private Integer heightTag;
 
     @Indexed
-    private String bodyType;
+    private Integer bodyTypeTag;
 
     @Indexed
-    private Integer topSize;
+    private Integer topSizeTag;
 
     @Indexed
-    private Integer bottomSize;
+    private Integer bottomSizeTag;
 
     // 컨텐츠 관련
     @Indexed
-    private Set<Integer> averageContentsViews;
+    private Set<Integer> averageContentsViewsTags;
 
     @Indexed
-    private Set<Integer> contentsAge;
+    private Set<Integer> contentsAgeTags;
 
     @Indexed
-    private Set<Integer> contentsGender;
+    private Set<Integer> contentsGenderTags;
 
     @Indexed
-    private Set<Integer> contentsLength;
+    private Set<Integer> contentsLengthTags;
 
     @Builder
     public UserTagDocument(Long userId, Set<Integer> fashionTags, Set<Integer> beautyTags,
-                           Set<Integer> contentTags, Integer height, String bodyType,
-                           Integer topSize, Integer bottomSize, Set<Integer> averageContentsViews,
-                           Set<Integer> contentsAge, Set<Integer> contentsGender, Set<Integer> contentsLength) {
+                           Set<Integer> contentTags, Integer heightTag, Integer bodyTypeTag,
+                           Integer topSizeTag, Integer bottomSizeTag, Set<Integer> averageContentsViewsTags,
+                           Set<Integer> contentsAgeTags, Set<Integer> contentsGenderTags, Set<Integer> contentsLengthTags) {
         this.id = "user:" + userId;
         this.userId = userId;
         this.fashionTags = fashionTags;
         this.beautyTags = beautyTags;
         this.contentTags = contentTags;
-        this.height = height;
-        this.bodyType = bodyType;
-        this.topSize = topSize;
-        this.bottomSize = bottomSize;
-        this.averageContentsViews = averageContentsViews;
-        this.contentsAge = contentsAge;
-        this.contentsGender = contentsGender;
-        this.contentsLength = contentsLength;
+        this.heightTag = heightTag;
+        this.bodyTypeTag = bodyTypeTag;
+        this.topSizeTag = topSizeTag;
+        this.bottomSizeTag = bottomSizeTag;
+        this.averageContentsViewsTags = averageContentsViewsTags;
+        this.contentsAgeTags = contentsAgeTags;
+        this.contentsGenderTags = contentsGenderTags;
+        this.contentsLengthTags = contentsLengthTags;
     }
 }

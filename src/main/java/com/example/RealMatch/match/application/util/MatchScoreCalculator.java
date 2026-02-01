@@ -112,7 +112,7 @@ public class MatchScoreCalculator {
         // 키 조건
         if (brand.getMinCreatorHeight() != null || brand.getMaxCreatorHeight() != null) {
             totalConditions++;
-            if (isInRange(user.getHeight(), brand.getMinCreatorHeight(), brand.getMaxCreatorHeight())) {
+            if (isInRange(user.getHeightTag(), brand.getMinCreatorHeight(), brand.getMaxCreatorHeight())) {
                 matchedConditions++;
             }
         }
@@ -120,21 +120,15 @@ public class MatchScoreCalculator {
         // 체형 조건
         if (!safeSet(brand.getPreferredBodyTypeTags()).isEmpty()) {
             totalConditions++;
-            if (user.getBodyType() != null) {
-                try {
-                    Integer bodyTypeTag = Integer.parseInt(user.getBodyType());
-                    if (brand.getPreferredBodyTypeTags().contains(bodyTypeTag)) {
-                        matchedConditions++;
-                    }
-                } catch (NumberFormatException ignored) {
-                }
+            if (user.getBodyTypeTag() != null && brand.getPreferredBodyTypeTags().contains(user.getBodyTypeTag())) {
+                matchedConditions++;
             }
         }
 
         // 상의 사이즈 조건
         if (!safeSet(brand.getPreferredTopSizeTags()).isEmpty()) {
             totalConditions++;
-            if (user.getTopSize() != null && brand.getPreferredTopSizeTags().contains(user.getTopSize())) {
+            if (user.getTopSizeTag() != null && brand.getPreferredTopSizeTags().contains(user.getTopSizeTag())) {
                 matchedConditions++;
             }
         }
@@ -142,7 +136,7 @@ public class MatchScoreCalculator {
         // 하의 사이즈 조건
         if (!safeSet(brand.getPreferredBottomSizeTags()).isEmpty()) {
             totalConditions++;
-            if (user.getBottomSize() != null && brand.getPreferredBottomSizeTags().contains(user.getBottomSize())) {
+            if (user.getBottomSizeTag() != null && brand.getPreferredBottomSizeTags().contains(user.getBottomSizeTag())) {
                 matchedConditions++;
             }
         }
@@ -150,7 +144,7 @@ public class MatchScoreCalculator {
         // 평균 조회수 조건
         if (!safeSet(brand.getPreferredContentsAverageViewsTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getAverageContentsViews()), brand.getPreferredContentsAverageViewsTags())) {
+            if (hasCommonElements(safeSet(user.getAverageContentsViewsTags()), brand.getPreferredContentsAverageViewsTags())) {
                 matchedConditions++;
             }
         }
@@ -158,7 +152,7 @@ public class MatchScoreCalculator {
         // 시청 연령대 조건
         if (!safeSet(brand.getPreferredContentsAgeTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getContentsAge()), brand.getPreferredContentsAgeTags())) {
+            if (hasCommonElements(safeSet(user.getContentsAgeTags()), brand.getPreferredContentsAgeTags())) {
                 matchedConditions++;
             }
         }
@@ -166,7 +160,7 @@ public class MatchScoreCalculator {
         // 시청 성별 조건
         if (!safeSet(brand.getPreferredContentsGenderTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getContentsGender()), brand.getPreferredContentsGenderTags())) {
+            if (hasCommonElements(safeSet(user.getContentsGenderTags()), brand.getPreferredContentsGenderTags())) {
                 matchedConditions++;
             }
         }
@@ -174,7 +168,7 @@ public class MatchScoreCalculator {
         // 컨텐츠 길이 조건
         if (!safeSet(brand.getPreferredContentsLengthTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getContentsLength()), brand.getPreferredContentsLengthTags())) {
+            if (hasCommonElements(safeSet(user.getContentsLengthTags()), brand.getPreferredContentsLengthTags())) {
                 matchedConditions++;
             }
         }
@@ -189,7 +183,7 @@ public class MatchScoreCalculator {
         // 키 조건
         if (campaign.getMinCreatorHeight() != null || campaign.getMaxCreatorHeight() != null) {
             totalConditions++;
-            if (isInRange(user.getHeight(), campaign.getMinCreatorHeight(), campaign.getMaxCreatorHeight())) {
+            if (isInRange(user.getHeightTag(), campaign.getMinCreatorHeight(), campaign.getMaxCreatorHeight())) {
                 matchedConditions++;
             }
         }
@@ -197,21 +191,15 @@ public class MatchScoreCalculator {
         // 체형 조건
         if (!safeSet(campaign.getPreferredBodyTypeTags()).isEmpty()) {
             totalConditions++;
-            if (user.getBodyType() != null) {
-                try {
-                    Integer bodyTypeTag = Integer.parseInt(user.getBodyType());
-                    if (campaign.getPreferredBodyTypeTags().contains(bodyTypeTag)) {
-                        matchedConditions++;
-                    }
-                } catch (NumberFormatException ignored) {
-                }
+            if (user.getBodyTypeTag() != null && campaign.getPreferredBodyTypeTags().contains(user.getBodyTypeTag())) {
+                matchedConditions++;
             }
         }
 
         // 상의 사이즈 조건
         if (!safeSet(campaign.getPreferredTopSizeTags()).isEmpty()) {
             totalConditions++;
-            if (user.getTopSize() != null && campaign.getPreferredTopSizeTags().contains(user.getTopSize())) {
+            if (user.getTopSizeTag() != null && campaign.getPreferredTopSizeTags().contains(user.getTopSizeTag())) {
                 matchedConditions++;
             }
         }
@@ -219,7 +207,7 @@ public class MatchScoreCalculator {
         // 하의 사이즈 조건
         if (!safeSet(campaign.getPreferredBottomSizeTags()).isEmpty()) {
             totalConditions++;
-            if (user.getBottomSize() != null && campaign.getPreferredBottomSizeTags().contains(user.getBottomSize())) {
+            if (user.getBottomSizeTag() != null && campaign.getPreferredBottomSizeTags().contains(user.getBottomSizeTag())) {
                 matchedConditions++;
             }
         }
@@ -227,7 +215,7 @@ public class MatchScoreCalculator {
         // 평균 조회수 조건
         if (!safeSet(campaign.getPreferredContentsAverageViewsTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getAverageContentsViews()), campaign.getPreferredContentsAverageViewsTags())) {
+            if (hasCommonElements(safeSet(user.getAverageContentsViewsTags()), campaign.getPreferredContentsAverageViewsTags())) {
                 matchedConditions++;
             }
         }
@@ -235,7 +223,7 @@ public class MatchScoreCalculator {
         // 시청 연령대 조건
         if (!safeSet(campaign.getPreferredContentsAgeTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getContentsAge()), campaign.getPreferredContentsAgeTags())) {
+            if (hasCommonElements(safeSet(user.getContentsAgeTags()), campaign.getPreferredContentsAgeTags())) {
                 matchedConditions++;
             }
         }
@@ -243,7 +231,7 @@ public class MatchScoreCalculator {
         // 시청 성별 조건
         if (!safeSet(campaign.getPreferredContentsGenderTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getContentsGender()), campaign.getPreferredContentsGenderTags())) {
+            if (hasCommonElements(safeSet(user.getContentsGenderTags()), campaign.getPreferredContentsGenderTags())) {
                 matchedConditions++;
             }
         }
@@ -251,7 +239,7 @@ public class MatchScoreCalculator {
         // 컨텐츠 길이 조건
         if (!safeSet(campaign.getPreferredContentsLengthTags()).isEmpty()) {
             totalConditions++;
-            if (hasCommonElements(safeSet(user.getContentsLength()), campaign.getPreferredContentsLengthTags())) {
+            if (hasCommonElements(safeSet(user.getContentsLengthTags()), campaign.getPreferredContentsLengthTags())) {
                 matchedConditions++;
             }
         }
