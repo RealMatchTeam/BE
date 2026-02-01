@@ -1,14 +1,17 @@
 package com.example.RealMatch.user.application.service;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
+import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.entity.UserTag;
+import com.example.RealMatch.tag.domain.repository.UserTagRepository;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -25,19 +28,30 @@ import lombok.extern.slf4j.Slf4j;
 public class UserFeatureService {
 
     private final UserMatchingDetailRepository userMatchingDetailRepository;
+    private final UserTagRepository userTagRepository;
 
     public MyFeatureResponseDto getMyFeatures(Long userId) {
 
-        // UserMatchingDetail 조회
         UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        log.info("사용자 프로필 조회 완료: userId={}", userId);
+        List<UserTag> userTags = userTagRepository.findAllByUserIdWithTag(userId);
 
-        // 각 영역별로 데이터 존재 여부 확인 및 조회
-        MyFeatureResponseDto.BeautyType beautyType = buildBeautyType(detail);
-        MyFeatureResponseDto.FashionType fashionType = buildFashionType(detail);
-        MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail);
+        Map<String, Map<String, List<String>>> tagsByTypeAndCategory = userTags.stream()
+                .map(UserTag::getTag)
+                .collect(Collectors.groupingBy(
+                        Tag::getTagType,
+                        Collectors.groupingBy(
+                                Tag::getTagCategory,
+                                Collectors.mapping(Tag::getTagName, Collectors.toList())
+                        )
+                ));
+
+        log.info("사용자 프로필 조회 완료: userId={}, 태그 수={}", userId, userTags.size());
+
+        MyFeatureResponseDto.BeautyType beautyType = buildBeautyType(detail, tagsByTypeAndCategory.get("뷰티"));
+        MyFeatureResponseDto.FashionType fashionType = buildFashionType(detail, tagsByTypeAndCategory.get("패션"));
+        MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail, tagsByTypeAndCategory.get("콘텐츠"));
 
         return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
     }
@@ -124,79 +138,68 @@ public class UserFeatureService {
         if (detail.getSkinType() == null && detail.getSkinBrightness() == null
                 && detail.getMakeupStyle() == null) {
             log.warn("뷰티 프로필 정보 없음: userId={}", detail.getUserId());
-            return null;  // 또는 예외를 던지거나, 빈 객체 반환
+            return null;
         }
 
-        log.info("뷰티 프로필 조회 - 피부타입: {}, 메이크업스타일: {}, 관심카테고리: {}",
-                detail.getSkinType(), detail.getMakeupStyle(), detail.getInterestCategories());
+        log.info("뷰티 프로필 조회 - userId={}, 태그 카테고리: {}", detail.getUserId(), tags.keySet());
 
         return new MyFeatureResponseDto.BeautyType(
-                parseTagString(detail.getSkinType()),           // 피부타입
-                detail.getSkinBrightness(),                     // 피부 밝기
-                parseTagString(detail.getMakeupStyle()),        // 메이크업 스타일
-                parseTagString(detail.getInterestCategories()), // 관심 카테고리
-                parseTagString(detail.getInterestFunctions())   // 관심 기능
+                getTagsOrEmpty(tags, "피부타입"),
+                detail.getSkinBrightness(),
+                getTagsOrEmpty(tags, "메이크업스타일"),
+                getTagsOrEmpty(tags, "관심카테고리"),
+                getTagsOrEmpty(tags, "관심기능")
         );
     }
 
-    private MyFeatureResponseDto.FashionType buildFashionType(UserMatchingDetail detail) {
-        // 패션 데이터가 있는지 확인
+    private MyFeatureResponseDto.FashionType buildFashionType(UserMatchingDetail detail, Map<String, List<String>> tagsByCategory) {
+        Map<String, List<String>> tags = tagsByCategory != null ? tagsByCategory : Collections.emptyMap();
+
         if (detail.getHeight() == null && detail.getWeight() == null
-                && detail.getBodyShape() == null) {
+                && detail.getBodyShape() == null && tags.isEmpty()) {
             log.warn("패션 프로필 정보 없음: userId={}", detail.getUserId());
             return null;
         }
 
-        log.info("패션 프로필 조회 - 키/몸무게: {}/{}, 체형: {}, 관심분야: {}",
-                detail.getHeight(), detail.getWeight(), detail.getBodyShape(), detail.getInterestFields());
+        log.info("패션 프로필 조회 - 키/몸무게: {}/{}, 체형: {}, 태그 카테고리: {}",
+                detail.getHeight(), detail.getWeight(), detail.getBodyShape(), tags.keySet());
 
         return new MyFeatureResponseDto.FashionType(
-                detail.getHeight() + "/" + detail.getWeight(),  // 키/몸무게
-                detail.getBodyShape(),                          // 체형
-                detail.getUpperSize(),                          // 상의 사이즈
-                detail.getLowerSize(),                          // 하의 사이즈
-                parseTagString(detail.getInterestFields()),     // 관심분야 (추가!)
-                parseTagString(detail.getInterestStyles()),     // 관심스타일 (추가!)
-                parseTagString(detail.getInterestBrands())      // 관심브랜드 (추가!)
+                detail.getHeight() + "/" + detail.getWeight(),
+                detail.getBodyShape(),
+                detail.getUpperSize(),
+                detail.getLowerSize(),
+                getTagsOrEmpty(tags, "관심분야"),
+                getTagsOrEmpty(tags, "관심스타일"),
+                getTagsOrEmpty(tags, "관심브랜드")
         );
     }
 
-    private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail) {
-        // 콘텐츠 데이터가 있는지 확인
-        if (detail.getViewerGender() == null && detail.getVideoLength() == null
-                && detail.getViews() == null) {
+    private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail, Map<String, List<String>> tagsByCategory) {
+        Map<String, List<String>> tags = tagsByCategory != null ? tagsByCategory : Collections.emptyMap();
+
+        if (detail.getVideoLength() == null && detail.getViews() == null && tags.isEmpty()) {
             log.warn("콘텐츠 프로필 정보 없음: userId={}", detail.getUserId());
             return null;
         }
 
-        log.info("콘텐츠 프로필 조회 - 시청자성별: {}, 콘텐츠형식: {}, 콘텐츠톤: {}",
-                detail.getViewerGender(), detail.getContentFormats(), detail.getContentTones());
+        log.info("콘텐츠 프로필 조회 - 영상길이: {}, 조회수: {}, 태그 카테고리: {}",
+                detail.getVideoLength(), detail.getViews(), tags.keySet());
 
         return new MyFeatureResponseDto.ContentsType(
-                parseTagString(detail.getViewerGender()),      // 시청자 성별
-                parseTagString(detail.getViewerAge()),         // 시청자 연령대
-                detail.getVideoLength(),                       // 영상 길이
-                detail.getViews(),                             // 조회수
-                parseTagString(detail.getContentFormats()),    // 콘텐츠 형식
-                parseTagString(detail.getContentTones()),      // 콘텐츠 톤
-                detail.getDesiredInvolvement(),                // 원하는 관여도
-                detail.getDesiredUsageScope()                  // 원하는 활용 범위
+                getTagsOrEmpty(tags, "시청자성별"),
+                getTagsOrEmpty(tags, "시청자연령대"),
+                detail.getVideoLength(),
+                detail.getViews(),
+                getTagsOrEmpty(tags, "콘텐츠형식"),
+                getTagsOrEmpty(tags, "콘텐츠톤"),
+                detail.getDesiredInvolvement(),
+                detail.getDesiredUsageScope()
         );
     }
 
-    /**
-     * 쉼표로 구분된 문자열을 List로 변환
-     * 예: "스킨케어,메이크업,향수" -> ["스킨케어", "메이크업", "향수"]
-     */
-    private List<String> parseTagString(String tagString) {
-        if (tagString == null || tagString.trim().isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.stream(tagString.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toUnmodifiableList());
+    private List<String> getTagsOrEmpty(Map<String, List<String>> tags, String category) {
+        return tags.getOrDefault(category, Collections.emptyList());
     }
 
     /**

@@ -1,10 +1,15 @@
 package com.example.RealMatch.match.presentation.swagger;
 
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.match.domain.entity.enums.CategoryType;
+import com.example.RealMatch.match.domain.entity.enums.SortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchBrandResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchCampaignResponseDto;
@@ -12,6 +17,10 @@ import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,33 +31,94 @@ public interface MatchSwagger {
 
     @Operation(summary = "크리에이터 매칭 분석",
             description = """
-                    크리에이터 정보를 기반으로 매칭 분석 결과와 추천 브랜드/캠페인 목록을 반환합니다.
-                    creatorAnalysis, highMatchingBrandList, highMatchingCampaignList를 포함합니다.
+                    크리에이터 정보를 기반으로 매칭 분석 결과와 추천 브랜드 목록을 반환합니다.
+                    userType, typeTag, highMatchingBrandList를 포함합니다.
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "매칭 분석 성공")
     })
-    CustomResponse<MatchResponseDto> matchBrand(@RequestBody MatchRequestDto requestDto);
+    CustomResponse<MatchResponseDto> match(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody(
+                    description = "크리에이터 매칭 요청 정보",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = MatchRequestDto.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "뷰티 크리에이터 예시",
+                                            summary = "뷰티 중심 크리에이터",
+                                            value = """
+                                                    {
+                                                      "beauty": {
+                                                        "interestStyleTags": [101, 102],
+                                                        "prefferedFunctionTags": [201, 202],
+                                                        "skinTypeTags": 301,
+                                                        "skinToneTags": 311,
+                                                        "makeupStyleTags": 401
+                                                      },
+                                                      "fashion": {
+                                                        "interestStyleTags": [501, 502],
+                                                        "preferredItemTags": [601, 602],
+                                                        "preferredBrandTags": [701, 702],
+                                                        "heightTag": 180,
+                                                        "weightTypeTag": 101,
+                                                        "topSizeTag": 101,
+                                                        "bottomSizeTag": 101
+                                                      },
+                                                      "content": {
+                                                        "sns": {
+                                                          "url": "https://www.instagram.com/vivi",
+                                                          "mainAudience": {
+                                                            "genderTags": [101, 102],
+                                                            "ageTags": [101, 102]
+                                                          },
+                                                          "averageAudience": {
+                                                            "videoLengthTags": [101, 102],
+                                                            "videoViewsTags": [101, 102]
+                                                          }
+                                                        },
+                                                        "typeTags": [101, 102],
+                                                        "toneTags": [101, 102],
+                                                        "prefferedInvolvementTags": [101, 102],
+                                                        "prefferedCoverageTags": [101, 102]
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ) MatchRequestDto requestDto);
 
     @Operation(summary = "매칭 브랜드 목록 조회",
             description = """
-                    사용자 ID를 기반으로 매칭률이 높은 브랜드 목록을 조회합니다.
-                    브랜드 정보와 매칭률, 태그 등을 포함합니다.
+                    JWT 토큰의 사용자 ID를 기반으로 매칭률이 높은 브랜드 목록을 조회합니다.
+                    정렬 옵션: MATCH_SCORE(매칭률 순), POPULARITY(인기순), NEWEST(신규순)
+                    카테고리 필터: ALL(전체), FASHION(패션), BEAUTY(뷰티)
+                    태그 필터: 뷰티/패션 관련 태그로 필터링
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "브랜드 목록 조회 성공")
     })
     CustomResponse<MatchBrandResponseDto> getMatchingBrands(
-            @Parameter(description = "사용자 ID") @PathVariable String userId);
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
+            @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
+            @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
 
     @Operation(summary = "매칭 캠페인 목록 조회",
             description = """
-                    사용자 ID를 기반으로 매칭률이 높은 캠페인 목록을 조회합니다.
-                    캠페인 정보, 원고료, 모집 현황 등을 포함합니다.
+                    JWT 토큰의 사용자 ID를 기반으로 매칭률이 높은 캠페인 목록을 조회합니다.
+                    정렬 옵션: MATCH_SCORE(매칭률 순), POPULARITY(인기순), NEWEST(신규순)
+                    카테고리 필터: ALL(전체), FASHION(패션), BEAUTY(뷰티)
+                    태그 필터: 뷰티/패션 관련 태그로 필터링
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "캠페인 목록 조회 성공")
     })
     CustomResponse<MatchCampaignResponseDto> getMatchingCampaigns(
-            @Parameter(description = "사용자 ID") @PathVariable String userId);
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
+            @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
+            @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
 }

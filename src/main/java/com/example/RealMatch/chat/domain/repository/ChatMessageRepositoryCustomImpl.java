@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
-import org.springframework.util.StringUtils;
 
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.QChatMessage;
@@ -22,6 +21,8 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
     private final JPAQueryFactory queryFactory;
 
     private static final QChatMessage MESSAGE = QChatMessage.chatMessage;
+    private static final int SEARCH_RESULT_LIMIT_PER_ROOM = 50;
+    private static final long SEARCH_RESULT_MAX_LIMIT = 2000;
 
     @Override
     public List<ChatMessage> findProposalMessagesByRoomId(Long roomId) {
@@ -57,10 +58,14 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
 
     @Override
     public Map<Long, ChatMessage> findLatestMatchingMessageByRoomIds(List<Long> roomIds, String search) {
-        if (roomIds == null || roomIds.isEmpty() || !StringUtils.hasText(search)) {
+        if (roomIds == null || roomIds.isEmpty() || search == null || search.isBlank()) {
             return Map.of();
         }
         String normalized = search.trim();
+        long limit = Math.min(
+                (long) roomIds.size() * SEARCH_RESULT_LIMIT_PER_ROOM,
+                SEARCH_RESULT_MAX_LIMIT
+        );
         List<ChatMessage> list = queryFactory
                 .selectFrom(MESSAGE)
                 .where(
@@ -70,6 +75,7 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
                         MESSAGE.content.containsIgnoreCase(normalized)
                 )
                 .orderBy(MESSAGE.id.desc())
+                .limit(limit)
                 .fetch();
         // 방별로 첫 번째(가장 최신) 메시지만 유지
         return list.stream()

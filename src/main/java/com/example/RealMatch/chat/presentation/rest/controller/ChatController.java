@@ -14,7 +14,7 @@ import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.service.message.ChatMessageQueryService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;

@@ -13,21 +13,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MatchResponseDto {
 
-    private CreatorAnalysisDto creatorAnalysis;
+    private String userType;
+    private List<String> typeTag;
     private HighMatchingBrandListDto highMatchingBrandList;
-    private HighMatchingCampaignListDto highMatchingCampaignList;
-
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class CreatorAnalysisDto {
-        private String creatorType;
-        private String beautyStyle;
-        private String fashionStyle;
-        private String contentStyle;
-        private String bestFitBrand;
-    }
 
     @Getter
     @Builder
@@ -43,37 +31,8 @@ public class MatchResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BrandDto {
-        private Long id;
-        private String name;
+        private Long brandId;
+        private String brandName;
         private Integer matchingRatio;
-        private Boolean isLiked;
-        private Boolean isRecruiting;
-        private List<String> tags;
-    }
-
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HighMatchingCampaignListDto {
-        private Integer count;
-        private List<CampaignDto> brands;
-    }
-
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class CampaignDto {
-        private Long id;
-        private String name;
-        private Integer matchingRatio;
-        private Boolean isLiked;
-        private Boolean isRecruiting;
-        private Integer manuscriptFee;
-        private String detail;
-        private Integer dDay;
-        private Integer totalRecruit;
-        private Integer currentRecruit;
     }
 }

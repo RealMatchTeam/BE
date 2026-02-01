@@ -9,9 +9,10 @@ import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
+import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
+import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.domain.repository.AttachmentRepository;
-import com.example.RealMatch.attachment.presentation.code.AttachmentErrorCode;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,16 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
     }
 
     @Override
+    public AttachmentDto findByIdOrThrow(Long attachmentId) {
+        if (attachmentId == null) {
+            throw new CustomException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND);
+        }
+        Attachment attachment = getAttachmentOrThrow(attachmentId);
+        AttachmentDto dto = responseMapper.toDto(attachment);
+        return enrichWithPresignedUrl(dto, attachment);
+    }
+
+    @Override
     public Map<Long, AttachmentDto> findAllById(List<Long> attachmentIds) {
         if (attachmentIds == null || attachmentIds.isEmpty()) {
             return Map.of();
@@ -58,12 +69,19 @@ public class AttachmentQueryServiceImpl implements AttachmentQueryService {
         if (attachmentId == null) {
             return;
         }
-        Attachment attachment = attachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new CustomException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND));
+        Attachment attachment = getAttachmentOrThrow(attachmentId);
         
         if (!attachment.getUploaderId().equals(userId)) {
             throw new CustomException(AttachmentErrorCode.ATTACHMENT_OWNERSHIP_MISMATCH);
         }
+        if (attachment.getStatus() != AttachmentStatus.READY) {
+            throw new CustomException(AttachmentErrorCode.ATTACHMENT_NOT_READY);
+        }
+    }
+
+    private Attachment getAttachmentOrThrow(Long attachmentId) {
+        return attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new CustomException(AttachmentErrorCode.ATTACHMENT_NOT_FOUND));
     }
 
     private AttachmentDto enrichWithPresignedUrl(AttachmentDto dto, Attachment attachment) {

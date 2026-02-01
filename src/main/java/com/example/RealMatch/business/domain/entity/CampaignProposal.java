@@ -52,6 +52,9 @@ public class CampaignProposal extends BaseEntity {
     @Column(name = "who_proposed", nullable = false, length = 20)
     private Role whoProposed;
 
+    @Column(name = "proposed_user_id", nullable = false)
+    private Long proposedUserId;
+
     // 기존 캠페인 기반 제안이면 참조
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "campaign_id")
@@ -98,6 +101,7 @@ public class CampaignProposal extends BaseEntity {
             User creator,
             Brand brand,
             Role whoProposed,
+            Long proposedUserId,
             Campaign campaign,
             String title,
             String campaignDescription,
@@ -109,6 +113,7 @@ public class CampaignProposal extends BaseEntity {
         this.creator = creator;
         this.brand = brand;
         this.whoProposed = whoProposed;
+        this.proposedUserId = proposedUserId;
         this.campaign = campaign;
         this.title = title;
         this.campaignDescription = campaignDescription;
@@ -119,7 +124,34 @@ public class CampaignProposal extends BaseEntity {
         this.status = ProposalStatus.REVIEWING;
     }
 
+    public void modify(
+            String title,
+            String description,
+            Integer rewardAmount,
+            Long productId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        if (this.campaign == null) {
+            this.title = title;
+        }
+        this.campaignDescription = description;
+        this.rewardAmount = rewardAmount;
+        this.productId = productId;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+
     /* ===== 도메인 메서드 ===== */
+
+    public boolean isModifiable() {
+        return this.status == ProposalStatus.REVIEWING;
+    }
+
+    public void clearContentTags() {
+        this.tags.clear();
+    }
 
     public boolean isNewCampaignProposal() {
         return campaign == null;
@@ -137,7 +169,6 @@ public class CampaignProposal extends BaseEntity {
     public void addTag(CampaignProposalContentTag tag) {
         this.tags.add(tag);
     }
-
     /**
      * MATCHED 시 Campaign 생성용 변환 (추가 확인 필요, 태그 관리 필요)
      */

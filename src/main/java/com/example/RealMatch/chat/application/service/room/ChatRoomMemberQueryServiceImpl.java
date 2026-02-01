@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,9 @@ public class ChatRoomMemberQueryServiceImpl implements ChatRoomMemberQueryServic
     private final ChatRoomMemberRepository chatRoomMemberRepository;
 
     @Override
-    public List<ChatRoomMember> findActiveMembers(Long roomId) {
-        return chatRoomMemberRepository.findActiveMembersByRoomId(roomId);
+    public List<Long> findActiveMemberUserIds(Long roomId) {
+        return chatRoomMemberRepository.findActiveMembersByRoomId(roomId).stream()
+                .map(member -> member.getUserId())
+                .toList();
     }
 }
