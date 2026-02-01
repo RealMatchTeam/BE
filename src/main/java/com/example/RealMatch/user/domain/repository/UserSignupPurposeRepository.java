@@ -1,13 +1,12 @@
 package com.example.RealMatch.user.domain.repository;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.RealMatch.user.domain.entity.UserSignupPurpose;
 
-public interface UserSignupPurposeRepository extends JpaRepository<UserSignupPurpose, UUID> {
+public interface UserSignupPurposeRepository extends JpaRepository<UserSignupPurpose, Long> {
 
     List<UserSignupPurpose> findByUserId(Long userId);
 
