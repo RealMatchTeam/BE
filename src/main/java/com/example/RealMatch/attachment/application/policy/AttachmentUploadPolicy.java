@@ -10,4 +10,8 @@ public interface AttachmentUploadPolicy {
     Set<String> getAllowedImageExtensions();
 
     Set<String> getAllowedImageContentTypes();
+
+    Set<String> getAllowedFileExtensions();
+
+    Set<String> getAllowedFileContentTypes();
 }
