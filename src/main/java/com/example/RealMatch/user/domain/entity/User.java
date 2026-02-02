@@ -39,7 +39,7 @@ public class User extends BaseEntity {
 
     private LocalDate birth;
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 20)
     private String nickname;
 
     @Column(nullable = false, length = 255)
