@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MatchCampaignResponseDto {
 
-    private Integer count;
     private List<CampaignDto> brands;
+    private Integer count;
 
     @Getter
     @Builder
@@ -32,5 +32,12 @@ public class MatchCampaignResponseDto {
         private Integer campaignDDay;
         private Integer campaignTotalRecruit;
         private Integer campaignTotalCurrentRecruit;
+    }
+
+    public static MatchCampaignResponseDto empty() {
+        return MatchCampaignResponseDto.builder()
+                .brands(List.of())
+                .count(0)
+                .build();
     }
 }

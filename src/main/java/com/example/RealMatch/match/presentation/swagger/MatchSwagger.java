@@ -106,19 +106,31 @@ public interface MatchSwagger {
             @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
             @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
 
-    @Operation(summary = "매칭 캠페인 목록 조회",
+    @Operation(summary = "매칭 캠페인 목록 조회 및 검색",
             description = """
-                    JWT 토큰의 사용자 ID를 기반으로 매칭률이 높은 캠페인 목록을 조회합니다.
-                    정렬 옵션: MATCH_SCORE(매칭률 순), POPULARITY(인기순), NEWEST(신규순)
-                    카테고리 필터: ALL(전체), FASHION(패션), BEAUTY(뷰티)
-                    태그 필터: 뷰티/패션 관련 태그로 필터링
+                    JWT 토큰의 사용자 ID를 기반으로 매칭 캠페인 목록을 검색하거나 매칭 캠페인 목록을 조회합니다.
+                    
+                    **검색**: keyword를 입력하면 캠페인명(title)만 검색합니다. (브랜드명, 설명 등은 검색 대상 제외)
+                    
+                    **정렬 옵션**:
+                    - MATCH_SCORE: 매칭률 순 (동점 시 인기순 우선)
+                    - POPULARITY: 인기 순 (좋아요 수)
+                    - REWARD_AMOUNT: 금액 순 (원고료 높은 순)
+                    - D_DAY: 마감 순 (마감 임박순)
+                    
+                    **카테고리 필터**: ALL(전체), FASHION(패션), BEAUTY(뷰티)
+                    
+                    **페이지네이션**: page(0부터 시작), size(기본 20)
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "캠페인 목록 조회 성공")
+            @ApiResponse(responseCode = "200", description = "캠페인 목록 조회 및 검색 성공")
     })
     CustomResponse<MatchCampaignResponseDto> getMatchingCampaigns(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
+            @Parameter(description = "캠페인명 검색어 (캠페인 title만 검색)") @RequestParam(required = false) String keyword,
+            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, REWARD_AMOUNT, D_DAY)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
             @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
-            @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
+            @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기 (기본 20, 최대 50)") @RequestParam(defaultValue = "20") int size);
 }

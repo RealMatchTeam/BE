@@ -56,11 +56,15 @@ public class MatchController implements MatchSwagger {
     @GetMapping("/campaigns")
     public CustomResponse<MatchCampaignResponseDto> getMatchingCampaigns(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
             @RequestParam(defaultValue = "ALL") CategoryType category,
-            @RequestParam(required = false) List<String> tags) {
+            @RequestParam(required = false) List<String> tags,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         String userId = String.valueOf(userDetails.getUserId());
-        MatchCampaignResponseDto result = matchService.getMatchingCampaigns(userId, sortBy, category, tags);
+        MatchCampaignResponseDto result = matchService.getMatchingCampaigns(
+                userId, keyword, sortBy, category, tags, page, size);
         return CustomResponse.ok(result);
     }
 }

@@ -15,5 +15,13 @@ public interface MatchService {
 
     MatchBrandResponseDto getMatchingBrands(String userId, SortType sortBy, CategoryType category, List<String> tags);
 
-    MatchCampaignResponseDto getMatchingCampaigns(String userId, SortType sortBy, CategoryType category, List<String> tags);
+    MatchCampaignResponseDto getMatchingCampaigns(
+            String userId,
+            String keyword,
+            SortType sortBy,
+            CategoryType category,
+            List<String> tags,
+            int page,
+            int size
+    );
 }
