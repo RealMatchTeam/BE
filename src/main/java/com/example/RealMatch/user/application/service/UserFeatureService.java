@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
+import com.example.RealMatch.match.application.service.MatchService;
+import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -25,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserFeatureService {
 
     private final UserMatchingDetailRepository userMatchingDetailRepository;
+    private final MatchService matchService;
 
     public MyFeatureResponseDto getMyFeatures(Long userId) {
 
@@ -106,28 +109,22 @@ public class UserFeatureService {
 
         // JPA 더티 체킹으로 자동 저장
         log.info("사용자 특성 정보 업데이트 완료: userId={}", userId);
-    }
 
-    /**
-     * 재검사 준비: 기존 데이터를 Soft Delete 처리하고 새로운 데이터 생성
-     * 재검사 '시작' 버튼을 누르거나, 검사 결과를 제출하기 직전에 호출
-     */
-    @Transactional
-    public void resetForReexamination(Long userId) { // matchService에서 호출 연동 예정
-        // 1. 기존 활성 데이터 조회 및 삭제 처리 (Soft Delete)
-        userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
-                .ifPresent(detail -> {
-                    detail.deprecated(); // isDeprecated = true 설정
-                    log.info("기존 사용자 매칭 정보 삭제 처리(Soft Delete): userId={}, detailId={}", userId, detail.getId());
-                });
+        // 특성 업데이트 후 자동으로 매칭 재실행
+        try {
+            log.info("특성 업데이트 후 매칭 재실행 시작: userId={}", userId);
 
-        // 2. 새로운 빈 프로필 생성 및 저장
-        UserMatchingDetail newDetail = UserMatchingDetail.builder()
-                .userId(userId)
-                .build();
+            // 업데이트된 UserMatchingDetail을 MatchRequestDto로 변환
+            MatchRequestDto matchRequest = convertToMatchRequest(detail);
 
-        userMatchingDetailRepository.save(newDetail);
-        log.info("재검사를 위한 신규 프로필 생성 완료: userId={}", userId);
+            // 매칭 재실행 (이전 매칭 결과는 MatchService에서 자동으로 폐기)
+            matchService.match(userId, matchRequest);
+
+            log.info("특성 업데이트 후 매칭 재실행 완료: userId={}", userId);
+        } catch (Exception e) {
+            log.error("매칭 재실행 중 오류 발생: userId={}, error={}", userId, e.getMessage(), e);
+            // 매칭 실패는 특성 업데이트에 영향을 주지 않음 (로그만 기록)
+        }
     }
 
     /**
@@ -241,5 +238,303 @@ public class UserFeatureService {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.joining(","));
+    }
+
+    /**
+     * UserMatchingDetail을 MatchRequestDto로 변환
+     * 매칭 재실행을 위해 사용자의 현재 특성 정보를 DTO로 변환
+     */
+    private MatchRequestDto convertToMatchRequest(UserMatchingDetail detail) {
+        try {
+            MatchRequestDto requestDto = new MatchRequestDto();
+
+            // Beauty 정보 설정
+            if (hasBeautyData(detail)) {
+                setField(requestDto, "beauty", createBeautyDto(detail));
+            }
+
+            // Fashion 정보 설정
+            if (hasFashionData(detail)) {
+                setField(requestDto, "fashion", createFashionDto(detail));
+            }
+
+            // Content 정보 설정
+            if (hasContentData(detail)) {
+                setField(requestDto, "content", createContentDto(detail));
+            }
+
+            return requestDto;
+        } catch (Exception e) {
+            log.error("MatchRequestDto 변환 중 오류 발생", e);
+            throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
+        }
+    }
+
+    /**
+     * Reflection을 사용하여 private 필드에 값 설정
+     */
+    private void setField(Object target, String fieldName, Object value) throws Exception {
+        java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(target, value);
+    }
+
+    /**
+     * Beauty 데이터 존재 여부 확인
+     */
+    private boolean hasBeautyData(UserMatchingDetail detail) {
+        return detail.getSkinType() != null
+                || detail.getSkinBrightness() != null
+                || detail.getMakeupStyle() != null
+                || detail.getInterestCategories() != null
+                || detail.getInterestFunctions() != null;
+    }
+
+    /**
+     * Fashion 데이터 존재 여부 확인
+     */
+    private boolean hasFashionData(UserMatchingDetail detail) {
+        return detail.getHeight() != null
+                || detail.getBodyShape() != null
+                || detail.getTopSize() != null
+                || detail.getBottomSize() != null
+                || detail.getInterestFields() != null
+                || detail.getInterestStyles() != null
+                || detail.getInterestBrands() != null;
+    }
+
+    /**
+     * Content 데이터 존재 여부 확인
+     */
+    private boolean hasContentData(UserMatchingDetail detail) {
+        return detail.getSnsUrl() != null
+                || detail.getViewerGender() != null
+                || detail.getViewerAge() != null
+                || detail.getAvgVideoLength() != null
+                || detail.getAvgViews() != null
+                || detail.getContentFormats() != null
+                || detail.getContentTones() != null
+                || detail.getDesiredInvolvement() != null
+                || detail.getDesiredUsageScope() != null;
+    }
+
+    /**
+     * BeautyDto 생성
+     */
+    private MatchRequestDto.BeautyDto createBeautyDto(UserMatchingDetail detail) {
+        try {
+            MatchRequestDto.BeautyDto beautyDto = new MatchRequestDto.BeautyDto();
+
+            // interestStyleTags: interestCategories (카테고리 관심사)
+            if (detail.getInterestCategories() != null) {
+                setField(beautyDto, "interestStyleTags", convertToIntegerList(detail.getInterestCategories()));
+            }
+
+            // prefferedFunctionTags: interestFunctions (기능 관심사)
+            if (detail.getInterestFunctions() != null) {
+                setField(beautyDto, "prefferedFunctionTags", convertToIntegerList(detail.getInterestFunctions()));
+            }
+
+            // skinTypeTags: skinType (피부 타입)
+            if (detail.getSkinType() != null) {
+                setField(beautyDto, "skinTypeTags", parseFirstInteger(detail.getSkinType()));
+            }
+
+            // skinToneTags: skinBrightness (피부 톤)
+            if (detail.getSkinBrightness() != null) {
+                setField(beautyDto, "skinToneTags", parseFirstInteger(detail.getSkinBrightness()));
+            }
+
+            // makeupStyleTags: makeupStyle (메이크업 스타일)
+            if (detail.getMakeupStyle() != null) {
+                setField(beautyDto, "makeupStyleTags", parseFirstInteger(detail.getMakeupStyle()));
+            }
+
+            return beautyDto;
+        } catch (Exception e) {
+            log.error("BeautyDto 생성 중 오류 발생", e);
+            return new MatchRequestDto.BeautyDto();
+        }
+    }
+
+    /**
+     * FashionDto 생성
+     */
+    private MatchRequestDto.FashionDto createFashionDto(UserMatchingDetail detail) {
+        try {
+            MatchRequestDto.FashionDto fashionDto = new MatchRequestDto.FashionDto();
+
+            // interestStyleTags: interestFields (관심 분야)
+            if (detail.getInterestFields() != null) {
+                setField(fashionDto, "interestStyleTags", convertToIntegerList(detail.getInterestFields()));
+            }
+
+            // preferredItemTags: interestStyles (관심 스타일)
+            if (detail.getInterestStyles() != null) {
+                setField(fashionDto, "preferredItemTags", convertToIntegerList(detail.getInterestStyles()));
+            }
+
+            // preferredBrandTags: interestBrands (관심 브랜드)
+            if (detail.getInterestBrands() != null) {
+                setField(fashionDto, "preferredBrandTags", convertToIntegerList(detail.getInterestBrands()));
+            }
+
+            // heightTag: height (키)
+            if (detail.getHeight() != null) {
+                setField(fashionDto, "heightTag", parseFirstInteger(detail.getHeight()));
+            }
+
+            // weightTypeTag: bodyShape (체형)
+            if (detail.getBodyShape() != null) {
+                setField(fashionDto, "weightTypeTag", parseFirstInteger(detail.getBodyShape()));
+            }
+
+            // topSizeTag: topSize (상의 사이즈)
+            if (detail.getTopSize() != null) {
+                setField(fashionDto, "topSizeTag", parseFirstInteger(detail.getTopSize()));
+            }
+
+            // bottomSizeTag: bottomSize (하의 사이즈)
+            if (detail.getBottomSize() != null) {
+                setField(fashionDto, "bottomSizeTag", parseFirstInteger(detail.getBottomSize()));
+            }
+
+            return fashionDto;
+        } catch (Exception e) {
+            log.error("FashionDto 생성 중 오류 발생", e);
+            return new MatchRequestDto.FashionDto();
+        }
+    }
+
+    /**
+     * ContentDto 생성
+     */
+    private MatchRequestDto.ContentDto createContentDto(UserMatchingDetail detail) {
+        try {
+            MatchRequestDto.ContentDto contentDto = new MatchRequestDto.ContentDto();
+
+            // SNS 정보 설정
+            if (detail.getSnsUrl() != null || detail.getViewerGender() != null
+                    || detail.getViewerAge() != null || detail.getAvgVideoLength() != null
+                    || detail.getAvgViews() != null) {
+                setField(contentDto, "sns", createSnsDto(detail));
+            }
+
+            // typeTags: contentFormats (콘텐츠 형식)
+            if (detail.getContentFormats() != null) {
+                setField(contentDto, "typeTags", convertToIntegerList(detail.getContentFormats()));
+            }
+
+            // toneTags: contentTones (콘텐츠 톤)
+            if (detail.getContentTones() != null) {
+                setField(contentDto, "toneTags", convertToIntegerList(detail.getContentTones()));
+            }
+
+            // prefferedInvolvementTags: desiredInvolvement (원하는 관여도)
+            if (detail.getDesiredInvolvement() != null) {
+                setField(contentDto, "prefferedInvolvementTags", convertToIntegerList(detail.getDesiredInvolvement()));
+            }
+
+            // prefferedCoverageTags: desiredUsageScope (원하는 사용 범위)
+            if (detail.getDesiredUsageScope() != null) {
+                setField(contentDto, "prefferedCoverageTags", convertToIntegerList(detail.getDesiredUsageScope()));
+            }
+
+            return contentDto;
+        } catch (Exception e) {
+            log.error("ContentDto 생성 중 오류 발생", e);
+            return new MatchRequestDto.ContentDto();
+        }
+    }
+
+    /**
+     * SnsDto 생성
+     */
+    private MatchRequestDto.SnsDto createSnsDto(UserMatchingDetail detail) {
+        try {
+            MatchRequestDto.SnsDto snsDto = new MatchRequestDto.SnsDto();
+
+            // URL 설정
+            if (detail.getSnsUrl() != null) {
+                setField(snsDto, "url", detail.getSnsUrl());
+            }
+
+            // 주요 시청자 정보 설정
+            if (detail.getViewerGender() != null || detail.getViewerAge() != null) {
+                MatchRequestDto.MainAudienceDto mainAudience = new MatchRequestDto.MainAudienceDto();
+
+                if (detail.getViewerGender() != null) {
+                    setField(mainAudience, "genderTags", convertToIntegerList(detail.getViewerGender()));
+                }
+
+                if (detail.getViewerAge() != null) {
+                    setField(mainAudience, "ageTags", convertToIntegerList(detail.getViewerAge()));
+                }
+
+                setField(snsDto, "mainAudience", mainAudience);
+            }
+
+            // 평균 시청 정보 설정
+            if (detail.getAvgVideoLength() != null || detail.getAvgViews() != null) {
+                MatchRequestDto.AverageAudienceDto averageAudience = new MatchRequestDto.AverageAudienceDto();
+
+                if (detail.getAvgVideoLength() != null) {
+                    setField(averageAudience, "videoLengthTags", convertToIntegerList(detail.getAvgVideoLength()));
+                }
+
+                if (detail.getAvgViews() != null) {
+                    setField(averageAudience, "videoViewsTags", convertToIntegerList(detail.getAvgViews()));
+                }
+
+                setField(snsDto, "averageAudience", averageAudience);
+            }
+
+            return snsDto;
+        } catch (Exception e) {
+            log.error("SnsDto 생성 중 오류 발생", e);
+            return new MatchRequestDto.SnsDto();
+        }
+    }
+
+    /**
+     * 쉼표로 구분된 문자열을 Integer List로 변환
+     * 예: "1,2,3" -> [1, 2, 3]
+     */
+    private List<Integer> convertToIntegerList(String tagString) {
+        if (tagString == null || tagString.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        try {
+            return Arrays.stream(tagString.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
+        } catch (NumberFormatException e) {
+            log.warn("태그 문자열을 Integer로 변환 실패: {}", tagString);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * 문자열에서 첫 번째 Integer 값만 파싱
+     * 예: "1,2,3" -> 1 또는 "medium" -> null
+     */
+    private Integer parseFirstInteger(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            // 쉼표로 구분된 경우 첫 번째 값만 사용
+            String firstValue = value.contains(",")
+                    ? value.split(",")[0].trim()
+                    : value.trim();
+            return Integer.parseInt(firstValue);
+        } catch (NumberFormatException e) {
+            log.warn("문자열을 Integer로 변환 실패: {}", value);
+            return null;
+        }
     }
 }
