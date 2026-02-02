@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MatchCampaignResponseDto {
 
-    private Integer count;
     private List<CampaignDto> brands;
+    private Integer count;
 
     @Getter
     @Builder
@@ -28,9 +28,16 @@ public class MatchCampaignResponseDto {
         private Boolean brandIsLiked;
         private Boolean brandIsRecruiting;
         private Integer campaignManuscriptFee;
-        private String campaignDetail;
+        private String campaignName;   // 캠페인명 (keyword 검색 대상)
         private Integer campaignDDay;
         private Integer campaignTotalRecruit;
         private Integer campaignTotalCurrentRecruit;
+    }
+
+    public static MatchCampaignResponseDto empty() {
+        return MatchCampaignResponseDto.builder()
+                .brands(List.of())
+                .count(0)
+                .build();
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.match.infrastructure.redis.document.BrandTagDocument;
 import com.example.RealMatch.match.infrastructure.redis.document.CampaignTagDocument;
-import com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,6 @@ public class RedisDocumentHelper {
 
     private static final String BRAND_PREFIX = "com.example.RealMatch.match.infrastructure.redis.document.BrandTagDocument:";
     private static final String CAMPAIGN_PREFIX = "com.example.RealMatch.match.infrastructure.redis.document.CampaignTagDocument:";
-    private static final String USER_PREFIX = "com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument:";
 
     public List<BrandTagDocument> findAllBrandTagDocuments() {
         return findAllDocuments(BRAND_PREFIX, BrandTagDocument.class);
@@ -34,10 +32,6 @@ public class RedisDocumentHelper {
 
     public List<CampaignTagDocument> findAllCampaignTagDocuments() {
         return findAllDocuments(CAMPAIGN_PREFIX, CampaignTagDocument.class);
-    }
-
-    public List<UserTagDocument> findAllUserTagDocuments() {
-        return findAllDocuments(USER_PREFIX, UserTagDocument.class);
     }
 
     private <T> List<T> findAllDocuments(String prefix, Class<T> clazz) {
@@ -67,21 +61,6 @@ public class RedisDocumentHelper {
         }
 
         return results;
-    }
-
-    public BrandTagDocument findBrandTagDocumentById(Long brandId) {
-        String key = BRAND_PREFIX + "brand:" + brandId;
-        return getJsonDocument(key, BrandTagDocument.class);
-    }
-
-    public CampaignTagDocument findCampaignTagDocumentById(Long campaignId) {
-        String key = CAMPAIGN_PREFIX + "campaign:" + campaignId;
-        return getJsonDocument(key, CampaignTagDocument.class);
-    }
-
-    public UserTagDocument findUserTagDocumentById(Long userId) {
-        String key = USER_PREFIX + "user:" + userId;
-        return getJsonDocument(key, UserTagDocument.class);
     }
 
     private <T> T getJsonDocument(String key, Class<T> clazz) {
