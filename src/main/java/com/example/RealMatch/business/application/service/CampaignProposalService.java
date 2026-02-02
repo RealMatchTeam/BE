@@ -112,22 +112,19 @@ public class CampaignProposalService {
     }
 
 
-    public void approveProposal(Long userId, Long campaignProposalId) {
+    public void approveCampaignProposal(Long userId, Long campaignProposalId) {
         CampaignProposal proposal = campaignProposalRepository
                 .findById(campaignProposalId)
                 .orElseThrow(() ->
                         new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
                 );
 
-        if (!proposal.getSenderUserId().equals(userId)) {
-            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_FORBIDDEN);
-        }
+        validateReceiver(proposal, userId);
 
         if (proposal.getStatus() != ProposalStatus.REVIEWING) {
             throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_REVIEWING);
         }
 
-        // 3️⃣ 도메인 로직
         proposal.match();
     }
 
@@ -189,6 +186,12 @@ public class CampaignProposalService {
             return creator.getId();
         }
         throw new CustomException(GeneralErrorCode.INVALID_DATA);
+    }
+
+    private void validateReceiver(CampaignProposal proposal, Long userId) {
+        if (!proposal.getReceiverUserId().equals(userId)) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_FORBIDDEN);
+        }
     }
 
 

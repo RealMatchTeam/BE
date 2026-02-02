@@ -9,45 +9,31 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
-import com.example.RealMatch.user.domain.entity.enums.Role;
 
 public interface CampaignProposalRepository extends JpaRepository<CampaignProposal, Long>, CampaignProposalRepositoryCustom {
 
     @Query("""
     select cp.id
     from CampaignProposal cp
-    where
-        cp.whoProposed = :role
-        and (
-            (:role = 'BRAND' and cp.brand.user.id = :userId)
-            or
-            (:role = 'CREATOR' and cp.creator.id = :userId)
-        )
-        and (:status is null or cp.status = :status)
-    """)
+    where cp.senderUserId= :userId
+      and (:status is null or cp.status = :status)
+""")
     List<Long> findSentProposalIds(
             @Param("userId") Long userId,
-            @Param("role") Role role,
             @Param("status") ProposalStatus status
     );
 
     @Query("""
     select cp.id
     from CampaignProposal cp
-    where
-        cp.whoProposed = :role
-        and (
-            (:role = 'BRAND' and cp.creator.id = :userId)
-            or
-            (:role = 'CREATOR' and cp.brand.user.id = :userId)
-        )
-        and (:status is null or cp.status = :status)
-    """)
+    where cp.receiverUserId = :userId
+      and (:status is null or cp.status = :status)
+""")
     List<Long> findReceivedProposalIds(
             @Param("userId") Long userId,
-            @Param("role") Role role,
             @Param("status") ProposalStatus status
     );
+
 
     @Query("""
         select distinct cp
