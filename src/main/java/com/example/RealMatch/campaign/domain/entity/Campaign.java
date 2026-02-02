@@ -4,11 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.campaign.domain.enums.CampaignOriginType;
 import com.example.RealMatch.campaign.domain.enums.CampaignRecruitingStatus;
+import com.example.RealMatch.campaign.domain.enums.CampaignStatus;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,6 +41,17 @@ public class Campaign extends DeleteBaseEntity {
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
+
+    @Column(name = "proposal_id")
+    private Long proposalId;  // originType이 proposal이라면 무조건 값이 있어야함
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin_type", nullable = false, length = 30)
+    private CampaignOriginType originType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 30)
+    private CampaignStatus status;
 
     @Column(nullable = false, length = 255)
     private String title;
@@ -86,7 +101,7 @@ public class Campaign extends DeleteBaseEntity {
 
     @Builder
     public Campaign(String title, String description, String preferredSkills, String schedule, String videoSpec,
-                    String product, Long rewardAmount,
+                    String product, Long rewardAmount, CampaignOriginType originType,
                     LocalDate startDate, LocalDate endDate,
                     LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
                     Integer quota, Long createdBy) {
@@ -97,32 +112,14 @@ public class Campaign extends DeleteBaseEntity {
         this.videoSpec = videoSpec;
         this.product = product;
         this.rewardAmount = rewardAmount;
+        this.originType = originType;
+        this.status = CampaignStatus.DRAFT;
         this.startDate = startDate;
         this.endDate = endDate;
         this.recruitStartDate = recruitStartDate;
         this.recruitEndDate = recruitEndDate;
         this.quota = quota;
         this.createdBy = createdBy;
-    }
-
-    public void update(String title, String description, String preferredSkills, String schedule, String videoSpec,
-                       String product, Long rewardAmount,
-                       LocalDate startDate, LocalDate endDate,
-                       LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
-                       Integer quota, Long updatedBy) {
-        this.title = title;
-        this.description = description;
-        this.preferredSkills = preferredSkills;
-        this.schedule = schedule;
-        this.videoSpec = videoSpec;
-        this.product = product;
-        this.rewardAmount = rewardAmount;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.recruitStartDate = recruitStartDate;
-        this.recruitEndDate = recruitEndDate;
-        this.quota = quota;
-        this.updatedBy = updatedBy;
     }
 
     public void softDelete(Long deletedBy) {
@@ -138,5 +135,27 @@ public class Campaign extends DeleteBaseEntity {
         }
         return CampaignRecruitingStatus.RECRUITING;
     }
+
+    public void activate() {
+        if (this.status != CampaignStatus.DRAFT) {
+            throw new IllegalStateException("DRAFT 상태에서만 활성화할 수 있습니다.");
+        }
+        this.status = CampaignStatus.ACTIVE;
+    }
+
+    public void complete() {
+        if (this.status != CampaignStatus.ACTIVE) {
+            throw new IllegalStateException("ACTIVE 상태에서만 종료할 수 있습니다.");
+        }
+        this.status = CampaignStatus.COMPLETED;
+    }
+
+    public void cancel() {
+        if (this.status == CampaignStatus.COMPLETED) {
+            throw new IllegalStateException("이미 종료된 캠페인은 취소할 수 없습니다.");
+        }
+        this.status = CampaignStatus.CANCELLED;
+    }
+
 
 }
