@@ -13,6 +13,7 @@ import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.entity.CampaignProposalContentTag;
+import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
 import com.example.RealMatch.business.exception.BusinessErrorCode;
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
@@ -53,20 +54,21 @@ public class CampaignProposalService {
                 .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
 
         validateRequesterAuthority(userDetails, creator, brand);
-
         Campaign campaign = null;
         if (request.getCampaignId() != null) {
             campaign = campaignRepository.findById(request.getCampaignId())
                     .orElseThrow(() -> new CustomException(CampaignErrorCode.CAMPAIGN_NOT_FOUND));
         }
-
         validateDateRange(request);
+
+        Long receiverUserId = resolveReceiverUserId(Role.from(userDetails.getRole()), creator, brand);
 
         CampaignProposal proposal = CampaignProposal.builder()
                 .creator(creator)
                 .brand(brand)
                 .whoProposed(Role.from(userDetails.getRole()))
-                .proposedUserId(userDetails.getUserId())
+                .senderUserId(userDetails.getUserId())
+                .receiverUserId(receiverUserId)
                 .campaign(campaign)
                 .title(request.getCampaignName())
                 .campaignDescription(request.getDescription())
@@ -109,21 +111,24 @@ public class CampaignProposalService {
         saveAllContentTags(request, proposal);
     }
 
-    private static void validateModifyAvailable(CustomUserDetails userDetails, CampaignProposal proposal) {
-        if (!proposal.isModifiable()) {
-            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_MODIFIABLE);
-        }
 
-        if (!proposal.getProposedUserId().equals(userDetails.getUserId())) {
+    public void approveProposal(Long userId, Long campaignProposalId) {
+        CampaignProposal proposal = campaignProposalRepository
+                .findById(campaignProposalId)
+                .orElseThrow(() ->
+                        new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
+                );
+
+        if (!proposal.getSenderUserId().equals(userId)) {
             throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_FORBIDDEN);
         }
 
-        Role requesterRole = Role.from(userDetails.getRole());
-        if (proposal.getWhoProposed() != requesterRole) {
-            throw new CustomException(
-                    BusinessErrorCode.CAMPAIGN_PROPOSAL_ROLE_MISMATCH
-            );
+        if (proposal.getStatus() != ProposalStatus.REVIEWING) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_REVIEWING);
         }
+
+        // 3️⃣ 도메인 로직
+        proposal.match();
     }
 
 
@@ -145,9 +150,7 @@ public class CampaignProposalService {
                 .map(CampaignProposalRequestDto.CampaignContentTagRequest::id)
                 .toList();
 
-        // 2. 한 번에 조회
         List<TagContent> tagContents = tagContentRepository.findAllById(tagIds);
-
         if (tagContents.size() != tagIds.size()) {
             throw new IllegalArgumentException("존재하지 않는 태그가 포함되어 있습니다.");
         }
@@ -168,6 +171,40 @@ public class CampaignProposalService {
                             tag,
                             tagRequest.customValue()
                     )
+            );
+        }
+    }
+
+    private Long resolveReceiverUserId(
+            Role whoProposed,
+            User creator,
+            Brand brand
+    ) {
+        // 크리에이터 → 브랜드 제안
+        if (whoProposed == Role.CREATOR) {
+            return brand.getUser().getId();
+        }
+        // 브랜드 → 크리에이터 제안
+        if (whoProposed == Role.BRAND) {
+            return creator.getId();
+        }
+        throw new CustomException(GeneralErrorCode.INVALID_DATA);
+    }
+
+
+    private static void validateModifyAvailable(CustomUserDetails userDetails, CampaignProposal proposal) {
+        if (!proposal.isModifiable()) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_MODIFIABLE);
+        }
+
+        if (!proposal.getSenderUserId().equals(userDetails.getUserId())) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_FORBIDDEN);
+        }
+
+        Role requesterRole = Role.from(userDetails.getRole());
+        if (proposal.getWhoProposed() != requesterRole) {
+            throw new CustomException(
+                    BusinessErrorCode.CAMPAIGN_PROPOSAL_ROLE_MISMATCH
             );
         }
     }
