@@ -10,6 +10,7 @@ import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
+import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
@@ -231,7 +232,7 @@ public class BrandService {
 
         Optional<Brand> existingBrand = brandRepository.findByUser(user);
         if (existingBrand.isPresent()) {
-            throw new IllegalArgumentException("이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
+            throw new CustomException(BrandErrorCode.BRAND_ALREADY_EXISTS, "이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
         }
 
         Brand brand = requestDto.toEntity(user);
