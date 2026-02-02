@@ -2,6 +2,7 @@ package com.example.RealMatch.business.presentation.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -63,4 +64,20 @@ public class CampaignProposalController implements CampaignProposalSwagger {
 
         return CustomResponse.ok(response);
     }
+
+    @Override
+    @PatchMapping("/{campaignProposalId}/approve")
+    public CustomResponse<String> approveCampaignProposal(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long campaignProposalId
+    ) {
+        campaignProposalService.approveCampaignProposal(
+                userDetails.getUserId(),
+                campaignProposalId
+        );
+
+        return CustomResponse.ok("캠페인 제안을 수락했습니다.");
+    }
+
+
 }
