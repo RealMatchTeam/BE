@@ -86,17 +86,18 @@ public class UserMatchingDetail extends BaseEntity {
     @Column(name = "content_tones")
     private String contentTones;
 
+    // 매칭 결과 (검사 완료 후 설정됨)
     @Column(name = "creator_type")
     private String creatorType;
-
-    @Column(name = "good_with")
-    private String goodWith;
 
     @Column(name = "desired_involvement")
     private String desiredInvolvement;
 
     @Column(name = "desired_usage_scope")
     private String desiredUsageScope;
+
+    @Column(name = "is_deprecated", nullable = false)
+    private Boolean isDeprecated = false;
 
     @Builder
     public UserMatchingDetail(
@@ -120,8 +121,6 @@ public class UserMatchingDetail extends BaseEntity {
             String viewerAge,
             String contentFormats,
             String contentTones,
-            String creatorType,
-            String goodWith,
             String desiredInvolvement,
             String desiredUsageScope
     ) {
@@ -145,10 +144,9 @@ public class UserMatchingDetail extends BaseEntity {
         this.viewerAge = viewerAge;
         this.contentFormats = contentFormats;
         this.contentTones = contentTones;
-        this.creatorType = creatorType;
-        this.goodWith = goodWith;
         this.desiredInvolvement = desiredInvolvement;
         this.desiredUsageScope = desiredUsageScope;
+        this.isDeprecated = false;
     }
 
     // ========== 비즈니스 메서드 (도메인 로직) ==========
@@ -256,5 +254,19 @@ public class UserMatchingDetail extends BaseEntity {
         if (desiredUsageScope != null) {
             this.desiredUsageScope = desiredUsageScope;
         }
+    }
+
+    /**
+     * 매칭 결과 설정 (검사 완료 후 호출)
+     */
+    public void setMatchingResult(String creatorType) {
+        this.creatorType = creatorType;
+    }
+
+    /**
+     * Soft delete 처리 (재검사 시 이전 데이터 폐기)
+     */
+    public void deprecated() {
+        this.isDeprecated = true;
     }
 }

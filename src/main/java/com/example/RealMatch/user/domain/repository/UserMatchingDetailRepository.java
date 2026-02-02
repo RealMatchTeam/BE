@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 
 public interface UserMatchingDetailRepository extends JpaRepository<UserMatchingDetail, Long> {
-    Optional<UserMatchingDetail> findByUserId(Long userId);
+    Optional<UserMatchingDetail> findByUserIdAndIsDeprecatedFalse(Long userId);
 }

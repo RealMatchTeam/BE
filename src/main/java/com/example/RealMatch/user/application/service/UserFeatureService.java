@@ -28,18 +28,19 @@ public class UserFeatureService {
 
     public MyFeatureResponseDto getMyFeatures(Long userId) {
 
-        // UserMatchingDetail 조회
-        UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
+        // UserMatchingDetail 조회 (삭제되지 않은 데이터만 조회)
+        UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        log.info("사용자 프로필 조회 완료: userId={}", userId);
+        log.info("사용자 프로필 조회 완료: userId={}, creatorType={}", userId, detail.getCreatorType());
 
         // 각 영역별로 데이터 존재 여부 확인 및 조회
         MyFeatureResponseDto.BeautyType beautyType = buildBeautyType(detail);
         MyFeatureResponseDto.FashionType fashionType = buildFashionType(detail);
         MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail);
 
-        return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
+        // creatorType(매칭 결과) 포함하여 반환
+        return new MyFeatureResponseDto(detail.getCreatorType(), beautyType, fashionType, contentsType);
     }
 
     /**
@@ -54,7 +55,8 @@ public class UserFeatureService {
             throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
         }
 
-        UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
+        // 삭제되지 않은 활성 프로필 조회
+        UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
         // 뷰티 특성 업데이트
@@ -73,8 +75,6 @@ public class UserFeatureService {
         // 패션 특성 업데이트
         if (request.fashionType() != null) {
             MyFeatureUpdateRequestDto.FashionTypeUpdate fashionType = request.fashionType();
-
-
             detail.updateFashionFeatures(
                     fashionType.height(),
                     fashionType.bodyShape(),
@@ -106,6 +106,41 @@ public class UserFeatureService {
 
         // JPA 더티 체킹으로 자동 저장
         log.info("사용자 특성 정보 업데이트 완료: userId={}", userId);
+    }
+
+    /**
+     * 재검사 준비: 기존 데이터를 Soft Delete 처리하고 새로운 데이터 생성
+     * 재검사 '시작' 버튼을 누르거나, 검사 결과를 제출하기 직전에 호출
+     */
+    @Transactional
+    public void resetForReexamination(Long userId) { // matchService에서 호출 연동 예정
+        // 1. 기존 활성 데이터 조회 및 삭제 처리 (Soft Delete)
+        userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
+                .ifPresent(detail -> {
+                    detail.deprecated(); // isDeprecated = true 설정
+                    log.info("기존 사용자 매칭 정보 삭제 처리(Soft Delete): userId={}, detailId={}", userId, detail.getId());
+                });
+
+        // 2. 새로운 빈 프로필 생성 및 저장
+        UserMatchingDetail newDetail = UserMatchingDetail.builder()
+                .userId(userId)
+                .build();
+
+        userMatchingDetailRepository.save(newDetail);
+        log.info("재검사를 위한 신규 프로필 생성 완료: userId={}", userId);
+    }
+
+    /**
+     * 매칭 결과(CreatorType) 저장
+     * MatchService에서 매칭 계산이 끝난 후 호출
+     */
+    @Transactional
+    public void updateMatchingResult(Long userId, String creatorType) { // matchService에서 호출 연동 예정
+        UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
+
+        detail.setMatchingResult(creatorType);
+        log.info("매칭 결과 저장 완료: userId={}, creatorType={}", userId, creatorType);
     }
 
     private MyFeatureResponseDto.BeautyType buildBeautyType(UserMatchingDetail detail) {
@@ -153,7 +188,6 @@ public class UserFeatureService {
     }
 
     private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail) {
-
         if (detail.getViewerGender() == null
                 && detail.getViewerAge() == null
                 && detail.getAvgVideoLength() == null
@@ -178,7 +212,6 @@ public class UserFeatureService {
                 parseTagString(detail.getDesiredUsageScope())
         );
     }
-
 
     /**
      * 쉼표로 구분된 문자열을 List로 변환
