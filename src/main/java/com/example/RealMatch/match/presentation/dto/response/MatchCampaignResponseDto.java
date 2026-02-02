@@ -21,15 +21,15 @@ public class MatchCampaignResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CampaignDto {
-        private Long id;
-        private String name;
-        private Integer matchingRatio;
-        private Boolean isLiked;
-        private Boolean isRecruiting;
-        private Integer manuscriptFee;
-        private String detail;
-        private Integer dDay;
-        private Integer totalRecruit;
-        private Integer currentRecruit;
+        private Long brandId;
+        private String brandName;
+        private Integer brandMatchingRatio;
+        private Boolean brandIsLiked;
+        private Boolean brandIsRecruiting;
+        private Integer campaignManuscriptFee;
+        private String campaignDetail;
+        private Integer campaignDDay;
+        private Integer campaignTotalRecruit;
+        private Integer campaignTotalCurrentRecruit;
     }
 }
