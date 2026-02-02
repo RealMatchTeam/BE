@@ -14,10 +14,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import com.example.RealMatch.campaign.domain.entity.QCampaignLike;
 import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
 import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.domain.entity.enums.CategoryType;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -40,14 +42,14 @@ public class MatchCampaignHistoryRepositoryCustomImpl implements MatchCampaignHi
             Pageable pageable
     ) {
         BooleanBuilder whereClause = buildWhereClause(userId, keyword, category, tags);
-        OrderSpecifier<?> orderSpecifier = buildOrderSpecifier(sortBy);
+        List<OrderSpecifier<?>> orderSpecifiers = buildOrderSpecifiers(sortBy);
 
         List<MatchCampaignHistory> content = queryFactory
                 .selectFrom(matchCampaignHistory)
                 .join(matchCampaignHistory.campaign, campaign).fetchJoin()
                 .join(campaign.brand, brand).fetchJoin()
                 .where(whereClause)
-                .orderBy(orderSpecifier)
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier<?>[0]))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -130,16 +132,41 @@ public class MatchCampaignHistoryRepositoryCustomImpl implements MatchCampaignHi
     // *********** //
     // 정렬 조건 빌더 //
     // *********** //
-    private OrderSpecifier<?> buildOrderSpecifier(CampaignSortType sortBy) {
+    /**
+     * 캠페인별 좋아요 수 (상관 서브쿼리, 정렬용).
+     * 메인 쿼리의 campaign과 연관되어 행마다 해당 캠페인의 좋아요 수를 반환.
+     */
+    private com.querydsl.core.types.Expression<Long> likeCountSubquery() {
+        QCampaignLike likeSub = new QCampaignLike("cl");
+        return JPAExpressions
+                .select(likeSub.id.count())
+                .from(likeSub)
+                .where(likeSub.campaign.id.eq(campaign.id));
+    }
+
+    /** 좋아요 수 내림차순 OrderSpecifier (null은 마지막) */
+    private OrderSpecifier<?> likeCountDesc() {
+        return new OrderSpecifier<>(Order.DESC, likeCountSubquery(), OrderSpecifier.NullHandling.NullsLast);
+    }
+
+    /**
+     * 정렬 타입별 OrderSpecifier 목록.
+     * - MATCH_SCORE: 매칭률 내림차순, 동점 시 좋아요 수 내림차순
+     * - POPULARITY: 좋아요 수 내림차순
+     */
+    private List<OrderSpecifier<?>> buildOrderSpecifiers(CampaignSortType sortBy) {
         if (sortBy == null) {
             sortBy = CampaignSortType.MATCH_SCORE;
         }
 
         return switch (sortBy) {
-            case POPULARITY -> campaign.id.desc(); // TODO: 좋아요 수 기반 정렬 (서브쿼리 필요)
-            case REWARD_AMOUNT -> campaign.rewardAmount.desc().nullsLast();
-            case D_DAY -> campaign.recruitEndDate.asc().nullsLast();
-            default -> matchCampaignHistory.matchingRatio.desc().nullsLast(); // MATCH_SCORE
+            case POPULARITY -> List.of(likeCountDesc());
+            case REWARD_AMOUNT -> List.of(campaign.rewardAmount.desc().nullsLast());
+            case D_DAY -> List.of(campaign.recruitEndDate.asc().nullsLast());
+            default -> List.of(
+                    matchCampaignHistory.matchingRatio.desc().nullsLast(),
+                    likeCountDesc()
+            ); // MATCH_SCORE: 매칭률 → 동점 시 인기순(좋아요 수)
         };
     }
 }
