@@ -72,7 +72,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user = userRepository.save(
                 User.builder()
                         .name(userInfo.getName())
-                        .nickname(userInfo.getName()) // 초기에 닉네임은 이름과 동일하게 설정
                         .email(userInfo.getEmail())
                         .role(Role.GUEST) // [수정] 최초 가입 시 GUEST 권한 부여
                         .build()
