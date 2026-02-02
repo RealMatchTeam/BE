@@ -6,7 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
-import com.example.RealMatch.tag.domain.repository.TagContentRepository;
+import com.example.RealMatch.tag.domain.enums.TagType;
+import com.example.RealMatch.tag.domain.repository.TagRepository;
 import com.example.RealMatch.tag.presentation.dto.response.ContentTagResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -15,11 +16,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TagContentService {
-    private final TagContentRepository tagContentRepository;
+    private final TagRepository tagRepository;
 
     public ContentTagResponse getContentTags() {
-
         return new ContentTagResponse(
+                findBy(ContentTagType.VIEWER_GENDER),
+                findBy(ContentTagType.VIEWER_AGE),
+                findBy(ContentTagType.AVG_VIDEO_LENGTH),
+                findBy(ContentTagType.AVG_VIDEO_VIEWS),
                 findBy(ContentTagType.FORMAT),
                 findBy(ContentTagType.CATEGORY),
                 findBy(ContentTagType.TONE),
@@ -29,14 +33,17 @@ public class TagContentService {
     }
 
     private List<ContentTagResponse.TagItemResponse> findBy(
-            ContentTagType tagType
+            ContentTagType contentTagType
     ) {
-        return tagContentRepository
-                .findByTagType(tagType)
+        return tagRepository
+                .findAllByTagTypeAndTagCategory(
+                        TagType.CONTENT.getDescription(),
+                        contentTagType.getKorName()
+                )
                 .stream()
                 .map(tag -> new ContentTagResponse.TagItemResponse(
                         tag.getId(),
-                        tag.getKorName()
+                        tag.getTagName()
                 ))
                 .toList();
     }
