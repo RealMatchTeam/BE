@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
+import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.domain.entity.enums.CategoryType;
-import com.example.RealMatch.match.domain.entity.enums.SortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchBrandResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchCampaignResponseDto;
@@ -102,7 +103,7 @@ public interface MatchSwagger {
     })
     CustomResponse<MatchBrandResponseDto> getMatchingBrands(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
+            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") @RequestParam(defaultValue = "MATCH_SCORE") BrandSortType sortBy,
             @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
             @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
 
@@ -128,7 +129,7 @@ public interface MatchSwagger {
     CustomResponse<MatchCampaignResponseDto> getMatchingCampaigns(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "캠페인명 검색어 (캠페인 title만 검색)") @RequestParam(required = false) String keyword,
-            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, REWARD_AMOUNT, D_DAY)") @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
+            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, REWARD_AMOUNT, D_DAY)") @RequestParam(defaultValue = "MATCH_SCORE") CampaignSortType sortBy,
             @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
             @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,

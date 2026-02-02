@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +28,9 @@ import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.match.application.util.MatchScoreCalculator;
 import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
+import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
+import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.domain.entity.enums.CategoryType;
-import com.example.RealMatch.match.domain.entity.enums.SortType;
 import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.match.infrastructure.redis.RedisDocumentHelper;
@@ -349,68 +352,7 @@ public class MatchServiceImpl implements MatchService {
                 .limit(TOP_MATCH_COUNT)
                 .toList();
     }
-    
-    private List<MatchBrandResponseDto.BrandDto> findMatchingBrandsForList(
-            UserTagDocument userDoc, Long userId, SortType sortBy, CategoryType category, List<String> filterTags) {
-        List<BrandTagDocument> allBrandDocs = redisDocumentHelper.findAllBrandTagDocuments();
 
-        if (allBrandDocs.isEmpty()) {
-            return List.of();
-        }
-
-        Set<Long> likedBrandIds = brandLikeRepository.findByUserId(userId).stream()
-                .map(like -> like.getBrand().getId())
-                .collect(Collectors.toSet());
-
-        Set<Long> recruitingBrandIds = getRecruitingBrandIds();
-        Map<Long, Long> brandLikeCountMap = getBrandLikeCountMap();
-
-        return allBrandDocs.stream()
-                .filter(brandDoc -> filterByCategory(brandDoc, category))
-                .filter(brandDoc -> filterByTags(brandDoc, filterTags))
-                .map(brandDoc -> new BrandMatchResult(
-                        brandDoc,
-                        MatchScoreCalculator.calculateBrandMatchScore(userDoc, brandDoc),
-                        likedBrandIds.contains(brandDoc.getBrandId()),
-                        recruitingBrandIds.contains(brandDoc.getBrandId())
-                ))
-                .sorted(getBrandComparator(sortBy, brandLikeCountMap))
-                .limit(TOP_MATCH_COUNT)
-                .map(this::toMatchBrandDto)
-                .toList();
-    }
-
-    private List<MatchCampaignResponseDto.CampaignDto> findMatchingCampaignsForList(
-            UserTagDocument userDoc, Long userId, SortType sortBy, CategoryType category, List<String> filterTags) {
-        List<CampaignTagDocument> allCampaignDocs = redisDocumentHelper.findAllCampaignTagDocuments();
-
-        if (allCampaignDocs.isEmpty()) {
-            return List.of();
-        }
-
-        Set<Long> likedCampaignIds = campaignLikeRepository.findByUserId(userId).stream()
-                .map(like -> like.getCampaign().getId())
-                .collect(Collectors.toSet());
-
-        Map<Long, Long> applyCountMap = getApplyCountMap();
-        Map<Long, Long> campaignLikeCountMap = getCampaignLikeCountMap();
-
-        return allCampaignDocs.stream()
-                .filter(campaignDoc -> campaignDoc.getRecruitEndDate() == null
-                        || campaignDoc.getRecruitEndDate().isAfter(LocalDateTime.now()))
-                .filter(campaignDoc -> filterByCategoryCampaign(campaignDoc, category))
-                .filter(campaignDoc -> filterByTagsCampaign(campaignDoc, filterTags))
-                .map(campaignDoc -> new CampaignMatchResult(
-                        campaignDoc,
-                        MatchScoreCalculator.calculateCampaignMatchScore(userDoc, campaignDoc),
-                        likedCampaignIds.contains(campaignDoc.getCampaignId()),
-                        applyCountMap.getOrDefault(campaignDoc.getCampaignId(), 0L).intValue()
-                ))
-                .sorted(getCampaignComparator(sortBy, campaignLikeCountMap))
-                .limit(TOP_MATCH_COUNT)
-                .map(this::toMatchCampaignDto)
-                .toList();
-    }
 
     // ************* //
     // 필터링 메서드 //
@@ -486,7 +428,7 @@ public class MatchServiceImpl implements MatchService {
     // ************* //
     // 정렬 메서드 //
     // ************* //
-    private Comparator<BrandMatchResult> getBrandComparator(SortType sortBy, Map<Long, Long> likeCountMap) {
+    private Comparator<BrandMatchResult> getBrandComparator(BrandSortType sortBy, Map<Long, Long> likeCountMap) {
         return switch (sortBy) {
             case POPULARITY -> Comparator.comparingLong(
                     (BrandMatchResult r) -> likeCountMap.getOrDefault(r.brandDoc().getBrandId(), 0L)
@@ -498,14 +440,19 @@ public class MatchServiceImpl implements MatchService {
         };
     }
 
-    private Comparator<CampaignMatchResult> getCampaignComparator(SortType sortBy, Map<Long, Long> likeCountMap) {
+    private Comparator<CampaignMatchResult> getCampaignComparator(CampaignSortType sortBy, Map<Long, Long> likeCountMap) {
         return switch (sortBy) {
             case POPULARITY -> Comparator.comparingLong(
                     (CampaignMatchResult r) -> likeCountMap.getOrDefault(r.campaignDoc().getCampaignId(), 0L)
             ).reversed();
-            case NEWEST -> Comparator.comparingLong(
-                    (CampaignMatchResult r) -> r.campaignDoc().getCampaignId()
+            case REWARD_AMOUNT -> Comparator.comparingLong(
+                    (CampaignMatchResult r) -> r.campaignDoc().getRewardAmount() != null
+                            ? r.campaignDoc().getRewardAmount().longValue() : 0L
             ).reversed();
+            case D_DAY -> Comparator.comparing(
+                    (CampaignMatchResult r) -> r.campaignDoc().getRecruitEndDate(),
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
             default -> Comparator.comparingInt(CampaignMatchResult::matchScore).reversed();
         };
     }
@@ -530,7 +477,7 @@ public class MatchServiceImpl implements MatchService {
     // 매칭 결과 조회 //
     // *********** //
     @Override
-    public MatchBrandResponseDto getMatchingBrands(String userId, SortType sortBy, CategoryType category, List<String> tags) {
+    public MatchBrandResponseDto getMatchingBrands(String userId, BrandSortType sortBy, CategoryType category, List<String> tags) {
         Long userIdLong = Long.parseLong(userId);
 
         List<MatchBrandHistory> brandHistories = matchBrandHistoryRepository.findByUserIdAndIsDeprecatedFalse(userIdLong);
@@ -567,7 +514,7 @@ public class MatchServiceImpl implements MatchService {
     public MatchCampaignResponseDto getMatchingCampaigns(
             String userId,
             String keyword,
-            SortType sortBy,
+            CampaignSortType sortBy,
             CategoryType category,
             List<String> tags,
             int page,
@@ -575,63 +522,28 @@ public class MatchServiceImpl implements MatchService {
     ) {
         Long userIdLong = Long.parseLong(userId);
 
-        // 1. 검색 조건으로 매칭 히스토리 조회 (캠페인명 검색 + 카테고리 필터)
-        List<MatchCampaignHistory> allHistories = matchCampaignHistoryRepository
-                .findByUserIdAndIsDeprecatedFalse(userIdLong);
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<MatchCampaignHistory> historyPage = matchCampaignHistoryRepository
+                .searchCampaigns(userIdLong, keyword, category, sortBy, tags, pageable);
 
-        if (allHistories.isEmpty()) {
+        if (historyPage.isEmpty()) {
             LOG.info("No match campaign history found for user. userId={}", userId);
             return MatchCampaignResponseDto.empty();
         }
 
-        // 2. 필터링: 모집 중 + 삭제 안 됨 + 키워드 + 카테고리 + 태그
-        List<MatchCampaignHistory> filtered = allHistories.stream()
-                .filter(h -> !h.getCampaign().isDeleted())
-                .filter(h -> h.getCampaign().getRecruitEndDate() == null
-                        || h.getCampaign().getRecruitEndDate().isAfter(LocalDateTime.now()))
-                .filter(h -> filterCampaignByCategory(h.getCampaign(), category))
-                .filter(h -> filterCampaignByKeyword(h.getCampaign(), keyword))
-                .filter(h -> filterCampaignByTags(h.getCampaign(), tags))
-                .toList();
-
-        if (filtered.isEmpty()) {
-            return MatchCampaignResponseDto.empty();
-        }
-
-        // 3. 정렬을 위한 부가 데이터 조회 (배치)
         Set<Long> likedCampaignIds = campaignLikeRepository.findByUserId(userIdLong).stream()
                 .map(like -> like.getCampaign().getId())
                 .collect(Collectors.toSet());
 
         Map<Long, Long> applyCountMap = getApplyCountMap();
-        Map<Long, Long> campaignLikeCountMap = getCampaignLikeCountMap();
 
-        // 4. 정렬
-        List<MatchCampaignHistory> sorted = filtered.stream()
-                .sorted(getCampaignSearchComparator(sortBy, campaignLikeCountMap))
-                .toList();
-
-        // 5. 페이지네이션 (요청 page/size만 사용, 응답은 기존 API 호환으로 count + brands만)
-        int fromIndex = page * size;
-        int toIndex = Math.min(fromIndex + size, sorted.size());
-
-        if (fromIndex >= sorted.size()) {
-            return MatchCampaignResponseDto.builder()
-                    .brands(List.of())
-                    .count(0)
-                    .build();
-        }
-
-        List<MatchCampaignHistory> paged = sorted.subList(fromIndex, toIndex);
-
-        // 6. DTO 변환
-        List<MatchCampaignResponseDto.CampaignDto> brands = paged.stream()
+        List<MatchCampaignResponseDto.CampaignDto> brands = historyPage.getContent().stream()
                 .map(h -> toCampaignCardDto(h, likedCampaignIds, applyCountMap))
                 .toList();
 
         return MatchCampaignResponseDto.builder()
                 .brands(brands)
-                .count(brands.size())
+                .count((int) historyPage.getTotalElements())
                 .build();
     }
 
@@ -673,7 +585,7 @@ public class MatchServiceImpl implements MatchService {
         Integer manuscriptFee = campaignDoc.getRewardAmount() != null ? campaignDoc.getRewardAmount().intValue() : null;
         String detail = campaignDoc.getCampaignName() != null ? campaignDoc.getCampaignName() : campaignDoc.getDescription();
         return MatchCampaignResponseDto.CampaignDto.builder()
-                .brandId(null)
+                .brandId(campaignDoc.getCampaignId())
                 .brandName(campaignDoc.getCampaignName())
                 .brandLogoUrl(null)
                 .brandMatchingRatio(result.matchScore())
@@ -716,16 +628,6 @@ public class MatchServiceImpl implements MatchService {
         return brand.getIndustryType().name().equalsIgnoreCase(category.name());
     }
 
-    private boolean filterCampaignByCategory(Campaign campaign, CategoryType category) {
-        if (category == null || category == CategoryType.ALL) {
-            return true;
-        }
-        if (campaign.getBrand() == null || campaign.getBrand().getIndustryType() == null) {
-            return true;
-        }
-        return campaign.getBrand().getIndustryType().name().equalsIgnoreCase(category.name());
-    }
-
     /**
      * 캠페인명(title) 기준 키워드 검색 필터
      */
@@ -740,20 +642,8 @@ public class MatchServiceImpl implements MatchService {
         return title.toLowerCase().contains(keyword.trim().toLowerCase());
     }
 
-    /**
-     * 태그 기반 필터 (콘텐츠 필터)
-     */
-    private boolean filterCampaignByTags(Campaign campaign, List<String> tags) {
-        // 태그 필터가 없으면 통과
-        if (tags == null || tags.isEmpty()) {
-            return true;
-        }
-        // TODO: 캠페인-태그 연관 구조에 따라 구현 확장 가능
-        // 현재는 태그 필터 없이 통과
-        return true;
-    }
 
-    private Comparator<MatchBrandHistory> getBrandHistoryComparator(SortType sortBy, Map<Long, Long> likeCountMap) {
+    private Comparator<MatchBrandHistory> getBrandHistoryComparator(BrandSortType sortBy, Map<Long, Long> likeCountMap) {
         return switch (sortBy) {
             case POPULARITY -> Comparator.comparingLong(
                     (MatchBrandHistory h) -> likeCountMap.getOrDefault(h.getBrand().getId(), 0L)
@@ -764,40 +654,6 @@ public class MatchServiceImpl implements MatchService {
             default -> Comparator.comparingLong(
                     (MatchBrandHistory h) -> h.getMatchingRatio() != null ? h.getMatchingRatio() : 0L
             ).reversed();
-        };
-    }
-
-    /**
-     * 캠페인 검색/목록용 정렬 Comparator
-     * - MATCH_SCORE: 매칭률 내림차순, 동점 시 인기순(좋아요 수) 내림차순
-     * - POPULARITY: 인기 순 (좋아요 수 내림차순)
-     * - REWARD_AMOUNT: 금액 순 (원고료 내림차순)
-     * - D_DAY: 마감 순 (마감일 오름차순 = 마감 임박순)
-     */
-    private Comparator<MatchCampaignHistory> getCampaignSearchComparator(SortType sortBy, Map<Long, Long> likeCountMap) {
-        return switch (sortBy) {
-            case POPULARITY -> Comparator.comparingLong(
-                    (MatchCampaignHistory h) -> likeCountMap.getOrDefault(h.getCampaign().getId(), 0L)
-            ).reversed();
-
-            case REWARD_AMOUNT -> Comparator.comparingLong(
-                    (MatchCampaignHistory h) -> h.getCampaign().getRewardAmount() != null
-                            ? h.getCampaign().getRewardAmount() : 0L
-            ).reversed();
-
-            case D_DAY -> Comparator.comparing(
-                    (MatchCampaignHistory h) -> h.getCampaign().getRecruitEndDate(),
-                    Comparator.nullsLast(Comparator.naturalOrder())
-            );
-
-            // MATCH_SCORE (기본): 매칭률 내림차순, 동점 시 인기순
-            default -> Comparator
-                    .comparingLong((MatchCampaignHistory h) ->
-                            h.getMatchingRatio() != null ? h.getMatchingRatio() : 0L)
-                    .reversed()
-                    .thenComparingLong(h ->
-                            likeCountMap.getOrDefault(h.getCampaign().getId(), 0L))
-                    .reversed();
         };
     }
 

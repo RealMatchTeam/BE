@@ -1,6 +1,7 @@
 package com.example.RealMatch.match.domain.repository;
 
 import static com.example.RealMatch.brand.domain.entity.QBrand.brand;
+import static com.example.RealMatch.business.domain.entity.QCampaignTag.campaignTag;
 import static com.example.RealMatch.campaign.domain.entity.QCampaign.campaign;
 import static com.example.RealMatch.match.domain.entity.QMatchCampaignHistory.matchCampaignHistory;
 
@@ -14,15 +15,15 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
+import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.domain.entity.enums.CategoryType;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 캠페인 매칭 히스토리 검색/페이지네이션
- */
 @Repository
 @RequiredArgsConstructor
 public class MatchCampaignHistoryRepositoryCustomImpl implements MatchCampaignHistoryRepositoryCustom {
@@ -34,27 +35,31 @@ public class MatchCampaignHistoryRepositoryCustomImpl implements MatchCampaignHi
             Long userId,
             String keyword,
             CategoryType category,
+            CampaignSortType sortBy,
+            List<String> tags,
             Pageable pageable
     ) {
-        BooleanBuilder whereClause = buildWhereClause(userId, keyword, category);
+        BooleanBuilder whereClause = buildWhereClause(userId, keyword, category, tags);
+        OrderSpecifier<?> orderSpecifier = buildOrderSpecifier(sortBy);
 
         List<MatchCampaignHistory> content = queryFactory
                 .selectFrom(matchCampaignHistory)
                 .join(matchCampaignHistory.campaign, campaign).fetchJoin()
                 .join(campaign.brand, brand).fetchJoin()
                 .where(whereClause)
+                .orderBy(orderSpecifier)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        long total = countSearchCampaigns(userId, keyword, category);
+        long total = countSearchCampaigns(userId, keyword, category, tags);
 
         return new PageImpl<>(content, pageable, total);
     }
 
     @Override
-    public long countSearchCampaigns(Long userId, String keyword, CategoryType category) {
-        BooleanBuilder whereClause = buildWhereClause(userId, keyword, category);
+    public long countSearchCampaigns(Long userId, String keyword, CategoryType category, List<String> tags) {
+        BooleanBuilder whereClause = buildWhereClause(userId, keyword, category, tags);
 
         Long count = queryFactory
                 .select(matchCampaignHistory.count())
@@ -67,36 +72,74 @@ public class MatchCampaignHistoryRepositoryCustomImpl implements MatchCampaignHi
         return count != null ? count : 0L;
     }
 
-    /**
-     * 검색 조건 빌더
-     */
-    private BooleanBuilder buildWhereClause(Long userId, String keyword, CategoryType category) {
+    // *********** //
+    // 검색 조건 빌더 //
+    // *********** //
+    private BooleanBuilder buildWhereClause(Long userId, String keyword, CategoryType category, List<String> tags) {
         BooleanBuilder builder = new BooleanBuilder();
 
-        // 필수 조건: 사용자 ID, deprecated=false
         builder.and(matchCampaignHistory.user.id.eq(userId));
         builder.and(matchCampaignHistory.isDeprecated.eq(false));
 
-        // 모집 중인 캠페인만 (recruitEndDate가 null이거나 현재보다 이후)
         LocalDateTime now = LocalDateTime.now();
         builder.and(
                 campaign.recruitEndDate.isNull()
                         .or(campaign.recruitEndDate.after(now))
         );
 
-        // 삭제되지 않은 캠페인만
         builder.and(campaign.isDeleted.eq(false));
 
-        // 캠페인명 검색 (keyword)
         if (StringUtils.hasText(keyword)) {
             builder.and(campaign.title.containsIgnoreCase(keyword.trim()));
         }
 
-        // 카테고리 필터
         if (category != null && category != CategoryType.ALL) {
             builder.and(brand.industryType.stringValue().equalsIgnoreCase(category.name()));
         }
 
+        // 태그 필터링: 캠페인이 해당 태그를 하나라도 가지고 있으면 통과
+        if (tags != null && !tags.isEmpty()) {
+            List<Long> tagIds = tags.stream()
+                    .map(tag -> {
+                        try {
+                            return Long.parseLong(tag);
+                        } catch (NumberFormatException e) {
+                            return null;
+                        }
+                    })
+                    .filter(id -> id != null)
+                    .toList();
+
+            if (!tagIds.isEmpty()) {
+                builder.and(
+                        JPAExpressions
+                                .selectOne()
+                                .from(campaignTag)
+                                .where(
+                                        campaignTag.campaign.id.eq(campaign.id),
+                                        campaignTag.tag.id.in(tagIds)
+                                )
+                                .exists()
+                );
+            }
+        }
+
         return builder;
+    }
+
+    // *********** //
+    // 정렬 조건 빌더 //
+    // *********** //
+    private OrderSpecifier<?> buildOrderSpecifier(CampaignSortType sortBy) {
+        if (sortBy == null) {
+            sortBy = CampaignSortType.MATCH_SCORE;
+        }
+
+        return switch (sortBy) {
+            case POPULARITY -> campaign.id.desc(); // TODO: 좋아요 수 기반 정렬 (서브쿼리 필요)
+            case REWARD_AMOUNT -> campaign.rewardAmount.desc().nullsLast();
+            case D_DAY -> campaign.recruitEndDate.asc().nullsLast();
+            default -> matchCampaignHistory.matchingRatio.desc().nullsLast(); // MATCH_SCORE
+        };
     }
 }
