@@ -12,6 +12,14 @@ import com.example.RealMatch.business.domain.entity.CampaignApply;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 
 public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Long> {
+
+    @Query("""
+            SELECT ca.campaign.id, COUNT(ca)
+            FROM CampaignApply ca
+            WHERE ca.campaign.id IN :campaignIds
+            GROUP BY ca.campaign.id
+            """)
+    List<Object[]> countByCampaignIdIn(@Param("campaignIds") List<Long> campaignIds);
     boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
     Optional<CampaignApply> findByCampaignIdAndUserId(Long campaignId, Long userId);
 

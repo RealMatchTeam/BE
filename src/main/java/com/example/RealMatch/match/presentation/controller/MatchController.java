@@ -13,8 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.match.application.service.MatchService;
+import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
+import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.domain.entity.enums.CategoryType;
-import com.example.RealMatch.match.domain.entity.enums.SortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchBrandResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchCampaignResponseDto;
@@ -44,7 +45,7 @@ public class MatchController implements MatchSwagger {
     @GetMapping("/brands")
     public CustomResponse<MatchBrandResponseDto> getMatchingBrands(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
+            @RequestParam(defaultValue = "MATCH_SCORE") BrandSortType sortBy,
             @RequestParam(defaultValue = "ALL") CategoryType category,
             @RequestParam(required = false) List<String> tags) {
         String userId = String.valueOf(userDetails.getUserId());
@@ -56,11 +57,15 @@ public class MatchController implements MatchSwagger {
     @GetMapping("/campaigns")
     public CustomResponse<MatchCampaignResponseDto> getMatchingCampaigns(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam(defaultValue = "MATCH_SCORE") SortType sortBy,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "MATCH_SCORE") CampaignSortType sortBy,
             @RequestParam(defaultValue = "ALL") CategoryType category,
-            @RequestParam(required = false) List<String> tags) {
+            @RequestParam(required = false) List<String> tags,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         String userId = String.valueOf(userDetails.getUserId());
-        MatchCampaignResponseDto result = matchService.getMatchingCampaigns(userId, sortBy, category, tags);
+        MatchCampaignResponseDto result = matchService.getMatchingCampaigns(
+                userId, keyword, sortBy, category, tags, page, size);
         return CustomResponse.ok(result);
     }
 }

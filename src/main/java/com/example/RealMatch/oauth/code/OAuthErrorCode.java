@@ -41,6 +41,30 @@ public enum OAuthErrorCode implements BaseErrorCode {
             "필수 약관에 동의하지 않았습니다."
     ),
 
+    INVALID_NICKNAME(
+            HttpStatus.BAD_REQUEST,
+            "AUTH400_6",
+            "닉네임은 필수 입력값입니다."
+    ),
+
+    INVALID_NICKNAME_LENGTH(
+            HttpStatus.BAD_REQUEST,
+            "AUTH400_7",
+            "닉네임은 2~10자 사이여야 합니다."
+    ),
+
+    INVALID_NICKNAME_FORMAT(
+            HttpStatus.BAD_REQUEST,
+            "AUTH400_8",
+            "닉네임은 한글, 영문, 숫자만 사용 가능합니다."
+    ),
+
+    FORBIDDEN_NICKNAME(
+            HttpStatus.BAD_REQUEST,
+            "AUTH400_9",
+            "사용할 수 없는 닉네임입니다."
+    ),
+
     INVALID_TOKEN(
             HttpStatus.UNAUTHORIZED,
             "AUTH401_1",
@@ -75,6 +99,12 @@ public enum OAuthErrorCode implements BaseErrorCode {
             HttpStatus.NOT_FOUND,
             "AUTH404_4",
             "콘텐츠 카테고리를 찾을 수 없습니다."
+    ),
+
+    DUPLICATE_NICKNAME(
+            HttpStatus.CONFLICT,
+            "AUTH409_1",
+            "이미 사용 중인 닉네임입니다."
     );
 
     private final HttpStatus status;

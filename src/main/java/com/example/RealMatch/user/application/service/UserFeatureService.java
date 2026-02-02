@@ -49,6 +49,11 @@ public class UserFeatureService {
      */
     @Transactional
     public void updateMyFeatures(Long userId, MyFeatureUpdateRequestDto request) {
+
+        if (request == null) {
+            throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
+        }
+
         UserMatchingDetail detail = userMatchingDetailRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
@@ -106,69 +111,76 @@ public class UserFeatureService {
     }
 
     private MyFeatureResponseDto.BeautyType buildBeautyType(UserMatchingDetail detail) {
-        // 뷰티 데이터가 있는지 확인
-        if (detail.getSkinType() == null && detail.getSkinBrightness() == null
-                && detail.getMakeupStyle() == null) {
-            log.warn("뷰티 프로필 정보 없음: userId={}", detail.getUserId());
-            return null;  // 또는 예외를 던지거나, 빈 객체 반환
+
+        if (detail.getSkinType() == null
+                && detail.getSkinBrightness() == null
+                && detail.getMakeupStyle() == null
+                && detail.getInterestCategories() == null
+                && detail.getInterestFunctions() == null) {
+
+            throw new CustomException(UserErrorCode.BEAUTY_PROFILE_NOT_FOUND);
         }
 
-        log.info("뷰티 프로필 조회 - 피부타입: {}, 메이크업스타일: {}, 관심카테고리: {}",
-                detail.getSkinType(), detail.getMakeupStyle(), detail.getInterestCategories());
-
         return new MyFeatureResponseDto.BeautyType(
-                parseTagString(detail.getSkinType()),           // 피부타입
-                detail.getSkinBrightness(),                     // 피부 밝기
-                parseTagString(detail.getMakeupStyle()),        // 메이크업 스타일
-                parseTagString(detail.getInterestCategories()), // 관심 카테고리
-                parseTagString(detail.getInterestFunctions())   // 관심 기능
+                parseTagString(detail.getSkinType()),
+                detail.getSkinBrightness(),
+                parseTagString(detail.getMakeupStyle()),
+                parseTagString(detail.getInterestCategories()),
+                parseTagString(detail.getInterestFunctions())
         );
     }
 
     private MyFeatureResponseDto.FashionType buildFashionType(UserMatchingDetail detail) {
-        // 패션 데이터가 있는지 확인
-        if (detail.getHeight() == null && detail.getWeight() == null
-                && detail.getBodyShape() == null) {
-            log.warn("패션 프로필 정보 없음: userId={}", detail.getUserId());
-            return null;
+
+        if (detail.getHeight() == null
+                && detail.getWeight() == null
+                && detail.getBodyShape() == null
+                && detail.getTopSize() == null
+                && detail.getBottomSize() == null
+                && detail.getInterestFields() == null
+                && detail.getInterestStyles() == null
+                && detail.getInterestBrands() == null) {
+
+            throw new CustomException(UserErrorCode.FASHION_PROFILE_NOT_FOUND);
         }
 
-        log.info("패션 프로필 조회 - 키/몸무게: {}/{}, 체형: {}, 관심분야: {}",
-                detail.getHeight(), detail.getWeight(), detail.getBodyShape(), detail.getInterestFields());
-
         return new MyFeatureResponseDto.FashionType(
-                detail.getHeight() + "/" + detail.getWeight(),  // 키/몸무게
-                detail.getBodyShape(),                          // 체형
-                detail.getTopSize(),                            // 상의 사이즈
-                detail.getBottomSize(),                         // 하의 사이즈
-                parseTagString(detail.getInterestFields()),     // 관심분야
-                parseTagString(detail.getInterestStyles()),     // 관심스타일
-                parseTagString(detail.getInterestBrands())      // 관심브랜드
+                detail.getHeight() + "/" + detail.getWeight(),
+                detail.getBodyShape(),
+                detail.getTopSize(),
+                detail.getBottomSize(),
+                parseTagString(detail.getInterestFields()),
+                parseTagString(detail.getInterestStyles()),
+                parseTagString(detail.getInterestBrands())
         );
     }
 
     private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail) {
-        // 콘텐츠 데이터가 있는지 확인
-        if (detail.getViewerGender() == null && detail.getAvgVideoLength() == null
-                && detail.getAvgViews() == null) {
-            log.warn("콘텐츠 프로필 정보 없음: userId={}", detail.getUserId());
-            return null;
+
+        if (detail.getViewerGender() == null
+                && detail.getViewerAge() == null
+                && detail.getAvgVideoLength() == null
+                && detail.getAvgViews() == null
+                && detail.getContentFormats() == null
+                && detail.getContentTones() == null
+                && detail.getDesiredInvolvement() == null
+                && detail.getDesiredUsageScope() == null) {
+
+            throw new CustomException(UserErrorCode.CONTENT_PROFILE_NOT_FOUND);
         }
 
-        log.info("콘텐츠 프로필 조회 - 시청자성별: {}, 콘텐츠형식: {}, 콘텐츠톤: {}",
-                detail.getViewerGender(), detail.getContentFormats(), detail.getContentTones());
-
         return new MyFeatureResponseDto.ContentsType(
-                parseTagString(detail.getViewerGender()),         // 시청자 성별
-                parseTagString(detail.getViewerAge()),            // 시청자 연령대
-                detail.getAvgVideoLength(),                       // 평균 영상 길이
-                detail.getAvgViews(),                             // 평균 조회수
-                parseTagString(detail.getContentFormats()),       // 콘텐츠 형식
-                parseTagString(detail.getContentTones()),         // 콘텐츠 톤
-                parseTagString(detail.getDesiredInvolvement()),   // 원하는 관여도
-                parseTagString(detail.getDesiredUsageScope())     // 원하는 활용 범위
+                parseTagString(detail.getViewerGender()),
+                parseTagString(detail.getViewerAge()),
+                detail.getAvgVideoLength(),
+                detail.getAvgViews(),
+                parseTagString(detail.getContentFormats()),
+                parseTagString(detail.getContentTones()),
+                parseTagString(detail.getDesiredInvolvement()),
+                parseTagString(detail.getDesiredUsageScope())
         );
     }
+
 
     /**
      * bodyStats 파싱 (예: "165cm/50kg" -> height, weight)

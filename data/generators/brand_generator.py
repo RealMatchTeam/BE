@@ -158,7 +158,114 @@ class BrandGenerator(BaseGenerator):
             """
             self.execute_many(sql, likes, "브랜드 좋아요")
 
+    # 협찬 상품명 템플릿
+    SPONSOR_NAMES = [
+        "프리미엄 스킨케어 세트", "시그니처 메이크업 키트", "데일리 에센스", "럭셔리 크림",
+        "모이스처 토너", "비타민 세럼", "클렌징 폼", "선크림 SPF50+", "립밤 세트",
+        "헤어 에센스", "바디로션", "핸드크림 세트", "마스크팩 10매", "아이크림",
+        "여름 한정 세트", "겨울 보습 세트", "신제품 체험 키트", "베스트셀러 세트"
+    ]
+
+    SPONSOR_CONTENTS = [
+        "브랜드 대표 제품으로 구성된 스페셜 세트입니다. 다양한 제품을 체험해 보세요.",
+        "피부 타입에 맞는 맞춤형 제품입니다. 효과적인 스킨케어 루틴을 경험하세요.",
+        "자연 유래 성분으로 만든 저자극 제품입니다. 민감한 피부에도 안심하고 사용 가능합니다.",
+        "트렌디한 컬러와 텍스처로 구성된 메이크업 제품입니다.",
+        "데일리로 사용하기 좋은 기본 아이템입니다. 가볍고 촉촉한 사용감이 특징입니다.",
+        "신제품 출시 기념 특별 구성 세트입니다. 한정 수량으로 제공됩니다.",
+        "베스트셀러 제품만 모아 구성했습니다. 검증된 품질을 경험하세요.",
+        "여행용으로 편리한 미니 사이즈 세트입니다."
+    ]
+
+    def generate_brand_sponsors(self):
+        """브랜드 협찬 상품 생성"""
+        print(f"\n[브랜드 협찬] 브랜드 협찬 상품 생성 중...")
+
+        with self.connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM campaign")
+            campaign_ids = [row['id'] for row in cursor.fetchall()]
+
+            cursor.execute("SELECT id FROM brand")
+            brand_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not campaign_ids or not brand_ids:
+            print("[경고] 캠페인 또는 브랜드가 없습니다.")
+            return
+
+        sponsors = []
+        for campaign_id in campaign_ids:
+            # 각 캠페인당 1~3개의 협찬 상품 생성
+            num_sponsors = self.fake.random_int(1, 3)
+            brand_id = self.fake.random_element(brand_ids)
+
+            for _ in range(num_sponsors):
+                total_count = self.fake.random_int(5, 20)
+                current_count = self.fake.random_int(0, total_count)
+
+                sponsors.append({
+                    'campaign_id': campaign_id,
+                    'brand_id': brand_id,
+                    'name': random.choice(self.SPONSOR_NAMES),
+                    'content': random.choice(self.SPONSOR_CONTENTS),
+                    'total_count': total_count,
+                    'current_count': current_count,
+                    'is_deleted': False,
+                    'created_at': datetime.now() - timedelta(days=self.fake.random_int(0, 30)),
+                    'updated_at': datetime.now()
+                })
+
+        sql = """
+            INSERT INTO brand_available_sponsor (campaign_id, brand_id, name, content,
+                total_count, current_count, is_deleted, created_at, updated_at)
+            VALUES (%(campaign_id)s, %(brand_id)s, %(name)s, %(content)s,
+                %(total_count)s, %(current_count)s, %(is_deleted)s, %(created_at)s, %(updated_at)s)
+        """
+        self.execute_many(sql, sponsors, "브랜드 협찬 상품")
+
+    def generate_brand_sponsor_images(self):
+        """브랜드 협찬 상품 이미지 생성"""
+        print(f"\n[협찬 상품 이미지] 협찬 상품 이미지 생성 중...")
+
+        with self.connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM brand_available_sponsor")
+            sponsor_ids = [row['id'] for row in cursor.fetchall()]
+
+            cursor.execute("SELECT id FROM users WHERE role = 'BRAND' LIMIT 1")
+            brand_user = cursor.fetchone()
+            created_by = brand_user['id'] if brand_user else 1
+
+        if not sponsor_ids:
+            print("[경고] 협찬 상품이 없습니다.")
+            return
+
+        images = []
+        for sponsor_id in sponsor_ids:
+            # 각 협찬 상품당 1~4개의 이미지 생성
+            num_images = self.fake.random_int(1, 4)
+            for _ in range(num_images):
+                images.append({
+                    'sponsor_id': sponsor_id,
+                    'image_url': f"https://picsum.photos/600/600?random={self.fake.uuid4()}",
+                    'created_by': created_by,
+                    'is_deleted': False,
+                    'created_at': datetime.now(),
+                    'updated_at': datetime.now()
+                })
+
+        sql = """
+            INSERT INTO brand_sponsor_image (sponsor_id, image_url, created_by,
+                is_deleted, created_at, updated_at)
+            VALUES (%(sponsor_id)s, %(image_url)s, %(created_by)s,
+                %(is_deleted)s, %(created_at)s, %(updated_at)s)
+        """
+        self.execute_many(sql, images, "협찬 상품 이미지")
+
     def generate_all(self, brand_count=20):
         self.generate_brands(brand_count)
         self.generate_brand_images()
         self.generate_brand_likes()
+
+    def generate_sponsors(self):
+        """협찬 관련 데이터 생성 (캠페인 생성 후 호출 필요)"""
+        self.generate_brand_sponsors()
+        self.generate_brand_sponsor_images()
