@@ -164,20 +164,21 @@ public class MatchCampaignHistoryRepositoryCustomImpl implements MatchCampaignHi
 
         OrderSpecifier<?> matchingRatioDesc = matchCampaignHistory.matchingRatio.desc().nullsLast();
         OrderSpecifier<?> campaignIdAsc = campaign.id.asc();
+        OrderSpecifier<?> popularityDesc = likeCountDesc();
 
         return switch (sortBy) {
-            case MATCH_SCORE -> List.of(matchingRatioDesc, likeCountDesc(), campaignIdAsc);
-            case POPULARITY -> List.of(likeCountDesc(), matchingRatioDesc, campaignIdAsc);
+            case MATCH_SCORE -> List.of(matchingRatioDesc, popularityDesc, campaignIdAsc);
+            case POPULARITY -> List.of(popularityDesc, matchingRatioDesc, campaignIdAsc);
             case REWARD_AMOUNT -> List.of(
                     campaign.rewardAmount.desc().nullsLast(),
                     matchingRatioDesc,
-                    likeCountDesc(),
+                    popularityDesc,
                     campaignIdAsc
             );
             case D_DAY -> List.of(
                     campaign.recruitEndDate.asc().nullsLast(),
                     matchingRatioDesc,
-                    likeCountDesc(),
+                    popularityDesc,
                     campaignIdAsc
             );
         };
