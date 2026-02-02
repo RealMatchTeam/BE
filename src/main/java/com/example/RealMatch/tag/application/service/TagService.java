@@ -9,4 +9,6 @@ public interface TagService {
     TagResponse getFashionTags();
 
     TagResponse getBeautyTags();
+
+    TagResponse getContentTags();
 }

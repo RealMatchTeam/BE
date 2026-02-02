@@ -46,4 +46,9 @@ public class TagServiceImpl implements TagService {
     public TagResponse getBeautyTags() {
         return getTagsByType(TagType.BEAUTY.getDescription());
     }
+
+    @Override
+    public TagResponse getContentTags() {
+        return getTagsByType(TagType.CONTENT.getDescription());
+    }
 }

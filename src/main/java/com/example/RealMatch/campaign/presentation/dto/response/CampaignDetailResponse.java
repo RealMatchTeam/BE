@@ -79,6 +79,10 @@ public class CampaignDetailResponse {
         }
 
         return new ContentTagResponse(
+                map.getOrDefault(ContentTagType.VIEWER_GENDER, List.of()),
+                map.getOrDefault(ContentTagType.VIEWER_AGE, List.of()),
+                map.getOrDefault(ContentTagType.AVG_VIDEO_LENGTH, List.of()),
+                map.getOrDefault(ContentTagType.AVG_VIDEO_VIEWS, List.of()),
                 map.getOrDefault(ContentTagType.FORMAT, List.of()),
                 map.getOrDefault(ContentTagType.CATEGORY, List.of()),
                 map.getOrDefault(ContentTagType.TONE, List.of()),

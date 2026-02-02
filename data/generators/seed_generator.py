@@ -25,37 +25,56 @@ class SeedGenerator(BaseGenerator):
             return
 
         tags = [
+            # VIEWER_GENDER (시청자 성별)
+            (1, 'VIEWER_GENDER', 'FEMALE', '여성'),
+            (2, 'VIEWER_GENDER', 'MALE', '남성'),
+            # VIEWER_AGE (시청자 나이대)
+            (3, 'VIEWER_AGE', 'TEENS_TWENTIES', '10~20대'),
+            (4, 'VIEWER_AGE', 'TWENTIES_THIRTIES', '20~30대'),
+            (5, 'VIEWER_AGE', 'THIRTIES_FORTIES', '30~40대'),
+            (6, 'VIEWER_AGE', 'FORTIES_FIFTIES', '40~50대'),
+            (7, 'VIEWER_AGE', 'FIFTIES_PLUS', '50대~'),
+            # AVG_VIDEO_LENGTH (평균 영상 길이)
+            (8, 'AVG_VIDEO_LENGTH', 'UNDER_15S', '~15초'),
+            (9, 'AVG_VIDEO_LENGTH', '15S_30S', '15~30초'),
+            (10, 'AVG_VIDEO_LENGTH', '30S_45S', '30~45초'),
+            (11, 'AVG_VIDEO_LENGTH', '45S_60S', '45~60초'),
+            # AVG_VIDEO_VIEWS (영상 조회수)
+            (12, 'AVG_VIDEO_VIEWS', '1K_100K', '1~10만회'),
+            (13, 'AVG_VIDEO_VIEWS', '100K_500K', '10~50만회'),
+            (14, 'AVG_VIDEO_VIEWS', '500K_1M', '50~100만회'),
+            (15, 'AVG_VIDEO_VIEWS', 'OVER_1M', '100만회~'),
             # FORMAT
-            (1, 'FORMAT', 'INSTAGRAM_STORY', '인스타 스토리'),
-            (2, 'FORMAT', 'INSTAGRAM_POST', '인스타 포스트'),
-            (3, 'FORMAT', 'INSTAGRAM_REELS', '인스타 릴스'),
-            (4, 'FORMAT', 'ETC', '기타'),
+            (16, 'FORMAT', 'INSTAGRAM_STORY', '인스타 스토리'),
+            (17, 'FORMAT', 'INSTAGRAM_POST', '인스타 포스트'),
+            (18, 'FORMAT', 'INSTAGRAM_REELS', '인스타 릴스'),
+            (19, 'FORMAT', 'ETC', '기타'),
             # CATEGORY
-            (5, 'CATEGORY', 'VLOG', '브이로그'),
-            (6, 'CATEGORY', 'REVIEW', '리뷰'),
-            (7, 'CATEGORY', 'GET_READY_WITH_ME', '겟레디윗미'),
-            (8, 'CATEGORY', 'BEFORE_AFTER', '비포&애프터'),
-            (9, 'CATEGORY', 'STORY_TALK', '스토리/썰'),
-            (10, 'CATEGORY', 'CHALLENGE', '챌린지'),
-            (11, 'CATEGORY', 'ETC', '기타'),
+            (20, 'CATEGORY', 'VLOG', '브이로그'),
+            (21, 'CATEGORY', 'REVIEW', '리뷰'),
+            (22, 'CATEGORY', 'GET_READY_WITH_ME', '겟레디윗미'),
+            (23, 'CATEGORY', 'BEFORE_AFTER', '비포&애프터'),
+            (24, 'CATEGORY', 'STORY_TALK', '스토리/썰'),
+            (25, 'CATEGORY', 'CHALLENGE', '챌린지'),
+            (26, 'CATEGORY', 'ETC', '기타'),
             # TONE
-            (12, 'TONE', 'PROFESSIONAL', '전문적인'),
-            (13, 'TONE', 'EMOTIONAL', '감성적인'),
-            (14, 'TONE', 'FUN', '유쾌/재밌는'),
-            (15, 'TONE', 'TRENDY', '트렌디한'),
-            (16, 'TONE', 'CASUAL', '일상적인'),
-            (17, 'TONE', 'TALKATIVE', '수다적인'),
-            (18, 'TONE', 'ETC', '기타'),
+            (27, 'TONE', 'PROFESSIONAL', '전문적인'),
+            (28, 'TONE', 'EMOTIONAL', '감성적인'),
+            (29, 'TONE', 'FUN', '유쾌/재밌는'),
+            (30, 'TONE', 'TRENDY', '트렌디한'),
+            (31, 'TONE', 'CASUAL', '일상적인'),
+            (32, 'TONE', 'TALKATIVE', '수다적인'),
+            (33, 'TONE', 'ETC', '기타'),
             # INVOLVEMENT
-            (19, 'INVOLVEMENT', 'NONE', '관여안함'),
-            (20, 'INVOLVEMENT', 'GUIDE_ONLY', '가이드만 제공'),
-            (21, 'INVOLVEMENT', 'PARTIAL_SCRIPT', '대본 일부 제공'),
-            (22, 'INVOLVEMENT', 'FULL_CONTROL', '모든 연출 관여'),
-            (23, 'INVOLVEMENT', 'ETC', '기타'),
+            (34, 'INVOLVEMENT', 'NONE', '관여안함'),
+            (35, 'INVOLVEMENT', 'GUIDE_ONLY', '가이드만 제공'),
+            (36, 'INVOLVEMENT', 'PARTIAL_SCRIPT', '대본 일부 제공'),
+            (37, 'INVOLVEMENT', 'FULL_CONTROL', '모든 연출 관여'),
+            (38, 'INVOLVEMENT', 'ETC', '기타'),
             # USAGE_RANGE
-            (24, 'USAGE_RANGE', 'CREATOR_PRIMARY', '크리에이터 1차활용'),
-            (25, 'USAGE_RANGE', 'BRAND_SECONDARY', '브랜드 2차활용'),
-            (26, 'USAGE_RANGE', 'ETC', '기타'),
+            (39, 'USAGE_RANGE', 'CREATOR_PRIMARY', '크리에이터 1차활용'),
+            (40, 'USAGE_RANGE', 'BRAND_SECONDARY', '브랜드 2차활용'),
+            (41, 'USAGE_RANGE', 'ETC', '기타'),
         ]
 
         data = []
