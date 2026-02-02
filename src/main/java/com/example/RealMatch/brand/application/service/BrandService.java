@@ -409,7 +409,7 @@ public class BrandService {
         Long currentUserId = getCurrentUserId();
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
-        brand.clearContent(currentUserId);
+        brand.softDelete(currentUserId);
     }
 
     public List<BrandListResponseDto> getAllBrands() {
