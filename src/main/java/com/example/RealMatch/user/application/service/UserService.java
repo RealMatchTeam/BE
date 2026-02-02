@@ -121,6 +121,16 @@ public class UserService {
             throw new CustomException(UserErrorCode.DUPLICATE_NICKNAME);
         }
 
+        // 닉네임 형식 체크 (한글, 영문, 숫자만)
+        if (!request.nickname().matches("^[가-힣a-zA-Z0-9]+$")) {
+            throw new CustomException(UserErrorCode.INVALID_NICKNAME_FORMAT);
+        }
+
+        // 닉네임 길이 체크 (2~10자)
+        if (request.nickname().length() < 2 || request.nickname().length() > 10) {
+            throw new CustomException(UserErrorCode.INVALID_NICKNAME_LENGTH);
+        }
+
         // 정보 수정
         user.updateInfo(
                 request.nickname(),

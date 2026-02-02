@@ -107,6 +107,18 @@ public enum UserErrorCode implements BaseErrorCode {
             HttpStatus.BAD_REQUEST,
             "USER400_5",
             "탈퇴 처리에 실패했습니다. 다시 시도해주세요."
+    ),
+
+    INVALID_NICKNAME_FORMAT(
+            HttpStatus.BAD_REQUEST,
+            "USER400_6",
+            "닉네임은 한글, 영문, 숫자만 사용 가능합니다."
+    ),
+
+    INVALID_NICKNAME_LENGTH(
+            HttpStatus.BAD_REQUEST,
+            "USER400_7",
+            "닉네임은 2~10자 사이여야 합니다."
     );
 
     private final HttpStatus status;
