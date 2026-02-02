@@ -32,10 +32,9 @@ public class CollaborationQueryService {
             LocalDate endDate
     ) {
         List<CollaborationResponse> result = new ArrayList<>();
-        getReceivedProposal(userId, role, type, status, result);
+        getReceivedProposal(userId, type, status, result);
         getAppliedCampaign(userId, type, status, startDate, endDate, result);
-
-        getSentProposal(userId, role, type, status, result);
+        getSentProposal(userId, type, status, result);
 
         return result;
 
@@ -53,11 +52,11 @@ public class CollaborationQueryService {
         }
     }
 
-    private void getReceivedProposal(Long userId, Role role, CollaborationType type, ProposalStatus status, List<CollaborationResponse> result) {
+    private void getReceivedProposal(Long userId, CollaborationType type, ProposalStatus status, List<CollaborationResponse> result) {
         // 2️⃣ 내가 받은 제안
         if (type == null || type == CollaborationType.RECEIVED) {
             List<Long> receivedIds =
-                    campaignProposalRepository.findReceivedProposalIds(userId, role, status);
+                    campaignProposalRepository.findReceivedProposalIds(userId, status);
 
             if (!receivedIds.isEmpty()) {
                 result.addAll(
@@ -69,11 +68,11 @@ public class CollaborationQueryService {
         }
     }
 
-    private void getSentProposal(Long userId, Role role, CollaborationType type, ProposalStatus status, List<CollaborationResponse> result) {
+    private void getSentProposal(Long userId, CollaborationType type, ProposalStatus status, List<CollaborationResponse> result) {
         // 3️⃣ 내가 보낸 제안
         if (type == null || type == CollaborationType.SENT) {
             List<Long> sentIds =
-                    campaignProposalRepository.findSentProposalIds(userId, role, status);
+                    campaignProposalRepository.findSentProposalIds(userId, status);
 
             if (!sentIds.isEmpty()) {
                 result.addAll(

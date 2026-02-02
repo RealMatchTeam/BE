@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.service.AttachmentUrlService;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class BrandCampaignService {
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
+    private final AttachmentUrlService attachmentUrlService;
 
     // 브랜드의 캠페인 리스트 조회
     @Transactional(readOnly = true)
@@ -90,6 +92,7 @@ public class BrandCampaignService {
         List<BrandRecruitingCampaignResponse.CampaignCard> cards = campaigns.stream()
                 .map(campaign -> {
                     int dDay = (int) ChronoUnit.DAYS.between(today, campaign.getRecruitEndDate().toLocalDate());
+                    String campaignImageUrl = attachmentUrlService.getAccessUrl(campaign.getImageUrl());
                     return new BrandRecruitingCampaignResponse.CampaignCard(
                             campaign.getId(),
                             brand.getBrandName(),
@@ -97,7 +100,7 @@ public class BrandCampaignService {
                             campaign.getQuota(),
                             Math.max(dDay, 0), // D-DAY 보정
                             campaign.getRewardAmount(),
-                            campaign.getImageUrl()
+                            campaignImageUrl
                     );
                 })
                 .toList();
