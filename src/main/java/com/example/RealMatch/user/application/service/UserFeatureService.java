@@ -167,6 +167,7 @@ public class UserFeatureService {
         }
 
         return new MyFeatureResponseDto.ContentsType(
+                detail.getSnsUrl(),
                 parseTagString(detail.getViewerGender()),
                 parseTagString(detail.getViewerAge()),
                 detail.getAvgVideoLength(),
