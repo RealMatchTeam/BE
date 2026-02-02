@@ -26,8 +26,6 @@ import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDt
 import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
@@ -374,32 +372,5 @@ public class BrandService {
                         .logoUrl(brand.getLogoUrl())
                         .build())
                 .collect(Collectors.toList());
-    }
-
-    // 브랜드의 캠페인 리스트 조회
-    @Transactional(readOnly = true)
-    public BrandCampaignSliceResponse getBrandCampaigns(Long brandId, Long cursor, int size) {
-        brandRepository.findById(brandId)
-                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
-
-        Pageable pageable = PageRequest.of(0, size + 1);
-        List<Campaign> campaigns = campaignRepository.findBrandCampaignsWithCursor(brandId, cursor, pageable);
-
-        boolean hasNext = campaigns.size() > size;
-        if (hasNext) {
-            campaigns = campaigns.subList(0, size);
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        List<BrandCampaignResponseDto> items = campaigns.stream()
-                .map(c -> new BrandCampaignResponseDto(
-                        c.getId(),
-                        c.getTitle(),
-                        c.getRecruitStartDate().toLocalDate(),
-                        c.getRecruitEndDate().toLocalDate(),
-                        c.getCampaignRecrutingStatus(now)
-                ))
-                .toList();
-        return new BrandCampaignSliceResponse(items, hasNext);
     }
 }

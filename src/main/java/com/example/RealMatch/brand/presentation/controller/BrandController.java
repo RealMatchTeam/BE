@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.brand.application.service.BrandService;
-import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
@@ -93,19 +92,5 @@ public class BrandController implements BrandSwagger {
     public CustomResponse<List<BrandListResponseDto>> getAllBrands() {
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, brandService.getAllBrands());
     }
-
-
-    @Override
-    @GetMapping("/{brandId}/campaigns")
-    public CustomResponse<BrandCampaignSliceResponse> getBrandCampaigns(
-            @Parameter(description = "브랜드 ID", example = "1")
-            @PathVariable Long brandId,
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") Integer size
-    ) {
-        BrandCampaignSliceResponse response = brandService.getBrandCampaigns(brandId, cursor, size);
-        return CustomResponse.ok(response);
-    }
-
 
 }

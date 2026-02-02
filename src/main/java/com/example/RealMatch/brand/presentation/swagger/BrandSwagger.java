@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
@@ -129,27 +128,4 @@ public interface BrandSwagger {
     @Operation(summary = "브랜드 전체 목록 조회", description = "등록된 모든 브랜드의 리스트를 반환합니다.")
     CustomResponse<List<BrandListResponseDto>> getAllBrands();
 
-    @Operation(
-            summary = "브랜드의 캠페인 조회 API by 박지영",
-            description = """
-                    브랜드의 캠페인을 조회합니다.   
-                    
-                    마지막으로 조회된 캠페인의 id를 cursor로 사용하는 페이징 방식입니다.   
-                    - 최초 조회 시 cursor 없이 요청합니다.     
-                    - 이후 조회 시 응답으로 받은 nextCursor 값을 cursor로 전달합니다.    
-                    - 정렬 조건 : UPCOMING /RECRUITING → 모집 시작 날짜 기준, CLOSED → 모집 끝나는 날짜 기준   
-                    
-                    캠페인 모집 상태는 다음 중 하나로 응답됩니다.   
-                    - UPCOMING   : 모집 예정   
-                    - RECRUITING : 모집 중   
-                    - CLOSED     : 완료 (모집 마감) 
-                    """
-    )
-    @GetMapping("/{brandId}/campaigns")
-    CustomResponse<BrandCampaignSliceResponse> getBrandCampaigns(
-            @Parameter(description = "브랜드 ID", example = "1")
-            @PathVariable Long brandId,
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") Integer size
-    );
 }
