@@ -46,17 +46,17 @@ public interface CampaignProposalSwagger {
                                         { "id": 1 }
                                       ],
                                       "categories": [
-                                        { "id": 2, "customValue": "성분 분석 리뷰" }
+                                        { "id": 11, "customValue": "성분 분석 리뷰" }
                                       ],
                                       "tones": [
-                                        { "id": 3 },
-                                        { "id": 4 }
+                                        { "id": 12 },
+                                        { "id": 13 }
                                       ],
                                       "involvements": [
-                                        { "id": 5 }
+                                        { "id": 20 }
                                       ],
                                       "usageRanges": [
-                                        { "id": 6 }
+                                        { "id": 25 }
                                       ],
                                       "rewardAmount": 200000,
                                       "productId": 5,
@@ -100,17 +100,17 @@ public interface CampaignProposalSwagger {
                                         { "id": 1 }
                                       ],
                                       "categories": [
-                                        { "id": 2, "customValue": "성분 분석 리뷰" },
-                                        { "id": 7 }
-                                      ],
-                                      "tones": [
-                                        { "id": 3 }
-                                      ],
-                                      "involvements": [
+                                        { "id": 11, "customValue": "성분 분석 리뷰" },
                                         { "id": 5 }
                                       ],
+                                      "tones": [
+                                        { "id": 12 }
+                                      ],
+                                      "involvements": [
+                                        { "id": 21 }
+                                      ],
                                       "usageRanges": [
-                                        { "id": 6 }
+                                        { "id": 26 }
                                       ],
                                       "rewardAmount": 100000,
                                       "productId": 5,
