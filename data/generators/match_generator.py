@@ -12,7 +12,7 @@ class MatchGenerator(BaseGenerator):
     BEAUTY_FUNCTIONS = ['보습', '미백', '주름개선', '진정', '각질제거', '모공케어', '트러블케어']
 
     # 패션 관련 옵션
-    HEIGHTS = [str(i) for i in range(23, 66)]
+    HEIGHTS = [str(i) for i in range(140, 201)]
     BODY_SHAPES = ["웨이브", "스트레이트", "내추럴", "커브"]
     TOP_SIZES = ['33', '44', '55', '66', '77']
     BOTTOM_SIZES = [str(i) for i in range(23, 66)]
