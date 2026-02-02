@@ -74,7 +74,7 @@ public class BrandController implements BrandSwagger {
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, responseDto);
     }
 
-    @PutMapping("/{brandId}")
+    @PatchMapping("/{brandId}")
     public ResponseEntity<Void> updateBrand(@PathVariable Long brandId, @RequestBody BrandUpdateRequestDto requestDto) {
         brandService.updateBrand(brandId, requestDto);
         return ResponseEntity.noContent().build();

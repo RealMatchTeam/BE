@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
@@ -277,6 +278,12 @@ public class BrandService {
                 .build();
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void deleteBrandAssociations(Brand brand) {
+        brand.getBrandTags().clear();
+        brand.getBrandCategoryViews().clear();
+    }
+
     @Transactional
     public void updateBrand(Long brandId, BrandUpdateRequestDto requestDto) {
         Long currentUserId = 1L; // 또는 SecurityContext에서 가져오기
@@ -294,9 +301,8 @@ public class BrandService {
                 currentUserId
         );
 
-        // 2. 기존 태그 및 카테고리 연결 모두 삭제
-        brand.getBrandTags().clear();
-        brand.getBrandCategoryViews().clear();
+        // 2. 기존 태그 및 카테고리 연결 모두 삭제 (새로운 트랜잭션에서)
+        deleteBrandAssociations(brand);
 
         // 3. 카테고리 새로 저장
         if (requestDto.getBrandCategory() != null) {
