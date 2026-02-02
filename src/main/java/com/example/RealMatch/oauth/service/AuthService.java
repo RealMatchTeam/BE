@@ -52,6 +52,9 @@ public class AuthService {
             throw new CustomException(OAuthErrorCode.ALREADY_SIGNED_UP);
         }
 
+        // ⭐ 닉네임 중복 체크 추가
+        validateNickname(request.nickname());
+
         // 유저 정보 업데이트
         user.completeSignup(
                 request.nickname(),
@@ -108,6 +111,28 @@ public class AuthService {
             return header.substring(7);
         }
         return header;
+    }
+
+    private void validateNickname(String nickname) {
+        // 1. null/빈 문자열 체크
+        if (nickname == null || nickname.trim().isEmpty()) {
+            throw new CustomException(OAuthErrorCode.INVALID_NICKNAME);
+        }
+
+        // 2. 길이 체크 (2~10자)
+        if (nickname.length() < 2 || nickname.length() > 10) {
+            throw new CustomException(OAuthErrorCode.INVALID_NICKNAME_LENGTH);
+        }
+
+        // 3. 형식 체크 (한글, 영문, 숫자만)
+        if (!nickname.matches("^[가-힣a-zA-Z0-9]+$")) {
+            throw new CustomException(OAuthErrorCode.INVALID_NICKNAME_FORMAT);
+        }
+
+        // 4. 중복 체크
+        if (userRepository.existsByNickname(nickname)) {
+            throw new CustomException(OAuthErrorCode.DUPLICATE_NICKNAME);
+        }
     }
 
     private void saveTermAgreements(User user, List<SignupCompleteRequest.TermAgreementDto> terms) {

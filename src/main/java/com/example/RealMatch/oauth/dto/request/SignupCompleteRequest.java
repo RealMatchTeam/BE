@@ -38,10 +38,10 @@ public record SignupCompleteRequest(
             """)
         List<TermAgreementDto> terms,
 
-        @Schema(description = "가입 목적 ID 리스트", example = "[1, 2]")
+        @Schema(description = "가입 목적 ID 리스트", example = "[1, 2, 3, 6]")
         List<Long> signupPurposeIds,
 
-        @Schema(description = "관심 콘텐츠 카테고리 ID 리스트", example = "[1, 3, 5]")
+        @Schema(description = "관심 콘텐츠 카테고리 ID 리스트", example = "[1, 2]")
         List<Long> contentCategoryIds
 ) {
     public record TermAgreementDto(
