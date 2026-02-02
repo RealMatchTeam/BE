@@ -62,7 +62,7 @@ public class UserFeatureService {
             MyFeatureUpdateRequestDto.BeautyTypeUpdate beautyType = request.beautyType();
             detail.updateBeautyFeatures(
                     joinTagList(beautyType.skinType()),
-                    beautyType.skinBrightness(),
+                    joinTagList(beautyType.skinBrightness()),
                     joinTagList(beautyType.makeupStyle()),
                     joinTagList(beautyType.interestCategories()),
                     joinTagList(beautyType.interestFunctions())
@@ -74,12 +74,9 @@ public class UserFeatureService {
         if (request.fashionType() != null) {
             MyFeatureUpdateRequestDto.FashionTypeUpdate fashionType = request.fashionType();
 
-            // bodyStats 파싱 (예: "165cm/50kg" -> height, weight)
-            BodyStats bodyStats = parseBodyStats(fashionType.bodyStats());
 
             detail.updateFashionFeatures(
-                    bodyStats.height(),
-                    bodyStats.weight(),
+                    fashionType.height(),
                     fashionType.bodyShape(),
                     fashionType.topSize(),
                     fashionType.bottomSize(),
@@ -94,6 +91,7 @@ public class UserFeatureService {
         if (request.contentsType() != null) {
             MyFeatureUpdateRequestDto.ContentsTypeUpdate contentsType = request.contentsType();
             detail.updateContentsFeatures(
+                    contentsType.snsUrl(),
                     joinTagList(contentsType.viewerGender()),
                     joinTagList(contentsType.viewerAge()),
                     contentsType.avgVideoLength(),
@@ -133,7 +131,6 @@ public class UserFeatureService {
     private MyFeatureResponseDto.FashionType buildFashionType(UserMatchingDetail detail) {
 
         if (detail.getHeight() == null
-                && detail.getWeight() == null
                 && detail.getBodyShape() == null
                 && detail.getTopSize() == null
                 && detail.getBottomSize() == null
@@ -145,7 +142,7 @@ public class UserFeatureService {
         }
 
         return new MyFeatureResponseDto.FashionType(
-                detail.getHeight() + "/" + detail.getWeight(),
+                detail.getHeight(),
                 detail.getBodyShape(),
                 detail.getTopSize(),
                 detail.getBottomSize(),
@@ -183,22 +180,6 @@ public class UserFeatureService {
 
 
     /**
-     * bodyStats 파싱 (예: "165cm/50kg" -> height, weight)
-     */
-    private BodyStats parseBodyStats(String bodyStats) {
-        if (bodyStats == null) {
-            return new BodyStats(null, null);
-        }
-
-        String[] stats = bodyStats.split("/");
-        if (stats.length == 2) {
-            return new BodyStats(stats[0].trim(), stats[1].trim());
-        }
-
-        return new BodyStats(null, null);
-    }
-
-    /**
      * 쉼표로 구분된 문자열을 List로 변환
      * 예: "스킨케어,메이크업,향수" -> ["스킨케어", "메이크업", "향수"]
      */
@@ -227,9 +208,4 @@ public class UserFeatureService {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.joining(","));
     }
-
-    /**
-     * Internal record for body stats parsing result
-     */
-    private record BodyStats(String height, String weight) {}
 }
