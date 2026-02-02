@@ -417,11 +417,7 @@ public class BrandService {
 
     public Page<BrandListResponseDto> getAllBrands(Pageable pageable) {
         return brandRepository.findAll(pageable)
-                .map(brand -> BrandListResponseDto.builder()
-                        .brandId(brand.getId())
-                        .brandName(brand.getBrandName())
-                        .logoUrl(brand.getLogoUrl())
-                        .build());
+                .map(BrandListResponseDto::from);
     }
 
     public Long getBrandIdByUserId(Long userId) {
