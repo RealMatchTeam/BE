@@ -16,7 +16,7 @@ public record MyFeatureResponseDto(
     ) {}
 
     public record FashionType(
-            String bodyStats,
+            String height,
             String bodyShape,
             String topSize,
             String bottomSize,
@@ -26,6 +26,7 @@ public record MyFeatureResponseDto(
     ) {}
 
     public record ContentsType(
+            String snsUrl,
             List<String> viewerGender,
             List<String> viewerAge,
             String avgVideoLength,

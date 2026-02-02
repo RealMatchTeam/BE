@@ -9,14 +9,14 @@ public record MyFeatureUpdateRequestDto(
 ) {
     public record BeautyTypeUpdate(
             List<String> skinType,
-            String skinBrightness,
+            List<String> skinBrightness,
             List<String> makeupStyle,
             List<String> interestCategories,
             List<String> interestFunctions
     ) {}
 
     public record FashionTypeUpdate(
-            String bodyStats,
+            String height,
             String bodyShape,
             String topSize,
             String bottomSize,
@@ -26,6 +26,7 @@ public record MyFeatureUpdateRequestDto(
     ) {}
 
     public record ContentsTypeUpdate(
+            String snsUrl,
             List<String> viewerGender,
             List<String> viewerAge,
             String avgVideoLength,

@@ -46,9 +46,6 @@ public class UserMatchingDetail extends BaseEntity {
     @Column(name = "height")
     private String height;
 
-    @Column(name = "weight")
-    private String weight;
-
     @Column(name = "body_shape")
     private String bodyShape;
 
@@ -105,7 +102,6 @@ public class UserMatchingDetail extends BaseEntity {
     public UserMatchingDetail(
             Long userId,
             String height,
-            String weight,
             String bodyShape,
             String topSize,
             String bottomSize,
@@ -131,7 +127,6 @@ public class UserMatchingDetail extends BaseEntity {
     ) {
         this.userId = userId;
         this.height = height;
-        this.weight = weight;
         this.bodyShape = bodyShape;
         this.topSize = topSize;
         this.bottomSize = bottomSize;
@@ -190,7 +185,6 @@ public class UserMatchingDetail extends BaseEntity {
      */
     public void updateFashionFeatures(
             String height,
-            String weight,
             String bodyShape,
             String topSize,
             String bottomSize,
@@ -200,9 +194,6 @@ public class UserMatchingDetail extends BaseEntity {
     ) {
         if (height != null) {
             this.height = height;
-        }
-        if (weight != null) {
-            this.weight = weight;
         }
         if (bodyShape != null) {
             this.bodyShape = bodyShape;
@@ -228,6 +219,7 @@ public class UserMatchingDetail extends BaseEntity {
      * 콘텐츠 특성 업데이트
      */
     public void updateContentsFeatures(
+            String snsUrl,
             String viewerGender,
             String viewerAge,
             String avgVideoLength,
@@ -237,6 +229,9 @@ public class UserMatchingDetail extends BaseEntity {
             String desiredInvolvement,
             String desiredUsageScope
     ) {
+        if (snsUrl != null) {
+            this.snsUrl = snsUrl;
+        }
         if (viewerGender != null) {
             this.viewerGender = viewerGender;
         }
