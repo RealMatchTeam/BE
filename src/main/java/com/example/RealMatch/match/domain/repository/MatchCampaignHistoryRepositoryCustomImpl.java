@@ -151,22 +151,36 @@ public class MatchCampaignHistoryRepositoryCustomImpl implements MatchCampaignHi
 
     /**
      * 정렬 타입별 OrderSpecifier 목록.
-     * - MATCH_SCORE: 매칭률 내림차순, 동점 시 좋아요 수 내림차순
-     * - POPULARITY: 좋아요 수 내림차순
+     * 동률 시: 매칭률 → 인기 → id 순으로 2차·3차 정렬 적용.
+     * - MATCH_SCORE: 매칭률 → 인기 → id
+     * - POPULARITY: 인기 → 매칭률 → id
+     * - REWARD_AMOUNT: 금액 → 매칭률 → 인기 → id
+     * - D_DAY: 마감 → 매칭률 → 인기 → id
      */
     private List<OrderSpecifier<?>> buildOrderSpecifiers(CampaignSortType sortBy) {
         if (sortBy == null) {
             sortBy = CampaignSortType.MATCH_SCORE;
         }
 
+        OrderSpecifier<?> matchingRatioDesc = matchCampaignHistory.matchingRatio.desc().nullsLast();
+        OrderSpecifier<?> campaignIdAsc = campaign.id.asc();
+        OrderSpecifier<?> popularityDesc = likeCountDesc();
+
         return switch (sortBy) {
-            case POPULARITY -> List.of(likeCountDesc());
-            case REWARD_AMOUNT -> List.of(campaign.rewardAmount.desc().nullsLast());
-            case D_DAY -> List.of(campaign.recruitEndDate.asc().nullsLast());
-            default -> List.of(
-                    matchCampaignHistory.matchingRatio.desc().nullsLast(),
-                    likeCountDesc()
-            ); // MATCH_SCORE: 매칭률 → 동점 시 인기순(좋아요 수)
+            case MATCH_SCORE -> List.of(matchingRatioDesc, popularityDesc, campaignIdAsc);
+            case POPULARITY -> List.of(popularityDesc, matchingRatioDesc, campaignIdAsc);
+            case REWARD_AMOUNT -> List.of(
+                    campaign.rewardAmount.desc().nullsLast(),
+                    matchingRatioDesc,
+                    popularityDesc,
+                    campaignIdAsc
+            );
+            case D_DAY -> List.of(
+                    campaign.recruitEndDate.asc().nullsLast(),
+                    matchingRatioDesc,
+                    popularityDesc,
+                    campaignIdAsc
+            );
         };
     }
 }
