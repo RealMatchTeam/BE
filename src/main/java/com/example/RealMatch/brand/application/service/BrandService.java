@@ -286,7 +286,7 @@ public class BrandService {
 
     @Transactional
     public void updateBrand(Long brandId, BrandUpdateRequestDto requestDto) {
-        Long currentUserId = 1L; // 또는 SecurityContext에서 가져오기
+        Long currentUserId = 1L;
 
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
@@ -301,63 +301,65 @@ public class BrandService {
                 currentUserId
         );
 
-        // 2. 기존 태그 및 카테고리 연결 모두 삭제 (새로운 트랜잭션에서)
-        deleteBrandAssociations(brand);
+        // 2. 기존 연관 관계 제거 및 DB 즉시 반영 (중복 에러 방지 핵심)
+        brand.getBrandTags().clear();
+        brand.getBrandCategoryViews().clear();
+        brandRepository.saveAndFlush(brand); // 여기서 기존 데이터를 확실히 지우고 넘어갑니다.
 
-        // 3. 카테고리 새로 저장
-        if (requestDto.getBrandCategory() != null) {
-            for (String categoryName : requestDto.getBrandCategory()) {
-                BrandCategory category = brandCategoryRepository.findByName(categoryName)
-                        .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryName));
-                brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build());
+        // 3. 카테고리 저장
+        List<String> requestedCategories = requestDto.getBrandCategory();
+        if (requestedCategories != null && !requestedCategories.isEmpty()) {
+            for (String categoryName : requestedCategories) {
+                brandCategoryRepository.findByName(categoryName).ifPresent(category ->
+                        brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build())
+                );
             }
         }
 
-        // 4. 조건부 태그 새로 저장
-        // 스킨케어 태그
-        if (requestDto.getBrandSkinCareTag() != null) {
-            BrandUpdateRequestDto.BrandSkinCareTagDto skinCareTags = requestDto.getBrandSkinCareTag();
-            if (skinCareTags.getSkinType() != null) {
-                addTagsToBrand(brand, skinCareTags.getSkinType(), TagType.BEAUTY, "스킨케어");
+        // 4. 카테고리별 태그 저장 (스킨케어의 건성과 메이크업의 건성을 따로 저장)
+        if (requestedCategories != null) {
+            // [스킨케어 태그]
+            if (requestedCategories.contains("스킨케어") && requestDto.getBrandSkinCareTag() != null) {
+                var tags = requestDto.getBrandSkinCareTag();
+                addTagsToBrand(brand, tags.getSkinType(), TagType.BEAUTY, "스킨케어");
+                addTagsToBrand(brand, tags.getMainFunction(), TagType.BEAUTY, "스킨케어");
             }
-            if (skinCareTags.getMainFunction() != null) {
-                addTagsToBrand(brand, skinCareTags.getMainFunction(), TagType.BEAUTY, "스킨케어");
+
+            // [메이크업 태그]
+            if (requestedCategories.contains("메이크업") && requestDto.getBrandMakeUpTag() != null) {
+                var tags = requestDto.getBrandMakeUpTag();
+                addTagsToBrand(brand, tags.getSkinType(), TagType.BEAUTY, "메이크업"); // 여기서 '메이크업' 카테고리로 저장됨
+                addTagsToBrand(brand, tags.getBrandMakeUpStyle(), TagType.BEAUTY, "메이크업");
             }
-        }
-        // 메이크업 태그
-        if (requestDto.getBrandMakeUpTag() != null) {
-            BrandUpdateRequestDto.BrandMakeUpTagDto makeUpTags = requestDto.getBrandMakeUpTag();
-            if (makeUpTags.getSkinType() != null) {
-                addTagsToBrand(brand, makeUpTags.getSkinType(), TagType.BEAUTY, "메이크업");
-            }
-            if (makeUpTags.getBrandMakeUpStyle() != null) {
-                addTagsToBrand(brand, makeUpTags.getBrandMakeUpStyle(), TagType.BEAUTY, "메이크업");
-            }
-        }
-        // 의류 태그
-        if (requestDto.getBrandClothingTag() != null) {
-            BrandUpdateRequestDto.BrandClothingTagDto clothingTags = requestDto.getBrandClothingTag();
-            if (clothingTags.getBrandType() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandType(), TagType.FASHION, "의류");
-            }
-            if (clothingTags.getBrandStyle() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandStyle(), TagType.FASHION, "의류");
+
+            // [의류 태그]
+            if (requestedCategories.contains("의류") && requestDto.getBrandClothingTag() != null) {
+                var tags = requestDto.getBrandClothingTag();
+                addTagsToBrand(brand, tags.getBrandType(), TagType.FASHION, "의류");
+                addTagsToBrand(brand, tags.getBrandStyle(), TagType.FASHION, "의류");
             }
         }
     }
 
     private void addTagsToBrand(Brand brand, List<String> tagNames, TagType type, String category) {
+        if (tagNames == null || tagNames.isEmpty()) return;
+
         for (String tagName : tagNames) {
-            Tag tag = tagRepository.findByTagName(tagName)
-                    .orElseGet(() -> {
-                        Tag newTag = Tag.builder()
-                                .tagName(tagName)
-                                .tagType(type.getDescription())
-                                .tagCategory(category) // 카테고리 지정
-                                .build();
-                        return tagRepository.save(newTag);
-                    });
-            brand.addBrandTag(BrandTag.builder().tag(tag).build());
+            // [수정 포인트] findByTagNameAndTagCategory를 사용하여 카테고리별로 태그를 구분해서 찾거나 생성함
+            Tag tag = tagRepository.findByTagNameAndTagCategory(tagName, category)
+                    .orElseGet(() -> tagRepository.save(Tag.builder()
+                            .tagName(tagName)
+                            .tagType(type.getDescription())
+                            .tagCategory(category)
+                            .build()));
+
+            // 현재 브랜드 내에서 중복 연결 방지
+            boolean isAlreadyLinked = brand.getBrandTags().stream()
+                    .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
+
+            if (!isAlreadyLinked) {
+                brand.addBrandTag(BrandTag.builder().tag(tag).build());
+            }
         }
     }
 
