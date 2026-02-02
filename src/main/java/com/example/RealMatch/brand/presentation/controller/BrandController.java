@@ -26,6 +26,7 @@ import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 
 @RestController
