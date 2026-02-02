@@ -14,6 +14,9 @@ import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -79,10 +82,9 @@ public class BrandController implements BrandSwagger {
         return ResponseEntity.noContent().build();
     }
 
-    @Override
     @GetMapping
-    public CustomResponse<List<BrandListResponseDto>> getAllBrands() {
-        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, brandService.getAllBrands());
+    public CustomResponse<Page<BrandListResponseDto>> getAllBrands(@PageableDefault(size = 10) Pageable pageable) {
+        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, brandService.getAllBrands(pageable));
     }
 
     // 임시 API

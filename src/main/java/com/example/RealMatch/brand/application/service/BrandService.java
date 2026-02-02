@@ -33,6 +33,8 @@ import com.example.RealMatch.tag.domain.repository.TagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -412,14 +414,13 @@ public class BrandService {
         brand.softDelete(currentUserId);
     }
 
-    public List<BrandListResponseDto> getAllBrands() {
-        return brandRepository.findAll().stream()
+    public Page<BrandListResponseDto> getAllBrands(Pageable pageable) {
+        return brandRepository.findAll(pageable)
                 .map(brand -> BrandListResponseDto.builder()
                         .brandId(brand.getId())
                         .brandName(brand.getBrandName())
                         .logoUrl(brand.getLogoUrl())
-                        .build())
-                .collect(Collectors.toList());
+                        .build());
     }
 
     public Long getBrandIdByUserId(Long userId) {
