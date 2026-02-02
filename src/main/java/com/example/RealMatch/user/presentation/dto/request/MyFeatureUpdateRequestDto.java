@@ -15,7 +15,7 @@ public record MyFeatureUpdateRequestDto(
             List<String> interestFunctions
     ) {}
 
-        public record FashionTypeUpdate(
+    public record FashionTypeUpdate(
             String height,
             String bodyShape,
             String topSize,
