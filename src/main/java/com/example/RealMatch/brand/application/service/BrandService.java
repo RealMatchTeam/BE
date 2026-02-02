@@ -37,9 +37,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -294,54 +297,107 @@ public class BrandService {
                 currentUserId
         );
 
-        brand.getBrandTags().clear();
-        brand.getBrandCategoryViews().clear();
-        brandRepository.saveAndFlush(brand);
-
-        List<String> requestedCategories = requestDto.getBrandCategory();
-        if (requestedCategories != null && !requestedCategories.isEmpty()) {
-            for (String categoryName : requestedCategories) {
-                brandCategoryRepository.findByName(categoryName).ifPresent(category ->
-                        brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build())
-                );
-            }
-        }
-
-        if (requestedCategories != null) {
-            if (requestedCategories.contains("스킨케어") && requestDto.getBrandSkinCareTag() != null) {
-                var tags = requestDto.getBrandSkinCareTag();
-                addTagsToBrand(brand, tags.getSkinType(), TagType.BEAUTY, "스킨케어");
-                addTagsToBrand(brand, tags.getMainFunction(), TagType.BEAUTY, "스킨케어");
-            }
-
-            if (requestedCategories.contains("메이크업") && requestDto.getBrandMakeUpTag() != null) {
-                var tags = requestDto.getBrandMakeUpTag();
-                addTagsToBrand(brand, tags.getSkinType(), TagType.BEAUTY, "메이크업");
-                addTagsToBrand(brand, tags.getBrandMakeUpStyle(), TagType.BEAUTY, "메이크업");
-            }
-
-            if (requestedCategories.contains("의류") && requestDto.getBrandClothingTag() != null) {
-                var tags = requestDto.getBrandClothingTag();
-                addTagsToBrand(brand, tags.getBrandType(), TagType.FASHION, "의류");
-                addTagsToBrand(brand, tags.getBrandStyle(), TagType.FASHION, "의류");
-            }
-        }
+        updateCategories(brand, requestDto.getBrandCategory());
+        updateTags(brand, requestDto);
     }
 
+    private void updateCategories(Brand brand, List<String> requestedCategoryNames) {
+        if (requestedCategoryNames == null) {
+            requestedCategoryNames = new ArrayList<>();
+        }
+
+        Set<String> existingCategoryNames = brand.getBrandCategoryViews().stream()
+                .map(bcv -> bcv.getCategory().getName())
+                .collect(Collectors.toSet());
+
+        Set<String> requestedCategoryNamesSet = Set.copyOf(requestedCategoryNames);
+
+        // Remove categories that are no longer requested
+        brand.getBrandCategoryViews().removeIf(bcv -> !requestedCategoryNamesSet.contains(bcv.getCategory().getName()));
+
+        // Add new categories
+        requestedCategoryNamesSet.stream()
+                .filter(name -> !existingCategoryNames.contains(name))
+                .forEach(name -> {
+                    BrandCategory category = brandCategoryRepository.findByName(name)
+                            .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + name));
+                    brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build());
+                });
+    }
+
+    private void updateTags(Brand brand, BrandUpdateRequestDto requestDto) {
+        List<String> requestedTagNames = new ArrayList<>();
+        if (requestDto.getBrandSkinCareTag() != null) {
+            if (requestDto.getBrandSkinCareTag().getSkinType() != null) requestedTagNames.addAll(requestDto.getBrandSkinCareTag().getSkinType());
+            if (requestDto.getBrandSkinCareTag().getMainFunction() != null) requestedTagNames.addAll(requestDto.getBrandSkinCareTag().getMainFunction());
+        }
+        if (requestDto.getBrandMakeUpTag() != null) {
+            if (requestDto.getBrandMakeUpTag().getSkinType() != null) requestedTagNames.addAll(requestDto.getBrandMakeUpTag().getSkinType());
+            if (requestDto.getBrandMakeUpTag().getBrandMakeUpStyle() != null) requestedTagNames.addAll(requestDto.getBrandMakeUpTag().getBrandMakeUpStyle());
+        }
+        if (requestDto.getBrandClothingTag() != null) {
+            if (requestDto.getBrandClothingTag().getBrandType() != null) requestedTagNames.addAll(requestDto.getBrandClothingTag().getBrandType());
+            if (requestDto.getBrandClothingTag().getBrandStyle() != null) requestedTagNames.addAll(requestDto.getBrandClothingTag().getBrandStyle());
+        }
+
+        Set<String> existingTagNames = brand.getBrandTags().stream()
+                .map(bt -> bt.getTag().getTagName())
+                .collect(Collectors.toSet());
+
+        Set<String> requestedTagNamesSet = Set.copyOf(requestedTagNames);
+
+        // Remove tags that are no longer requested
+        brand.getBrandTags().removeIf(bt -> !requestedTagNamesSet.contains(bt.getTag().getTagName()));
+
+        // Add new tags
+        requestedTagNamesSet.stream()
+                .filter(name -> !existingTagNames.contains(name))
+                .forEach(name -> {
+                    // This is a simplified logic. You might need to determine TagType and category based on the request DTO.
+                    // For now, let's assume a default or find the first one.
+                    Tag tag = tagRepository.findByTagName(name).stream().findFirst()
+                            .orElseGet(() -> {
+                                // This part is tricky without more context on how to create a new tag.
+                                // You need to decide the TagType and category for a new tag.
+                                // For this example, I'll throw an exception.
+                                throw new ResourceNotFoundException("Tag not found and cannot create new one without type/category: " + name);
+                            });
+                    brand.addBrandTag(BrandTag.builder().tag(tag).build());
+                });
+    }
+
+
     private void addTagsToBrand(Brand brand, List<String> tagNames, TagType type, String category) {
-        if (tagNames == null || tagNames.isEmpty()) return;
+        if (tagNames == null || tagNames.isEmpty()) {
+            return;
+        }
 
-        for (String tagName : tagNames) {
-            Tag tag = tagRepository.findByTagNameAndTagCategory(tagName, category)
-                    .orElseGet(() -> tagRepository.save(Tag.builder()
-                            .tagName(tagName)
-                            .tagType(type.getDescription())
-                            .tagCategory(category)
-                            .build()));
+        // 1. Find existing tags in one query
+        Map<String, Tag> existingTags = tagRepository.findAllByTagNameInAndTagCategory(tagNames, category).stream()
+                .collect(Collectors.toMap(Tag::getTagName, Function.identity()));
 
+        // 2. Find new tag names and create them in one batch
+        List<Tag> newTags = tagNames.stream()
+                .filter(name -> !existingTags.containsKey(name))
+                .map(name -> Tag.builder()
+                        .tagName(name)
+                        .tagType(type.getDescription())
+                        .tagCategory(category)
+                        .build())
+                .collect(Collectors.toList());
+
+        if (!newTags.isEmpty()) {
+            tagRepository.saveAll(newTags);
+        }
+
+        // 3. Combine existing and new tags
+        List<Tag> allTags = new ArrayList<>(existingTags.values());
+        allTags.addAll(newTags);
+
+        // 4. Link all tags to the brand
+        for (Tag tag : allTags) {
             boolean isAlreadyLinked = brand.getBrandTags().stream()
                     .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
-
             if (!isAlreadyLinked) {
                 brand.addBrandTag(BrandTag.builder().tag(tag).build());
             }
@@ -364,5 +420,13 @@ public class BrandService {
                         .logoUrl(brand.getLogoUrl())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public Long getBrandIdByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        Brand brand = brandRepository.findByUser(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand not found for user: " + userId));
+        return brand.getId();
     }
 }

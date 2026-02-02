@@ -1,16 +1,5 @@
 package com.example.RealMatch.brand.presentation.controller;
 
-import java.util.Collections;
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.example.RealMatch.brand.application.service.BrandService;
 import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
@@ -24,9 +13,12 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListR
 import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
-
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/brands")
@@ -93,4 +85,10 @@ public class BrandController implements BrandSwagger {
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, brandService.getAllBrands());
     }
 
+    // 임시 API
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Long> getBrandIdByUserId(@PathVariable Long userId) {
+        Long brandId = brandService.getBrandIdByUserId(userId);
+        return ResponseEntity.ok(brandId);
+    }
 }
