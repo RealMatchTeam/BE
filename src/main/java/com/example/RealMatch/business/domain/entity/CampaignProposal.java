@@ -51,8 +51,11 @@ public class CampaignProposal extends BaseEntity {
     @Column(name = "who_proposed", nullable = false, length = 20)
     private Role whoProposed;
 
-    @Column(name = "proposed_user_id", nullable = false)
-    private Long proposedUserId;
+    @Column(name = "sender_user_id", nullable = false)
+    private Long senderUserId;
+
+    @Column(name = "receiver_user_id", nullable = false)
+    private Long receiverUserId;
 
     // 기존 캠페인 기반 제안이면 참조
     @ManyToOne(fetch = FetchType.LAZY)
@@ -100,7 +103,8 @@ public class CampaignProposal extends BaseEntity {
             User creator,
             Brand brand,
             Role whoProposed,
-            Long proposedUserId,
+            Long senderUserId,
+            Long receiverUserId,
             Campaign campaign,
             String title,
             String campaignDescription,
@@ -112,7 +116,8 @@ public class CampaignProposal extends BaseEntity {
         this.creator = creator;
         this.brand = brand;
         this.whoProposed = whoProposed;
-        this.proposedUserId = proposedUserId;
+        this.senderUserId = senderUserId;
+        this.receiverUserId = receiverUserId;
         this.campaign = campaign;
         this.title = title;
         this.campaignDescription = campaignDescription;

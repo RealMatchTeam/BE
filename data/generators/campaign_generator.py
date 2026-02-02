@@ -154,6 +154,85 @@ class CampaignGenerator(BaseGenerator):
             """
             self.execute_many(sql, likes, "캠페인 좋아요")
 
+    def generate_campaign_content_tags(self):
+        """캠페인 콘텐츠 태그 연결 (모든 캠페인)"""
+        print(f"\n[캠페인 콘텐츠 태그] 캠페인 콘텐츠 태그 연결 중...")
+
+        with self.connection.cursor() as cursor:
+            # 모든 캠페인 ID 조회
+            cursor.execute("SELECT id FROM campaign")
+            campaigns = cursor.fetchall()
+            print(f"  - 조회된 캠페인 수: {len(campaigns) if campaigns else 0}")
+            if not campaigns:
+                print("[경고] 캠페인이 없습니다.")
+                return
+            campaign_ids = [c['id'] for c in campaigns]
+
+            # 태그 조회
+            cursor.execute("SELECT id, tag_type, eng_name FROM tag_content")
+            tags = cursor.fetchall()
+            print(f"  - 조회된 태그 수: {len(tags) if tags else 0}")
+            if not tags:
+                print("[경고] tag_content 테이블에 데이터가 없습니다.")
+                return
+
+        # 태그를 타입별로 그룹화
+        tags_by_type = {}
+        for tag in tags:
+            tag_type = tag['tag_type']
+            if tag_type not in tags_by_type:
+                tags_by_type[tag_type] = []
+            tags_by_type[tag_type].append(tag)
+
+        # ETC가 아닌 태그만 필터링
+        non_etc_tags_by_type = {}
+        for tag_type, tag_list in tags_by_type.items():
+            non_etc_tags_by_type[tag_type] = [t for t in tag_list if t['eng_name'] != 'ETC']
+
+        data = []
+        custom_values = ['커스텀 콘텐츠', '특별 기획', '브랜디드 콘텐츠', '콜라보 영상']
+
+        for campaign_id in campaign_ids:
+            # 각 캠페인에 타입별로 1~2개씩 태그 연결
+            for tag_type, tag_list in non_etc_tags_by_type.items():
+                if not tag_list:
+                    continue
+
+                # 랜덤하게 1~2개 태그 선택
+                num_tags = min(self.fake.random_int(1, 2), len(tag_list))
+                selected_tags = random.sample(tag_list, num_tags)
+
+                for tag in selected_tags:
+                    data.append({
+                        'campaign_id': campaign_id,
+                        'content_tag_id': tag['id'],
+                        'custom_tag_value': None,
+                        'created_at': datetime.now(),
+                        'updated_at': datetime.now()
+                    })
+
+            # 20% 확률로 ETC 태그 추가 (커스텀 값 포함)
+            if self.fake.random_int(1, 100) <= 20:
+                for tag_type, tag_list in tags_by_type.items():
+                    etc_tags = [t for t in tag_list if t['eng_name'] == 'ETC']
+                    if etc_tags:
+                        data.append({
+                            'campaign_id': campaign_id,
+                            'content_tag_id': etc_tags[0]['id'],
+                            'custom_tag_value': random.choice(custom_values),
+                            'created_at': datetime.now(),
+                            'updated_at': datetime.now()
+                        })
+                        break  # 하나만 추가
+
+        if data:
+            sql = """
+                INSERT IGNORE INTO campaign_content_tag (campaign_id, content_tag_id, custom_tag_value, created_at, updated_at)
+                VALUES (%(campaign_id)s, %(content_tag_id)s, %(custom_tag_value)s, %(created_at)s, %(updated_at)s)
+            """
+            self.execute_many(sql, data, "캠페인 콘텐츠 태그")
+
     def generate_all(self, campaign_count=30):
         self.generate_campaigns(campaign_count)
         self.generate_campaign_likes()
+        self.generate_campaign_content_tags()

@@ -18,7 +18,9 @@ class SeedGenerator(BaseGenerator):
         """콘텐츠 태그 생성"""
         print(f"\n[콘텐츠 태그] 콘텐츠 태그 생성 중...")
 
-        if not self._table_exists('tag_content'):
+        table_exists = self._table_exists('tag_content')
+        print(f"  - tag_content 테이블 존재: {table_exists}")
+        if not table_exists:
             print("  - tag_content 테이블이 없습니다. 스킵합니다.")
             return
 
@@ -148,8 +150,8 @@ class SeedGenerator(BaseGenerator):
             return
 
         categories = [
-            (1, '일상/Vlog'),
-            (2, '패션/뷰티'),
+            (1, '패션'),
+            (2, '뷰티'),
         ]
 
         data = []
