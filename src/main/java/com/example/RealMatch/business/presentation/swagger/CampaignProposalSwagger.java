@@ -154,7 +154,7 @@ public interface CampaignProposalSwagger {
             summary = "받은 캠페인 제안 수락 API by 박지영",
             description = """
                     제안 받은 사람이 제안을 수락하는 API입니다.   
-                    /api/v1/proposal/{campaignId}에서 status가 MATCH로 변경되었다면 성공입니다.
+                    /api/v1/campaigns/proposal/{campaignProposalId}에서 status가 MATCH로 변경되었다면 성공입니다.
                     """
     )
     CustomResponse<String> approveCampaignProposal(
