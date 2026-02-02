@@ -10,16 +10,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
+import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
-import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
+import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatExceptionConverter;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
+import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
-import com.example.RealMatch.chat.presentation.code.ChatErrorCode;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
@@ -34,10 +36,12 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     private final ChatMessageRepository chatMessageRepository;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatRoomMemberService chatRoomMemberService;
-    private final ChatRoomCommandService chatRoomCommandService;
+    private final ChatRoomUpdateService chatRoomUpdateService;
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
     private final SystemMessagePayloadSerializer payloadSerializer;
+    private final ChatCacheInvalidationService cacheInvalidationService;
+    private final AfterCommitExecutor afterCommitExecutor;
 
     @Override
     @Transactional
@@ -107,11 +111,14 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
         // 채팅방 마지막 메시지 업데이트
         updateChatRoomLastMessage(saved);
+        invalidateCachesAfterMessage(command.roomId(), null);
 
         // 응답 생성
         AttachmentDto savedAttachment = attachment != null
                 ? attachment
-                : attachmentQueryService.findById(saved.getAttachmentId());
+                : (saved.getAttachmentId() == null
+                        ? null
+                        : attachmentQueryService.findByIdOrThrow(saved.getAttachmentId()));
         return responseMapper.toResponse(saved, savedAttachment);
     }
 
@@ -159,6 +166,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         // 메시지 저장
         ChatMessage saved = chatMessageRepository.save(message);
         updateChatRoomLastMessage(saved);
+        invalidateCachesAfterMessage(roomId, kind);
 
         return responseMapper.toResponse(saved, null);
     }
@@ -168,7 +176,7 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
             return null;
         }
         attachmentQueryService.validateOwnership(attachmentId, userId);
-        return attachmentQueryService.findById(attachmentId);
+        return attachmentQueryService.findByIdOrThrow(attachmentId);
     }
 
     private void validateIdempotentConsistency(ChatMessage stored, ChatSendMessageCommand command) {
@@ -184,12 +192,19 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
 
     private void updateChatRoomLastMessage(ChatMessage message) {
         String preview = messagePreviewGenerator.generate(message.getMessageType(), message.getContent());
-        chatRoomCommandService.updateLastMessage(
+        chatRoomUpdateService.updateLastMessage(
                 message.getRoomId(),
                 message.getId(),
                 message.getCreatedAt(),
-                message.getMessageType(),
-                preview
+                preview,
+                message.getMessageType()
         );
+    }
+
+    private void invalidateCachesAfterMessage(Long roomId, ChatSystemMessageKind kind) {
+        if (roomId == null) {
+            return;
+        }
+        afterCommitExecutor.execute(() -> cacheInvalidationService.invalidateAfterMessageSaved(roomId, kind));
     }
 }

@@ -26,13 +26,13 @@ public class UserTagDocument {
     // 이산형 태그 조건 //
     // ************ //
     @Indexed
-    private Set<String> fashionTags;
+    private Set<Integer> fashionTags;
 
     @Indexed
-    private Set<String> beautyTags;
+    private Set<Integer> beautyTags;
 
     @Indexed
-    private Set<String> contentTags;
+    private Set<Integer> contentTags;
 
     // ************ //
     // 연속형 태그 조건 //
@@ -40,47 +40,47 @@ public class UserTagDocument {
 
     // 패션 관련
     @Indexed
-    private Integer height;
+    private Integer heightTag;
 
     @Indexed
-    private String bodyType;
+    private Integer bodyTypeTag;
 
     @Indexed
-    private String topSize;
+    private Integer topSizeTag;
 
     @Indexed
-    private String bottomSize;
+    private Integer bottomSizeTag;
 
     // 컨텐츠 관련
     @Indexed
-    private Long averageContentsViews;
+    private Set<Integer> averageContentsViewsTags;
 
     @Indexed
-    private Set<String> contentsAge;
+    private Set<Integer> contentsAgeTags;
 
     @Indexed
-    private Set<String> contentsGender;
+    private Set<Integer> contentsGenderTags;
 
     @Indexed
-    private String contentsLength;
+    private Set<Integer> contentsLengthTags;
 
     @Builder
-    public UserTagDocument(Long userId, Set<String> fashionTags, Set<String> beautyTags,
-                           Set<String> contentTags, Integer height, String bodyType,
-                           String topSize, String bottomSize, Long averageContentsViews,
-                           Set<String> contentsAge, Set<String> contentsGender, String contentsLength) {
+    public UserTagDocument(Long userId, Set<Integer> fashionTags, Set<Integer> beautyTags,
+                           Set<Integer> contentTags, Integer heightTag, Integer bodyTypeTag,
+                           Integer topSizeTag, Integer bottomSizeTag, Set<Integer> averageContentsViewsTags,
+                           Set<Integer> contentsAgeTags, Set<Integer> contentsGenderTags, Set<Integer> contentsLengthTags) {
         this.id = "user:" + userId;
         this.userId = userId;
         this.fashionTags = fashionTags;
         this.beautyTags = beautyTags;
         this.contentTags = contentTags;
-        this.height = height;
-        this.bodyType = bodyType;
-        this.topSize = topSize;
-        this.bottomSize = bottomSize;
-        this.averageContentsViews = averageContentsViews;
-        this.contentsAge = contentsAge;
-        this.contentsGender = contentsGender;
-        this.contentsLength = contentsLength;
+        this.heightTag = heightTag;
+        this.bodyTypeTag = bodyTypeTag;
+        this.topSizeTag = topSizeTag;
+        this.bottomSizeTag = bottomSizeTag;
+        this.averageContentsViewsTags = averageContentsViewsTags;
+        this.contentsAgeTags = contentsAgeTags;
+        this.contentsGenderTags = contentsGenderTags;
+        this.contentsLengthTags = contentsLengthTags;
     }
 }

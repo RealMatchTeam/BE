@@ -1,7 +1,8 @@
-package com.example.RealMatch.tag.domain.entity;
+package com.example.RealMatch.business.domain.entity;
 
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.tag.domain.entity.Tag;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

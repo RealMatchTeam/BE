@@ -14,7 +14,6 @@ public class S3Properties {
 
     private String bucketName;
     private String region;
-    private boolean publicBucket = false;
     private int presignedUrlExpirationSeconds = 604800;
     private long maxImageSizeBytes = 10485760L;
     private long maxFileSizeBytes = 52428800L;

@@ -32,7 +32,7 @@ public record MyFeatureResponseDto(
             String avgViews,
             List<String> contentFormats,
             List<String> contentTones,
-            String desiredInvolvement,
-            String desiredUsageScope
+            List<String> desiredInvolvement,
+            List<String> desiredUsageScope
     ) {}
 }

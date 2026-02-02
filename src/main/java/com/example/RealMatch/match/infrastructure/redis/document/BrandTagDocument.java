@@ -32,13 +32,13 @@ public class BrandTagDocument {
     // 이산형 태그 조건 //
     // ************ //
     @Indexed
-    private Set<String> preferredFashionTags;
+    private Set<Integer> preferredFashionTags;
 
     @Indexed
-    private Set<String> preferredBeautyTags;
+    private Set<Integer> preferredBeautyTags;
 
     @Indexed
-    private Set<String> preferredContentTags;
+    private Set<Integer> preferredContentTags;
 
     // ************ //
     // 연속형 태그 조건 //
@@ -52,40 +52,37 @@ public class BrandTagDocument {
     private Integer maxCreatorHeight;
 
     @Indexed
-    private Set<String> preferredBodyTypes;  // 체형
+    private Set<Integer> preferredBodyTypeTags;  // 체형
 
     @Indexed
-    private Set<String> preferredTopSizes;  // 상의 사이즈
+    private Set<Integer> preferredTopSizeTags;  // 상의 사이즈
 
     @Indexed
-    private Set<String> preferredBottomSizes;  // 하의 사이즈
+    private Set<Integer> preferredBottomSizeTags;  // 하의 사이즈
 
     // 컨텐츠 관련
     @Indexed
-    private Long minContentsAverageViews;
+    private Set<Integer> preferredContentsAverageViewsTags;
 
     @Indexed
-    private Long maxContentsAverageViews;
+    private Set<Integer> preferredContentsAgeTags;  // 컨텐츠 시청 연령대
 
     @Indexed
-    private Set<String> preferredContentsAges;  // 컨텐츠 시청 연령대
+    private Set<Integer> preferredContentsGenderTags;  // 컨텐츠 시청 성별
 
     @Indexed
-    private Set<String> preferredContentsGenders;  // 컨텐츠 시청 성별
-
-    @Indexed
-    private Set<String> preferredContentsLengths;  // 컨텐츠 길이
+    private Set<Integer> preferredContentsLengthTags;  // 컨텐츠 길이
 
     @Builder
     public BrandTagDocument(Long brandId, String brandName, Set<String> categories,
-                            Set<String> preferredFashionTags, Set<String> preferredBeautyTags,
-                            Set<String> preferredContentTags,
+                            Set<Integer> preferredFashionTags, Set<Integer> preferredBeautyTags,
+                            Set<Integer> preferredContentTags,
                             Integer minCreatorHeight, Integer maxCreatorHeight,
-                            Set<String> preferredBodyTypes, Set<String> preferredTopSizes,
-                            Set<String> preferredBottomSizes,
-                            Long minContentsAverageViews, Long maxContentsAverageViews,
-                            Set<String> preferredContentsAges, Set<String> preferredContentsGenders,
-                            Set<String> preferredContentsLengths) {
+                            Set<Integer> preferredBodyTypeTags, Set<Integer> preferredTopSizeTags,
+                            Set<Integer> preferredBottomSizeTags,
+                            Set<Integer> preferredContentsAverageViewsTags,
+                            Set<Integer> preferredContentsAgeTags, Set<Integer> preferredContentsGenderTags,
+                            Set<Integer> preferredContentsLengthTags) {
         this.id = "brand:" + brandId;
         this.brandId = brandId;
         this.brandName = brandName;
@@ -95,13 +92,12 @@ public class BrandTagDocument {
         this.preferredContentTags = preferredContentTags;
         this.minCreatorHeight = minCreatorHeight;
         this.maxCreatorHeight = maxCreatorHeight;
-        this.preferredBodyTypes = preferredBodyTypes;
-        this.preferredTopSizes = preferredTopSizes;
-        this.preferredBottomSizes = preferredBottomSizes;
-        this.minContentsAverageViews = minContentsAverageViews;
-        this.maxContentsAverageViews = maxContentsAverageViews;
-        this.preferredContentsAges = preferredContentsAges;
-        this.preferredContentsGenders = preferredContentsGenders;
-        this.preferredContentsLengths = preferredContentsLengths;
+        this.preferredBodyTypeTags = preferredBodyTypeTags;
+        this.preferredTopSizeTags = preferredTopSizeTags;
+        this.preferredBottomSizeTags = preferredBottomSizeTags;
+        this.preferredContentsAverageViewsTags = preferredContentsAverageViewsTags;
+        this.preferredContentsAgeTags = preferredContentsAgeTags;
+        this.preferredContentsGenderTags = preferredContentsGenderTags;
+        this.preferredContentsLengthTags = preferredContentsLengthTags;
     }
 }

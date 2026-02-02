@@ -1,12 +1,11 @@
 package com.example.RealMatch.user.domain.entity;
 
-import java.util.UUID;
-
 import com.example.RealMatch.global.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -21,9 +20,8 @@ import lombok.NoArgsConstructor;
 public class UserMatchingDetail extends BaseEntity {
 
     @Id
-    @GeneratedValue
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -55,10 +53,10 @@ public class UserMatchingDetail extends BaseEntity {
     private String bodyShape;
 
     @Column(name = "upper_size")
-    private String upperSize;
+    private String topSize;
 
     @Column(name = "lower_size")
-    private String lowerSize;
+    private String bottomSize;
 
     @Column(name = "interest_fields")
     private String interestFields;
@@ -80,10 +78,10 @@ public class UserMatchingDetail extends BaseEntity {
     private String viewerAge;
 
     @Column(name = "video_length")
-    private String videoLength;
+    private String avgVideoLength;
 
     @Column(name = "views")
-    private String views;
+    private String avgViews;
 
     @Column(name = "content_formats")
     private String contentFormats;
@@ -109,8 +107,8 @@ public class UserMatchingDetail extends BaseEntity {
             String height,
             String weight,
             String bodyShape,
-            String upperSize,
-            String lowerSize,
+            String topSize,
+            String bottomSize,
             String interestFields,
             String interestStyles,
             String interestBrands,
@@ -120,8 +118,8 @@ public class UserMatchingDetail extends BaseEntity {
             String interestCategories,
             String interestFunctions,
             String snsUrl,
-            String videoLength,
-            String views,
+            String avgVideoLength,
+            String avgViews,
             String viewerGender,
             String viewerAge,
             String contentFormats,
@@ -135,8 +133,8 @@ public class UserMatchingDetail extends BaseEntity {
         this.height = height;
         this.weight = weight;
         this.bodyShape = bodyShape;
-        this.upperSize = upperSize;
-        this.lowerSize = lowerSize;
+        this.topSize = topSize;
+        this.bottomSize = bottomSize;
         this.interestFields = interestFields;
         this.interestStyles = interestStyles;
         this.interestBrands = interestBrands;
@@ -146,8 +144,8 @@ public class UserMatchingDetail extends BaseEntity {
         this.interestCategories = interestCategories;
         this.interestFunctions = interestFunctions;
         this.snsUrl = snsUrl;
-        this.videoLength = videoLength;
-        this.views = views;
+        this.avgVideoLength = avgVideoLength;
+        this.avgViews = avgViews;
         this.viewerGender = viewerGender;
         this.viewerAge = viewerAge;
         this.contentFormats = contentFormats;
@@ -156,5 +154,112 @@ public class UserMatchingDetail extends BaseEntity {
         this.goodWith = goodWith;
         this.desiredInvolvement = desiredInvolvement;
         this.desiredUsageScope = desiredUsageScope;
+    }
+
+    // ========== 비즈니스 메서드 (도메인 로직) ==========
+
+    /**
+     * 뷰티 특성 업데이트
+     */
+    public void updateBeautyFeatures(
+            String skinType,
+            String skinBrightness,
+            String makeupStyle,
+            String interestCategories,
+            String interestFunctions
+    ) {
+        if (skinType != null) {
+            this.skinType = skinType;
+        }
+        if (skinBrightness != null) {
+            this.skinBrightness = skinBrightness;
+        }
+        if (makeupStyle != null) {
+            this.makeupStyle = makeupStyle;
+        }
+        if (interestCategories != null) {
+            this.interestCategories = interestCategories;
+        }
+        if (interestFunctions != null) {
+            this.interestFunctions = interestFunctions;
+        }
+    }
+
+    /**
+     * 패션 특성 업데이트
+     */
+    public void updateFashionFeatures(
+            String height,
+            String weight,
+            String bodyShape,
+            String topSize,
+            String bottomSize,
+            String interestFields,
+            String interestStyles,
+            String interestBrands
+    ) {
+        if (height != null) {
+            this.height = height;
+        }
+        if (weight != null) {
+            this.weight = weight;
+        }
+        if (bodyShape != null) {
+            this.bodyShape = bodyShape;
+        }
+        if (topSize != null) {
+            this.topSize = topSize;
+        }
+        if (bottomSize != null) {
+            this.bottomSize = bottomSize;
+        }
+        if (interestFields != null) {
+            this.interestFields = interestFields;
+        }
+        if (interestStyles != null) {
+            this.interestStyles = interestStyles;
+        }
+        if (interestBrands != null) {
+            this.interestBrands = interestBrands;
+        }
+    }
+
+    /**
+     * 콘텐츠 특성 업데이트
+     */
+    public void updateContentsFeatures(
+            String viewerGender,
+            String viewerAge,
+            String avgVideoLength,
+            String avgViews,
+            String contentFormats,
+            String contentTones,
+            String desiredInvolvement,
+            String desiredUsageScope
+    ) {
+        if (viewerGender != null) {
+            this.viewerGender = viewerGender;
+        }
+        if (viewerAge != null) {
+            this.viewerAge = viewerAge;
+        }
+        if (avgVideoLength != null) {
+            this.avgVideoLength = avgVideoLength;
+        }
+        if (avgViews != null) {
+            this.avgViews = avgViews;
+        }
+        if (contentFormats != null) {
+            this.contentFormats = contentFormats;
+        }
+        if (contentTones != null) {
+            this.contentTones = contentTones;
+        }
+        if (desiredInvolvement != null) {
+            this.desiredInvolvement = desiredInvolvement;
+        }
+        if (desiredUsageScope != null) {
+            this.desiredUsageScope = desiredUsageScope;
+        }
     }
 }

@@ -2,7 +2,7 @@ package com.example.RealMatch.brand.presentation.dto.response;
 
 import java.time.LocalDate;
 
-import com.example.RealMatch.campaign.domain.enums.CampaignRecrutingStatus;
+import com.example.RealMatch.campaign.domain.enums.CampaignRecruitingStatus;
 
 
 public record BrandCampaignResponseDto(
@@ -10,6 +10,6 @@ public record BrandCampaignResponseDto(
         String title,
         LocalDate recruitStartDate,
         LocalDate recruitEndDate,
-        CampaignRecrutingStatus status
+        CampaignRecruitingStatus status
 ) {
 }

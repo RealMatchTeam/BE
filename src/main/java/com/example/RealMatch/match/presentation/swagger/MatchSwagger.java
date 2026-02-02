@@ -38,6 +38,7 @@ public interface MatchSwagger {
             @ApiResponse(responseCode = "200", description = "매칭 분석 성공")
     })
     CustomResponse<MatchResponseDto> match(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody(
                     description = "크리에이터 매칭 요청 정보",
                     required = true,
@@ -49,42 +50,38 @@ public interface MatchSwagger {
                                             summary = "뷰티 중심 크리에이터",
                                             value = """
                                                     {
-                                                      "userId": "1",
-                                                      "brandId": "101",
-                                                      "sex": "여성",
-                                                      "age": 25,
-                                                      "height": 165,
-                                                      "weight": 52,
-                                                      "size": {
-                                                        "upper": 55,
-                                                        "bottom": 26
-                                                      },
                                                       "beauty": {
-                                                        "interests": ["스킨케어", "메이크업"],
-                                                        "functions": ["보습", "미백"],
-                                                        "skinType": "복합성",
-                                                        "skinTone": "웜톤",
-                                                        "makeupStyle": "내추럴"
+                                                        "interestStyleTags": [1, 2],
+                                                        "prefferedFunctionTags": [6, 7],
+                                                        "skinTypeTags": 12,
+                                                        "skinToneTags": 13,
+                                                        "makeupStyleTags": 2
                                                       },
                                                       "fashion": {
-                                                        "styles": ["미니멀", "캐주얼"],
-                                                        "items": ["원피스", "블라우스"],
-                                                        "preferredBrands": ["자라", "유니클로"]
+                                                        "interestStyleTags": [16, 17],
+                                                        "preferredItemTags": [22, 23],
+                                                        "preferredBrandTags": [27, 28],
+                                                        "heightTag": 72,
+                                                        "weightTypeTag": 94,
+                                                        "topSizeTag": 108,
+                                                        "bottomSizeTag": 178
                                                       },
-                                                      "sns": {
-                                                        "url": "https://www.instagram.com/beauty_creator",
-                                                        "mainAudience": {
-                                                          "sex": ["여성"],
-                                                          "age": ["20대", "30대"]
+                                                      "content": {
+                                                        "sns": {
+                                                          "url": "https://www.instagram.com/vivi",
+                                                          "mainAudience": {
+                                                            "genderTags": [221, 222],
+                                                            "ageTags": [223, 224]
+                                                          },
+                                                          "averageAudience": {
+                                                            "videoLengthTags": [228, 229],
+                                                            "videoViewsTags": [232, 233]
+                                                          }
                                                         },
-                                                        "contentStyle": {
-                                                          "avgVideoLength": "30초~1분",
-                                                          "avgViews": "50000",
-                                                          "format": "릴스",
-                                                          "type": "리뷰",
-                                                          "contributionLevel": "높음",
-                                                          "usageCoverage": "전체"
-                                                        }
+                                                        "typeTags": [236, 237],
+                                                        "toneTags": [245, 246],
+                                                        "prefferedInvolvementTags": [251, 252],
+                                                        "prefferedCoverageTags": [255, 256]
                                                       }
                                                     }
                                                     """

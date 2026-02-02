@@ -1,11 +1,10 @@
-package com.example.RealMatch.business.presentation.docs;
-
-import java.util.UUID;
+package com.example.RealMatch.business.presentation.swagger;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
+import com.example.RealMatch.business.presentation.dto.response.CampaignProposalDetailResponse;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
@@ -43,22 +42,22 @@ public interface CampaignProposalSwagger {
                                       "campaignId": null,
                                       "campaignName": "비플레인 선크림 리뷰 캠페인",
                                       "description": "비플레인 선크림을 체험하고 솔직한 리뷰 콘텐츠를 제작해주세요.",
-                                                                  "formats": [
-                                                                    { "id": "32000000-0000-0000-0000-000000000000" }
-                                                                  ],
-                                                                  "categories": [
-                                                                    { "id": "31310000-0000-0000-0000-000000000000", "customValue": "성분 분석 리뷰" }
-                                                                  ],
-                                                                  "tones": [
-                                                                    { "id": "31360000-0000-0000-0000-000000000000" },
-                                                                    { "id": "31330000-0000-0000-0000-000000000000" }
-                                                                  ],
-                                                                  "involvements": [
-                                                                    { "id": "32320000-0000-0000-0000-000000000000" }
-                                                                  ],
-                                                                  "usageRanges": [
-                                                                    { "id": "32350000-0000-0000-0000-000000000000" }
-                                                                  ],
+                                      "formats": [
+                                        { "id": 1 }
+                                      ],
+                                      "categories": [
+                                        { "id": 2, "customValue": "성분 분석 리뷰" }
+                                      ],
+                                      "tones": [
+                                        { "id": 3 },
+                                        { "id": 4 }
+                                      ],
+                                      "involvements": [
+                                        { "id": 5 }
+                                      ],
+                                      "usageRanges": [
+                                        { "id": 6 }
+                                      ],
                                       "rewardAmount": 200000,
                                       "productId": 5,
                                       "startDate": "2025-03-01",
@@ -97,22 +96,22 @@ public interface CampaignProposalSwagger {
                                       "campaignId": null,
                                       "campaignName": "비플레인 선크림 리뷰 캠페인",
                                       "description": "비플레인 선크림을 체험하고 솔직한 리뷰 콘텐츠를 제작해주세요.",
-                                                                  "formats": [
-                                                                    { "id": "32000000-0000-0000-0000-000000000000" }
-                                                                  ],
-                                                                  "categories": [
-                                                                    { "id": "31310000-0000-0000-0000-000000000000", "customValue": "성분 분석 리뷰" },
-                                                                    { "id": "38000000-0000-0000-0000-000000000000"}
-                                                                  ],
-                                                                  "tones": [
-                                                                    { "id": "31360000-0000-0000-0000-000000000000" }
-                                                                  ],
-                                                                  "involvements": [
-                                                                    { "id": "32320000-0000-0000-0000-000000000000" }
-                                                                  ],
-                                                                  "usageRanges": [
-                                                                    { "id": "32350000-0000-0000-0000-000000000000" }
-                                                                  ],
+                                      "formats": [
+                                        { "id": 1 }
+                                      ],
+                                      "categories": [
+                                        { "id": 2, "customValue": "성분 분석 리뷰" },
+                                        { "id": 7 }
+                                      ],
+                                      "tones": [
+                                        { "id": 3 }
+                                      ],
+                                      "involvements": [
+                                        { "id": 5 }
+                                      ],
+                                      "usageRanges": [
+                                        { "id": 6 }
+                                      ],
                                       "rewardAmount": 100000,
                                       "productId": 5,
                                       "startDate": "2025-03-29",
@@ -124,9 +123,31 @@ public interface CampaignProposalSwagger {
     )
     CustomResponse<String> modifyCampaignProposal(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "캠페인 Proposal ID", example = "43bf11cd-b075-4187-b43b-07ee5cd54d41")
-            @PathVariable UUID campaignProposalID,
+            @Parameter(description = "캠페인 Proposal ID", example = "1")
+            @PathVariable Long campaignProposalID,
             @org.springframework.web.bind.annotation.RequestBody @Valid CampaignProposalRequestDto request
+    );
+
+    @Operation(
+            summary = "캠페인 제안 상세 조회 API by 박지영",
+            description = """
+                    한 건의 캠페인 제안 상세 정보를 조회합니다.
+
+                    campaignProposalId는 /api/v1/campaigns/collaborations/me에서 확인해주세요.
+                    (masterJWT로 조회 불가능 API, 크리에이터/브랜드 계정으로 로그인 필요)
+
+                    <태그>
+                    formats : 형식
+                    categories : 종류
+                    tones : 톤
+                    involvements : 관여도
+                    usageRanges : 활용 범위
+                    """
+    )
+    CustomResponse<CampaignProposalDetailResponse> getProposalDetail(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Parameter(description = "캠페인 Proposal ID", example = "1")
+            @PathVariable Long campaignProposalId
     );
 
 }

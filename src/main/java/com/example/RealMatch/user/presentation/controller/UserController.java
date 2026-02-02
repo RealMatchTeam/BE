@@ -2,6 +2,7 @@ package com.example.RealMatch.user.presentation.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +14,7 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyFeatureUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -92,5 +94,15 @@ public class UserController implements UserSwagger {
     ) {
         MyFeatureResponseDto response = userFeatureService.getMyFeatures(userDetails.getUserId());
         return CustomResponse.ok(response);
+    }
+
+    @Override
+    @PatchMapping("/me/feature")
+    public CustomResponse<Void> updateMyFeature(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyFeatureUpdateRequestDto request
+    ) {
+        userFeatureService.updateMyFeatures(userDetails.getUserId(), request);
+        return CustomResponse.ok(null);
     }
 }

@@ -4,6 +4,7 @@ import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -35,10 +36,25 @@ public class MatchCampaignHistory extends DeleteBaseEntity {
     @JoinColumn(name = "campaign_id", nullable = false)
     private Campaign campaign;
 
+    @Column(name = "matching_ratio")
+    private Long matchingRatio;
+
+    @Column(name = "is_deprecated", nullable = false)
+    private Boolean isDeprecated = false;
 
     @Builder
-    public MatchCampaignHistory(User user, Campaign campaign) {
+    public MatchCampaignHistory(User user, Campaign campaign, Long matchingRatio) {
         this.user = user;
         this.campaign = campaign;
+        this.matchingRatio = matchingRatio;
+        this.isDeprecated = false;
+    }
+
+    public void updateMatchingRatio(Long matchingRatio) {
+        this.matchingRatio = matchingRatio;
+    }
+
+    public void deprecate() {
+        this.isDeprecated = true;
     }
 }

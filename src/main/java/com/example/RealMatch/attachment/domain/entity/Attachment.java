@@ -2,8 +2,10 @@ package com.example.RealMatch.attachment.domain.entity;
 
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +14,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +28,9 @@ public class Attachment extends DeleteBaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(name = "uploader_id", nullable = false)
     private Long uploaderId;
@@ -42,12 +48,17 @@ public class Attachment extends DeleteBaseEntity {
     @Column(name = "file_size", nullable = false)
     private Long fileSize;
 
-    @Column(name = "access_url", length = 1024)
-    private String accessUrl;
+    @Column(name = "storage_key", length = 1024)
+    private String storageKey;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private AttachmentStatus status;
+
+    // S3 prefix 분리용. CHAT/PUBLIC에 따라 경로가 나뉘며, 향후 용도별 TTL 분기 가능
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attachment_usage", length = 20)
+    private AttachmentUsage usage;
 
     private Attachment(
             Long uploaderId,
@@ -55,25 +66,28 @@ public class Attachment extends DeleteBaseEntity {
             String contentType,
             String originalName,
             Long fileSize,
-            String accessUrl,
-            AttachmentStatus status
+            String storageKey,
+            AttachmentStatus status,
+            AttachmentUsage usage
     ) {
         this.uploaderId = uploaderId;
         this.attachmentType = attachmentType;
         this.contentType = contentType;
         this.originalName = originalName;
         this.fileSize = fileSize;
-        this.accessUrl = accessUrl;
+        this.storageKey = storageKey;
         this.status = status;
+        this.usage = usage;
     }
 
-    public static Attachment create(
+    public static Attachment createReady(
             Long uploaderId,
             AttachmentType attachmentType,
             String contentType,
             String originalName,
             Long fileSize,
-            String accessUrl
+            @Nullable String storageKey,
+            AttachmentUsage usage
     ) {
         return new Attachment(
                 uploaderId,
@@ -81,16 +95,41 @@ public class Attachment extends DeleteBaseEntity {
                 contentType,
                 originalName,
                 fileSize,
-                accessUrl,
-                AttachmentStatus.UPLOADED
+                storageKey,
+                AttachmentStatus.READY,
+                usage
         );
+    }
+
+    public static Attachment createUploading(
+            Long uploaderId,
+            AttachmentType attachmentType,
+            String contentType,
+            String originalName,
+            Long fileSize,
+            AttachmentUsage usage
+    ) {
+        return new Attachment(
+                uploaderId,
+                attachmentType,
+                contentType,
+                originalName,
+                fileSize,
+                null,
+                AttachmentStatus.UPLOADED,
+                usage
+        );
+    }
+
+    public void updateStorageKey(String storageKey) {
+        this.storageKey = storageKey;
+    }
+
+    public void markAsReady() {
+        this.status = AttachmentStatus.READY;
     }
 
     public void markAsFailed() {
         this.status = AttachmentStatus.FAILED;
-    }
-
-    public void updateAccessUrl(String accessUrl) {
-        this.accessUrl = accessUrl;
     }
 }

@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
-import com.example.RealMatch.campaign.domain.enums.CampaignRecrutingStatus;
+import com.example.RealMatch.campaign.domain.enums.CampaignRecruitingStatus;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.Column;
@@ -129,14 +129,14 @@ public class Campaign extends DeleteBaseEntity {
         this.deletedBy = deletedBy;
     }
 
-    public CampaignRecrutingStatus getCampaignRecrutingStatus(LocalDateTime now) {
+    public CampaignRecruitingStatus getCampaignRecrutingStatus(LocalDateTime now) {
         if (now.isBefore(this.recruitStartDate)) {
-            return CampaignRecrutingStatus.UPCOMING;
+            return CampaignRecruitingStatus.UPCOMING;
         }
         if (now.isAfter(this.recruitEndDate)) {
-            return CampaignRecrutingStatus.CLOSED;
+            return CampaignRecruitingStatus.CLOSED;
         }
-        return CampaignRecrutingStatus.RECRUITING;
+        return CampaignRecruitingStatus.RECRUITING;
     }
 
 }

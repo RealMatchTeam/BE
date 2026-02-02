@@ -69,17 +69,22 @@ public class MatchServiceImpl implements MatchService {
     // ******* //
     @Override
     @Transactional
-    public MatchResponseDto match(MatchRequestDto requestDto) {
-        Long userId = Long.parseLong(requestDto.getUserId());
-
-        UserTagDocument userDoc = convertToUserTagDocument(requestDto);
+    public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
+        UserTagDocument userDoc = convertToUserTagDocument(userId, requestDto);
 
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
+
+        List<Long> brandIds = brandResults.stream()
+                .map(result -> result.brandDoc().getBrandId())
+                .toList();
+        Map<Long, Brand> brandMap = brandRepository.findAllById(brandIds).stream()
+                .collect(Collectors.toMap(Brand::getId, brand -> brand));
+
         List<BrandDto> matchedBrands = brandResults.stream()
-                .map(this::toBrandDto)
+                .map(result -> toBrandDto(result, brandMap.get(result.brandDoc().getBrandId())))
                 .toList();
 
         HighMatchingBrandListDto brandListDto = HighMatchingBrandListDto.builder()
@@ -104,127 +109,155 @@ public class MatchServiceImpl implements MatchService {
             return;
         }
 
-        for (BrandMatchResult result : brandResults) {
-            Long brandId = result.brandDoc().getBrandId();
-            if (!matchBrandHistoryRepository.existsByUserIdAndBrandId(userId, brandId)) {
-                Brand brand = brandRepository.findById(brandId).orElse(null);
-                if (brand != null) {
-                    MatchBrandHistory history = MatchBrandHistory.builder()
-                            .user(user)
-                            .brand(brand)
-                            .build();
-                    matchBrandHistoryRepository.save(history);
-                }
-            }
-        }
+        // 기존 매칭 기록을 벌크 UPDATE로 deprecated 처리
+        matchBrandHistoryRepository.bulkDeprecateByUserId(userId);
+        matchCampaignHistoryRepository.bulkDeprecateByUserId(userId);
 
-        for (CampaignMatchResult result : campaignResults) {
-            Long campaignId = result.campaignDoc().getCampaignId();
-            if (!matchCampaignHistoryRepository.existsByUserIdAndCampaignId(userId, campaignId)) {
-                Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
-                if (campaign != null) {
-                    MatchCampaignHistory history = MatchCampaignHistory.builder()
-                            .user(user)
-                            .campaign(campaign)
-                            .build();
-                    matchCampaignHistoryRepository.save(history);
-                }
-            }
-        }
+        // 새로운 브랜드 매칭 기록 저장 (배치 처리)
+        List<Long> brandIds = brandResults.stream()
+                .map(result -> result.brandDoc().getBrandId())
+                .toList();
+        Map<Long, Brand> brandMap = brandRepository.findAllById(brandIds).stream()
+                .collect(Collectors.toMap(Brand::getId, brand -> brand));
+
+        List<MatchBrandHistory> brandHistories = brandResults.stream()
+                .filter(result -> brandMap.containsKey(result.brandDoc().getBrandId()))
+                .map(result -> MatchBrandHistory.builder()
+                        .user(user)
+                        .brand(brandMap.get(result.brandDoc().getBrandId()))
+                        .matchingRatio((long) result.matchScore())
+                        .build())
+                .toList();
+        matchBrandHistoryRepository.saveAll(brandHistories);
+
+        // 새로운 캠페인 매칭 기록 저장 (배치 처리)
+        List<Long> campaignIds = campaignResults.stream()
+                .map(result -> result.campaignDoc().getCampaignId())
+                .toList();
+        Map<Long, Campaign> campaignMap = campaignRepository.findAllById(campaignIds).stream()
+                .collect(Collectors.toMap(Campaign::getId, campaign -> campaign));
+
+        List<MatchCampaignHistory> campaignHistories = campaignResults.stream()
+                .filter(result -> campaignMap.containsKey(result.campaignDoc().getCampaignId()))
+                .map(result -> MatchCampaignHistory.builder()
+                        .user(user)
+                        .campaign(campaignMap.get(result.campaignDoc().getCampaignId()))
+                        .matchingRatio((long) result.matchScore())
+                        .build())
+                .toList();
+        matchCampaignHistoryRepository.saveAll(campaignHistories);
 
         LOG.info("Match history saved. userId={}, brands={}, campaigns={}",
-                userId, brandResults.size(), campaignResults.size());
+                userId, brandHistories.size(), campaignHistories.size());
     }
 
     // Request -> Redis Document Converter
-    private UserTagDocument convertToUserTagDocument(MatchRequestDto dto) {
-        Set<String> fashionTags = new HashSet<>();
-        Set<String> beautyTags = new HashSet<>();
-        Set<String> contentTags = new HashSet<>();
+    private UserTagDocument convertToUserTagDocument(Long userId, MatchRequestDto dto) {
+        Set<Integer> fashionTags = new HashSet<>();
+        Set<Integer> beautyTags = new HashSet<>();
+        Set<Integer> contentTags = new HashSet<>();
 
+        // Fashion 태그 수집
         if (dto.getFashion() != null) {
-            if (dto.getFashion().getStyles() != null) {
-                fashionTags.addAll(dto.getFashion().getStyles());
+            if (dto.getFashion().getInterestStyleTags() != null) {
+                fashionTags.addAll(dto.getFashion().getInterestStyleTags());
             }
-            if (dto.getFashion().getItems() != null) {
-                fashionTags.addAll(dto.getFashion().getItems());
+            if (dto.getFashion().getPreferredItemTags() != null) {
+                fashionTags.addAll(dto.getFashion().getPreferredItemTags());
+            }
+            if (dto.getFashion().getPreferredBrandTags() != null) {
+                fashionTags.addAll(dto.getFashion().getPreferredBrandTags());
             }
         }
 
+        // Beauty 태그 수집
         if (dto.getBeauty() != null) {
-            if (dto.getBeauty().getInterests() != null) {
-                beautyTags.addAll(dto.getBeauty().getInterests());
+            if (dto.getBeauty().getInterestStyleTags() != null) {
+                beautyTags.addAll(dto.getBeauty().getInterestStyleTags());
             }
-            if (dto.getBeauty().getFunctions() != null) {
-                beautyTags.addAll(dto.getBeauty().getFunctions());
+            if (dto.getBeauty().getPrefferedFunctionTags() != null) {
+                beautyTags.addAll(dto.getBeauty().getPrefferedFunctionTags());
             }
-            if (dto.getBeauty().getSkinType() != null) {
-                beautyTags.add(dto.getBeauty().getSkinType());
+            if (dto.getBeauty().getSkinTypeTags() != null) {
+                beautyTags.add(dto.getBeauty().getSkinTypeTags());
             }
-            if (dto.getBeauty().getMakeupStyle() != null) {
-                beautyTags.add(dto.getBeauty().getMakeupStyle());
+            if (dto.getBeauty().getSkinToneTags() != null) {
+                beautyTags.add(dto.getBeauty().getSkinToneTags());
             }
-        }
-
-        if (dto.getSns() != null && dto.getSns().getContentStyle() != null) {
-            MatchRequestDto.ContentStyleDto contentStyle = dto.getSns().getContentStyle();
-            if (contentStyle.getFormat() != null) {
-                contentTags.add(contentStyle.getFormat());
-            }
-            if (contentStyle.getType() != null) {
-                contentTags.add(contentStyle.getType());
+            if (dto.getBeauty().getMakeupStyleTags() != null) {
+                beautyTags.add(dto.getBeauty().getMakeupStyleTags());
             }
         }
 
-        String topSize = null;
-        String bottomSize = null;
-        if (dto.getSize() != null) {
-            if (dto.getSize().getUpper() != null) {
-                topSize = String.valueOf(dto.getSize().getUpper());
+        // Content 태그 수집
+        if (dto.getContent() != null) {
+            if (dto.getContent().getTypeTags() != null) {
+                contentTags.addAll(dto.getContent().getTypeTags());
             }
-            if (dto.getSize().getBottom() != null) {
-                bottomSize = String.valueOf(dto.getSize().getBottom());
+            if (dto.getContent().getToneTags() != null) {
+                contentTags.addAll(dto.getContent().getToneTags());
             }
-        }
-
-        Long avgViews = null;
-        if (dto.getSns() != null && dto.getSns().getContentStyle() != null
-                && dto.getSns().getContentStyle().getAvgViews() != null) {
-            try {
-                avgViews = Long.parseLong(dto.getSns().getContentStyle().getAvgViews().replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException e) {
-                LOG.debug("Could not parse avgViews: {}", dto.getSns().getContentStyle().getAvgViews());
+            if (dto.getContent().getPrefferedInvolvementTags() != null) {
+                contentTags.addAll(dto.getContent().getPrefferedInvolvementTags());
+            }
+            if (dto.getContent().getPrefferedCoverageTags() != null) {
+                contentTags.addAll(dto.getContent().getPrefferedCoverageTags());
             }
         }
 
-        Set<String> contentsAge = new HashSet<>();
-        Set<String> contentsGender = new HashSet<>();
-        if (dto.getSns() != null && dto.getSns().getMainAudience() != null) {
-            if (dto.getSns().getMainAudience().getAge() != null) {
-                contentsAge.addAll(dto.getSns().getMainAudience().getAge());
-            }
-            if (dto.getSns().getMainAudience().getSex() != null) {
-                contentsGender.addAll(dto.getSns().getMainAudience().getSex());
-            }
+        // Fashion 관련 필드
+        Integer heightTag = null;
+        Integer bodyTypeTag = null;
+        Integer topSizeTag = null;
+        Integer bottomSizeTag = null;
+        if (dto.getFashion() != null) {
+            heightTag = dto.getFashion().getHeightTag();
+            bodyTypeTag = dto.getFashion().getWeightTypeTag();
+            topSizeTag = dto.getFashion().getTopSizeTag();
+            bottomSizeTag = dto.getFashion().getBottomSizeTag();
         }
 
-        String contentsLength = null;
-        if (dto.getSns() != null && dto.getSns().getContentStyle() != null) {
-            contentsLength = dto.getSns().getContentStyle().getAvgVideoLength();
+        // Content SNS 관련 필드
+        Set<Integer> contentsAgeTags = new HashSet<>();
+        Set<Integer> contentsGenderTags = new HashSet<>();
+        Set<Integer> contentsLengthTags = new HashSet<>();
+        Set<Integer> averageContentsViewsTags = new HashSet<>();
+
+        if (dto.getContent() != null && dto.getContent().getSns() != null) {
+            MatchRequestDto.SnsDto sns = dto.getContent().getSns();
+
+            if (sns.getMainAudience() != null) {
+                if (sns.getMainAudience().getAgeTags() != null) {
+                    contentsAgeTags.addAll(sns.getMainAudience().getAgeTags());
+                }
+                if (sns.getMainAudience().getGenderTags() != null) {
+                    contentsGenderTags.addAll(sns.getMainAudience().getGenderTags());
+                }
+            }
+
+            if (sns.getAverageAudience() != null) {
+                if (sns.getAverageAudience().getVideoLengthTags() != null) {
+                    contentsLengthTags.addAll(sns.getAverageAudience().getVideoLengthTags());
+                }
+                if (sns.getAverageAudience().getVideoViewsTags() != null) {
+                    averageContentsViewsTags.addAll(sns.getAverageAudience().getVideoViewsTags());
+                }
+            }
         }
 
         return UserTagDocument.builder()
-                .userId(Long.parseLong(dto.getUserId()))
+                .userId(userId)
                 .fashionTags(fashionTags)
                 .beautyTags(beautyTags)
                 .contentTags(contentTags)
-                .height(dto.getHeight())
-                .topSize(topSize)
-                .bottomSize(bottomSize)
-                .averageContentsViews(avgViews)
-                .contentsAge(contentsAge)
-                .contentsGender(contentsGender)
-                .contentsLength(contentsLength)
+                .heightTag(heightTag)
+                .bodyTypeTag(bodyTypeTag)
+                .topSizeTag(topSizeTag)
+                .bottomSizeTag(bottomSizeTag)
+                .averageContentsViewsTags(averageContentsViewsTags)
+                .contentsAgeTags(contentsAgeTags)
+                .contentsGenderTags(contentsGenderTags)
+                .contentsLengthTags(contentsLengthTags)
                 .build();
     }
 
@@ -397,14 +430,23 @@ public class MatchServiceImpl implements MatchService {
         if (filterTags == null || filterTags.isEmpty()) {
             return true;
         }
-        Set<String> allTags = new HashSet<>();
+        Set<Integer> allTags = new HashSet<>();
         if (brandDoc.getPreferredFashionTags() != null) {
             allTags.addAll(brandDoc.getPreferredFashionTags());
         }
         if (brandDoc.getPreferredBeautyTags() != null) {
             allTags.addAll(brandDoc.getPreferredBeautyTags());
         }
-        return filterTags.stream().anyMatch(allTags::contains);
+        return filterTags.stream()
+                .map(tag -> {
+                    try {
+                        return Integer.parseInt(tag);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .filter(tag -> tag != null)
+                .anyMatch(allTags::contains);
     }
 
     private boolean filterByCategoryCampaign(CampaignTagDocument campaignDoc, CategoryType category) {
@@ -422,14 +464,23 @@ public class MatchServiceImpl implements MatchService {
         if (filterTags == null || filterTags.isEmpty()) {
             return true;
         }
-        Set<String> allTags = new HashSet<>();
+        Set<Integer> allTags = new HashSet<>();
         if (campaignDoc.getPreferredFashionTags() != null) {
             allTags.addAll(campaignDoc.getPreferredFashionTags());
         }
         if (campaignDoc.getPreferredBeautyTags() != null) {
             allTags.addAll(campaignDoc.getPreferredBeautyTags());
         }
-        return filterTags.stream().anyMatch(allTags::contains);
+        return filterTags.stream()
+                .map(tag -> {
+                    try {
+                        return Integer.parseInt(tag);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                })
+                .filter(tag -> tag != null)
+                .anyMatch(allTags::contains);
     }
 
     // ************* //
@@ -482,17 +533,29 @@ public class MatchServiceImpl implements MatchService {
     public MatchBrandResponseDto getMatchingBrands(String userId, SortType sortBy, CategoryType category, List<String> tags) {
         Long userIdLong = Long.parseLong(userId);
 
-        UserTagDocument userDoc = redisDocumentHelper.findUserTagDocumentById(userIdLong);
+        List<MatchBrandHistory> brandHistories = matchBrandHistoryRepository.findByUserIdAndIsDeprecatedFalse(userIdLong);
 
-        if (userDoc == null) {
-            LOG.warn("User tag document not found in Redis. userId={}", userId);
+        if (brandHistories.isEmpty()) {
+            LOG.warn("No match brand history found in DB. userId={}", userId);
             return MatchBrandResponseDto.builder()
                     .count(0)
                     .brands(List.of())
                     .build();
         }
 
-        List<MatchBrandResponseDto.BrandDto> matchedBrands = findMatchingBrandsForList(userDoc, userIdLong, sortBy, category, tags);
+        Set<Long> likedBrandIds = brandLikeRepository.findByUserId(userIdLong).stream()
+                .map(like -> like.getBrand().getId())
+                .collect(Collectors.toSet());
+
+        Set<Long> recruitingBrandIds = getRecruitingBrandIds();
+        Map<Long, Long> brandLikeCountMap = getBrandLikeCountMap();
+
+        List<MatchBrandResponseDto.BrandDto> matchedBrands = brandHistories.stream()
+                .filter(history -> filterBrandByCategory(history.getBrand(), category))
+                .sorted(getBrandHistoryComparator(sortBy, brandLikeCountMap))
+                .limit(TOP_MATCH_COUNT)
+                .map(history -> toMatchBrandDtoFromHistory(history, likedBrandIds, recruitingBrandIds))
+                .toList();
 
         return MatchBrandResponseDto.builder()
                 .count(matchedBrands.size())
@@ -504,17 +567,31 @@ public class MatchServiceImpl implements MatchService {
     public MatchCampaignResponseDto getMatchingCampaigns(String userId, SortType sortBy, CategoryType category, List<String> tags) {
         Long userIdLong = Long.parseLong(userId);
 
-        UserTagDocument userDoc = redisDocumentHelper.findUserTagDocumentById(userIdLong);
+        List<MatchCampaignHistory> campaignHistories = matchCampaignHistoryRepository.findByUserIdAndIsDeprecatedFalse(userIdLong);
 
-        if (userDoc == null) {
-            LOG.warn("User tag document not found in Redis. userId={}", userId);
+        if (campaignHistories.isEmpty()) {
+            LOG.warn("No match campaign history found in DB. userId={}", userId);
             return MatchCampaignResponseDto.builder()
                     .count(0)
                     .brands(List.of())
                     .build();
         }
 
-        List<MatchCampaignResponseDto.CampaignDto> matchedCampaigns = findMatchingCampaignsForList(userDoc, userIdLong, sortBy, category, tags);
+        Set<Long> likedCampaignIds = campaignLikeRepository.findByUserId(userIdLong).stream()
+                .map(like -> like.getCampaign().getId())
+                .collect(Collectors.toSet());
+
+        Map<Long, Long> applyCountMap = getApplyCountMap();
+        Map<Long, Long> campaignLikeCountMap = getCampaignLikeCountMap();
+
+        List<MatchCampaignResponseDto.CampaignDto> matchedCampaigns = campaignHistories.stream()
+                .filter(history -> history.getCampaign().getRecruitEndDate() == null
+                        || history.getCampaign().getRecruitEndDate().isAfter(LocalDateTime.now()))
+                .filter(history -> filterCampaignByCategory(history.getCampaign(), category))
+                .sorted(getCampaignHistoryComparator(sortBy, campaignLikeCountMap))
+                .limit(TOP_MATCH_COUNT)
+                .map(history -> toMatchCampaignDtoFromHistory(history, likedCampaignIds, applyCountMap))
+                .toList();
 
         return MatchCampaignResponseDto.builder()
                 .count(matchedCampaigns.size())
@@ -522,16 +599,17 @@ public class MatchServiceImpl implements MatchService {
                 .build();
     }
 
-    private BrandDto toBrandDto(BrandMatchResult result) {
+    private BrandDto toBrandDto(BrandMatchResult result, Brand brand) {
         return BrandDto.builder()
                 .brandId(result.brandDoc().getBrandId())
                 .brandName(result.brandDoc().getBrandName())
+                .logoUrl(brand != null ? brand.getLogoUrl() : null)
                 .matchingRatio(result.matchScore())
                 .build();
     }
 
     private MatchBrandResponseDto.BrandDto toMatchBrandDto(BrandMatchResult result) {
-        List<String> tags = new ArrayList<>();
+        List<Integer> tags = new ArrayList<>();
         if (result.brandDoc().getPreferredFashionTags() != null) {
             tags.addAll(result.brandDoc().getPreferredFashionTags());
         }
@@ -545,7 +623,7 @@ public class MatchServiceImpl implements MatchService {
                 .brandMatchingRatio(result.matchScore())
                 .brandIsLiked(result.isLiked())
                 .brandIsRecruiting(result.isRecruiting())
-                .brandTags(tags.stream().limit(3).toList())
+                .brandTags(tags.stream().limit(3).map(String::valueOf).toList())
                 .build();
     }
 
@@ -572,11 +650,7 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private Set<Long> getRecruitingBrandIds() {
-        return campaignRepository.findByRecruitEndDateAfter(LocalDateTime.now()).stream()
-                .map(c -> brandRepository.findByCreatedBy(c.getCreatedBy()).orElse(null))
-                .filter(brand -> brand != null)
-                .map(Brand::getId)
-                .collect(Collectors.toSet());
+        return campaignRepository.findRecruitingBrandIds(LocalDateTime.now());
     }
 
     private Map<Long, Long> getApplyCountMap() {
@@ -589,6 +663,95 @@ public class MatchServiceImpl implements MatchService {
     }
     private int safeSize(Set<?> set) {
         return set != null ? set.size() : 0;
+    }
+
+    // ************************* //
+    // DB History 기반 헬퍼 메서드 //
+    // ************************* //
+    private boolean filterBrandByCategory(Brand brand, CategoryType category) {
+        if (category == null || category == CategoryType.ALL) {
+            return true;
+        }
+        if (brand.getIndustryType() == null) {
+            return true;
+        }
+        return brand.getIndustryType().name().equalsIgnoreCase(category.name());
+    }
+
+    private boolean filterCampaignByCategory(Campaign campaign, CategoryType category) {
+        if (category == null || category == CategoryType.ALL) {
+            return true;
+        }
+        if (campaign.getBrand() == null || campaign.getBrand().getIndustryType() == null) {
+            return true;
+        }
+        return campaign.getBrand().getIndustryType().name().equalsIgnoreCase(category.name());
+    }
+
+    private Comparator<MatchBrandHistory> getBrandHistoryComparator(SortType sortBy, Map<Long, Long> likeCountMap) {
+        return switch (sortBy) {
+            case POPULARITY -> Comparator.comparingLong(
+                    (MatchBrandHistory h) -> likeCountMap.getOrDefault(h.getBrand().getId(), 0L)
+            ).reversed();
+            case NEWEST -> Comparator.comparingLong(
+                    (MatchBrandHistory h) -> h.getBrand().getId()
+            ).reversed();
+            default -> Comparator.comparingLong(
+                    (MatchBrandHistory h) -> h.getMatchingRatio() != null ? h.getMatchingRatio() : 0L
+            ).reversed();
+        };
+    }
+
+    private Comparator<MatchCampaignHistory> getCampaignHistoryComparator(SortType sortBy, Map<Long, Long> likeCountMap) {
+        return switch (sortBy) {
+            case POPULARITY -> Comparator.comparingLong(
+                    (MatchCampaignHistory h) -> likeCountMap.getOrDefault(h.getCampaign().getId(), 0L)
+            ).reversed();
+            case NEWEST -> Comparator.comparingLong(
+                    (MatchCampaignHistory h) -> h.getCampaign().getId()
+            ).reversed();
+            default -> Comparator.comparingLong(
+                    (MatchCampaignHistory h) -> h.getMatchingRatio() != null ? h.getMatchingRatio() : 0L
+            ).reversed();
+        };
+    }
+
+    private MatchBrandResponseDto.BrandDto toMatchBrandDtoFromHistory(
+            MatchBrandHistory history, Set<Long> likedBrandIds, Set<Long> recruitingBrandIds) {
+        Brand brand = history.getBrand();
+        return MatchBrandResponseDto.BrandDto.builder()
+                .brandId(brand.getId())
+                .brandName(brand.getBrandName())
+                .brandLogoUrl(brand.getLogoUrl())
+                .brandMatchingRatio(history.getMatchingRatio() != null ? history.getMatchingRatio().intValue() : 0)
+                .brandIsLiked(likedBrandIds.contains(brand.getId()))
+                .brandIsRecruiting(recruitingBrandIds.contains(brand.getId()))
+                .brandTags(List.of())
+                .build();
+    }
+
+    private MatchCampaignResponseDto.CampaignDto toMatchCampaignDtoFromHistory(
+            MatchCampaignHistory history, Set<Long> likedCampaignIds, Map<Long, Long> applyCountMap) {
+        Campaign campaign = history.getCampaign();
+        Brand brand = campaign.getBrand();
+        int dDay = campaign.getRecruitEndDate() != null
+                ? (int) ChronoUnit.DAYS.between(LocalDate.now(), campaign.getRecruitEndDate().toLocalDate())
+                : 0;
+
+        return MatchCampaignResponseDto.CampaignDto.builder()
+                .brandId(brand != null ? brand.getId() : null)
+                .brandName(brand != null ? brand.getBrandName() : null)
+                .brandLogoUrl(brand != null ? brand.getLogoUrl() : null)
+                .brandMatchingRatio(history.getMatchingRatio() != null ? history.getMatchingRatio().intValue() : 0)
+                .brandIsLiked(likedCampaignIds.contains(campaign.getId()))
+                .brandIsRecruiting(campaign.getRecruitEndDate() == null
+                        || campaign.getRecruitEndDate().isAfter(LocalDateTime.now()))
+                .campaignManuscriptFee(campaign.getRewardAmount() != null ? campaign.getRewardAmount().intValue() : 0)
+                .campaignDetail(campaign.getDescription())
+                .campaignDDay(Math.max(dDay, 0))
+                .campaignTotalRecruit(campaign.getQuota())
+                .campaignTotalCurrentRecruit(applyCountMap.getOrDefault(campaign.getId(), 0L).intValue())
+                .build();
     }
 
     private record BrandMatchResult(

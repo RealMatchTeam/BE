@@ -1,6 +1,7 @@
 package com.example.RealMatch.attachment.presentation.controller;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.http.MediaType;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.RealMatch.attachment.application.service.AttachmentService;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
 import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
@@ -37,17 +39,20 @@ public class AttachmentController implements AttachmentSwagger {
     public CustomResponse<AttachmentUploadResponse> uploadAttachment(
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestParam("attachmentType") AttachmentType attachmentType,
+            @Valid @RequestParam("usage") AttachmentUsage usage,
             @RequestPart("file") MultipartFile file
     ) throws IOException {
         Long userId = user.getUserId();
-        AttachmentUploadRequest request = new AttachmentUploadRequest(attachmentType);
-        return CustomResponse.ok(attachmentService.uploadAttachment(
-                userId,
-                request,
-                file.getInputStream(),
-                file.getOriginalFilename(),
-                file.getContentType(),
-                file.getSize()
-        ));
+        AttachmentUploadRequest request = new AttachmentUploadRequest(attachmentType, usage);
+        try (InputStream inputStream = file.getInputStream()) {
+            return CustomResponse.ok(attachmentService.uploadAttachment(
+                    userId,
+                    request,
+                    inputStream,
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getSize()
+            ));
+        }
     }
 }

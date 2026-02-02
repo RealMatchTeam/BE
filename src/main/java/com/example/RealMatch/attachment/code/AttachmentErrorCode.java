@@ -1,4 +1,4 @@
-package com.example.RealMatch.attachment.presentation.code;
+package com.example.RealMatch.attachment.code;
 
 import org.springframework.http.HttpStatus;
 
@@ -16,9 +16,18 @@ public enum AttachmentErrorCode implements BaseErrorCode {
     ATTACHMENT_OWNERSHIP_MISMATCH(HttpStatus.FORBIDDEN,
             "ATTACHMENT403_1",
             "첨부 파일 소유권이 일치하지 않습니다."),
+    ATTACHMENT_NOT_READY(HttpStatus.CONFLICT,
+            "ATTACHMENT409_1",
+            "첨부 파일이 아직 사용 가능한 상태가 아닙니다."),
+    ATTACHMENT_INVALID_STATUS(HttpStatus.CONFLICT,
+            "ATTACHMENT409_2",
+            "첨부 파일 상태 경합 또는 잘못된 상태입니다."),
     INVALID_FILE(HttpStatus.BAD_REQUEST,
             "ATTACHMENT400_1",
             "유효하지 않은 파일입니다."),
+    INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST,
+            "ATTACHMENT400_6",
+            "유효하지 않은 Content-Type입니다."),
     INVALID_FILE_NAME(HttpStatus.BAD_REQUEST,
             "ATTACHMENT400_2",
             "유효하지 않은 파일명입니다."),
@@ -31,12 +40,21 @@ public enum AttachmentErrorCode implements BaseErrorCode {
     INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST,
             "ATTACHMENT400_5",
             "지원하지 않는 이미지 형식입니다."),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST,
+            "ATTACHMENT400_7",
+            "지원하지 않는 첨부파일 형식입니다."),
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
             "ATTACHMENT500_1",
             "파일 업로드에 실패했습니다."),
+    S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
+            "ATTACHMENT500_2",
+            "파일 삭제에 실패했습니다."),
     S3_ACCESS_DENIED(HttpStatus.FORBIDDEN,
             "ATTACHMENT403_2",
-            "파일 스토리지 접근 권한이 없습니다.");
+            "파일 스토리지 접근 권한이 없습니다."),
+    STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE,
+            "ATTACHMENT503_1",
+            "스토리지가 설정되지 않았거나 사용할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

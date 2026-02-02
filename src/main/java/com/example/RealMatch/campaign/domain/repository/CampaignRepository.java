@@ -3,6 +3,7 @@ package com.example.RealMatch.campaign.domain.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,6 +27,10 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
         FROM Campaign c
         WHERE c.brand.id = :brandId
           AND (:cursor IS NULL OR c.id < :cursor)
+          AND (
+               CURRENT_TIMESTAMP < c.recruitStartDate
+            OR CURRENT_TIMESTAMP > c.recruitEndDate
+          )
         ORDER BY
           CASE
             WHEN CURRENT_TIMESTAMP > c.recruitEndDate THEN c.recruitEndDate
@@ -38,4 +43,33 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
             @Param("cursor") Long cursor,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT c
+    FROM Campaign c
+    WHERE c.brand.id = :brandId
+      AND c.recruitStartDate <= CURRENT_TIMESTAMP
+      AND c.recruitEndDate >= CURRENT_TIMESTAMP
+      AND (:cursor IS NULL OR c.id < :cursor)
+    ORDER BY c.recruitStartDate DESC, c.id DESC
+""")
+    List<Campaign> findRecruitingCampaigns(
+            @Param("brandId") Long brandId,
+            @Param("cursor") Long cursor,
+            Pageable pageable
+    );
+
+    @Query("""
+        select c
+        from Campaign c
+        where c.brand.id = :brandId
+          and c.isDeleted = false
+          and c.recruitStartDate <= current_timestamp
+          and c.recruitEndDate >= current_timestamp
+        order by c.recruitEndDate asc
+    """)
+    List<Campaign> findRecruitingCampaignsByBrandId(Long brandId);
+
+    @Query("SELECT DISTINCT c.brand.id FROM Campaign c WHERE c.recruitEndDate > :now")
+    Set<Long> findRecruitingBrandIds(@Param("now") LocalDateTime now);
 }

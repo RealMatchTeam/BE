@@ -1,7 +1,17 @@
 package com.example.RealMatch.chat.domain.enums;
 
 public enum ChatSystemMessageKind {
-    PROPOSAL_CARD,
-    PROPOSAL_STATUS_NOTICE,
-    MATCHED_CAMPAIGN_CARD
+    PROPOSAL_CARD(true),
+    PROPOSAL_STATUS_NOTICE(true),
+    MATCHED_CAMPAIGN_CARD(true);
+
+    private final boolean payloadRequired;
+
+    ChatSystemMessageKind(boolean payloadRequired) {
+        this.payloadRequired = payloadRequired;
+    }
+
+    public boolean isPayloadRequired() {
+        return payloadRequired;
+    }
 }

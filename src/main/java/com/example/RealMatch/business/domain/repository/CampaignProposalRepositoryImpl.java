@@ -5,7 +5,6 @@ import static com.example.RealMatch.business.domain.entity.QCampaignProposal.cam
 import static com.example.RealMatch.campaign.domain.entity.QCampaign.campaign;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 
@@ -26,7 +25,7 @@ public class CampaignProposalRepositoryImpl
 
     @Override
     public List<CollaborationResponse> findProposalCollaborations(
-            List<UUID> ids,
+            List<Long> ids,
             CollaborationType type
     ) {
         return queryFactory

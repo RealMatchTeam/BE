@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;

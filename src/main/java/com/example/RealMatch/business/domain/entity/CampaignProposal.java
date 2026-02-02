@@ -3,7 +3,6 @@ package com.example.RealMatch.business.domain.entity;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
@@ -37,8 +36,8 @@ import lombok.NoArgsConstructor;
 public class CampaignProposal extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)

@@ -1,9 +1,5 @@
 package com.example.RealMatch.tag.domain.entity;
 
-import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
 
@@ -12,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -32,10 +29,8 @@ import lombok.NoArgsConstructor;
 public class TagContent extends DeleteBaseEntity {
 
     @Id
-    @UuidGenerator
-    @GeneratedValue
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tag_type", nullable = false, length = 30)

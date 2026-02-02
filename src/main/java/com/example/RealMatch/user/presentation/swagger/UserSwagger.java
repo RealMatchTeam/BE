@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyFeatureUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -79,5 +80,14 @@ public interface UserSwagger {
     )
     CustomResponse<MyFeatureResponseDto> getMyFeature(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "내 특성 수정 API By 고경수",
+            description = "로그인한 사용자의 특성 정보를 수정합니다. (하드코딩)"
+    )
+    CustomResponse<Void> updateMyFeature(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyFeatureUpdateRequestDto request
     );
 }
