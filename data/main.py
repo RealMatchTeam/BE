@@ -34,6 +34,7 @@ class DummyDataOrchestrator:
             'chat_message',
             'chat_room_member',
             'chat_room',
+            'user_matching_detail',
             'match_brand_history',
             'match_campaign_history',
             'campaign_proposal_content_tag',
@@ -132,6 +133,9 @@ class DummyDataOrchestrator:
             campaign_gen = CampaignGenerator(self.connection)
             campaign_gen.generate_all(campaign_count)
 
+            # 캠페인 생성 후 협찬 데이터 생성
+            brand_gen.generate_sponsors()
+
             tag_gen = TagGenerator(self.connection)
             tag_gen.generate_all()
 
@@ -164,22 +168,22 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 예시:
-  python main.py --users 50 --brands 20 --campaigns 30
+  python main.py --users 50 --brands 20 --campaigns 30 --rooms 20 --messages 10 --applies 10
   python main.py --all 100
         """
     )
 
-    parser.add_argument('--users', type=int, default=50,
+    parser.add_argument('--users', type=int, default=500,
                         help='생성할 사용자 수 (기본값: 50)')
-    parser.add_argument('--brands', type=int, default=20,
+    parser.add_argument('--brands', type=int, default=20000,
                         help='생성할 브랜드 수 (기본값: 20)')
-    parser.add_argument('--campaigns', type=int, default=30,
+    parser.add_argument('--campaigns', type=int, default=30000,
                         help='생성할 캠페인 수 (기본값: 30)')
-    parser.add_argument('--rooms', type=int, default=20,
+    parser.add_argument('--rooms', type=int, default=2000,
                         help='생성할 채팅방 수 (기본값: 20)')
     parser.add_argument('--messages', type=int, default=10,
                         help='채팅방당 메시지 수 (기본값: 10)')
-    parser.add_argument('--applies', type=int, default=3,
+    parser.add_argument('--applies', type=int, default=10,
                         help='캠페인당 지원 수 (기본값: 3)')
     parser.add_argument('--all', type=int,
                         help='모든 항목에 동일한 개수 적용')
