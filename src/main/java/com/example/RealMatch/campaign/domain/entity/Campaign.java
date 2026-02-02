@@ -100,11 +100,38 @@ public class Campaign extends DeleteBaseEntity {
     private Long createdBy;
 
     @Builder
-    public Campaign(String title, String description, String preferredSkills, String schedule, String videoSpec,
-                    String product, Long rewardAmount, CampaignOriginType originType,
-                    LocalDate startDate, LocalDate endDate,
-                    LocalDateTime recruitStartDate, LocalDateTime recruitEndDate,
-                    Integer quota, Long createdBy) {
+    public Campaign(
+            Brand brand,
+            String title,
+            String description,
+            String preferredSkills,
+            String schedule,
+            String videoSpec,
+            String product,
+            Long rewardAmount,
+            String imageUrl,
+            Long proposalId,
+            CampaignOriginType originType,
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalDateTime recruitStartDate,
+            LocalDateTime recruitEndDate,
+            Integer quota,
+            Long createdBy
+    ) {
+        if (originType == CampaignOriginType.PROPOSAL && proposalId == null) {
+            throw new IllegalArgumentException(
+                    "originType이 PROPOSAL이면 proposalId는 필수입니다."
+            );
+        }
+
+        if (originType == CampaignOriginType.DIRECT && proposalId != null) {
+            throw new IllegalArgumentException(
+                    "DIRECT 캠페인은 proposalId를 가질 수 없습니다."
+            );
+        }
+
+        this.brand = brand;
         this.title = title;
         this.description = description;
         this.preferredSkills = preferredSkills;
@@ -112,6 +139,8 @@ public class Campaign extends DeleteBaseEntity {
         this.videoSpec = videoSpec;
         this.product = product;
         this.rewardAmount = rewardAmount;
+        this.imageUrl = imageUrl;
+        this.proposalId = proposalId;
         this.originType = originType;
         this.status = CampaignStatus.DRAFT;
         this.startDate = startDate;
