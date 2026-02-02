@@ -1,13 +1,15 @@
 package com.example.RealMatch.brand.application.service;
 
-import com.example.RealMatch.brand.domain.entity.BrandCategory;
-import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.example.RealMatch.brand.domain.entity.BrandCategory;
+import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
