@@ -30,7 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/v1/matches")
 public interface MatchSwagger {
 
-    @Operation(summary = "크리에이터 매칭 분석",
+    @Operation(summary = "크리에이터 매칭 분석 by 정윤철",
             description = """
                     크리에이터 정보를 기반으로 매칭 분석 결과와 추천 브랜드 목록을 반환합니다.
                     userType, typeTag, highMatchingBrandList를 포함합니다.
@@ -91,7 +91,7 @@ public interface MatchSwagger {
                     )
             ) MatchRequestDto requestDto);
 
-    @Operation(summary = "매칭 브랜드 목록 조회",
+    @Operation(summary = "매칭 브랜드 목록 조회 by 정윤철",
             description = """
                     JWT 토큰의 사용자 ID를 기반으로 매칭률이 높은 브랜드 목록을 조회합니다.
                     정렬 옵션: MATCH_SCORE(매칭률 순), POPULARITY(인기순), NEWEST(신규순)
@@ -107,7 +107,7 @@ public interface MatchSwagger {
             @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") @RequestParam(defaultValue = "ALL") CategoryType category,
             @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") @RequestParam(required = false) List<String> tags);
 
-    @Operation(summary = "매칭 캠페인 목록 조회 및 검색",
+    @Operation(summary = "매칭 캠페인 목록 조회 및 검색 by 정윤철",
             description = """
                     JWT 토큰의 사용자 ID를 기반으로 매칭 캠페인 목록을 검색하거나 매칭 캠페인 목록을 조회합니다.
                     
