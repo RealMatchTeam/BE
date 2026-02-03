@@ -74,10 +74,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
 
-                 .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
-                         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
-                         .anyRequest().authenticated())
+                        .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
+                        .anyRequest().authenticated())
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2

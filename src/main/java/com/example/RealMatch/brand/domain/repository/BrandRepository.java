@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
+import com.example.RealMatch.user.domain.entity.User;
 
 public interface BrandRepository extends JpaRepository<Brand, Long> {
     Optional<Brand> findById(Long id);
@@ -20,4 +21,6 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     Optional<Brand> findByCreatedBy(Long createdBy);
 
     List<Brand> findByCreatedByIn(List<Long> createdByList);
+
+    Optional<Brand> findByUser(User user);
 }

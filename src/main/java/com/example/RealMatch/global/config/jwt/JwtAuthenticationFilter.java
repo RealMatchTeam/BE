@@ -28,12 +28,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/oauth2/",
             "/login/oauth2/",
             "/oauth/callback",
-            "/api/**",
-            "/v3/**",
+            "/v3/api-docs/**",
             "/swagger-ui",
-            "/swagger-resources",
-            "/brand/v1/**",
-            "/v3/api-docs/**"
+            "/swagger-resources"
     );
 
     @Override
@@ -44,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String requestURI = request.getRequestURI();
 
-        // OAuth2 관련 경로는 JWT 검증 건너뛰기
+        // JWT 검증을 건너뛸 경로인지 확인
         if (shouldNotFilter(requestURI)) {
             filterChain.doFilter(request, response);
             return;
@@ -70,7 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            masterUser,
+                            masterUser.getUserId().toString(), // Principal을 userId(String)로 설정
                             null,
                             masterUser.getAuthorities()
                     );
@@ -95,7 +92,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userDetails,
+                        userDetails.getUserId().toString(), // Principal을 userId(String)로 설정
                         null,
                         userDetails.getAuthorities()
                 );
@@ -106,6 +103,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean shouldNotFilter(String requestURI) {
+        // 더 정확한 경로 비교를 위해 startsWith 대신 equals 또는 정규식 사용을 고려할 수 있습니다.
         return EXCLUDED_PATHS.stream()
                 .anyMatch(requestURI::startsWith);
     }
