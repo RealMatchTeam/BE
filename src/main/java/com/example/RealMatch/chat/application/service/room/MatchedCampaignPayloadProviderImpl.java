@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class MatchedCampaignPayloadProviderImpl implements MatchedCampaignPayloadProvider {
 
     private static final String DEFAULT_CURRENCY = "KRW";
-    private static final String DEFAULT_MESSAGE = "매칭이 완료되었습니다.";
+    private static final String DEFAULT_MESSAGE = "*결제 대금은 캠페인 종료 후 크리에이터에게 전달됩니다";
 
     private final CampaignRepository campaignRepository;
 
