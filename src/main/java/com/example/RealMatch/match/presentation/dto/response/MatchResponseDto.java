@@ -13,7 +13,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MatchResponseDto {
 
+    private String username;
     private String userType;
+    private String userTypeImage;
     private List<String> typeTag;
     private HighMatchingBrandListDto highMatchingBrandList;
 
