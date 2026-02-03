@@ -25,11 +25,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // JWT 검증을 건너뛸 경로들
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
             "/login",
-            "/oauth2/",
-            "/login/oauth2/",
+            "/oauth2",
+            "/login/oauth2",
             "/oauth/callback",
-            "/v3/api-docs/**",
+            "/v3/api-docs",
             "/swagger-ui",
+            "/swagger-ui.html",
             "/swagger-resources"
     );
 
@@ -49,8 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
+        if (!authHeader.startsWith("Bearer ")) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Authorization header");
             return;
         }
 
@@ -67,7 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            masterUser.getUserId().toString(), // Principal을 userId(String)로 설정
+                            masterUser,
                             null,
                             masterUser.getAuthorities()
                     );
@@ -78,7 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (!jwtProvider.validateToken(token)) {
-            filterChain.doFilter(request, response);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
             return;
         }
 
@@ -92,7 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                        userDetails.getUserId().toString(), // Principal을 userId(String)로 설정
+                        userDetails,
                         null,
                         userDetails.getAuthorities()
                 );
