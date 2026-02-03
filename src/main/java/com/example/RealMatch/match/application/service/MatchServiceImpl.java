@@ -516,7 +516,9 @@ public class MatchServiceImpl implements MatchService {
                 .brandMatchingRatio(history.getMatchingRatio() != null ? history.getMatchingRatio().intValue() : 0)
                 .brandIsLiked(likedBrandIds.contains(brand.getId()))
                 .brandIsRecruiting(recruitingBrandIds.contains(brand.getId()))
-                .brandTags(List.of())
+                .brandTags(brand.getBrandTags().stream()
+                        .map(brandTag -> brandTag.getTag().getTagName())
+                        .toList())
                 .build();
     }
 
