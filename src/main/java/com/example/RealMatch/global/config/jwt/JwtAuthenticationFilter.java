@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/oauth2/",
             "/login/oauth2/",
             "/oauth/callback",
-            "/v3/api-docs",
+            "/v3/api-docs/**",
             "/swagger-ui",
             "/swagger-resources"
     );
