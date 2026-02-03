@@ -22,7 +22,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
 
-    @Value("${oauth.redirect.base-url:http://realmatch.co.kr}")
+    @Value("${oauth.redirect.base-url:https://realmatch.co.kr}")
     private String frontendBaseUrl;
 
     @Override
