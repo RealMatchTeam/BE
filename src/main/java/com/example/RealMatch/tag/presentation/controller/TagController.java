@@ -27,7 +27,7 @@ public class TagController {
 
     @GetMapping("/fashion")
     @Operation(
-            summary = "패션 태그 조회",
+            summary = "패션 태그 조회 by 정윤철",
             description = "패션 태그 목록을 카테고리별로 조회합니다."
     )
     public CustomResponse<TagResponse> getFashionTags() {
@@ -39,7 +39,7 @@ public class TagController {
 
     @GetMapping("/beauty")
     @Operation(
-            summary = "뷰티 태그 조회",
+            summary = "뷰티 태그 조회 by 정윤철",
             description = "뷰티 태그 목록을 카테고리별로 조회합니다."
     )
     public CustomResponse<TagResponse> getBeautyTags() {
@@ -51,7 +51,7 @@ public class TagController {
 
     @GetMapping("/{tagType}")
     @Operation(
-            summary = "태그 타입별 조회",
+            summary = "태그 타입별 조회 by 정윤철",
             description = "지정된 태그 타입의 목록을 카테고리별로 조회합니다."
     )
     public CustomResponse<TagResponse> getTagsByType(
@@ -65,7 +65,7 @@ public class TagController {
 
     @GetMapping("/content")
     @Operation(
-            summary = "컨텐츠 태그 조회",
+            summary = "컨텐츠 태그 조회 by 정윤철",
             description = "컨텐츠 태그 목록을 조회합니다."
     )
     public CustomResponse<ContentTagResponse> getContentTags() {
