@@ -98,8 +98,14 @@ public class MatchServiceImpl implements MatchService {
         List<CampaignMatchResult> campaignResults = findMatchingCampaignResults(userDoc, userId);
         saveMatchHistory(userId, brandResults, campaignResults);
 
+        String username = userRepository.findById(userId)
+                .map(User::getName)
+                .orElse("사용자");
+
         return MatchResponseDto.builder()
+                .username(username)
                 .userType(userType)
+                .userTypeImage("https://ui-avatars.com/api/?name=" + userType + "&background=6366f1&color=fff&size=200")
                 .typeTag(typeTag)
                 .highMatchingBrandList(brandListDto)
                 .build();
