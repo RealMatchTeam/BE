@@ -163,8 +163,10 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
         // 협업중 여부 판단
         boolean isCollaborating = room.isCollaborating();
 
-        // 협업 요약 바 정보 조회 (제안이 있는 경우)
-        CampaignSummaryResponse campaignSummary = campaignSummaryService.getCampaignSummary(roomId);
+        // 협업 요약 바: 협업중일 때만 노출
+        CampaignSummaryResponse campaignSummary = isCollaborating
+                ? campaignSummaryService.getCampaignSummary(roomId)
+                : null;
 
         return new ChatRoomDetailResponse(
                 room.getId(),
