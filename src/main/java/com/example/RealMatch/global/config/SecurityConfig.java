@@ -47,7 +47,7 @@ public class SecurityConfig {
             "/actuator/health"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
-            "/api/test-auth"
+            "/api/test-auth", "/api/v1/campaigns/**"
     };
 
     @Value("${swagger.server-url}")
