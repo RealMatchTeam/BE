@@ -42,7 +42,7 @@ public class SecurityConfig {
             "/api/test",
             "/api/login/success",
             "/ws/**",
-            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui.html",
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**",
             "/api/v1/tags/**",
             "/actuator/health"};
 
