@@ -38,8 +38,7 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
     @Query("""
         select distinct cp
         from CampaignProposal cp
-        left join fetch cp.tags t
-        left join fetch t.tagContent
+        left join fetch cp.tags
         where cp.id = :proposalId
     """)
     Optional<CampaignProposal> findByIdWithTags(Long proposalId);

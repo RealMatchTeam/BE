@@ -63,7 +63,7 @@ public class CampaignProposalRequestDto {
     private LocalDate endDate;
 
     public record CampaignContentTagRequest(
-            @NotNull Long id,
+            @NotBlank String name,
             String customValue
     ) {}
 

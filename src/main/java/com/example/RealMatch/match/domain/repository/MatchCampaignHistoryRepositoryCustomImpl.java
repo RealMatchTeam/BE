@@ -1,7 +1,7 @@
 package com.example.RealMatch.match.domain.repository;
 
 import static com.example.RealMatch.brand.domain.entity.QBrand.brand;
-import static com.example.RealMatch.business.domain.entity.QCampaignTag.campaignTag;
+import static com.example.RealMatch.tag.domain.entity.QCampaignTag.campaignTag;
 import static com.example.RealMatch.campaign.domain.entity.QCampaign.campaign;
 import static com.example.RealMatch.match.domain.entity.QMatchCampaignHistory.matchCampaignHistory;
 

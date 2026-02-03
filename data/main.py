@@ -179,11 +179,11 @@ def main():
                         help='생성할 브랜드 수 (기본값: 20)')
     parser.add_argument('--campaigns', type=int, default=30000,
                         help='생성할 캠페인 수 (기본값: 30)')
-    parser.add_argument('--rooms', type=int, default=2000,
+    parser.add_argument('--rooms', type=int, default=1,
                         help='생성할 채팅방 수 (기본값: 20)')
-    parser.add_argument('--messages', type=int, default=10,
+    parser.add_argument('--messages', type=int, default=1,
                         help='채팅방당 메시지 수 (기본값: 10)')
-    parser.add_argument('--applies', type=int, default=10,
+    parser.add_argument('--applies', type=int, default=1,
                         help='캠페인당 지원 수 (기본값: 3)')
     parser.add_argument('--all', type=int,
                         help='모든 항목에 동일한 개수 적용')

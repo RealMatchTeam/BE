@@ -10,7 +10,6 @@ import java.util.Map;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.entity.CampaignContentTag;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
-import com.example.RealMatch.tag.presentation.dto.response.ContentTagResponse;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -41,7 +40,7 @@ public class CampaignDetailResponse {
 
     private Integer quota;
 
-    private ContentTagResponse contentTags;
+    private CampaignTagResponse contentTags;
 
     public static CampaignDetailResponse from(
             Campaign campaign,
@@ -61,14 +60,14 @@ public class CampaignDetailResponse {
                 .recruitStartDate(campaign.getRecruitStartDate())
                 .recruitEndDate(campaign.getRecruitEndDate())
                 .quota(campaign.getQuota())
-                .contentTags(toContentTagResponse(tags))
+                .contentTags(toCampaignTagResponse(tags))
                 .build();
     }
 
-    private static ContentTagResponse toContentTagResponse(
+    private static CampaignTagResponse toCampaignTagResponse(
             List<CampaignContentTag> tags
     ) {
-        Map<ContentTagType, List<ContentTagResponse.TagItemResponse>> map =
+        Map<ContentTagType, List<CampaignTagResponse.TagItemResponse>> map =
                 new EnumMap<>(ContentTagType.class);
 
         for (CampaignContentTag tag : tags) {
@@ -78,11 +77,7 @@ public class CampaignDetailResponse {
                     .add(toTagItem(tag));
         }
 
-        return new ContentTagResponse(
-                map.getOrDefault(ContentTagType.VIEWER_GENDER, List.of()),
-                map.getOrDefault(ContentTagType.VIEWER_AGE, List.of()),
-                map.getOrDefault(ContentTagType.AVG_VIDEO_LENGTH, List.of()),
-                map.getOrDefault(ContentTagType.AVG_VIDEO_VIEWS, List.of()),
+        return new CampaignTagResponse(
                 map.getOrDefault(ContentTagType.FORMAT, List.of()),
                 map.getOrDefault(ContentTagType.CATEGORY, List.of()),
                 map.getOrDefault(ContentTagType.TONE, List.of()),
@@ -91,10 +86,10 @@ public class CampaignDetailResponse {
         );
     }
 
-    private static ContentTagResponse.TagItemResponse toTagItem(
+    private static CampaignTagResponse.TagItemResponse toTagItem(
             CampaignContentTag tag
     ) {
-        return new ContentTagResponse.TagItemResponse(
+        return new CampaignTagResponse.TagItemResponse(
                 tag.getTagContent().getId(),
                 resolveTagName(tag)
         );

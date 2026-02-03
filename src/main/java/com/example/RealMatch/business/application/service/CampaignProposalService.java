@@ -1,9 +1,6 @@
 package com.example.RealMatch.business.application.service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +11,7 @@ import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.entity.CampaignProposalContentTag;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.business.domain.enums.ProposalTagType;
 import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
 import com.example.RealMatch.business.exception.BusinessErrorCode;
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
@@ -23,8 +21,6 @@ import com.example.RealMatch.campaign.exception.CampaignErrorCode;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
-import com.example.RealMatch.tag.domain.entity.TagContent;
-import com.example.RealMatch.tag.domain.repository.TagContentRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.UserRepository;
@@ -38,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 public class CampaignProposalService {
 
     private final CampaignProposalRepository campaignProposalRepository;
-    private final TagContentRepository tagContentRepository;
     private final UserRepository userRepository;
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
@@ -130,42 +125,24 @@ public class CampaignProposalService {
 
 
     private void saveAllContentTags(CampaignProposalRequestDto request, CampaignProposal proposal) {
-        saveContentTags(proposal, request.getFormats());
-        saveContentTags(proposal, request.getCategories());
-        saveContentTags(proposal, request.getTones());
-        saveContentTags(proposal, request.getInvolvements());
-        saveContentTags(proposal, request.getUsageRanges());
+        saveContentTags(proposal, ProposalTagType.FORMAT, request.getFormats());
+        saveContentTags(proposal, ProposalTagType.CATEGORY, request.getCategories());
+        saveContentTags(proposal, ProposalTagType.TONE, request.getTones());
+        saveContentTags(proposal, ProposalTagType.INVOLVEMENT, request.getInvolvements());
+        saveContentTags(proposal, ProposalTagType.USAGE_RANGE, request.getUsageRanges());
     }
-
 
     private void saveContentTags(
             CampaignProposal proposal,
+            ProposalTagType tagType,
             List<CampaignProposalRequestDto.CampaignContentTagRequest> tagRequests
     ) {
-        // 1. tagId(Long) 수집
-        List<Long> tagIds = tagRequests.stream()
-                .map(CampaignProposalRequestDto.CampaignContentTagRequest::id)
-                .toList();
-
-        List<TagContent> tagContents = tagContentRepository.findAllById(tagIds);
-        if (tagContents.size() != tagIds.size()) {
-            throw new IllegalArgumentException("존재하지 않는 태그가 포함되어 있습니다.");
-        }
-        // 3. Map<Long, TagContent> 변환
-        Map<Long, TagContent> tagMap = tagContents.stream()
-                .collect(Collectors.toMap(
-                        TagContent::getId,
-                        Function.identity()
-                ));
-
-        // 4. 매핑
         for (CampaignProposalRequestDto.CampaignContentTagRequest tagRequest : tagRequests) {
-            TagContent tag = tagMap.get(tagRequest.id());
-
             proposal.addTag(
                     CampaignProposalContentTag.create(
                             proposal,
-                            tag,
+                            tagType,
+                            tagRequest.name(),
                             tagRequest.customValue()
                     )
             );

@@ -3,6 +3,7 @@ package com.example.RealMatch.global.config;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -43,7 +44,7 @@ public class SecurityConfig {
             "/api/login/success",
             "/ws/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**",
-            "/api/v1/tags/**",
+            "/api/v1/tags/**", "/api/v1/**",
             "/actuator/health"};
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
@@ -75,6 +76,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler))
 
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**", "/oauth2/**", "/ws/**").permitAll()
                         .requestMatchers(REQUEST_AUTHENTICATED_ARRAY).authenticated()
                         .requestMatchers(PERMIT_ALL_URL_ARRAY).permitAll()
                         .anyRequest().authenticated())

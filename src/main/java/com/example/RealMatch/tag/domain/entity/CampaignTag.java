@@ -1,4 +1,4 @@
-package com.example.RealMatch.business.domain.entity;
+package com.example.RealMatch.tag.domain.entity;
 
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "campaign_fashion_tag",
+        name = "campaign_tag",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"campaign_id", "tag_id"})
         }

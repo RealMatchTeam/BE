@@ -1,10 +1,12 @@
 package com.example.RealMatch.business.domain.entity;
 
+import com.example.RealMatch.business.domain.enums.ProposalTagType;
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.tag.domain.entity.TagContent;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "campaign_proposal_content_tag",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"campaign_proposal_id", "content_tag_id"})
+                @UniqueConstraint(columnNames = {"campaign_proposal_id", "tag_type", "tag_name"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,40 +39,50 @@ public class CampaignProposalContentTag extends BaseEntity {
     @JoinColumn(name = "campaign_proposal_id", nullable = false)
     private CampaignProposal campaignProposal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "content_tag_id", nullable = false)
-    private TagContent tagContent;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tag_type", nullable = false, length = 20)
+    private ProposalTagType tagType;
 
-    @Column(name = "custom_tag_value")
+    @Column(name = "tag_name", nullable = false, length = 100)
+    private String tagName;
+
+    @Column(name = "custom_tag_value", length = 255)
     private String customTagValue;
 
     @Builder
     public CampaignProposalContentTag(
             CampaignProposal campaignProposal,
-            TagContent tagContent,
+            ProposalTagType tagType,
+            String tagName,
             String customTagValue
     ) {
         this.campaignProposal = campaignProposal;
-        this.tagContent = tagContent;
-        this.customTagValue = customTagValue;
+        this.tagType = tagType;
+        this.tagName = tagName;
+        this.customTagValue = normalize(customTagValue);
     }
 
     public static CampaignProposalContentTag create(
             CampaignProposal campaignProposal,
-            TagContent tagContent,
+            ProposalTagType tagType,
+            String tagName,
             String customTagValue
     ) {
         if (campaignProposal == null) {
             throw new IllegalArgumentException("campaignProposal은 null일 수 없습니다.");
         }
-        if (tagContent == null) {
-            throw new IllegalArgumentException("tagContent는 null일 수 없습니다.");
+        if (tagType == null) {
+            throw new IllegalArgumentException("tagType은 null일 수 없습니다.");
+        }
+        if (tagName == null || tagName.isBlank()) {
+            throw new IllegalArgumentException("tagName은 null이거나 비어있을 수 없습니다.");
         }
 
         return CampaignProposalContentTag.builder()
                 .campaignProposal(campaignProposal)
-                .tagContent(tagContent)
-                .customTagValue(normalize(customTagValue))
+                .tagType(tagType)
+                .tagName(tagName.trim())
+                .customTagValue(customTagValue)
                 .build();
     }
 
