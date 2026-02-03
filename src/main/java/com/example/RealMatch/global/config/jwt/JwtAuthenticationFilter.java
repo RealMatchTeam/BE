@@ -50,8 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (!authHeader.startsWith("Bearer ")) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid Authorization header");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT required");
             return;
         }
 
