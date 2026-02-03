@@ -71,6 +71,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<CustomResponse<?>> handleIllegalState(IllegalStateException e) {
         log.error("[IllegalStateException] {}", e.getMessage(), e);
+
+        // 보안 문제가 남아 있습니다. 시스템 연동 이후 반환 값을 null로 변환해주세요
         return ResponseEntity
                 .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
@@ -81,6 +83,7 @@ public class GlobalExceptionHandler {
 
         log.error("[UnexpectedException]", e);
 
+        // 보안 문제가 남아 있습니다. 시스템 연동 이후 반환 값을 null로 변환해주세요
         return ResponseEntity
                 .status(GeneralErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(CustomResponse.onFailure(GeneralErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
