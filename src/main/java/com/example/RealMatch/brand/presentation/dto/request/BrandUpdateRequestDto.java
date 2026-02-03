@@ -34,7 +34,6 @@ public class BrandUpdateRequestDto {
     @Getter
     @NoArgsConstructor
     public static class BrandMakeUpTagDto {
-        private List<String> skinType;
         private List<String> brandMakeUpStyle;
     }
 

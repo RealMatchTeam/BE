@@ -10,25 +10,35 @@ import lombok.Getter;
 public class BrandDetailResponseDto {
     private Long userId;
     private String brandName;
+    private String logoUrl;
+    private String simpleIntro;
+    private String detailIntro;
+    private String homepageUrl;
     private List<String> brandTag;
-    private String brandDescription;
     private Integer brandMatchingRatio;
     private Boolean brandIsLiked;
     private List<String> brandCategory;
     private BrandSkinCareTagDto brandSkinCareTag;
     private BrandMakeUpTagDto brandMakeUpTag;
+    private BrandClothingTagDto brandClothingTag;
 
     @Getter
     @Builder
     public static class BrandSkinCareTagDto {
-        private List<String> brandSkinType;
-        private List<String> brandMainFunction;
+        private List<String> skinType;
+        private List<String> mainFunction;
     }
 
     @Getter
     @Builder
     public static class BrandMakeUpTagDto {
-        private List<String> brandSkinType;
         private List<String> brandMakeUpStyle;
+    }
+
+    @Getter
+    @Builder
+    public static class BrandClothingTagDto {
+        private List<String> brandType;
+        private List<String> brandStyle;
     }
 }
