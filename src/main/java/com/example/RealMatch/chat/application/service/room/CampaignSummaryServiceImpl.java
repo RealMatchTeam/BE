@@ -99,7 +99,7 @@ public class CampaignSummaryServiceImpl implements CampaignSummaryService {
     private static CampaignSummarySponsorProductResponse toSummarySponsorProduct(BrandAvailableSponsor sponsor) {
         String thumbnailUrl = null;
         List<BrandSponsorImage> images = sponsor.getImages();
-        if (images != null && !images.isEmpty()) {
+        if (!images.isEmpty()) {
             thumbnailUrl = images.get(0).getImageUrl();
         }
         return new CampaignSummarySponsorProductResponse(
