@@ -44,7 +44,9 @@ public class SecurityConfig {
             "/ws/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**",
             "/api/v1/tags/**",
-            "/actuator/health"};
+            "/actuator/health",
+            "/api/v1/auth/signup"
+    };
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {
             "/api/test-auth", "/api/v1/campaigns/**"
