@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -53,6 +55,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class BrandService {
 
     private final BrandRepository brandRepository;
@@ -65,12 +68,13 @@ public class BrandService {
     private final UserRepository userRepository;
 
     private Long getCurrentUserId() {
-        String principal = SecurityContextHolder.getContext().getAuthentication().getName();
-        try {
-            return Long.parseLong(principal);
-        } catch (NumberFormatException e) {
-            throw new CustomException(GeneralErrorCode.UNAUTHORIZED);
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof CustomUserDetails) {
+            return ((CustomUserDetails) principal).getUserId();
         }
+        log.warn("Authentication principal is not of type CustomUserDetails: {}", principal.getClass().getName());
+        throw new CustomException(GeneralErrorCode.UNAUTHORIZED);
     }
 
     public BrandDetailResponseDto getBrandDetail(Long brandId) {
@@ -118,6 +122,7 @@ public class BrandService {
                 .build();
 
         return BrandDetailResponseDto.builder()
+                .userId(brand.getUser().getId())
                 .brandName(brand.getBrandName())
                 .brandTag(brandTagNames)
                 .brandDescription(brand.getDetailIntro())

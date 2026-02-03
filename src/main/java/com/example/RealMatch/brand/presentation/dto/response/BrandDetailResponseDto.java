@@ -8,6 +8,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class BrandDetailResponseDto {
+    private Long userId;
     private String brandName;
     private List<String> brandTag;
     private String brandDescription;

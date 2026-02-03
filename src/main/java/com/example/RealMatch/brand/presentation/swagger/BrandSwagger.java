@@ -2,6 +2,7 @@ package com.example.RealMatch.brand.presentation.swagger;
 
 import java.util.List;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -127,7 +128,7 @@ public interface BrandSwagger {
 
     @Operation(summary = "브랜드 전체 목록 조회 (페이징)", description = "등록된 모든 브랜드의 리스트를 페이징하여 반환합니다.")
     CustomResponse<Page<BrandListResponseDto>> getAllBrands(
-            @Parameter(description = "페이지 정보 (예: ?page=0&size=10)") Pageable pageable
+            @ParameterObject Pageable pageable
     );
 
 }
