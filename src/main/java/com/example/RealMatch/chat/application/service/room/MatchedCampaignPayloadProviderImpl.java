@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 public class MatchedCampaignPayloadProviderImpl implements MatchedCampaignPayloadProvider {
 
     private static final String DEFAULT_CURRENCY = "KRW";
-    private static final String DEFAULT_MESSAGE = "*결제 대금은 캠페인 종료 후 크리에이터에게 전달됩니다";
 
     private final CampaignRepository campaignRepository;
 
@@ -32,14 +31,13 @@ public class MatchedCampaignPayloadProviderImpl implements MatchedCampaignPayloa
     private ChatMatchedCampaignPayloadResponse toPayload(Campaign campaign) {
         // TODO: orderNumber - 결제/주문 도메인에서 주문 번호 확정 시 채팅으로 전달하거나,
         //       ProposalStatusChangedEvent(또는 매칭 완료 이벤트)에 orderNumber 포함 후 여기서 사용
-        // TODO: message - 필요 시 이벤트/설정에서 내려주도록 확장
         return new ChatMatchedCampaignPayloadResponse(
                 campaign.getId(),
                 campaign.getTitle(),
                 campaign.getRewardAmount() != null ? campaign.getRewardAmount() : 0L,
                 DEFAULT_CURRENCY,
                 "",
-                DEFAULT_MESSAGE
+                null
         );
     }
 }
