@@ -37,6 +37,7 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
@@ -49,10 +50,11 @@ import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class BrandService {
 
     private final BrandRepository brandRepository;
@@ -65,12 +67,13 @@ public class BrandService {
     private final UserRepository userRepository;
 
     private Long getCurrentUserId() {
-        String principal = SecurityContextHolder.getContext().getAuthentication().getName();
-        try {
-            return Long.parseLong(principal);
-        } catch (NumberFormatException e) {
-            throw new CustomException(GeneralErrorCode.UNAUTHORIZED);
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof CustomUserDetails) {
+            return ((CustomUserDetails) principal).getUserId();
         }
+        log.warn("Authentication principal is not of type CustomUserDetails: {}", principal.getClass().getName());
+        throw new CustomException(GeneralErrorCode.UNAUTHORIZED);
     }
 
     public BrandDetailResponseDto getBrandDetail(Long brandId) {
@@ -118,6 +121,7 @@ public class BrandService {
                 .build();
 
         return BrandDetailResponseDto.builder()
+                .userId(brand.getUser().getId())
                 .brandName(brand.getBrandName())
                 .brandTag(brandTagNames)
                 .brandDescription(brand.getDetailIntro())

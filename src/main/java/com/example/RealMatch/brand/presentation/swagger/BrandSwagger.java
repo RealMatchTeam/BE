@@ -2,6 +2,7 @@ package com.example.RealMatch.brand.presentation.swagger;
 
 import java.util.List;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Brand", description = "브랜드 API")
 public interface BrandSwagger {
 
-    @Operation(summary = "브랜드 생성", description = "새로운 브랜드를 등록합니다.")
+    @Operation(summary = "브랜드 생성 by 이예림", description = "새로운 브랜드를 등록합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "생성 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청",
@@ -60,7 +61,7 @@ public interface BrandSwagger {
             BrandCreateRequestDto requestDto
     );
 
-    @Operation(summary = "브랜드 상세 조회", description = "브랜드 ID로 상세 정보를 조회합니다.")
+    @Operation(summary = "브랜드 상세 조회 by 이예림", description = "브랜드 ID로 상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드",
@@ -70,7 +71,7 @@ public interface BrandSwagger {
             @Parameter(description = "조회할 브랜드의 ID", required = true) @PathVariable Long brandId
     );
 
-    @Operation(summary = "브랜드 좋아요 토글", description = "브랜드 ID로 좋아요를 추가하거나 취소합니다.")
+    @Operation(summary = "브랜드 좋아요 토글 by 이예림", description = "브랜드 ID로 좋아요를 추가하거나 취소합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "토글 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드",
@@ -80,13 +81,13 @@ public interface BrandSwagger {
             @Parameter(description = "좋아요 토글할 브랜드의 ID", required = true) @PathVariable Long brandId
     );
 
-    @Operation(summary = "브랜드 필터 옵션 조회", description = "브랜드 필터링에 사용될 옵션들을 조회합니다.")
+    @Operation(summary = "브랜드 필터 옵션 조회 by 이예림", description = "브랜드 필터링에 사용될 옵션들을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공")
     })
     CustomResponse<List<BrandFilterResponseDto>> getBrandFilters();
 
-    @Operation(summary = "협찬 가능 제품 상세 조회", description = "브랜드의 특정 협찬 가능 제품 상세 정보를 조회합니다.")
+    @Operation(summary = "협찬 가능 제품 상세 조회 by 이예림", description = "브랜드의 특정 협찬 가능 제품 상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청",
@@ -99,12 +100,12 @@ public interface BrandSwagger {
             @Parameter(description = "제품 ID", required = true) @PathVariable Long productId
     );
 
-    @Operation(summary = "브랜드 협찬 가능 제품 리스트 조회", description = "특정 브랜드의 협찬 가능 제품 목록을 조회합니다.")
+    @Operation(summary = "브랜드 협찬 가능 제품 리스트 조회 by 이예림", description = "특정 브랜드의 협찬 가능 제품 목록을 조회합니다.")
     CustomResponse<List<SponsorProductListResponseDto>> getSponsorProducts(
             @Parameter(description = "브랜드 ID", required = true) @PathVariable Long brandId
     );
 
-    @Operation(summary = "브랜드 정보 수정", description = "특정 브랜드의 정보를 수정합니다.")
+    @Operation(summary = "브랜드 정보 수정 by 이예림", description = "특정 브랜드의 정보를 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "수정 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드",
@@ -115,7 +116,7 @@ public interface BrandSwagger {
             @RequestBody(description = "수정할 브랜드 정보") BrandUpdateRequestDto requestDto
     );
 
-    @Operation(summary = "브랜드 삭제", description = "브랜드 ID로 브랜드를 삭제합니다. (소프트 삭제)")
+    @Operation(summary = "브랜드 삭제 by 이예림", description = "브랜드 ID로 브랜드를 삭제합니다. (소프트 삭제)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드",
@@ -125,9 +126,18 @@ public interface BrandSwagger {
             @Parameter(description = "삭제할 브랜드의 ID", required = true) @PathVariable Long brandId
     );
 
-    @Operation(summary = "브랜드 전체 목록 조회 (페이징)", description = "등록된 모든 브랜드의 리스트를 페이징하여 반환합니다.")
+    @Operation(summary = "브랜드 전체 목록 조회 (페이징) by 이예림", description = "등록된 모든 브랜드의 리스트를 페이징하여 반환합니다.")
     CustomResponse<Page<BrandListResponseDto>> getAllBrands(
-            @Parameter(description = "페이지 정보 (예: ?page=0&size=10)") Pageable pageable
+            @ParameterObject Pageable pageable
     );
 
+    @Operation(summary = "유저 ID로 브랜드 ID 조회 by 이예림", description = "유저 ID에 해당하는 브랜드 ID를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 유저 또는 브랜드",
+                    content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+    })
+    ResponseEntity<Long> getBrandIdByUserId(
+            @Parameter(description = "조회할 유저의 ID", required = true) @PathVariable Long userId
+    );
 }
