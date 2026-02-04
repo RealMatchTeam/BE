@@ -14,10 +14,11 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePay
 import lombok.RequiredArgsConstructor;
 
 /**
- * 시스템 메시지 핸들러의 공통 로직을 제공하는 추상 클래스
+ * 시스템 메시지 이벤트 처리의 공통 실행 템플릿.
  *
- * <p>멱등성 저장/판단은 SystemMessageRetrySender가 담당하며,
- * Base는 payload 생성 실패 및 sendAction 실패의 DLQ 통합 관리를 담당합니다.
+ * <p>payload 생성 및 전송 단계에서 발생하는 예외를 일관되게 처리하고,
+ * 실패 이벤트를 DLQ에 기록하여 추적성을 보장합니다.
+ * 실제 메시지 전송과 멱등성 판단은 외부 컴포넌트에 위임합니다.
  */
 @RequiredArgsConstructor
 public abstract class BaseSystemMessageHandler {
@@ -28,17 +29,17 @@ public abstract class BaseSystemMessageHandler {
     protected abstract Logger getLogger();
 
     /**
-     * 표준 실행 템플릿: payload 생성, 전송을 한 번에 처리합니다.
+     * 표준 실행 템플릿: payload 생성 및 전송을 한 번에 처리합니다.
      *
      * <p>처리 흐름:
      * <ol>
-     *   <li>payload 생성 (supplier) 실행 - 예외 발생 시 DLQ enqueue + 종료</li>
+     *   <li>payload 생성 (supplier) 실행 - 예외 발생 시 DLQ enqueue 후 종료</li>
      *   <li>sendAction 실행 - 예외 발생 시 DLQ enqueue</li>
      * </ol>
      *
      * @param meta 이벤트 메타데이터 (idempotencyKey, roomId, eventType)
      * @param contextData DLQ에 저장할 컨텍스트 데이터 (applyId, proposalId, campaignId, messageKind 등)
-     *                    null이어도 안전하게 처리되며, 실패 시 DLQ에 포함되어 추적성을 보장합니다.
+     *                    null이어도 안전하게 처리되며, 실패 시 DLQ에 포함되어 추적성을 보장합니다
      * @param payloadSupplier payload를 생성하는 supplier (예외 발생 시 DLQ enqueue)
      * @param sendAction payload를 받아서 전송하는 action (내부적으로 retrySender 호출, 예외 발생 시 DLQ enqueue)
      */

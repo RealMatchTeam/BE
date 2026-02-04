@@ -19,10 +19,11 @@ import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatApplyStatusNoticePayloadResponse;
 
 /**
- * 지원(Apply) 관련 시스템 메시지 처리를 담당하는 핸들러
- * 
- * <p>역할: 오케스트레이션 (payload 준비, roomId 찾기, 메시지 종류 결정, 멱등성 키 결정)
- * <p>실제 전송/재시도/멱등성/DLQ는 Base의 execute 메서드와 SystemMessageRetrySender가 담당합니다.
+ * 지원(Apply) 시스템 메시지 이벤트 핸들러.
+ *
+ * <p>이 클래스는 이벤트 오케스트레이션만 담당하며,
+ * 메시지 전송, 재시도, 멱등성, DLQ 처리는 공통 컴포넌트에 위임합니다.
+ * sendWithIdempotency의 반환값은 전송 성공이 아닌 이벤트 수락(accepted) 여부를 의미합니다.
  */
 @Component
 public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
@@ -51,7 +52,7 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
      */
     @Async
     public void handleApplySent(ApplySentEvent event) {
-        // 1. 논리적 검증 먼저 수행
+        // 논리적 검증
         if (event.roomId() == null || event.payload() == null) {
             LOG.warn("[Apply] Invalid event. eventId={}, roomId={}, payload={}",
                     event.eventId(), event.roomId(), event.payload());
@@ -61,34 +62,34 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
         LOG.info("[Apply] Processing apply sent. eventId={}, roomId={}, applyId={}, campaignId={}",
                 event.eventId(), event.roomId(), event.payload().applyId(), event.payload().campaignId());
 
-        // 2. 멱등성 키 결정 (deterministic)
-        String idempotencyKey = event.eventId(); // 이미 deterministic: "APPLY_SENT:{applyId}"
+        // 멱등성 키 결정 (deterministic: "APPLY_SENT:{applyId}")
+        String idempotencyKey = event.eventId();
 
-        // 3. eventMeta 생성
+        // 이벤트 메타데이터 생성
         SystemEventMeta meta = new SystemEventMeta(
                 idempotencyKey,
                 event.roomId(),
                 "ApplySentEvent"
         );
 
-        // 4. contextData 준비 (공통 키: messageKind, domainId 필수)
+        // 컨텍스트 데이터 준비 (공통 키: messageKind, domainId)
         Map<String, Object> contextData = new HashMap<>();
         contextData.put("messageKind", ChatSystemMessageKind.APPLY_CARD.toString());
         if (event.payload().applyId() != null) {
-            contextData.put("domainId", event.payload().applyId()); // 공통 키
+            contextData.put("domainId", event.payload().applyId());
             contextData.put("applyId", event.payload().applyId());
         }
         if (event.payload().campaignId() != null) {
             contextData.put("campaignId", event.payload().campaignId());
         }
 
-        // 5. Base의 execute 메서드 사용 (payload 생성은 이미 event에 있으므로 supplier로 감싸기)
+        // 공통 템플릿 실행
         execute(
                 meta,
                 contextData,
-                () -> event.payload(), // payload는 이미 event에 있음
+                () -> event.payload(),
                 payload -> {
-                    boolean sent = retrySender.sendWithIdempotency(
+                    boolean accepted = retrySender.sendWithIdempotency(
                             meta.idempotencyKey(),
                             meta.roomId(),
                             ChatSystemMessageKind.APPLY_CARD,
@@ -97,11 +98,12 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
                             contextData
                     );
 
-                    if (sent) {
-                        LOG.info("[Apply] System message sent. roomId={}, applyId={}, campaignId={}",
-                                meta.roomId(), event.payload().applyId(), event.payload().campaignId());
+                    if (accepted) {
+                        LOG.info("[Apply] System message event accepted. idempotencyKey={}, roomId={}, applyId={}, kind={}",
+                                meta.idempotencyKey(), meta.roomId(), event.payload().applyId(), ChatSystemMessageKind.APPLY_CARD);
                     } else {
-                        LOG.warn("[Apply] Duplicate event, skipped. idempotencyKey={}", meta.idempotencyKey());
+                        LOG.warn("[Apply] System message event skipped (duplicate or logical failure). idempotencyKey={}, roomId={}, applyId={}, kind={}",
+                                meta.idempotencyKey(), meta.roomId(), event.payload().applyId(), ChatSystemMessageKind.APPLY_CARD);
                     }
                 }
         );
@@ -113,13 +115,12 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
      */
     @Async
     public void handleApplyStatusChanged(ApplyStatusChangedEvent event) {
-        // 1. 채팅방 조회 (논리적 검증을 먼저 수행)
+        // 채팅방 조회 (논리적 검증)
         Optional<Long> roomIdOpt = chatRoomQueryService.getRoomIdByUserPair(
                 event.brandUserId(), event.creatorUserId());
         if (roomIdOpt.isEmpty()) {
             LOG.warn("[Apply] Chat room not found. eventId={}, applyId={}, brandUserId={}, creatorUserId={}",
                     event.eventId(), event.applyId(), event.brandUserId(), event.creatorUserId());
-            // 논리적 실패는 Redis 키를 남기지 않음
             return;
         }
         Long roomId = roomIdOpt.get();
@@ -127,30 +128,28 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
         LOG.info("[Apply] Processing status change. eventId={}, applyId={}, newStatus={}, brandUserId={}, creatorUserId={}",
                 event.eventId(), event.applyId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
 
-        // 2. 상태 변경 알림 메시지 전송 (별도 멱등성 키)
-        // event.eventId()는 "APPLY_STATUS_CHANGED:{applyId}:{newStatus}" 형태로 유니크함
-        // ":NOTICE"를 붙여 "APPLY_STATUS_CHANGED:{applyId}:{newStatus}:NOTICE" 형태로 구분
+        // 멱등성 키 결정 (NOTICE suffix)
         String statusNoticeKey = String.format("%s:NOTICE", event.eventId());
-        
-        // 3. eventMeta 생성
+
+        // 이벤트 메타데이터 생성
         SystemEventMeta meta = new SystemEventMeta(
                 statusNoticeKey,
                 roomId,
                 "ApplyStatusChangedEvent"
         );
 
-        // 4. contextData 준비 (공통 키: messageKind, domainId 필수)
+        // 컨텍스트 데이터 준비
         Map<String, Object> contextData = new HashMap<>();
         contextData.put("messageKind", ChatSystemMessageKind.APPLY_STATUS_NOTICE.toString());
         if (event.applyId() != null) {
-            contextData.put("domainId", event.applyId()); // 공통 키
+            contextData.put("domainId", event.applyId());
             contextData.put("applyId", event.applyId());
         }
         if (event.actorUserId() != null) {
             contextData.put("actorUserId", event.actorUserId());
         }
 
-        // 5. Base의 execute 메서드 사용
+        // 공통 템플릿 실행
         execute(
                 meta,
                 contextData,
@@ -160,7 +159,7 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
                         LocalDateTime.now()
                 ),
                 payload -> {
-                    retrySender.sendWithIdempotency(
+                    boolean accepted = retrySender.sendWithIdempotency(
                             meta.idempotencyKey(),
                             meta.roomId(),
                             ChatSystemMessageKind.APPLY_STATUS_NOTICE,
@@ -168,8 +167,14 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
                             meta.eventType(),
                             contextData
                     );
-                    LOG.info("[Apply] Status change processed. roomId={}, applyId={}, status={}",
-                            roomId, event.applyId(), event.newStatus());
+
+                    if (accepted) {
+                        LOG.info("[Apply] Status notice event accepted. idempotencyKey={}, roomId={}, applyId={}, status={}",
+                                meta.idempotencyKey(), meta.roomId(), event.applyId(), event.newStatus());
+                    } else {
+                        LOG.warn("[Apply] Status notice event skipped (duplicate or logical failure). idempotencyKey={}, roomId={}, applyId={}, status={}",
+                                meta.idempotencyKey(), meta.roomId(), event.applyId(), event.newStatus());
+                    }
                 }
         );
     }
