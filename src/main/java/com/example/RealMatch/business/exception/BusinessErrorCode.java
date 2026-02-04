@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 public enum BusinessErrorCode implements BaseErrorCode {
 
     CAMPAIGN_APPLY_ALREADY_APPLIED(HttpStatus.BAD_REQUEST, "BUSINESS_CAMPAIGN_APPLY_400_1", "이미 지원한 캠페인입니다."),
+    CAMPAIGN_APPLY_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "BUSINESS_CAMPAIGN_APPLY_400_2", "현재 상태에서는 캠페인 지원을 취소할 수 없습니다."),
+    CAMPAIGN_APPLY_FORBIDDEN(HttpStatus.FORBIDDEN, "BUSINESS_CAMPAIGN_APPLY_403_1", "해당 캠페인 지원 내역에 대한 권한이 없습니다."),
     CAMPAIGN_APPLY_NOT_FOUND(HttpStatus.NOT_FOUND, "BUSINESS_CAMPAIGN_APPLY_404_1", "캠페인 지원 내역이 없습니다."),
 
     CAMPAIGN_PROPOSAL_NOT_MODIFIABLE(HttpStatus.BAD_REQUEST, "BUSINESS_CAMPAIGN_PROPOSAL_400_1", "현재 상태에서는 캠페인 제안을 수정할 수 없습니다."),

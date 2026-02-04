@@ -30,7 +30,7 @@ public class CampaignApplyQueryService {
                 apply.getCampaign().getId(),
                 apply.getCampaign().getTitle(),
                 apply.getReason(),
-                apply.getProposalStatus()
+                apply.getApplyStatus()
         );
     }
 }

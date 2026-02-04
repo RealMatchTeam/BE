@@ -3,6 +3,7 @@ package com.example.RealMatch.business.presentation.swagger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -44,6 +45,20 @@ public interface CampaignApplySwagger {
     ResponseEntity<CampaignApplyDetailResponse> getMyApplyCampaignDetails(
             @Parameter(description = "캠페인 ID", example = "1")
             @PathVariable Long campaignId,
+            @AuthenticationPrincipal CustomUserDetails principal
+    );
+
+    @Operation(
+            summary = "캠페인 지원 취소하기 API by 박지영",
+            description = """
+                    내가 지원한 캠페인을 지원 취소합니다.
+                    
+                   /api/v1/campaigns/{campaignId}/apply/me에서 status의 상태가 CANCElED 인지 확인해주세요
+                    """
+    )
+    @PatchMapping("/apply/{campaignApplyId}/cancel")
+    CustomResponse<String> cancelCampaignApply(
+            @PathVariable Long campaignApplyId,
             @AuthenticationPrincipal CustomUserDetails principal
     );
 }

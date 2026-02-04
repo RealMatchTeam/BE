@@ -12,5 +12,5 @@ public class CampaignApplyDetailResponse {
     private Long campaignId;
     private String campaignTitle;
     private String campaignReason;
-    private ProposalStatus proposalStatus;
+    private ProposalStatus status;
 }
