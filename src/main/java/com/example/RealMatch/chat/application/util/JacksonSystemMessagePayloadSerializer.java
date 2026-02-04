@@ -3,6 +3,8 @@ package com.example.RealMatch.chat.application.util;
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
+import com.example.RealMatch.chat.presentation.dto.response.ChatApplyCardPayloadResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatApplyStatusNoticePayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatProposalStatusNoticePayloadResponse;
@@ -50,6 +52,8 @@ public class JacksonSystemMessagePayloadSerializer implements SystemMessagePaylo
             case PROPOSAL_CARD, RE_PROPOSAL_CARD -> ChatProposalCardPayloadResponse.class;
             case PROPOSAL_STATUS_NOTICE -> ChatProposalStatusNoticePayloadResponse.class;
             case MATCHED_CAMPAIGN_CARD -> ChatMatchedCampaignPayloadResponse.class;
+            case APPLY_CARD -> ChatApplyCardPayloadResponse.class;
+            case APPLY_STATUS_NOTICE -> ChatApplyStatusNoticePayloadResponse.class;
         };
     }
 }

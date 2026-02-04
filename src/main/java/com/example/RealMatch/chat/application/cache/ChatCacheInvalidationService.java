@@ -17,7 +17,9 @@ public class ChatCacheInvalidationService {
                     ChatSystemMessageKind.PROPOSAL_CARD,
                     ChatSystemMessageKind.RE_PROPOSAL_CARD,
                     ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE,
-                    ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD
+                    ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD,
+                    ChatSystemMessageKind.APPLY_CARD,
+                    ChatSystemMessageKind.APPLY_STATUS_NOTICE
             );
 
     private final ChatCacheEvictor chatCacheEvictor;

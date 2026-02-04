@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.application.event;
+package com.example.RealMatch.chat.application.event.proposal;
 
 import java.util.Optional;
 
@@ -35,30 +35,31 @@ public class CampaignProposalSentEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCampaignProposalSent(CampaignProposalSentEvent event) {
         if (event == null) {
-            LOG.warn("Invalid CampaignProposalSentEvent: event is null");
+            LOG.warn("[ProposalBoundary] Invalid CampaignProposalSentEvent: event is null");
             return;
         }
 
-        LOG.info("CampaignProposalSentEvent received. proposalId={}, isReProposal={}",
+        LOG.info("[ProposalBoundary] Received business event. proposalId={}, isReProposal={}",
                 event.proposalId(), event.isReProposal());
 
         Optional<Long> roomIdOpt = chatRoomQueryService.getRoomIdByUserPair(
                 event.brandUserId(), event.creatorUserId());
 
         if (roomIdOpt.isEmpty()) {
-            LOG.debug("Chat room not found for proposal. brandUserId={}, creatorUserId={}",
+            LOG.debug("[ProposalBoundary] Chat room not found. brandUserId={}, creatorUserId={}",
                     event.brandUserId(), event.creatorUserId());
             return;
         }
 
         Long roomId = roomIdOpt.get();
         ChatProposalCardPayloadResponse payload = createPayload(event);
+        String eventId = ProposalSentEvent.generateEventId(event.proposalId(), event.isReProposal());
 
-        ProposalSentEvent chatEvent = new ProposalSentEvent(roomId, payload, event.isReProposal());
+        ProposalSentEvent chatEvent = new ProposalSentEvent(eventId, roomId, payload, event.isReProposal());
         eventPublisher.publishEvent(chatEvent);
 
-        LOG.info("ProposalSentEvent published. roomId={}, proposalId={}, isReProposal={}",
-                roomId, event.proposalId(), event.isReProposal());
+        LOG.info("[ProposalBoundary] Published internal event. eventId={}, roomId={}, proposalId={}",
+                eventId, roomId, event.proposalId());
     }
 
     private ChatProposalCardPayloadResponse createPayload(CampaignProposalSentEvent event) {
