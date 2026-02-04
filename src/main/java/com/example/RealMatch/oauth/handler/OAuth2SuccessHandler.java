@@ -22,7 +22,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
 
-    @Value("${front.domain-url}:http://localhost:8080}")
+    @Value("${front.domain-url:http://localhost:8080}")
     private String frontendBaseUrl;
 
     @Override
