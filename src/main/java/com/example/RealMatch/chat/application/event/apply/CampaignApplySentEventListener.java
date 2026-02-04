@@ -49,7 +49,7 @@ public class CampaignApplySentEventListener {
 
         Long roomId = roomIdOpt.get();
         ChatApplyCardPayloadResponse payload = createPayload(event);
-        String eventId = ApplySentEvent.generateEventId(event.applyId(), event.campaignId());
+        String eventId = ApplySentEvent.generateEventId(event.applyId());
 
         ApplySentEvent chatEvent = new ApplySentEvent(eventId, roomId, payload);
         eventPublisher.publishEvent(chatEvent);
