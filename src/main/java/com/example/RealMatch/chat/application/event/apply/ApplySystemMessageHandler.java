@@ -1,18 +1,24 @@
 package com.example.RealMatch.chat.application.event.apply;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.chat.application.exception.ChatRoomNotFoundException;
+import com.example.RealMatch.chat.application.idempotency.FailedEventDlq;
+import com.example.RealMatch.chat.application.idempotency.ProcessedEventStore;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
+import com.example.RealMatch.chat.presentation.dto.response.ChatApplyCardPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatApplyStatusNoticePayloadResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -28,10 +34,10 @@ public class ApplySystemMessageHandler {
 
     private final ChatMessageSocketService chatMessageSocketService;
     private final ChatRoomQueryService chatRoomQueryService;
+    private final ProcessedEventStore processedEventStore;
+    private final FailedEventDlq failedEventDlq;
 
-    // 이벤트 중복 처리를 위한 간단한 인메모리 캐시 (프로덕션에서는 Redis 권장)
-    private final Set<String> processedEventIds = ConcurrentHashMap.newKeySet();
-    private static final int MAX_PROCESSED_EVENTS = 10000;
+    private static final Duration EVENT_IDEMPOTENCY_TTL = Duration.ofHours(6);
 
     /**
      * 지원 전송 이벤트 처리.
@@ -39,35 +45,40 @@ public class ApplySystemMessageHandler {
      */
     @Async
     public void handleApplySent(ApplySentEvent event) {
-        if (!validateAndMarkProcessed(event.eventId(), "ApplySentEvent")) {
+        // 1. 논리적 검증 먼저 수행
+        if (event.roomId() == null || event.payload() == null) {
+            LOG.warn("[Apply] Invalid event. eventId={}, roomId={}, payload={}",
+                    event.eventId(), event.roomId(), event.payload());
+            return;
+        }
+
+        // 2. Redis 멱등성 체크 (중복 방지용, 전송 전에만 체크)
+        if (!checkIfNotProcessed(event.eventId(), "ApplySentEvent")) {
             return;
         }
 
         try {
-            if (event.roomId() == null || event.payload() == null) {
-                LOG.warn("[Apply] Invalid event. roomId={}, payload={}",
-                        event.roomId(), event.payload());
-                return;
-            }
-
             LOG.info("[Apply] Processing apply sent. eventId={}, roomId={}, applyId={}, campaignId={}",
                     event.eventId(), event.roomId(), event.payload().applyId(), event.payload().campaignId());
 
-            chatMessageSocketService.sendSystemMessage(
-                    event.roomId(),
-                    ChatSystemMessageKind.APPLY_CARD,
-                    event.payload()
-            );
+            // 3. 전송 시도 (성공 시 Redis 키가 남음)
+            sendApplyCard(event.roomId(), event.payload(), event.eventId());
 
             LOG.info("[Apply] System message sent. roomId={}, applyId={}, campaignId={}",
                     event.roomId(), event.payload().applyId(), event.payload().campaignId());
 
+        } catch (IllegalArgumentException ex) {
+            // 논리적 실패: Redis 키 삭제
+            LOG.warn("[Apply] Logical failure. Removing Redis key. eventId={}, error={}",
+                    event.eventId(), ex.getMessage());
+            processedEventStore.removeProcessed(event.eventId());
         } catch (Exception ex) {
             LOG.error("[Apply] Failed to handle apply sent. eventId={}, roomId={}, applyId={}",
                     event.eventId(),
                     event.roomId(),
                     event.payload() != null ? event.payload().applyId() : null,
                     ex);
+            // 전송 실패 시 Redis 키는 유지됨 (재시도 방지, 최종 실패는 @Recover에서 처리)
         }
     }
 
@@ -77,7 +88,19 @@ public class ApplySystemMessageHandler {
      */
     @Async
     public void handleApplyStatusChanged(ApplyStatusChangedEvent event) {
-        if (!validateAndMarkProcessed(event.eventId(), "ApplyStatusChangedEvent")) {
+        // 1. 채팅방 조회 (논리적 검증을 먼저 수행)
+        Optional<Long> roomIdOpt = chatRoomQueryService.getRoomIdByUserPair(
+                event.brandUserId(), event.creatorUserId());
+        if (roomIdOpt.isEmpty()) {
+            LOG.warn("[Apply] Chat room not found. eventId={}, applyId={}, brandUserId={}, creatorUserId={}",
+                    event.eventId(), event.applyId(), event.brandUserId(), event.creatorUserId());
+            // 논리적 실패는 Redis 키를 남기지 않음
+            return;
+        }
+        Long roomId = roomIdOpt.get();
+
+        // 2. Redis 멱등성 체크 (중복 방지용, 전송 전에만 체크)
+        if (!checkIfNotProcessed(event.eventId(), "ApplyStatusChangedEvent")) {
             return;
         }
 
@@ -85,32 +108,17 @@ public class ApplySystemMessageHandler {
             LOG.info("[Apply] Processing status change. eventId={}, applyId={}, newStatus={}, brandUserId={}, creatorUserId={}",
                     event.eventId(), event.applyId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
 
-            // 1. 채팅방 조회
-            Optional<Long> roomIdOpt = chatRoomQueryService.getRoomIdByUserPair(
-                    event.brandUserId(), event.creatorUserId());
-            if (roomIdOpt.isEmpty()) {
-                LOG.debug("[Apply] Chat room not found. brandUserId={}, creatorUserId={}",
-                        event.brandUserId(), event.creatorUserId());
-                return;
-            }
-            Long roomId = roomIdOpt.get();
-
-            // 2. 상태 변경 알림 메시지 전송
-            ChatApplyStatusNoticePayloadResponse statusNoticePayload =
-                    new ChatApplyStatusNoticePayloadResponse(
-                            event.applyId(),
-                            event.actorUserId(),
-                            LocalDateTime.now()
-                    );
-            chatMessageSocketService.sendSystemMessage(
-                    roomId,
-                    ChatSystemMessageKind.APPLY_STATUS_NOTICE,
-                    statusNoticePayload
-            );
+            // 3. 상태 변경 알림 메시지 전송 (재시도 가능, 성공 시 Redis 키 유지)
+            sendApplyStatusNotice(roomId, event.applyId(), event.actorUserId(), event.eventId());
 
             LOG.info("[Apply] Status change processed. roomId={}, applyId={}, status={}",
                     roomId, event.applyId(), event.newStatus());
 
+        } catch (ChatRoomNotFoundException ex) {
+            // 논리적 실패: Redis 키 삭제
+            LOG.warn("[Apply] Logical failure (room not found). Removing Redis key. eventId={}",
+                    event.eventId());
+            processedEventStore.removeProcessed(event.eventId());
         } catch (Exception ex) {
             LOG.error("[Apply] Failed to handle status change. eventId={}, applyId={}, brandUserId={}, creatorUserId={}",
                     event.eventId(),
@@ -118,26 +126,126 @@ public class ApplySystemMessageHandler {
                     event.brandUserId(),
                     event.creatorUserId(),
                     ex);
+            // 전송 실패 시 Redis 키는 유지됨 (재시도 방지)
+            // 최종 실패는 @Recover에서 처리
         }
     }
 
     /**
-     * 이벤트 중복 처리 검증 및 마킹.
-     * @return true면 처리 진행, false면 중복이므로 스킵
+     * 지원 카드 전송 (재시도 가능)
+     * 전송 성공 시 Redis 키를 확실히 남깁니다.
      */
-    private boolean validateAndMarkProcessed(String eventId, String eventType) {
+    @Retryable(
+            retryFor = {Exception.class},
+            noRetryFor = {IllegalArgumentException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 200, multiplier = 2, maxDelay = 800)
+    )
+    private void sendApplyCard(Long roomId, ChatApplyCardPayloadResponse payload, String eventId) {
+        try {
+            LOG.info("[Apply] Attempting to send apply card. eventId={}, roomId={}, applyId={}",
+                    eventId, roomId, payload != null ? payload.applyId() : null);
+            chatMessageSocketService.sendSystemMessage(roomId, ChatSystemMessageKind.APPLY_CARD, payload);
+            // 전송 성공 후 Redis 키를 확실히 남김
+            processedEventStore.markAsProcessed(eventId, EVENT_IDEMPOTENCY_TTL);
+            LOG.info("[Apply] Apply card sent successfully. eventId={}, roomId={}", eventId, roomId);
+        } catch (Exception ex) {
+            // 재시도 가능한 예외는 Spring Retry가 처리
+            // 최종 실패는 @Recover에서 키 삭제
+            LOG.warn("[Apply] Failed to send apply card (will retry). eventId={}, roomId={}, error={}",
+                    eventId, roomId, ex.getMessage());
+            throw ex;
+        }
+    }
+
+    /**
+     * 지원 상태 변경 알림 메시지 전송 (재시도 가능)
+     * 전송 성공 시 Redis 키를 확실히 남깁니다.
+     */
+    @Retryable(
+            retryFor = {Exception.class},
+            noRetryFor = {ChatRoomNotFoundException.class, IllegalArgumentException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 200, multiplier = 2, maxDelay = 800)
+    )
+    private void sendApplyStatusNotice(Long roomId, Long applyId, Long actorUserId, String eventId) {
+        try {
+            LOG.info("[Apply] Attempting to send apply status notice. eventId={}, roomId={}, applyId={}",
+                    eventId, roomId, applyId);
+            ChatApplyStatusNoticePayloadResponse statusNoticePayload =
+                    new ChatApplyStatusNoticePayloadResponse(
+                            applyId,
+                            actorUserId,
+                            LocalDateTime.now()
+                    );
+            chatMessageSocketService.sendSystemMessage(
+                    roomId,
+                    ChatSystemMessageKind.APPLY_STATUS_NOTICE,
+                    statusNoticePayload
+            );
+            // 전송 성공 후 Redis 키를 확실히 남김
+            processedEventStore.markAsProcessed(eventId, EVENT_IDEMPOTENCY_TTL);
+            LOG.info("[Apply] Apply status notice sent successfully. eventId={}, roomId={}", eventId, roomId);
+        } catch (Exception ex) {
+            // 재시도 가능한 예외는 Spring Retry가 처리
+            // 최종 실패는 @Recover에서 키 삭제
+            LOG.warn("[Apply] Failed to send apply status notice (will retry). eventId={}, roomId={}, error={}",
+                    eventId, roomId, ex.getMessage());
+            throw ex;
+        }
+    }
+
+    /**
+     * 지원 카드 전송 실패 시 복구 처리
+     */
+    @Recover
+    private void recoverApplyCard(Exception ex, Long roomId, ChatApplyCardPayloadResponse payload, String eventId) {
+        // 전송 실패 시 Redis 키 삭제 (재시도 가능하도록)
+        processedEventStore.removeProcessed(eventId);
+        LOG.error("[Apply] Failed to send apply card after all retries (3 attempts). " +
+                        "eventId={}, roomId={}, applyId={}, Redis key removed",
+                eventId, roomId, payload != null ? payload.applyId() : null, ex);
+        failedEventDlq.enqueueFailedEvent(
+                "ApplySentEvent",
+                eventId,
+                roomId,
+                ex.getMessage(),
+                java.util.Map.of("applyId", payload != null ? payload.applyId() : null)
+        );
+    }
+
+    /**
+     * 지원 상태 변경 알림 메시지 전송 실패 시 복구 처리
+     */
+    @Recover
+    private void recoverApplyStatusNotice(Exception ex, Long roomId, Long applyId, Long actorUserId, String eventId) {
+        // 전송 실패 시 Redis 키 삭제 (재시도 가능하도록)
+        processedEventStore.removeProcessed(eventId);
+        LOG.error("[Apply] Failed to send apply status notice after all retries (3 attempts). " +
+                        "eventId={}, roomId={}, applyId={}, actorUserId={}, Redis key removed",
+                eventId, roomId, applyId, actorUserId, ex);
+        failedEventDlq.enqueueFailedEvent(
+                "ApplyStatusChangedEvent",
+                eventId,
+                roomId,
+                ex.getMessage(),
+                java.util.Map.of("applyId", applyId, "actorUserId", actorUserId)
+        );
+    }
+
+    /**
+     * 이벤트 중복 처리 검증 (Redis 기반, 전송 전 체크만)
+     * 전송 성공 후에는 markAsProcessed()를 호출하여 키를 확실히 남깁니다.
+     */
+    private boolean checkIfNotProcessed(String eventId, String eventType) {
         if (eventId == null) {
-            LOG.warn("[Apply] {} has null eventId, skipping duplicate check", eventType);
-            return true;
+            LOG.error("[Apply] {} has null eventId, this should never happen. Rejecting event.", eventType);
+            throw new IllegalStateException("Event ID cannot be null for " + eventType);
         }
 
-        // 캐시 크기 제한 (간단한 구현, 프로덕션에서는 TTL 기반 Redis 권장)
-        if (processedEventIds.size() > MAX_PROCESSED_EVENTS) {
-            processedEventIds.clear();
-            LOG.info("[Apply] Cleared processed event cache (size exceeded)");
-        }
-
-        if (!processedEventIds.add(eventId)) {
+        // 중복 체크만 수행 (키는 전송 성공 후에만 남김)
+        boolean isNewEvent = processedEventStore.markIfNotProcessed(eventId, EVENT_IDEMPOTENCY_TTL);
+        if (!isNewEvent) {
             LOG.warn("[Apply] Duplicate {} detected, skipping. eventId={}", eventType, eventId);
             return false;
         }

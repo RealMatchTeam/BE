@@ -1,5 +1,7 @@
 package com.example.RealMatch.chat.application.event.proposal;
 
+import java.util.UUID;
+
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 
 /**
@@ -7,15 +9,21 @@ import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
  * 비즈니스 이벤트(CampaignProposalStatusChangedEvent)를 변환한 결과물입니다.
  */
 public record ProposalStatusChangedEvent(
-        String eventId,      // 이벤트 중복 처리용 고유 ID
+        String eventId,      // 이벤트 중복 처리용 고유 ID (UUID 기반)
         Long proposalId,
         Long campaignId,
         Long brandUserId,
         Long creatorUserId,
         ChatProposalStatus newStatus,
-        Long actorUserId     // 상태 변경을 수행한 사용자 ID (수락/거절한 사용자)
+        Long actorUserId     // 상태 변경을 수행한 사용자 ID (수락/거절/취소한 사용자)
 ) {
     public static String generateEventId(Long proposalId, ChatProposalStatus newStatus) {
-        return String.format("PROPOSAL_STATUS:%d:%s:%d", proposalId, newStatus, System.currentTimeMillis());
+        if (proposalId == null) {
+            throw new IllegalArgumentException("proposalId cannot be null");
+        }
+        if (newStatus == null) {
+            throw new IllegalArgumentException("newStatus cannot be null");
+        }
+        return String.format("PROPOSAL_STATUS_CHANGED:%d:%s:%s", proposalId, newStatus, UUID.randomUUID().toString());
     }
 }

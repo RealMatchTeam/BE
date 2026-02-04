@@ -56,13 +56,16 @@ public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
 
         if (room == null) {
-            LOG.warn("Chat room not found for proposal status update. brandUserId={}, creatorUserId={}, status={}",
-                    brandUserId, creatorUserId, status);
+            String message = String.format(
+                    "Chat room not found for proposal status update. brandUserId=%d, creatorUserId=%d, status=%s",
+                    brandUserId, creatorUserId, status
+            );
+            LOG.warn("[ChatRoomUpdate] {}. This may indicate a data inconsistency.", message);
             return;
         }
 
         room.updateProposalStatus(status);
-        LOG.debug("Chat room proposal status updated. roomId={}, status={}", room.getId(), status);
+        LOG.debug("[ChatRoomUpdate] Chat room proposal status updated. roomId={}, status={}", room.getId(), status);
 
         afterCommitExecutor.execute(() -> {
             cacheInvalidationService.invalidateAfterProposalStatusChanged(
