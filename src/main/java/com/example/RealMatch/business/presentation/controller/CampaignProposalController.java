@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.business.application.service.CampaignProposalQueryService;
 import com.example.RealMatch.business.application.service.CampaignProposalService;
+import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRejectRequest;
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
 import com.example.RealMatch.business.presentation.dto.response.CampaignProposalDetailResponse;
 import com.example.RealMatch.business.presentation.swagger.CampaignProposalSwagger;
@@ -78,6 +79,23 @@ public class CampaignProposalController implements CampaignProposalSwagger {
 
         return CustomResponse.ok("캠페인 제안을 수락했습니다.");
     }
+
+    @Override
+    @PatchMapping("/{campaignProposalId}/reject")
+    public CustomResponse<String> rejectCampaignProposal(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long campaignProposalId,
+            @RequestBody(required = false) @Valid CampaignProposalRejectRequest request
+    ) {
+        campaignProposalService.rejectCampaignProposal(
+                userDetails.getUserId(),
+                campaignProposalId,
+                request != null ? request.getRejectReason() : null
+        );
+
+        return CustomResponse.ok("캠페인 제안을 거절했습니다.");
+    }
+
 
 
 }

@@ -3,6 +3,7 @@ package com.example.RealMatch.business.presentation.swagger;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRejectRequest;
 import com.example.RealMatch.business.presentation.dto.request.CampaignProposalRequestDto;
 import com.example.RealMatch.business.presentation.dto.response.CampaignProposalDetailResponse;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
@@ -160,6 +161,19 @@ public interface CampaignProposalSwagger {
     CustomResponse<String> approveCampaignProposal(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long campaignProposalId
+    );
+
+    @Operation(
+            summary = "받은 캠페인 제안 거절 API by 박지영",
+            description = """
+                    제안 받은 사람이 제안을 거절하는 API입니다.   
+                    /api/v1/campaigns/proposal/{campaignProposalId}에서 status가 REJECTED로 변경되었다면 성공입니다.
+                    """
+    )
+    CustomResponse<String> rejectCampaignProposal(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long campaignProposalId,
+            @RequestBody(required = false) @Valid CampaignProposalRejectRequest request
     );
 
 }
