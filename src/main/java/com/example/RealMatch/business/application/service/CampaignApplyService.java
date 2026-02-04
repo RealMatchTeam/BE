@@ -49,9 +49,6 @@ public class CampaignApplyService {
 
     @Transactional
     public void cancelCampaignApply(Long campaignApplyId, Long userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-
         CampaignApply campaignApply = campaignApplyRepository.findById(campaignApplyId)
                 .orElseThrow(() ->
                         new CustomException(BusinessErrorCode.CAMPAIGN_APPLY_NOT_FOUND)

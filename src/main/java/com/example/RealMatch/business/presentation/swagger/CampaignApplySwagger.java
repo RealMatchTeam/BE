@@ -53,7 +53,7 @@ public interface CampaignApplySwagger {
             description = """
                     내가 지원한 캠페인을 지원 취소합니다.
                     
-                   /api/v1/campaigns/{campaignId}/apply/me에서 proposalStatus의 상태가 CANCElED 인지 확인해주세요
+                   /api/v1/campaigns/{campaignId}/apply/me에서 status의 상태가 CANCElED 인지 확인해주세요
                     """
     )
     @PatchMapping("/apply/{campaignApplyId}/cancel")
