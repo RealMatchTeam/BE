@@ -48,6 +48,8 @@ public class CampaignProposalService {
     private final CampaignRepository campaignRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    private static final int CAMPAIGN_SUMMARY_MAX_LENGTH = 100;
+
     public void createCampaignProposal(CustomUserDetails userDetails, CampaignProposalRequestDto request) {
         userRepository.findById(userDetails.getUserId())
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
@@ -291,8 +293,8 @@ public class CampaignProposalService {
         Long campaignId = proposal.getCampaign() != null ? proposal.getCampaign().getId() : null;
 
         String campaignSummary = proposal.getCampaignDescription();
-        if (campaignSummary != null && campaignSummary.length() > 100) {
-            campaignSummary = campaignSummary.substring(0, 100) + "...";
+        if (campaignSummary != null && campaignSummary.length() > CAMPAIGN_SUMMARY_MAX_LENGTH) {
+            campaignSummary = campaignSummary.substring(0, CAMPAIGN_SUMMARY_MAX_LENGTH) + "...";
         }
 
         CampaignProposalSentEvent event = new CampaignProposalSentEvent(
