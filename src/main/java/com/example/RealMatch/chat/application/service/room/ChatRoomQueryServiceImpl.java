@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -40,6 +42,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ChatRoomQueryServiceImpl.class);
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
@@ -200,7 +204,9 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                         if (payload instanceof ChatProposalCardPayloadResponse card) {
                             return Optional.ofNullable(card.proposalId());
                         }
-                    } catch (Exception ignored) {
+                    } catch (Exception ex) {
+                        LOG.warn("Failed to deserialize system message payload for roomId={}, kind={}, payload={}",
+                                roomId, kind, rawPayload, ex);
                     }
                     return Optional.<Long>empty();
                 })
