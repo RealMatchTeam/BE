@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
@@ -40,17 +39,21 @@ public class ChatProposalEventAsyncHandler {
                 return;
             }
 
-            LOG.info("Proposal sent event received. roomId={}, proposalId={}",
-                    event.roomId(), event.payload().proposalId());
+            LOG.info("Proposal sent event received. roomId={}, proposalId={}, isReProposal={}",
+                    event.roomId(), event.payload().proposalId(), event.isReProposal());
+
+            ChatSystemMessageKind messageKind = event.isReProposal()
+                    ? ChatSystemMessageKind.RE_PROPOSAL_CARD
+                    : ChatSystemMessageKind.PROPOSAL_CARD;
 
             chatMessageSocketService.sendSystemMessage(
                     event.roomId(),
-                    ChatSystemMessageKind.PROPOSAL_CARD,
+                    messageKind,
                     event.payload()
             );
 
-            LOG.info("Proposal card system message sent. roomId={}, proposalId={}",
-                    event.roomId(), event.payload().proposalId());
+            LOG.info("Proposal card system message sent. roomId={}, proposalId={}, kind={}",
+                    event.roomId(), event.payload().proposalId(), messageKind);
         } catch (Exception ex) {
             LOG.error("Failed to handle proposal sent. roomId={}, proposalId={}",
                     event != null ? event.roomId() : null,
@@ -70,7 +73,7 @@ public class ChatProposalEventAsyncHandler {
             LOG.info("Proposal status changed event received. proposalId={}, newStatus={}, brandUserId={}, creatorUserId={}",
                     event.proposalId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
 
-            ChatProposalStatus chatStatus = convertToChatProposalStatus(event.newStatus());
+            ChatProposalStatus chatStatus = event.newStatus();
             chatRoomUpdateService.updateProposalStatusByUsers(
                     event.brandUserId(),
                     event.creatorUserId(),
@@ -98,7 +101,7 @@ public class ChatProposalEventAsyncHandler {
                     statusNoticePayload
             );
 
-            if (event.newStatus() == ProposalStatus.MATCHED) {
+            if (event.newStatus() == ChatProposalStatus.MATCHED) {
                 matchedCampaignPayloadProvider.getPayload(event.campaignId())
                         .ifPresent(payload -> chatMessageSocketService.sendSystemMessage(
                                 roomId,
@@ -118,15 +121,4 @@ public class ChatProposalEventAsyncHandler {
         }
     }
 
-    private ChatProposalStatus convertToChatProposalStatus(ProposalStatus proposalStatus) {
-        if (proposalStatus == null) {
-            return ChatProposalStatus.NONE;
-        }
-        return switch (proposalStatus) {
-            case NONE -> ChatProposalStatus.NONE;
-            case REVIEWING -> ChatProposalStatus.REVIEWING;
-            case MATCHED -> ChatProposalStatus.MATCHED;
-            case REJECTED -> ChatProposalStatus.REJECTED;
-        };
-    }
 }

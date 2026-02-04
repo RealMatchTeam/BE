@@ -15,6 +15,7 @@ public class ChatCacheInvalidationService {
     private static final EnumSet<ChatSystemMessageKind> DETAIL_INVALIDATION_KINDS =
             EnumSet.of(
                     ChatSystemMessageKind.PROPOSAL_CARD,
+                    ChatSystemMessageKind.RE_PROPOSAL_CARD,
                     ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE,
                     ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD
             );

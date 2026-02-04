@@ -33,6 +33,7 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
                         MESSAGE.messageType.eq(ChatMessageType.SYSTEM),
                         MESSAGE.systemKind.in(
                                 ChatSystemMessageKind.PROPOSAL_CARD,
+                                ChatSystemMessageKind.RE_PROPOSAL_CARD,
                                 ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD
                         )
                 )

@@ -2,6 +2,7 @@ package com.example.RealMatch.chat.domain.enums;
 
 public enum ChatSystemMessageKind {
     PROPOSAL_CARD(true),
+    RE_PROPOSAL_CARD(true),
     PROPOSAL_STATUS_NOTICE(true),
     MATCHED_CAMPAIGN_CARD(true);
 
