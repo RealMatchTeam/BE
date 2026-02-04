@@ -26,7 +26,9 @@ import com.example.RealMatch.chat.presentation.dto.response.ChatProposalStatusNo
  *
  * <p>이벤트에 따라 적절한 시스템 메시지를 구성하고 전송을 위임합니다.
  * 메시지 전송, 재시도, 멱등성, DLQ 처리는 공통 컴포넌트에 위임되며,
- * sendWithIdempotency의 반환값은 전송 성공이 아닌 이벤트 수락(accepted) 여부를 의미합니다.
+ * sendWithIdempotency의 반환값은 메시지 처리 성공 여부를 의미합니다.
+ * - true: 전송 성공 및 markAsProcessed 완료 (at-least-once 보장)
+ * - false: 중복 이벤트 또는 논리적 실패로 처리 중단
  */
 @Component
 public class ProposalSystemMessageHandler extends BaseSystemMessageHandler {
