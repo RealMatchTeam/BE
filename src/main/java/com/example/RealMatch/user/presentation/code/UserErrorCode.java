@@ -15,7 +15,7 @@ public enum UserErrorCode implements BaseErrorCode {
     USER_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "USER404_1",
-            "유저 정보를 불러오는데 실패하였습니다."
+            "존재하지 않는 사용자입니다."
     ),
 
     PROFILE_CARD_NOT_FOUND(
