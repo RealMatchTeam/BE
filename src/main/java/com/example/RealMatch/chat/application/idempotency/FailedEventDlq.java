@@ -44,15 +44,17 @@ public class FailedEventDlq {
             String json = objectMapper.writeValueAsString(entry);
             redisTemplate.opsForList().rightPush(DLQ_KEY, json);
 
-            LOG.warn("[DLQ] Failed event enqueued. eventType={}, eventId={}, roomId={}, error={}",
+            LOG.info("[DLQ] Failed event enqueued. eventType={}, eventId={}, roomId={}, error={}",
                     eventType, eventId, roomId, error);
 
         } catch (JsonProcessingException ex) {
             LOG.error("[DLQ] Failed to serialize failed event. eventType={}, eventId={}, roomId={}",
                     eventType, eventId, roomId, ex);
+            throw new IllegalStateException("Failed to serialize DLQ entry. eventId=" + eventId, ex);
         } catch (Exception ex) {
             LOG.error("[DLQ] Failed to enqueue failed event. eventType={}, eventId={}, roomId={}",
                     eventType, eventId, roomId, ex);
+            throw ex;
         }
     }
 

@@ -103,7 +103,7 @@ public class RedisProcessedEventStore implements ProcessedEventStore {
 
         try {
             redisTemplate.delete(key);
-            LOG.debug("[Idempotency] Removed processed event key (logical failure). eventId={}", eventId);
+            LOG.debug("[Idempotency] Removed processed event key. eventId={}", eventId);
         } catch (Exception ex) {
             LOG.warn("[Idempotency] Failed to remove processed event key. eventId={}, key={}", eventId, key, ex);
             // 삭제 실패해도 TTL로 자동 만료되므로 치명적이지 않음

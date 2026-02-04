@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>재시도 소진 후 전송 실패 시 removeProcessed 호출 후 DLQ 기록.
  * 키를 제거해야 재처리(DLQ 재전송 등) 시 유실 없이 처리 가능합니다.
- * DLQ stage는 send_after_retries로 남기며, @Recover에서 DLQ 기록을 책임지고 예외는 삼킵니다.
+ * DLQ 기록 시도 후, 실패하면 예외를 전파하여 상위(@Recover)에서 DlqEnqueueFailedException로 래핑/ fallback 처리되도록 한다.
  */
 @Component
 @RequiredArgsConstructor
@@ -49,23 +49,18 @@ public class SystemMessageFailureHandlerImpl implements SystemMessageFailureHand
         processedEventStore.removeProcessed(idempotencyKey);
 
         // DLQ 기록: stage=send_after_retries, failureReason으로 판단 가능하게
-        try {
-            Map<String, Object> dlqData = new HashMap<>(additionalData != null ? additionalData : Map.of());
-            dlqData.put("messageKind", messageKind != null ? messageKind.toString() : "UNKNOWN");
-            dlqData.put("stage", STAGE_SEND_AFTER_RETRIES);
-            dlqData.put("failureReason", FAILURE_REASON_TRANSIENT_SEND_FAILED);
+        // 실패 시 예외 전파 → @Recover에서 DlqEnqueueFailedException으로 래핑되어 fallback 처리되도록 한다.
+        Map<String, Object> dlqData = new HashMap<>(additionalData != null ? additionalData : Map.of());
+        dlqData.put("messageKind", messageKind != null ? messageKind.toString() : "UNKNOWN");
+        dlqData.put("stage", STAGE_SEND_AFTER_RETRIES);
+        dlqData.put("failureReason", FAILURE_REASON_TRANSIENT_SEND_FAILED);
 
-            failedEventDlq.enqueueFailedEvent(
-                    eventType,
-                    idempotencyKey,
-                    roomId,
-                    errorMessage,
-                    dlqData
-            );
-        } catch (Exception ex) {
-            LOG.error("[FailureHandler] Failed to enqueue failed event to DLQ. key={}, eventType={}",
-                    idempotencyKey, eventType, ex);
-            // 예외를 다시 던지지 않음 (이미 로그는 남겼음)
-        }
+        failedEventDlq.enqueueFailedEvent(
+                eventType,
+                idempotencyKey,
+                roomId,
+                errorMessage,
+                dlqData
+        );
     }
 }
