@@ -2,6 +2,7 @@ package com.example.RealMatch.chat.domain.repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
@@ -39,6 +40,25 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
                 )
                 .orderBy(MESSAGE.id.desc())
                 .fetch();
+    }
+
+    @Override
+    public Optional<ChatMessage> findLatestProposalCardMessageByRoomId(Long roomId) {
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(MESSAGE)
+                        .where(
+                                MESSAGE.roomId.eq(roomId),
+                                MESSAGE.messageType.eq(ChatMessageType.SYSTEM),
+                                MESSAGE.systemKind.in(
+                                        ChatSystemMessageKind.PROPOSAL_CARD,
+                                        ChatSystemMessageKind.RE_PROPOSAL_CARD
+                                )
+                        )
+                        .orderBy(MESSAGE.id.desc())
+                        .limit(1)
+                        .fetchOne()
+        );
     }
 
     @Override
