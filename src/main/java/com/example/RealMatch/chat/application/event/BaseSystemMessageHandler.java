@@ -84,15 +84,12 @@ public abstract class BaseSystemMessageHandler {
             if (isDlqEnqueuedInChain(ex)) {
                 return;
             }
-            // DlqEnqueueFailedException이면 suppressed(DLQ enqueue 실패 원인) 우선, 없으면 cause(원래 전송 실패)
-            String msg = ex.getMessage();
-            if (ex instanceof DlqEnqueueFailedException) {
-                Throwable[] suppressed = ex.getSuppressed();
-                if (suppressed != null && suppressed.length > 0 && suppressed[0] != null) {
-                    msg = suppressed[0].getMessage();
-                } else if (ex.getCause() != null) {
-                    msg = ex.getCause().getMessage();
-                }
+            // DlqEnqueueFailedException의 경우, DLQ에 기록할 메시지는 원래 전송 실패 원인(cause)을 사용합니다.
+            String msg;
+            if (ex instanceof DlqEnqueueFailedException && ex.getCause() != null) {
+                msg = ex.getCause().getMessage();
+            } else {
+                msg = ex.getMessage();
             }
             getLogger().error("[{}] Failed to execute sendAction. idempotencyKey={}, roomId={}, error={}",
                     meta.eventType(), meta.idempotencyKey(), meta.roomId(), msg, ex);
