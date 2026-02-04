@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -15,19 +17,23 @@ import com.example.RealMatch.chat.application.conversion.RoomCursor;
 import com.example.RealMatch.chat.application.mapper.ChatRoomCardAssembler;
 import com.example.RealMatch.chat.application.service.room.OpponentInfoService.OpponentInfo;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
+import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomRepositoryCustom.RoomCursorInfo;
 import com.example.RealMatch.chat.presentation.dto.response.CampaignSummaryResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
+import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
@@ -36,6 +42,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ChatRoomQueryServiceImpl.class);
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
@@ -46,6 +54,7 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
     private final ChatRoomCardAssembler roomCardAssembler;
     private final ChatRoomListCache chatRoomListCache;
     private final ChatRoomDetailCache chatRoomDetailCache;
+    private final SystemMessagePayloadSerializer payloadSerializer;
 
     @Override
     public Optional<Long> getRoomIdByUserPair(Long brandUserId, Long creatorUserId) {
@@ -168,13 +177,39 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 ? campaignSummaryService.getCampaignSummary(roomId)
                 : null;
 
+        // 재제안 폼 진입용: 최신 PROPOSAL_CARD/RE_PROPOSAL_CARD 메시지에서 proposalId 추출
+        Long latestProposalId = resolveLatestProposalId(roomId);
+
         return new ChatRoomDetailResponse(
                 room.getId(),
                 opponent.userId(),
                 opponent.name(),
                 opponent.profileImageUrl(),
                 isCollaborating,
-                campaignSummary
+                campaignSummary,
+                latestProposalId
         );
+    }
+
+    private Long resolveLatestProposalId(Long roomId) {
+        return chatMessageRepository.findLatestProposalCardMessageByRoomId(roomId)
+                .flatMap(msg -> {
+                    String rawPayload = msg.getSystemPayload();
+                    ChatSystemMessageKind kind = msg.getSystemKind();
+                    if (rawPayload == null || rawPayload.isBlank() || kind == null) {
+                        return Optional.<Long>empty();
+                    }
+                    try {
+                        ChatSystemMessagePayload payload = payloadSerializer.deserialize(kind, rawPayload);
+                        if (payload instanceof ChatProposalCardPayloadResponse card) {
+                            return Optional.ofNullable(card.proposalId());
+                        }
+                    } catch (Exception ex) {
+                        LOG.warn("Failed to deserialize system message payload for roomId={}, kind={}, payload={}",
+                                roomId, kind, rawPayload, ex);
+                    }
+                    return Optional.<Long>empty();
+                })
+                .orElse(null);
     }
 }
