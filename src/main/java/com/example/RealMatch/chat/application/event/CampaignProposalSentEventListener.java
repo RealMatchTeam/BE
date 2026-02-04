@@ -80,7 +80,7 @@ public class CampaignProposalSentEventListener {
             return ChatProposalDecisionStatus.PENDING;
         }
         return switch (proposalStatus) {
-            case CANCELED ->  ChatProposalDecisionStatus.EXPIRED;
+            case CANCELED ->  ChatProposalDecisionStatus.CANCELED;
             case REVIEWING, NONE -> ChatProposalDecisionStatus.PENDING;
             case MATCHED -> ChatProposalDecisionStatus.ACCEPTED;
             case REJECTED -> ChatProposalDecisionStatus.REJECTED;
