@@ -29,7 +29,7 @@ public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Lo
     join fetch ca.campaign c
     join fetch c.brand b
     where ca.user.id = :userId
-      and (:status is null or ca.proposalStatus = :status)
+      and (:status is null or ca.applyStatus = :status)
       and (:startDate is null or c.startDate >= :startDate)
       and (:endDate is null or c.endDate <= :endDate)
 """)

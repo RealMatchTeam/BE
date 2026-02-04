@@ -34,7 +34,7 @@ public record CollaborationResponse(
                         apply.getCampaign().getBrand().getBrandName(),
                         apply.getCampaign().getImageUrl(),
                         apply.getCampaign().getTitle(),
-                        apply.getProposalStatus(),
+                        apply.getApplyStatus(),
 
                         apply.getCampaign().getStartDate(),
                         apply.getCampaign().getEndDate(),

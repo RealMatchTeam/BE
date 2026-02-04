@@ -50,17 +50,26 @@ public class CampaignApply extends BaseEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ProposalStatus proposalStatus;
+    private ProposalStatus applyStatus;
 
     @Column(nullable = false, length = 1000)
     private String reason;
 
     @Builder
-    public CampaignApply(User user, Campaign campaign, ProposalStatus proposalStatus, String reason) {
+    public CampaignApply(User user, Campaign campaign, ProposalStatus applyStatus, String reason) {
         this.user = user;
         this.campaign = campaign;
         this.reason = reason;
-        this.proposalStatus = ProposalStatus.REVIEWING;
+        this.applyStatus = ProposalStatus.REVIEWING;
     }
+
+    public void cancel() {
+        this.applyStatus = ProposalStatus.CANCELED;
+    }
+
+    public boolean isCancelable() {
+        return this.applyStatus == ProposalStatus.REVIEWING;
+    }
+
 
 }
