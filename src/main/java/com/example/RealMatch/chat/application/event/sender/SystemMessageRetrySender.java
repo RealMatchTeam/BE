@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.chat.application.exception.ChatRoomNotFoundException;
+import com.example.RealMatch.chat.application.exception.LogicalFailureException;
 import com.example.RealMatch.chat.application.idempotency.ProcessedEventStore;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
@@ -70,7 +71,14 @@ public class SystemMessageRetrySender {
         try {
             // 실제 전송 (재시도 가능) - SystemMessageSender에 위임
             systemMessageSender.sendWithRetry(idempotencyKey, roomId, messageKind, payload, eventType, additionalData);
+        } catch (LogicalFailureException ex) {
+            // 논리적 실패: removeProcessed로 키 제거하고 false 반환 (DLQ 기록 안 함)
+            processedEventStore.removeProcessed(idempotencyKey);
+            LOG.warn("[RetrySender] Logical failure. key={}, eventType={}, error={}",
+                    idempotencyKey, eventType, ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), ex);
+            return false;
         } catch (ChatRoomNotFoundException | IllegalArgumentException ex) {
+            // fallback: @Recover가 동작하지 않은 경우 (proxy 비활성화 등)
             // 논리적 실패만 removeProcessed: 재시도해도 동일 결과이므로 키 제거 (레이스/중복 가능성 없음)
             processedEventStore.removeProcessed(idempotencyKey);
             LOG.error("[RetrySender] Logical failure (fallback - proxy inactive suspected). " +
