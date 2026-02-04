@@ -2,6 +2,8 @@ package com.example.RealMatch.chat.application.event.apply;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -78,7 +80,8 @@ public class ApplySystemMessageHandler {
                     event.roomId(),
                     event.payload() != null ? event.payload().applyId() : null,
                     ex);
-            // 전송 실패 시 Redis 키는 유지됨 (재시도 방지, 최종 실패는 @Recover에서 처리)
+            // 전송 실패 시 Redis 키는 유지됨 (재시도 방지)
+            // 최종 실패 시 @Recover에서 키를 삭제하여 재처리 가능하도록 함
         }
     }
 
@@ -205,12 +208,17 @@ public class ApplySystemMessageHandler {
         LOG.error("[Apply] Failed to send apply card after all retries (3 attempts). " +
                         "eventId={}, roomId={}, applyId={}, Redis key removed",
                 eventId, roomId, payload != null ? payload.applyId() : null, ex);
+        
+        Map<String, Object> additionalData = new HashMap<>();
+        if (payload != null && payload.applyId() != null) {
+            additionalData.put("applyId", payload.applyId());
+        }
         failedEventDlq.enqueueFailedEvent(
                 "ApplySentEvent",
                 eventId,
                 roomId,
                 ex.getMessage(),
-                java.util.Map.of("applyId", payload != null ? payload.applyId() : null)
+                additionalData
         );
     }
 
@@ -224,18 +232,33 @@ public class ApplySystemMessageHandler {
         LOG.error("[Apply] Failed to send apply status notice after all retries (3 attempts). " +
                         "eventId={}, roomId={}, applyId={}, actorUserId={}, Redis key removed",
                 eventId, roomId, applyId, actorUserId, ex);
+        
+        Map<String, Object> additionalData = new HashMap<>();
+        if (applyId != null) {
+            additionalData.put("applyId", applyId);
+        }
+        if (actorUserId != null) {
+            additionalData.put("actorUserId", actorUserId);
+        }
         failedEventDlq.enqueueFailedEvent(
                 "ApplyStatusChangedEvent",
                 eventId,
                 roomId,
                 ex.getMessage(),
-                java.util.Map.of("applyId", applyId, "actorUserId", actorUserId)
+                additionalData
         );
     }
 
     /**
-     * 이벤트 중복 처리 검증 (Redis 기반, 전송 전 체크만)
-     * 전송 성공 후에는 markAsProcessed()를 호출하여 키를 확실히 남깁니다.
+     * 이벤트 중복 처리 검증 (Redis 기반)
+     * 
+     * <p>처리 흐름:
+     * <ol>
+     *   <li>markIfNotProcessed(): SETNX로 처리 시작 시점에 키 생성 (중복 체크)</li>
+     *   <li>전송 성공 시: markAsProcessed()로 키를 확실히 남김 (SET 명령어)</li>
+     *   <li>논리적 실패 시: removeProcessed()로 키 삭제</li>
+     *   <li>최종 실패 시: @Recover에서 removeProcessed()로 키 삭제</li>
+     * </ol>
      */
     private boolean checkIfNotProcessed(String eventId, String eventType) {
         if (eventId == null) {
@@ -243,7 +266,7 @@ public class ApplySystemMessageHandler {
             throw new IllegalStateException("Event ID cannot be null for " + eventType);
         }
 
-        // 중복 체크만 수행 (키는 전송 성공 후에만 남김)
+        // SETNX로 처리 시작 시점에 키 생성 (중복 체크)
         boolean isNewEvent = processedEventStore.markIfNotProcessed(eventId, EVENT_IDEMPOTENCY_TTL);
         if (!isNewEvent) {
             LOG.warn("[Apply] Duplicate {} detected, skipping. eventId={}", eventType, eventId);
