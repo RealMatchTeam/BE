@@ -97,7 +97,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl, frontDomainUrl, "https://www.realmatch.co.kr", "http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl, frontDomainUrl,"https://www.realmatch.co.kr"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
