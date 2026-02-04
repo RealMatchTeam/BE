@@ -54,6 +54,7 @@ public class CampaignProposalStatusChangedEventListener {
             return ChatProposalStatus.NONE;
         }
         return switch (status) {
+            case CANCELED -> ChatProposalStatus.CANCELED;
             case NONE -> ChatProposalStatus.NONE;
             case REVIEWING -> ChatProposalStatus.REVIEWING;
             case MATCHED -> ChatProposalStatus.MATCHED;
