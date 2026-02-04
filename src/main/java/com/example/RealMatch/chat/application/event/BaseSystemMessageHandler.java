@@ -8,6 +8,8 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 
 import com.example.RealMatch.chat.application.event.sender.SystemMessageRetrySender;
+import com.example.RealMatch.chat.application.exception.DlqEnqueueFailedException;
+import com.example.RealMatch.chat.application.exception.DlqEnqueuedException;
 import com.example.RealMatch.chat.application.idempotency.FailedEventDlq;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 
@@ -63,6 +65,7 @@ public abstract class BaseSystemMessageHandler {
             dlqData.put("failureReason", "payload_creation_failed");
             dlqData.put("stage", "payload_supplier");
             dlqData.put("handler", this.getClass().getSimpleName());
+            dlqData.put("exceptionType", ex.getClass().getSimpleName());
 
             failedEventDlq.enqueueFailedEvent(
                     meta.eventType(),
@@ -74,25 +77,61 @@ public abstract class BaseSystemMessageHandler {
             return;
         }
 
-        // 2) 전송 실행 (sendAction 내부 예외도 DLQ로 처리)
+        // 2) 전송 실행 (sendAction 내부 예외도 DLQ로 처리, 단 이미 DLQ 처리된 경우는 제외)
         try {
             sendAction.accept(payload);
         } catch (Exception ex) {
+            if (isDlqEnqueuedInChain(ex)) {
+                return;
+            }
+            // DlqEnqueueFailedException이면 suppressed(DLQ enqueue 실패 원인) 우선, 없으면 cause(원래 전송 실패)
+            String msg = ex.getMessage();
+            if (ex instanceof DlqEnqueueFailedException) {
+                Throwable[] suppressed = ex.getSuppressed();
+                if (suppressed != null && suppressed.length > 0 && suppressed[0] != null) {
+                    msg = suppressed[0].getMessage();
+                } else if (ex.getCause() != null) {
+                    msg = ex.getCause().getMessage();
+                }
+            }
             getLogger().error("[{}] Failed to execute sendAction. idempotencyKey={}, roomId={}, error={}",
-                    meta.eventType(), meta.idempotencyKey(), meta.roomId(), ex.getMessage(), ex);
+                    meta.eventType(), meta.idempotencyKey(), meta.roomId(), msg, ex);
 
             Map<String, Object> dlqData = new HashMap<>(safeContext);
             dlqData.put("failureReason", "send_action_failed");
             dlqData.put("stage", "send_action");
             dlqData.put("handler", this.getClass().getSimpleName());
+            dlqData.put("exceptionType", ex.getClass().getSimpleName());
 
             failedEventDlq.enqueueFailedEvent(
                     meta.eventType(),
                     meta.idempotencyKey(),
                     meta.roomId(),
-                    ex.getMessage(),
+                    msg,
                     dlqData
             );
         }
+    }
+
+    /**
+     * 예외의 cause 체인과 suppressed에 DlqEnqueuedException이 있는지 검사합니다.
+     * 중복 DLQ enqueue를 완전히 차단할 때 사용합니다.
+     */
+    private static boolean isDlqEnqueuedInChain(Throwable t) {
+        int depth = 0;
+        for (Throwable x = t; x != null && depth++ < 20; x = x.getCause()) {
+            if (x instanceof DlqEnqueuedException) {
+                return true;
+            }
+            Throwable[] suppressed = x.getSuppressed();
+            if (suppressed != null) {
+                for (Throwable s : suppressed) {
+                    if (s instanceof DlqEnqueuedException) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

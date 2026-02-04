@@ -16,13 +16,18 @@ import lombok.RequiredArgsConstructor;
 /**
  * 시스템 메시지 전송 실패 처리 구현체.
  *
- * <p>전송 실패 시 Redis 키 삭제 및 DLQ 기록을 수행합니다.
+ * <p>재시도 소진 후 전송 실패 시 removeProcessed 호출 후 DLQ 기록.
+ * 키를 제거해야 재처리(DLQ 재전송 등) 시 유실 없이 처리 가능합니다.
+ * DLQ stage는 send_after_retries로 남기며, @Recover에서 DLQ 기록을 책임지고 예외는 삼킵니다.
  */
 @Component
 @RequiredArgsConstructor
 public class SystemMessageFailureHandlerImpl implements SystemMessageFailureHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemMessageFailureHandlerImpl.class);
+
+    private static final String STAGE_SEND_AFTER_RETRIES = "send_after_retries";
+    private static final String FAILURE_REASON_TRANSIENT_SEND_FAILED = "transient_send_failed";
 
     private final ProcessedEventStore processedEventStore;
     private final FailedEventDlq failedEventDlq;
@@ -36,27 +41,19 @@ public class SystemMessageFailureHandlerImpl implements SystemMessageFailureHand
             String errorMessage,
             Map<String, Object> additionalData
     ) {
-        // 전송 실패 시 Redis 키 삭제 (재시도 가능하도록)
-        // 예외가 발생해도 전체 흐름을 막지 않도록 try-catch로 보호
-        try {
-            processedEventStore.removeProcessed(idempotencyKey);
-            LOG.debug("[FailureHandler] Removed processed event key. key={}, eventType={}",
-                    idempotencyKey, eventType);
-        } catch (Exception ex) {
-            LOG.error("[FailureHandler] Failed to remove processed event key. key={}, eventType={}",
-                    idempotencyKey, eventType, ex);
-            // 예외를 다시 던지지 않음 (DLQ 기록은 계속 진행)
-        }
-
-        LOG.error("[FailureHandler] Handling system message failure. " +
+        LOG.error("[FailureHandler] Handling system message failure (transient, after retries). " +
                         "key={}, roomId={}, kind={}, eventType={}",
                 idempotencyKey, roomId, messageKind, eventType);
 
-        // DLQ 기록
-        // 예외가 발생해도 전체 흐름을 막지 않도록 try-catch로 보호
+        // 전송 최종 실패: removeProcessed로 키 제거 → 재처리 시 유실 없음 (계약상 swallow)
+        processedEventStore.removeProcessed(idempotencyKey);
+
+        // DLQ 기록: stage=send_after_retries, failureReason으로 판단 가능하게
         try {
             Map<String, Object> dlqData = new HashMap<>(additionalData != null ? additionalData : Map.of());
             dlqData.put("messageKind", messageKind != null ? messageKind.toString() : "UNKNOWN");
+            dlqData.put("stage", STAGE_SEND_AFTER_RETRIES);
+            dlqData.put("failureReason", FAILURE_REASON_TRANSIENT_SEND_FAILED);
 
             failedEventDlq.enqueueFailedEvent(
                     eventType,

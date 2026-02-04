@@ -7,10 +7,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.chat.application.exception.IdempotencyStoreException;
+
 import lombok.RequiredArgsConstructor;
 
 /**
  * Redis 기반 이벤트 중복 처리 방지 저장소 구현체.
+ *
+ * <p>markIfNotProcessed: 장애/NULL → throw (false 금지). false는 "중복" 의미로만 사용.
  */
 @Component
 @RequiredArgsConstructor
@@ -40,31 +44,33 @@ public class RedisProcessedEventStore implements ProcessedEventStore {
             Boolean result = redisTemplate.opsForValue().setIfAbsent(key, "1", ttl);
 
             if (result == null) {
-                // Redis 응답이 null인 경우 (장애 가능성)
-                LOG.error("[Idempotency] Redis returned null for SETNX. eventId={}, key={}", eventId, key);
-                // 보수적으로 실패 처리 (중복 카드 방지)
-                return false;
+                // Redis 응답 null = 판단 불가 → 반드시 실패로 올림 (DLQ/재시도)
+                String msg = String.format("Redis returned null for SETNX. eventId=%s, key=%s", eventId, key);
+                LOG.error("[Idempotency] {}", msg);
+                throw new IdempotencyStoreException(msg);
             }
 
             if (result) {
                 LOG.debug("[Idempotency] Event marked as processing. eventId={}, ttl={}s", eventId, ttlSeconds);
-                return true; // 처리 가능 (처리되지 않음)
+                return true; // 선점 성공 (처리 가능)
             } else {
                 LOG.debug("[Idempotency] Duplicate event detected. eventId={}", eventId);
-                return false; // 중복 (이미 처리됨)
+                return false; // 중복만 의미
             }
 
+        } catch (IdempotencyStoreException e) {
+            throw e;
         } catch (Exception ex) {
-            LOG.error("[Idempotency] Redis operation failed. eventId={}, key={}, ttl={}s",
-                    eventId, key, ttlSeconds, ex);
-            // 보수적으로 실패 처리 (중복 카드가 뜨는 것보다 안전)
-            // TODO: 모니터링 시스템에 알림 전송
-            return false;
+            // Redis 장애/타임아웃 등 판단 불가 → 반드시 실패로 올림
+            String msg = String.format("Redis operation failed. eventId=%s, key=%s, ttl=%ds",
+                    eventId, key, ttlSeconds);
+            LOG.error("[Idempotency] {}", msg, ex);
+            throw new IdempotencyStoreException(msg, ex);
         }
     }
 
     @Override
-    public boolean markAsProcessed(String eventId, Duration ttl) {
+    public void markAsProcessed(String eventId, Duration ttl) {
         if (eventId == null) {
             throw new IllegalArgumentException("eventId cannot be null");
         }
@@ -79,11 +85,11 @@ public class RedisProcessedEventStore implements ProcessedEventStore {
             // 전송 성공 후 키를 확실히 남기기 위해 SET EX 사용
             redisTemplate.opsForValue().set(key, "1", ttl);
             LOG.debug("[Idempotency] Event marked as processed (success). eventId={}, ttl={}s", eventId, ttlSeconds);
-            return true;
         } catch (Exception ex) {
-            LOG.error("[Idempotency] Failed to mark event as processed. eventId={}, key={}, ttl={}s",
-                    eventId, key, ttlSeconds, ex);
-            return false;
+            String msg = String.format("Failed to mark event as processed. eventId=%s, key=%s, ttl=%ds",
+                    eventId, key, ttlSeconds);
+            LOG.error("[Idempotency] {}", msg, ex);
+            throw new IdempotencyStoreException(msg, ex);
         }
     }
 

@@ -10,6 +10,8 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.chat.application.exception.ChatRoomNotFoundException;
+import com.example.RealMatch.chat.application.exception.DlqEnqueueFailedException;
+import com.example.RealMatch.chat.application.exception.DlqEnqueuedException;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
@@ -105,10 +107,9 @@ public class SystemMessageSender {
     }
 
     /**
-     * 재시도 후에도 전송에 실패한 경우 호출되어 실패 처리자에게 위임합니다.
-     *
-     * <p>@Recover는 절대 예외를 던지지 않도록 보장합니다.
-     * failureHandler 내부 예외도 catch하여 전체 흐름을 보호합니다.
+     * 재시도 소진 후 전송 실패 시: removeProcessed + DLQ 기록 후 DlqEnqueuedException throw.
+     * DLQ enqueue 실패 시에는 DlqEnqueuedException을 던지지 않고 상위로 전파하여
+     * BaseSystemMessageHandler가 fallback DLQ enqueue 하도록 합니다.
      */
     @Recover
     public void recoverSystemMessage(
@@ -124,8 +125,6 @@ public class SystemMessageSender {
                         "key={}, roomId={}, kind={}, eventType={}",
                 idempotencyKey, roomId, messageKind, eventType, ex);
 
-        // 실패 처리 정책을 failureHandler에 위임
-        // failureHandler 내부 예외도 catch하여 @Recover가 절대 예외를 던지지 않도록 보장
         try {
             failureHandler.handleFailure(
                     idempotencyKey,
@@ -136,9 +135,14 @@ public class SystemMessageSender {
                     additionalData
             );
         } catch (Exception handlerEx) {
-            LOG.error("[MessageSender] FailureHandler threw exception. key={}, eventType={}",
+            LOG.error("[MessageSender] FailureHandler (DLQ enqueue) failed. key={}, eventType={}. Fallback to BaseHandler.",
                     idempotencyKey, eventType, handlerEx);
-            // 예외를 다시 던지지 않음 (@Recover는 절대 throw 안 함)
+            throw new DlqEnqueueFailedException(
+                    "DLQ enqueue failed for key=" + idempotencyKey,
+                    ex,        // cause = 원래 전송 실패
+                    handlerEx  // suppressed = DLQ enqueue 실패
+            );
         }
+        throw new DlqEnqueuedException("DLQ enqueued for idempotencyKey=" + idempotencyKey, ex);
     }
 }
