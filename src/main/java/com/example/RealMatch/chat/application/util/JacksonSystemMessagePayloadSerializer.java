@@ -47,7 +47,7 @@ public class JacksonSystemMessagePayloadSerializer implements SystemMessagePaylo
 
     private Class<? extends ChatSystemMessagePayload> resolvePayloadType(ChatSystemMessageKind kind) {
         return switch (kind) {
-            case PROPOSAL_CARD -> ChatProposalCardPayloadResponse.class;
+            case PROPOSAL_CARD, RE_PROPOSAL_CARD -> ChatProposalCardPayloadResponse.class;
             case PROPOSAL_STATUS_NOTICE -> ChatProposalStatusNoticePayloadResponse.class;
             case MATCHED_CAMPAIGN_CARD -> ChatMatchedCampaignPayloadResponse.class;
         };

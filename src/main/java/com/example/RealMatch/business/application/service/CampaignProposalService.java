@@ -5,14 +5,18 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
+import com.example.RealMatch.business.application.event.CampaignProposalSentEvent;
+import com.example.RealMatch.business.application.event.CampaignProposalStatusChangedEvent;
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.entity.CampaignProposalContentTag;
+import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
 import com.example.RealMatch.business.exception.BusinessErrorCode;
@@ -42,6 +46,9 @@ public class CampaignProposalService {
     private final UserRepository userRepository;
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    private static final int CAMPAIGN_SUMMARY_MAX_LENGTH = 100;
 
     public void createCampaignProposal(CustomUserDetails userDetails, CampaignProposalRequestDto request) {
         userRepository.findById(userDetails.getUserId())
@@ -80,6 +87,8 @@ public class CampaignProposalService {
 
         saveAllContentTags(request, proposal);
         campaignProposalRepository.save(proposal);
+
+        publishProposalSentEvent(proposal, false);
     }
 
     @Transactional
@@ -109,6 +118,8 @@ public class CampaignProposalService {
                 request.getEndDate()
         );
         saveAllContentTags(request, proposal);
+
+        publishProposalSentEvent(proposal, true);
     }
 
 
@@ -126,6 +137,8 @@ public class CampaignProposalService {
         }
 
         proposal.match();
+
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.MATCHED);
     }
 
 
@@ -274,5 +287,43 @@ public class CampaignProposalService {
         }
     }
 
+    private void publishProposalSentEvent(CampaignProposal proposal, boolean isReProposal) {
+        Long brandUserId = proposal.getBrand().getUser().getId();
+        Long creatorUserId = proposal.getCreator().getId();
+        Long campaignId = proposal.getCampaign() != null ? proposal.getCampaign().getId() : null;
+
+        String campaignSummary = proposal.getCampaignDescription();
+        if (campaignSummary != null && campaignSummary.length() > CAMPAIGN_SUMMARY_MAX_LENGTH) {
+            campaignSummary = campaignSummary.substring(0, CAMPAIGN_SUMMARY_MAX_LENGTH) + "...";
+        }
+
+        CampaignProposalSentEvent event = new CampaignProposalSentEvent(
+                proposal.getId(),
+                brandUserId,
+                creatorUserId,
+                campaignId,
+                proposal.getTitle(),
+                campaignSummary,
+                proposal.getStatus(),
+                ProposalDirection.fromWhoProposed(proposal.getWhoProposed()),
+                isReProposal
+        );
+        eventPublisher.publishEvent(event);
+    }
+
+    private void publishProposalStatusChangedEvent(CampaignProposal proposal, ProposalStatus newStatus) {
+        Long brandUserId = proposal.getBrand().getUser().getId();
+        Long creatorUserId = proposal.getCreator().getId();
+        Long campaignId = proposal.getCampaign() != null ? proposal.getCampaign().getId() : null;
+
+        CampaignProposalStatusChangedEvent event = new CampaignProposalStatusChangedEvent(
+                proposal.getId(),
+                campaignId,
+                brandUserId,
+                creatorUserId,
+                newStatus
+        );
+        eventPublisher.publishEvent(event);
+    }
 
 }

@@ -1,8 +1,7 @@
 package com.example.RealMatch.chat.application.event;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import lombok.RequiredArgsConstructor;
 
@@ -12,7 +11,7 @@ public class ProposalStatusChangedEventListener {
 
     private final ChatProposalEventAsyncHandler asyncHandler;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void handleProposalStatusChanged(ProposalStatusChangedEvent event) {
         asyncHandler.handleProposalStatusChanged(event);
     }
