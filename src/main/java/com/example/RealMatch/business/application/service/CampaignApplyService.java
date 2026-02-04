@@ -46,4 +46,26 @@ public class CampaignApplyService {
 
         campaignApplyRepository.save(campaignApply);
     }
+
+    @Transactional
+    public void cancelCampaignApply(Long campaignApplyId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        CampaignApply campaignApply = campaignApplyRepository.findById(campaignApplyId)
+                .orElseThrow(() ->
+                        new CustomException(BusinessErrorCode.CAMPAIGN_APPLY_NOT_FOUND)
+                );
+
+        if (!campaignApply.getUser().getId().equals(userId)) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_APPLY_FORBIDDEN);
+        }
+
+        if (!campaignApply.isCancelable()) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_APPLY_NOT_CANCELABLE);
+        }
+
+        campaignApply.cancel();
+    }
+
 }
