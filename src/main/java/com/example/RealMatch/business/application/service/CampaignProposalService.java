@@ -141,6 +141,30 @@ public class CampaignProposalService {
         publishProposalStatusChangedEvent(proposal, ProposalStatus.MATCHED);
     }
 
+    public void rejectCampaignProposal(
+            Long userId,
+            Long campaignProposalId,
+            String rejectReason
+    ) {
+        CampaignProposal proposal = campaignProposalRepository
+                .findById(campaignProposalId)
+                .orElseThrow(() ->
+                        new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
+                );
+        validateReceiver(proposal, userId);
+
+        if (proposal.getStatus() != ProposalStatus.REVIEWING) {
+            throw new CustomException(
+                    BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_REVIEWING
+            );
+        }
+        proposal.reject(rejectReason);
+
+        // 4. 상태 변경 이벤트 발행
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.REJECTED);
+    }
+
+
 
     private void saveAllContentTags(CampaignProposalRequestDto request, CampaignProposal proposal) {
         saveContentTags(proposal, request.getFormats());
