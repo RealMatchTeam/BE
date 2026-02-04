@@ -49,7 +49,7 @@ public class CampaignApplyService {
 
     @Transactional
     public void cancelCampaignApply(Long campaignApplyId, Long userId) {
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         CampaignApply campaignApply = campaignApplyRepository.findById(campaignApplyId)
