@@ -92,6 +92,9 @@ jobs:
       S3_KEY_PREFIX: attachment
       AWS_ACCESS_KEY_ID: AWSACCESSKEYIDISSECRET
       AWS_SECRET_ACCESS_KEY: AWSSECRETACCESSKEYISSECRET
+      # FRONT
+      FRONT_DOMAIN_URL_V2: http://localhost:3000
+      FRONT_DOMAIN_URL_LOCAL: http://localhost:3000
 
     steps:
     - name: Checkout code

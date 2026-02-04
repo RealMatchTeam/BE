@@ -5,8 +5,9 @@ swagger:
   server-url: http://localhost:8080
 
 front:
-  domain-url: http://localhost:3000 # 임의의 값
-
+  domain-url: http://localhost:3000
+  domain-url-v2: ${FRONT_DOMAIN_URL_V2}
+  domain-url-local: ${FRONT_DOMAIN_URL_LOCAL}
 server:
   timezone: Asia/Seoul
 
