@@ -10,34 +10,49 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.chat.application.event.BaseSystemMessageHandler;
+import com.example.RealMatch.chat.application.event.SystemEventMeta;
 import com.example.RealMatch.chat.application.event.sender.SystemMessageRetrySender;
-import com.example.RealMatch.chat.application.exception.ChatRoomNotFoundException;
+import com.example.RealMatch.chat.application.idempotency.FailedEventDlq;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.application.service.room.MatchedCampaignPayloadProvider;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatProposalStatusNoticePayloadResponse;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * 제안(Proposal) 관련 시스템 메시지 처리를 담당하는 핸들러.
  * 
  * <p>역할: 오케스트레이션 (payload 준비, roomId 찾기, 메시지 종류 결정, 멱등성 키 결정)
- * <p>실제 전송/재시도/멱등성/DLQ는 SystemMessageRetrySender가 담당합니다.
+ * <p>실제 전송/재시도/멱등성/DLQ는 Base의 execute 메서드와 SystemMessageRetrySender가 담당합니다.
  */
 @Component
-@RequiredArgsConstructor
-public class ProposalSystemMessageHandler {
+public class ProposalSystemMessageHandler extends BaseSystemMessageHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProposalSystemMessageHandler.class);
 
-    private final SystemMessageRetrySender retrySender;
     private final ChatRoomUpdateService chatRoomUpdateService;
     private final ChatRoomQueryService chatRoomQueryService;
     private final MatchedCampaignPayloadProvider matchedCampaignPayloadProvider;
+
+    public ProposalSystemMessageHandler(
+            FailedEventDlq failedEventDlq,
+            SystemMessageRetrySender retrySender,
+            ChatRoomUpdateService chatRoomUpdateService,
+            ChatRoomQueryService chatRoomQueryService,
+            MatchedCampaignPayloadProvider matchedCampaignPayloadProvider
+    ) {
+        super(failedEventDlq, retrySender);
+        this.chatRoomUpdateService = chatRoomUpdateService;
+        this.chatRoomQueryService = chatRoomQueryService;
+        this.matchedCampaignPayloadProvider = matchedCampaignPayloadProvider;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
+    }
 
     /**
      * 제안 전송 이벤트 처리
@@ -62,33 +77,44 @@ public class ProposalSystemMessageHandler {
         // 2. 멱등성 키 결정 (deterministic)
         String idempotencyKey = event.eventId(); // 이미 deterministic: "PROPOSAL_SENT:{proposalId}" 또는 "RE_PROPOSAL_SENT:{proposalId}"
 
-        // 3. RetrySender로 전송 (멱등성 체크 + 재시도 + DLQ 포함)
-        Map<String, Object> additionalData = new HashMap<>();
+        // 3. eventMeta 생성
+        SystemEventMeta meta = new SystemEventMeta(
+                idempotencyKey,
+                event.roomId(),
+                "ProposalSentEvent"
+        );
+
+        // 4. contextData 준비 (공통 키: messageKind, domainId 필수)
+        Map<String, Object> contextData = new HashMap<>();
+        contextData.put("messageKind", messageKind.toString());
         if (event.payload().proposalId() != null) {
-            additionalData.put("proposalId", event.payload().proposalId());
+            contextData.put("domainId", event.payload().proposalId()); // 공통 키
+            contextData.put("proposalId", event.payload().proposalId());
         }
-        additionalData.put("messageKind", messageKind.toString());
 
-        try {
-            boolean sent = retrySender.sendWithIdempotency(
-                    idempotencyKey,
-                    event.roomId(),
-                    messageKind,
-                    event.payload(),
-                    "ProposalSentEvent",
-                    additionalData
-            );
+        // 5. Base의 execute 메서드 사용 (payload 생성은 이미 event에 있으므로 supplier로 감싸기)
+        execute(
+                meta,
+                contextData,
+                () -> event.payload(), // payload는 이미 event에 있음
+                payload -> {
+                    boolean sent = retrySender.sendWithIdempotency(
+                            meta.idempotencyKey(),
+                            meta.roomId(),
+                            messageKind,
+                            payload,
+                            meta.eventType(),
+                            contextData
+                    );
 
-            if (sent) {
-                LOG.info("[Proposal] System message sent. roomId={}, proposalId={}, kind={}",
-                        event.roomId(), event.payload().proposalId(), messageKind);
-            } else {
-                LOG.warn("[Proposal] Duplicate event, skipped. eventId={}", event.eventId());
-            }
-        } catch (IllegalArgumentException ex) {
-            // 논리적 실패는 RetrySender에서 이미 처리됨
-            LOG.warn("[Proposal] Logical failure. eventId={}, error={}", event.eventId(), ex.getMessage());
-        }
+                    if (sent) {
+                        LOG.info("[Proposal] System message sent. roomId={}, proposalId={}, kind={}",
+                                meta.roomId(), event.payload().proposalId(), messageKind);
+                    } else {
+                        LOG.warn("[Proposal] Duplicate event, skipped. idempotencyKey={}", meta.idempotencyKey());
+                    }
+                }
+        );
     }
 
     /**
@@ -110,85 +136,108 @@ public class ProposalSystemMessageHandler {
         }
         Long roomId = roomIdOpt.get();
 
-        try {
-            LOG.info("[Proposal] Processing status change. eventId={}, proposalId={}, newStatus={}, brandUserId={}, creatorUserId={}",
-                    event.eventId(), event.proposalId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
+        LOG.info("[Proposal] Processing status change. eventId={}, proposalId={}, newStatus={}, brandUserId={}, creatorUserId={}",
+                event.eventId(), event.proposalId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
 
-            // 2. 채팅방 제안 상태 업데이트
-            ChatProposalStatus chatStatus = event.newStatus();
-            chatRoomUpdateService.updateProposalStatusByUsers(
-                    event.brandUserId(),
-                    event.creatorUserId(),
-                    chatStatus
-            );
+        // 2. 채팅방 제안 상태 업데이트
+        ChatProposalStatus chatStatus = event.newStatus();
+        chatRoomUpdateService.updateProposalStatusByUsers(
+                event.brandUserId(),
+                event.creatorUserId(),
+                chatStatus
+        );
 
-            // 3. 상태 변경 알림 메시지 전송 (별도 멱등성 키)
-            String statusNoticeKey = String.format("%s:NOTICE", event.eventId());
-            ChatProposalStatusNoticePayloadResponse statusNoticePayload =
-                    new ChatProposalStatusNoticePayloadResponse(
-                            event.proposalId(),
-                            event.actorUserId(),
-                            LocalDateTime.now()
-                    );
+        // 3. 상태 변경 알림 메시지 전송 (별도 멱등성 키)
+        // event.eventId()는 "PROPOSAL_STATUS_CHANGED:{proposalId}:{newStatus}" 형태로 유니크함
+        // ":NOTICE"를 붙여 "PROPOSAL_STATUS_CHANGED:{proposalId}:{newStatus}:NOTICE" 형태로 구분
+        String statusNoticeKey = String.format("%s:NOTICE", event.eventId());
+        
+        SystemEventMeta noticeMeta = new SystemEventMeta(
+                statusNoticeKey,
+                roomId,
+                "ProposalStatusChangedEvent"
+        );
 
-            Map<String, Object> noticeData = new HashMap<>();
-            noticeData.put("proposalId", event.proposalId());
-            if (event.actorUserId() != null) {
-                noticeData.put("actorUserId", event.actorUserId());
-            }
-
-            retrySender.sendWithIdempotency(
-                    statusNoticeKey,
-                    roomId,
-                    ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE,
-                    statusNoticePayload,
-                    "ProposalStatusChangedEvent",
-                    noticeData
-            );
-
-            // 4. 매칭 완료 시 추가 카드 전송 (별도 멱등성 키)
-            if (event.newStatus() == ChatProposalStatus.MATCHED) {
-                String matchedCardKey = String.format("%s:MATCHED_CARD", event.eventId());
-                
-                ChatMatchedCampaignPayloadResponse matchedPayload = matchedCampaignPayloadProvider.getPayload(event.campaignId())
-                        .orElseThrow(() -> {
-                            String message = String.format(
-                                    "Failed to get matched campaign payload. campaignId=%d may not exist or be deleted",
-                                    event.campaignId()
-                            );
-                            LOG.warn("[Proposal] {}. eventId={}, roomId={}", message, event.eventId(), roomId);
-                            return new IllegalStateException(message);
-                        });
-
-                Map<String, Object> matchedData = new HashMap<>();
-                matchedData.put("campaignId", event.campaignId());
-                matchedData.put("proposalId", event.proposalId());
-                matchedData.put("messageKind", "MATCHED_CAMPAIGN_CARD");
-
-                retrySender.sendWithIdempotency(
-                        matchedCardKey,
-                        roomId,
-                        ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD,
-                        matchedPayload,
-                        "ProposalStatusChangedEvent",
-                        matchedData
-                );
-            }
-
-            LOG.info("[Proposal] Status change processed. roomId={}, status={}",
-                    roomId, chatStatus);
-
-        } catch (ChatRoomNotFoundException ex) {
-            // 논리적 실패는 RetrySender에서 이미 처리됨
-            LOG.warn("[Proposal] Logical failure (room not found). eventId={}", event.eventId());
-        } catch (Exception ex) {
-            LOG.error("[Proposal] Failed to handle status change. eventId={}, proposalId={}, brandUserId={}, creatorUserId={}",
-                    event.eventId(),
-                    event.proposalId(),
-                    event.brandUserId(),
-                    event.creatorUserId(),
-                    ex);
-            // 전송 실패는 RetrySender의 @Recover에서 처리됨
+        // contextData 준비 (공통 키: messageKind, domainId 필수)
+        Map<String, Object> contextData = new HashMap<>();
+        contextData.put("messageKind", ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE.toString());
+        if (event.proposalId() != null) {
+            contextData.put("domainId", event.proposalId()); // 공통 키
+            contextData.put("proposalId", event.proposalId());
         }
+        if (event.actorUserId() != null) {
+            contextData.put("actorUserId", event.actorUserId());
+        }
+
+        execute(
+                noticeMeta,
+                contextData,
+                () -> new ChatProposalStatusNoticePayloadResponse(
+                        event.proposalId(),
+                        event.actorUserId(),
+                        LocalDateTime.now()
+                ),
+                payload -> {
+                    retrySender.sendWithIdempotency(
+                            noticeMeta.idempotencyKey(),
+                            noticeMeta.roomId(),
+                            ChatSystemMessageKind.PROPOSAL_STATUS_NOTICE,
+                            payload,
+                            noticeMeta.eventType(),
+                            contextData
+                    );
+                }
+        );
+
+        // 4. 매칭 완료 시 추가 카드 전송 (별도 멱등성 키)
+        // MATCHED 상태는 보통 1회만 발생하므로 proposalId만으로도 충분히 유니크함
+        // event.eventId()는 "PROPOSAL_STATUS_CHANGED:{proposalId}:MATCHED" 형태
+        if (event.newStatus() == ChatProposalStatus.MATCHED) {
+            String matchedCardKey = String.format("%s:MATCHED_CARD", event.eventId());
+            
+            SystemEventMeta matchedMeta = new SystemEventMeta(
+                    matchedCardKey,
+                    roomId,
+                    "ProposalStatusChangedEvent"
+            );
+
+            // contextData 준비 (공통 키: messageKind, domainId 필수)
+            Map<String, Object> matchedContextData = new HashMap<>();
+            matchedContextData.put("messageKind", ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD.toString());
+            if (event.proposalId() != null) {
+                matchedContextData.put("domainId", event.proposalId()); // 공통 키
+                matchedContextData.put("proposalId", event.proposalId());
+            }
+            if (event.campaignId() != null) {
+                matchedContextData.put("campaignId", event.campaignId());
+            }
+
+            execute(
+                    matchedMeta,
+                    matchedContextData,
+                    () -> matchedCampaignPayloadProvider.getPayload(event.campaignId())
+                            .orElseThrow(() -> {
+                                String message = String.format(
+                                        "Failed to get matched campaign payload. campaignId=%d may not exist or be deleted",
+                                        event.campaignId()
+                                );
+                                LOG.warn("[Proposal] {}. eventId={}, roomId={}", message, event.eventId(), roomId);
+                                return new IllegalStateException(message);
+                            }),
+                    payload -> {
+                        retrySender.sendWithIdempotency(
+                                matchedMeta.idempotencyKey(),
+                                matchedMeta.roomId(),
+                                ChatSystemMessageKind.MATCHED_CAMPAIGN_CARD,
+                                payload,
+                                matchedMeta.eventType(),
+                                matchedContextData
+                        );
+                    }
+            );
+        }
+
+        LOG.info("[Proposal] Status change processed. roomId={}, status={}",
+                roomId, chatStatus);
     }
 }

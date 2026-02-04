@@ -10,28 +10,40 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.chat.application.event.BaseSystemMessageHandler;
+import com.example.RealMatch.chat.application.event.SystemEventMeta;
 import com.example.RealMatch.chat.application.event.sender.SystemMessageRetrySender;
-import com.example.RealMatch.chat.application.exception.ChatRoomNotFoundException;
+import com.example.RealMatch.chat.application.idempotency.FailedEventDlq;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatApplyStatusNoticePayloadResponse;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * 지원(Apply) 관련 시스템 메시지 처리를 담당하는 핸들러.
+ * 지원(Apply) 관련 시스템 메시지 처리를 담당하는 핸들러
  * 
  * <p>역할: 오케스트레이션 (payload 준비, roomId 찾기, 메시지 종류 결정, 멱등성 키 결정)
- * <p>실제 전송/재시도/멱등성/DLQ는 SystemMessageRetrySender가 담당합니다.
+ * <p>실제 전송/재시도/멱등성/DLQ는 Base의 execute 메서드와 SystemMessageRetrySender가 담당합니다.
  */
 @Component
-@RequiredArgsConstructor
-public class ApplySystemMessageHandler {
+public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ApplySystemMessageHandler.class);
 
-    private final SystemMessageRetrySender retrySender;
     private final ChatRoomQueryService chatRoomQueryService;
+
+    public ApplySystemMessageHandler(
+            FailedEventDlq failedEventDlq,
+            SystemMessageRetrySender retrySender,
+            ChatRoomQueryService chatRoomQueryService
+    ) {
+        super(failedEventDlq, retrySender);
+        this.chatRoomQueryService = chatRoomQueryService;
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
+    }
 
     /**
      * 지원 전송 이벤트 처리.
@@ -52,36 +64,47 @@ public class ApplySystemMessageHandler {
         // 2. 멱등성 키 결정 (deterministic)
         String idempotencyKey = event.eventId(); // 이미 deterministic: "APPLY_SENT:{applyId}"
 
-        // 3. RetrySender로 전송 (멱등성 체크 + 재시도 + DLQ 포함)
-        Map<String, Object> additionalData = new HashMap<>();
+        // 3. eventMeta 생성
+        SystemEventMeta meta = new SystemEventMeta(
+                idempotencyKey,
+                event.roomId(),
+                "ApplySentEvent"
+        );
+
+        // 4. contextData 준비 (공통 키: messageKind, domainId 필수)
+        Map<String, Object> contextData = new HashMap<>();
+        contextData.put("messageKind", ChatSystemMessageKind.APPLY_CARD.toString());
         if (event.payload().applyId() != null) {
-            additionalData.put("applyId", event.payload().applyId());
+            contextData.put("domainId", event.payload().applyId()); // 공통 키
+            contextData.put("applyId", event.payload().applyId());
         }
         if (event.payload().campaignId() != null) {
-            additionalData.put("campaignId", event.payload().campaignId());
+            contextData.put("campaignId", event.payload().campaignId());
         }
-        additionalData.put("messageKind", ChatSystemMessageKind.APPLY_CARD.toString());
 
-        try {
-            boolean sent = retrySender.sendWithIdempotency(
-                    idempotencyKey,
-                    event.roomId(),
-                    ChatSystemMessageKind.APPLY_CARD,
-                    event.payload(),
-                    "ApplySentEvent",
-                    additionalData
-            );
+        // 5. Base의 execute 메서드 사용 (payload 생성은 이미 event에 있으므로 supplier로 감싸기)
+        execute(
+                meta,
+                contextData,
+                () -> event.payload(), // payload는 이미 event에 있음
+                payload -> {
+                    boolean sent = retrySender.sendWithIdempotency(
+                            meta.idempotencyKey(),
+                            meta.roomId(),
+                            ChatSystemMessageKind.APPLY_CARD,
+                            payload,
+                            meta.eventType(),
+                            contextData
+                    );
 
-            if (sent) {
-                LOG.info("[Apply] System message sent. roomId={}, applyId={}, campaignId={}",
-                        event.roomId(), event.payload().applyId(), event.payload().campaignId());
-            } else {
-                LOG.warn("[Apply] Duplicate event, skipped. eventId={}", event.eventId());
-            }
-        } catch (IllegalArgumentException ex) {
-            // 논리적 실패는 RetrySender에서 이미 처리됨
-            LOG.warn("[Apply] Logical failure. eventId={}, error={}", event.eventId(), ex.getMessage());
-        }
+                    if (sent) {
+                        LOG.info("[Apply] System message sent. roomId={}, applyId={}, campaignId={}",
+                                meta.roomId(), event.payload().applyId(), event.payload().campaignId());
+                    } else {
+                        LOG.warn("[Apply] Duplicate event, skipped. idempotencyKey={}", meta.idempotencyKey());
+                    }
+                }
+        );
     }
 
     /**
@@ -101,48 +124,53 @@ public class ApplySystemMessageHandler {
         }
         Long roomId = roomIdOpt.get();
 
-        try {
-            LOG.info("[Apply] Processing status change. eventId={}, applyId={}, newStatus={}, brandUserId={}, creatorUserId={}",
-                    event.eventId(), event.applyId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
+        LOG.info("[Apply] Processing status change. eventId={}, applyId={}, newStatus={}, brandUserId={}, creatorUserId={}",
+                event.eventId(), event.applyId(), event.newStatus(), event.brandUserId(), event.creatorUserId());
 
-            // 2. 상태 변경 알림 메시지 전송 (별도 멱등성 키)
-            String statusNoticeKey = String.format("%s:NOTICE", event.eventId());
-            ChatApplyStatusNoticePayloadResponse statusNoticePayload =
-                    new ChatApplyStatusNoticePayloadResponse(
-                            event.applyId(),
-                            event.actorUserId(),
-                            LocalDateTime.now()
-                    );
+        // 2. 상태 변경 알림 메시지 전송 (별도 멱등성 키)
+        // event.eventId()는 "APPLY_STATUS_CHANGED:{applyId}:{newStatus}" 형태로 유니크함
+        // ":NOTICE"를 붙여 "APPLY_STATUS_CHANGED:{applyId}:{newStatus}:NOTICE" 형태로 구분
+        String statusNoticeKey = String.format("%s:NOTICE", event.eventId());
+        
+        // 3. eventMeta 생성
+        SystemEventMeta meta = new SystemEventMeta(
+                statusNoticeKey,
+                roomId,
+                "ApplyStatusChangedEvent"
+        );
 
-            Map<String, Object> noticeData = new HashMap<>();
-            noticeData.put("applyId", event.applyId());
-            if (event.actorUserId() != null) {
-                noticeData.put("actorUserId", event.actorUserId());
-            }
-
-            retrySender.sendWithIdempotency(
-                    statusNoticeKey,
-                    roomId,
-                    ChatSystemMessageKind.APPLY_STATUS_NOTICE,
-                    statusNoticePayload,
-                    "ApplyStatusChangedEvent",
-                    noticeData
-            );
-
-            LOG.info("[Apply] Status change processed. roomId={}, applyId={}, status={}",
-                    roomId, event.applyId(), event.newStatus());
-
-        } catch (ChatRoomNotFoundException ex) {
-            // 논리적 실패는 RetrySender에서 이미 처리됨
-            LOG.warn("[Apply] Logical failure (room not found). eventId={}", event.eventId());
-        } catch (Exception ex) {
-            LOG.error("[Apply] Failed to handle status change. eventId={}, applyId={}, brandUserId={}, creatorUserId={}",
-                    event.eventId(),
-                    event.applyId(),
-                    event.brandUserId(),
-                    event.creatorUserId(),
-                    ex);
-            // 전송 실패는 RetrySender의 @Recover에서 처리됨
+        // 4. contextData 준비 (공통 키: messageKind, domainId 필수)
+        Map<String, Object> contextData = new HashMap<>();
+        contextData.put("messageKind", ChatSystemMessageKind.APPLY_STATUS_NOTICE.toString());
+        if (event.applyId() != null) {
+            contextData.put("domainId", event.applyId()); // 공통 키
+            contextData.put("applyId", event.applyId());
         }
+        if (event.actorUserId() != null) {
+            contextData.put("actorUserId", event.actorUserId());
+        }
+
+        // 5. Base의 execute 메서드 사용
+        execute(
+                meta,
+                contextData,
+                () -> new ChatApplyStatusNoticePayloadResponse(
+                        event.applyId(),
+                        event.actorUserId(),
+                        LocalDateTime.now()
+                ),
+                payload -> {
+                    retrySender.sendWithIdempotency(
+                            meta.idempotencyKey(),
+                            meta.roomId(),
+                            ChatSystemMessageKind.APPLY_STATUS_NOTICE,
+                            payload,
+                            meta.eventType(),
+                            contextData
+                    );
+                    LOG.info("[Apply] Status change processed. roomId={}, applyId={}, status={}",
+                            roomId, event.applyId(), event.newStatus());
+                }
+        );
     }
 }
