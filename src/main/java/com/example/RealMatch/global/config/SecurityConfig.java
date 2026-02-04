@@ -60,6 +60,12 @@ public class SecurityConfig {
     @Value("${front.domain-url}")
     private String frontDomainUrl;
 
+    @Value("${front.domain-url-v2}")
+    private String frontDomainUrlV2;
+
+    @Value("${front.domain-url-local}")
+    private String frontDomainUrlLocal;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         log.info("Configuring Security Filter Chain");
@@ -96,7 +102,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl, frontDomainUrl, "https://www.realmatch.co.kr"));
+        configuration.setAllowedOrigins(List.of(allowedOrigin, "http://localhost:8080", swaggerUrl, frontDomainUrl, frontDomainUrlV2, frontDomainUrlLocal));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

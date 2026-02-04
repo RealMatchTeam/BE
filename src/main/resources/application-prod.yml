@@ -6,6 +6,8 @@ swagger:
 
 front:
   domain-url: ${FRONT_DOMAIN_URL}
+  domain-url-v2: ${FRONT_DOMAIN_URL_V2}
+  domain-url-local: ${FRONT_DOMAIN_URL_LOCAL}
 
 server:
   timezone: Asia/Seoul
