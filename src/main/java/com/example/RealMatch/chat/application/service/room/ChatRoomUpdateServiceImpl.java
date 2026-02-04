@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
+import com.example.RealMatch.chat.application.exception.ChatRoomNotFoundException;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.ChatRoomKeyGenerator;
 import com.example.RealMatch.chat.code.ChatErrorCode;
@@ -53,16 +54,18 @@ public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
             @NonNull ChatProposalStatus status
     ) {
         String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandUserId, creatorUserId);
-        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
-
-        if (room == null) {
-            LOG.warn("Chat room not found for proposal status update. brandUserId={}, creatorUserId={}, status={}",
-                    brandUserId, creatorUserId, status);
-            return;
-        }
+        ChatRoom room = chatRoomRepository.findByRoomKey(roomKey)
+                .orElseThrow(() -> {
+                    String message = String.format(
+                            "Chat room not found for proposal status update. brandUserId=%d, creatorUserId=%d, status=%s",
+                            brandUserId, creatorUserId, status
+                    );
+                    LOG.warn("[ChatRoomUpdate] {}. This may indicate a data inconsistency.", message);
+                    return new ChatRoomNotFoundException(message);
+                });
 
         room.updateProposalStatus(status);
-        LOG.debug("Chat room proposal status updated. roomId={}, status={}", room.getId(), status);
+        LOG.debug("[ChatRoomUpdate] Chat room proposal status updated. roomId={}, status={}", room.getId(), status);
 
         afterCommitExecutor.execute(() -> {
             cacheInvalidationService.invalidateAfterProposalStatusChanged(

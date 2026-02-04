@@ -170,6 +170,9 @@ public class CampaignProposal extends BaseEntity {
         this.refusalReason = refusalReason;
     }
 
+    // TODO: 제안 취소 기능 구현 필요
+    // 제안을 제시한 유저(senderUserId)가 자신의 제안을 취소할 수 있어야 함
+
     public void addTag(CampaignProposalContentTag tag) {
         this.tags.add(tag);
     }

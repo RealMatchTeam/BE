@@ -138,7 +138,7 @@ public class CampaignProposalService {
 
         proposal.match();
 
-        publishProposalStatusChangedEvent(proposal, ProposalStatus.MATCHED);
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.MATCHED, userId);
     }
 
     public void rejectCampaignProposal(
@@ -161,9 +161,12 @@ public class CampaignProposalService {
         proposal.reject(rejectReason);
 
         // 4. 상태 변경 이벤트 발행
-        publishProposalStatusChangedEvent(proposal, ProposalStatus.REJECTED);
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.REJECTED, userId);
     }
 
+    // TODO: 제안 취소 기능 구현 필요
+    // 제안을 제시한 유저가 자신의 제안을 취소할 수 있는 API
+    // 그리고 상태 변경 이벤트 발행 필요
 
 
     private void saveAllContentTags(CampaignProposalRequestDto request, CampaignProposal proposal) {
@@ -335,7 +338,7 @@ public class CampaignProposalService {
         eventPublisher.publishEvent(event);
     }
 
-    private void publishProposalStatusChangedEvent(CampaignProposal proposal, ProposalStatus newStatus) {
+    private void publishProposalStatusChangedEvent(CampaignProposal proposal, ProposalStatus newStatus, Long actorUserId) {
         Long brandUserId = proposal.getBrand().getUser().getId();
         Long creatorUserId = proposal.getCreator().getId();
         Long campaignId = proposal.getCampaign() != null ? proposal.getCampaign().getId() : null;
@@ -345,7 +348,8 @@ public class CampaignProposalService {
                 campaignId,
                 brandUserId,
                 creatorUserId,
-                newStatus
+                newStatus,
+                actorUserId
         );
         eventPublisher.publishEvent(event);
     }
