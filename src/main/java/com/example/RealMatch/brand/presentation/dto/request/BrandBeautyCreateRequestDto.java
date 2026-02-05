@@ -2,8 +2,6 @@ package com.example.RealMatch.brand.presentation.dto.request;
 
 import java.util.List;
 
-import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

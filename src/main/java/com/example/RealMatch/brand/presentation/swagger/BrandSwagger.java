@@ -19,9 +19,8 @@ import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDt
 import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
-import com.example.RealMatch.global.presentation.CustomResponse;
-
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
+import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

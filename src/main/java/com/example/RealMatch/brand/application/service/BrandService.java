@@ -1,28 +1,23 @@
 package com.example.RealMatch.brand.application.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
-import com.example.RealMatch.brand.domain.entity.BrandCategory;
-import com.example.RealMatch.brand.domain.entity.BrandCategoryView;
+import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
-import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
@@ -44,10 +39,10 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
-import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
+import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
 import com.example.RealMatch.tag.domain.entity.BrandTag;
 import com.example.RealMatch.tag.domain.entity.Tag;
 import com.example.RealMatch.tag.domain.enums.TagCategory;
@@ -56,7 +51,6 @@ import com.example.RealMatch.tag.domain.repository.TagBrandRepository;
 import com.example.RealMatch.tag.domain.repository.TagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
-import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
