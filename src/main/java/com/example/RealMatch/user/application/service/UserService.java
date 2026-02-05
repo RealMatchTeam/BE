@@ -1,5 +1,6 @@
 package com.example.RealMatch.user.application.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -65,6 +66,13 @@ public class UserService {
     // 파라미터 cursor를 page로 변경
     public MyProfileCardResponseDto getMyProfileCard(Long userId, int page, int size) {
 
+        if (page < 0) {
+            throw new CustomException(UserErrorCode.INVALID_PAGE_INDEX);
+        }
+        if (size <= 0) {
+            throw new CustomException(UserErrorCode.INVALID_PAGE_SIZE);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
@@ -76,48 +84,41 @@ public class UserService {
                 .findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        // 1️⃣ 모든 협업 데이터 수집 (기존 private 메서드들 호출)
+        // 2️⃣ 모든 데이터 수집 (개선된 private 메서드 사용)
         List<MyProfileCardResponseDto.CampaignInfo> allCampaigns = new ArrayList<>();
         getAppliedCampaigns(userId, allCampaigns);
         getReceivedProposals(userId, allCampaigns);
         getSentProposals(userId, allCampaigns);
 
-        List<String> interests = userContentCategoryRepository
-                .findByUserId(userId)
-                .stream()
-                .map(uc -> uc.getContentCategory().getCategoryName())
-                .toList();
-
-        // 2️⃣ 정렬: 최신순 (endDate 기준 내림차순)
+        // 3️⃣ 정렬 및 페이징 (메모리 방식 유지 - 데이터 100건 내외면 충분)
         allCampaigns.sort(Comparator.comparing(MyProfileCardResponseDto.CampaignInfo::endDate).reversed());
 
-        // 3️⃣ 페이징 계산
         int totalElements = allCampaigns.size();
         int start = Math.min(page * size, totalElements);
         int end = Math.min(start + size, totalElements);
 
-        // 해당 페이지에 속하는 데이터만 추출
         List<MyProfileCardResponseDto.CampaignInfo> pagedCampaigns = (start < totalElements)
                 ? allCampaigns.subList(start, end)
                 : Collections.emptyList();
 
-        // 4️⃣ DTO 생성 시 totalElements와 size를 넘겨서 totalPages를 계산하게 함
+        List<String> interests = userContentCategoryRepository.findByUserId(userId)
+                .stream().map(uc -> uc.getContentCategory().getCategoryName()).toList();
+
         return MyProfileCardResponseDto.from(user, detail, interests, pagedCampaigns, totalElements, size);
     }
-    /**
-     * 1️⃣ 지원한 캠페인 조회 (APPLIED)
-     */
+
     private void getAppliedCampaigns(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
+        // 전체 조회를 위해 status, startDate, endDate 위치에 null 전달
         List<CampaignApply> applies = campaignApplyRepository.findMyApplies(
                 userId,
-                null,  // status null = 전체 조회
-                null,  // startDate
-                null   // endDate
+                null,
+                null,
+                null
         );
 
         for (CampaignApply apply : applies) {
             Campaign c = apply.getCampaign();
-            Brand b = c.getBrand();
+            Brand b = c.getBrand(); // JOIN FETCH 덕분에 추가 쿼리 없이 즉시 접근
 
             campaigns.add(new MyProfileCardResponseDto.CampaignInfo(
                     c.getId(),
@@ -125,104 +126,57 @@ public class UserService {
                     b.getBrandName(),
                     c.getTitle(),
                     "APPLIED",
-                    apply.getApplyStatus().name(),  // REVIEWING, MATCHED, REJECTED
+                    apply.getApplyStatus().name(),
                     c.getRecruitEndDate().toLocalDate()
             ));
         }
     }
 
-    /**
-     * 2️⃣ 받은 제안 조회 (RECEIVED)
-     */
     private void getReceivedProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
-        List<Long> receivedIds = campaignProposalRepository.findReceivedProposalIds(
-                userId,
-                null  // status null = 전체 조회
-        );
-
-        if (receivedIds.isEmpty()) {
+        List<Long> ids = campaignProposalRepository.findReceivedProposalIds(userId, null);
+        if (ids.isEmpty()) {
             return;
         }
 
-        List<CampaignProposal> proposals = campaignProposalRepository.findAllById(receivedIds);
-
-        for (CampaignProposal proposal : proposals) {
-            // ✅ 기존 캠페인 기반 제안인 경우
-            if (proposal.getCampaign() != null) {
-                Campaign c = proposal.getCampaign();
-                Brand b = c.getBrand();
-
-                campaigns.add(new MyProfileCardResponseDto.CampaignInfo(
-                        c.getId(),
-                        b.getId(),
-                        b.getBrandName(),
-                        c.getTitle(),
-                        "RECEIVED",
-                        proposal.getStatus().name(),
-                        c.getRecruitEndDate().toLocalDate()
-                ));
-            } else {
-                Brand b = proposal.getBrand();
-
-                campaigns.add(new MyProfileCardResponseDto.CampaignInfo(
-                        null,  // campaignId (아직 캠페인 생성 전)
-                        b.getId(),
-                        b.getBrandName(),
-                        proposal.getTitle(),  // proposal의 title 사용
-                        "RECEIVED",
-                        proposal.getStatus().name(),
-                        proposal.getEndDate()  // proposal의 endDate 사용
-                ));
-            }
+        // ✅ FETCH JOIN으로 N+1 방지
+        List<CampaignProposal> proposals = campaignProposalRepository.findAllByIdWithDetails(ids);
+        for (CampaignProposal p : proposals) {
+            campaigns.add(convertToCampaignInfo(p, "RECEIVED"));
         }
     }
 
-    /**
-     * 3️⃣ 보낸 제안 조회 (SENT)
-     */
     private void getSentProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
-        List<Long> sentIds = campaignProposalRepository.findSentProposalIds(
-                userId,
-                null  // status null = 전체 조회
-        );
-
-        if (sentIds.isEmpty()) {
+        List<Long> ids = campaignProposalRepository.findSentProposalIds(userId, null);
+        if (ids.isEmpty()) {
             return;
         }
 
-        List<CampaignProposal> proposals = campaignProposalRepository.findAllById(sentIds);
-
-        for (CampaignProposal proposal : proposals) {
-            // ✅ 기존 캠페인 기반 제안인 경우
-            if (proposal.getCampaign() != null) {
-                Campaign c = proposal.getCampaign();
-                Brand b = c.getBrand();
-
-                campaigns.add(new MyProfileCardResponseDto.CampaignInfo(
-                        c.getId(),
-                        b.getId(),
-                        b.getBrandName(),
-                        c.getTitle(),
-                        "SENT",
-                        proposal.getStatus().name(),
-                        c.getRecruitEndDate().toLocalDate()
-                ));
-            } else {
-                Brand b = proposal.getBrand();
-
-                campaigns.add(new MyProfileCardResponseDto.CampaignInfo(
-                        null,  // campaignId (아직 캠페인 생성 전)
-                        b.getId(),
-                        b.getBrandName(),
-                        proposal.getTitle(),  // proposal의 title 사용
-                        "SENT",
-                        proposal.getStatus().name(),
-                        proposal.getEndDate()  // proposal의 endDate 사용
-                ));
-            }
+        // ✅ FETCH JOIN으로 N+1 방지
+        List<CampaignProposal> proposals = campaignProposalRepository.findAllByIdWithDetails(ids);
+        for (CampaignProposal p : proposals) {
+            campaigns.add(convertToCampaignInfo(p, "SENT"));
         }
     }
 
+    private MyProfileCardResponseDto.CampaignInfo convertToCampaignInfo(CampaignProposal p, String type) {
+        boolean hasCampaign = p.getCampaign() != null;
+        Long campaignId = hasCampaign ? p.getCampaign().getId() : null;
+
+        // 브랜드 정보 추출 (Campaign이 있으면 거기서, 없으면 Proposal에서)
+        Brand brand = hasCampaign ? p.getCampaign().getBrand() : p.getBrand();
+        String title = hasCampaign ? p.getCampaign().getTitle() : p.getTitle();
+        LocalDate endDate = hasCampaign ? p.getCampaign().getRecruitEndDate().toLocalDate() : p.getEndDate();
+
+        return new MyProfileCardResponseDto.CampaignInfo(
+                campaignId,
+                brand.getId(),
+                brand.getBrandName(),
+                title,
+                type,
+                p.getStatus().name(),
+                endDate
+        );
+    }
         public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
         // 유저 조회
         User user = userRepository.findById(userId)
