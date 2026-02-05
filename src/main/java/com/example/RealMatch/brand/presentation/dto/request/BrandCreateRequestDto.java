@@ -37,7 +37,6 @@ public class BrandCreateRequestDto {
                 .simpleIntro(this.simpleIntro)
                 .detailIntro(this.detailIntro)
                 .homepageUrl(this.homepageUrl)
-                .matchingRate(0) // 기본값 설정
                 .createdBy(user.getId())
                 .user(user)
                 .build();

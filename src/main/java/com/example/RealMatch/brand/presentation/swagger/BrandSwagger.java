@@ -19,6 +19,8 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetai
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -58,7 +60,8 @@ public interface BrandSwagger {
                                     "    \"brandMakeUpStyle\": [\"내추럴\", \"글로우\"]\n" +
                                     "  }\n" +
                                     "}")))
-            BrandCreateRequestDto requestDto
+            BrandCreateRequestDto requestDto,
+            @Parameter(hidden = true) CustomUserDetails principal
     );
 
     @Operation(summary = "브랜드 상세 조회 by 이예림", description = "브랜드 ID로 상세 정보를 조회합니다.")
@@ -68,7 +71,8 @@ public interface BrandSwagger {
                     content = @Content(schema = @Schema(implementation = CustomResponse.class)))
     })
     CustomResponse<java.util.List<BrandDetailResponseDto>> getBrandDetail(
-            @Parameter(description = "조회할 브랜드의 ID", required = true) @PathVariable Long brandId
+            @Parameter(description = "조회할 브랜드의 ID", required = true) @PathVariable Long brandId,
+            @Parameter(hidden = true) CustomUserDetails principal
     );
 
     @Operation(summary = "브랜드 좋아요 토글 by 이예림", description = "브랜드 ID로 좋아요를 추가하거나 취소합니다.")
@@ -78,7 +82,8 @@ public interface BrandSwagger {
                     content = @Content(schema = @Schema(implementation = CustomResponse.class)))
     })
     CustomResponse<List<BrandLikeResponseDto>> likeBrand(
-            @Parameter(description = "좋아요 토글할 브랜드의 ID", required = true) @PathVariable Long brandId
+            @Parameter(description = "좋아요 토글할 브랜드의 ID", required = true) @PathVariable Long brandId,
+            @Parameter(hidden = true) CustomUserDetails principal
     );
 
     @Operation(summary = "브랜드 필터 옵션 조회 by 이예림", description = "브랜드 필터링에 사용될 옵션들을 조회합니다.")
@@ -113,7 +118,8 @@ public interface BrandSwagger {
     })
     ResponseEntity<Void> updateBrand(
             @Parameter(description = "수정할 브랜드의 ID", required = true) @PathVariable Long brandId,
-            @RequestBody(description = "수정할 브랜드 정보") BrandUpdateRequestDto requestDto
+            @RequestBody(description = "수정할 브랜드 정보") BrandUpdateRequestDto requestDto,
+            @Parameter(hidden = true) CustomUserDetails principal
     );
 
     @Operation(summary = "브랜드 삭제 by 이예림", description = "브랜드 ID로 브랜드를 삭제합니다. (소프트 삭제)")
@@ -123,7 +129,8 @@ public interface BrandSwagger {
                     content = @Content(schema = @Schema(implementation = CustomResponse.class)))
     })
     ResponseEntity<Void> deleteBrand(
-            @Parameter(description = "삭제할 브랜드의 ID", required = true) @PathVariable Long brandId
+            @Parameter(description = "삭제할 브랜드의 ID", required = true) @PathVariable Long brandId,
+            @Parameter(hidden = true) CustomUserDetails principal
     );
 
     @Operation(summary = "브랜드 전체 목록 조회 (페이징) by 이예림", description = "등록된 모든 브랜드의 리스트를 페이징하여 반환합니다.")
