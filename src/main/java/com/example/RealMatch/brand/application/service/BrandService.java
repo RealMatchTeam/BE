@@ -84,12 +84,19 @@ public class BrandService {
     }
 
     public BrandDetailResponseDto getBrandDetail(Long brandId) {
-        Long currentUserId = getCurrentUserId();
-
+        Long currentUserId = getCurrentUserId(); //
         Brand brand = brandRepository.findById(brandId)
-                .orElseThrow(() -> new IllegalArgumentException("Brand not found with id: " + brandId));
+                .orElseThrow(() -> new IllegalArgumentException("Brand not found")); //
 
-        boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
+        boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId); //
+
+        // 태그 조회 및 카테고리별 그룹화
+        List<BrandTag> brandTags = brandTagRepository.findAllByBrandIdWithTag(brandId);
+        Map<String, List<String>> tagsMap = brandTags.stream()
+                .collect(Collectors.groupingBy(
+                        bt -> bt.getTag().getTagCategory(),
+                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
+                ));
 
         BrandDetailResponseDto.BrandDetailResponseDtoBuilder responseBuilder = BrandDetailResponseDto.builder()
                 .userId(brand.getUser().getId())
@@ -102,34 +109,27 @@ public class BrandService {
                 .brandIsLiked(isLiked)
                 .brandTag(Collections.emptyList());
 
-        List<BrandTag> brandTags = brandTagRepository.findAllByBrandIdWithTag(brandId);
-        Map<String, List<String>> tagsMap = brandTags.stream()
-                .collect(Collectors.groupingBy(
-                        bt -> bt.getTag().getTagCategory(),
-                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
-                ));
-
         if (brand.getIndustryType() == IndustryType.BEAUTY) {
-            BrandDetailResponseDto.BrandSkinCareTagDto skinCareTagDto = BrandDetailResponseDto.BrandSkinCareTagDto.builder()
+            List<String> beautyCategories = brand.getBrandCategoryViews().stream()
+                    .map(v -> v.getCategory().getName())
+                    .collect(Collectors.toList());
+
+            responseBuilder.beautyResponse(BrandDetailResponseDto.BrandBeautyResponse.builder()
+                    .categories(beautyCategories)
                     .skinType(tagsMap.getOrDefault(TagCategory.SKIN_TYPE.getDescription(), Collections.emptyList()))
                     .mainFunction(tagsMap.getOrDefault(TagCategory.SKIN_CARE_MAIN_FUNCTION.getDescription(), Collections.emptyList()))
-                    .build();
-
-            BrandDetailResponseDto.BrandMakeUpTagDto makeUpTagDto = BrandDetailResponseDto.BrandMakeUpTagDto.builder()
-                    .brandMakeUpStyle(tagsMap.getOrDefault(TagCategory.MAKEUP_STYLE.getDescription(), Collections.emptyList()))
-                    .build();
-
-            responseBuilder.brandCategory(tagsMap.getOrDefault(TagCategory.BEAUTY_STYLE.getDescription(), Collections.emptyList()))
-                    .brandSkinCareTag(skinCareTagDto)
-                    .brandMakeUpTag(makeUpTagDto);
-
+                    .makeUpStyle(tagsMap.getOrDefault(TagCategory.MAKEUP_STYLE.getDescription(), Collections.emptyList()))
+                    .build());
         } else if (brand.getIndustryType() == IndustryType.FASHION) {
-            BrandDetailResponseDto.BrandClothingTagDto clothingTagDto = BrandDetailResponseDto.BrandClothingTagDto.builder()
+            List<String> fashionCategories = brand.getBrandCategoryViews().stream()
+                    .map(v -> v.getCategory().getName())
+                    .collect(Collectors.toList());
+
+            responseBuilder.fashionResponse(BrandDetailResponseDto.BrandFashionResponse.builder()
+                    .categories(fashionCategories)
                     .brandType(tagsMap.getOrDefault(TagCategory.FASHION_BRAND_TYPE.getDescription(), Collections.emptyList()))
                     .brandStyle(tagsMap.getOrDefault(TagCategory.FASHION_STYLE.getDescription(), Collections.emptyList()))
-                    .build();
-
-            responseBuilder.brandClothingTag(clothingTagDto);
+                    .build());
         }
 
         return responseBuilder.build();
