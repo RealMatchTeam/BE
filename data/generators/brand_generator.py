@@ -45,6 +45,78 @@ class BrandGenerator(BaseGenerator):
         "고객님의 개성을 존중하는 브랜드입니다. 다양한 스타일과 옵션을 제공하여 자신만의 유니크한 룩을 완성할 수 있도록 도와드립니다. 나만의 스타일을 찾아보세요."
     ]
 
+    def _table_exists(self, table_name):
+        print(f"[{table_name}] is creating...")
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
+                return cursor.fetchone() is not None
+        except Exception:
+            print(f"[에러] {table_name} 이 없습니다")
+            return False
+
+    def _get_table_columns(self, table_name):
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(f"DESCRIBE {table_name}")
+                return [row['Field'] for row in cursor.fetchall()]
+        except Exception:
+            return []
+
+    def _get_enum_values(self, table_name, column_name):
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(f"SHOW COLUMNS FROM {table_name} WHERE Field = %s", (column_name,))
+                result = cursor.fetchone()
+                if result and result.get('Type', '').startswith('enum'):
+                    enum_str = result['Type']
+                    values = enum_str.replace("enum(", "").replace(")", "").replace("'", "").split(",")
+                    return [v.strip() for v in values]
+        except Exception:
+            pass
+        return []
+
+    # 브랜드 설명 태그 단어 목록
+    BRAND_DESCRIBE_TAGS = [
+        "트렌디", "감성적", "고급스러운", "캐주얼", "모던",
+        "빈티지", "심플", "유니크", "자연친화", "프리미엄",
+        "세련된", "편안한", "실용적", "클래식", "스타일리시",
+        "젊은", "우아한", "힙한", "미니멀", "럭셔리",
+        "친환경", "비건", "오가닉", "데일리", "베이직"
+    ]
+
+    def generate_brand_describe_tag(self, count=3):
+
+        if not self._table_exists('brand_describe_tag'):
+            return
+
+        with self.connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM brand")
+            brand_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not brand_ids:
+            print("[경고] 브랜드가 없습니다.")
+            return
+
+        tags = []
+        for brand_id in brand_ids:
+            selected_tags = self.fake.random_sample(self.BRAND_DESCRIBE_TAGS, length=min(count, len(self.BRAND_DESCRIBE_TAGS)))
+            for tag in selected_tags:
+                tags.append({
+                    'brand_id': brand_id,
+                    'brand_describe_tag': tag,
+                    'created_at': datetime.now(),
+                })
+
+        if tags:
+            sql = """
+                INSERT IGNORE INTO brand_describe_tag (brand_id, brand_describe_tag, created_at)
+                VALUES (%(brand_id)s, %(brand_describe_tag)s, %(created_at)s)
+            """
+            self.execute_many(sql, tags, "브랜드 설명 태그")
+        else:
+            print("[에러] 생성할 데이터가 없습니다.")
+
     def generate_brands(self, count=20):
         print(f"\n[브랜드] {count}개의 브랜드 생성 중...")
 
@@ -79,7 +151,6 @@ class BrandGenerator(BaseGenerator):
                 'simple_intro': simple_intro,
                 'detail_intro': detail_intro,
                 'homepage_url': self.fake.url(),
-                'matching_rate': self.fake.random_int(50, 100),
                 'user_id': user_ids[i],
                 'created_by': user_ids[i],
                 'is_deleted': False,
@@ -90,10 +161,10 @@ class BrandGenerator(BaseGenerator):
 
         sql = """
             INSERT INTO brand (brand_name, industry_type, logo_url, simple_intro,
-                               detail_intro, homepage_url, matching_rate, user_id, created_by,
+                               detail_intro, homepage_url, user_id, created_by,
                                is_deleted, created_at, updated_at)
             VALUES (%(brand_name)s, %(industry_type)s, %(logo_url)s, %(simple_intro)s,
-                    %(detail_intro)s, %(homepage_url)s, %(matching_rate)s, %(user_id)s, %(created_by)s,
+                    %(detail_intro)s, %(homepage_url)s, %(user_id)s, %(created_by)s,
                     %(is_deleted)s, %(created_at)s, %(updated_at)s)
         """
         self.execute_many(sql, brands, "브랜드")
@@ -222,48 +293,255 @@ class BrandGenerator(BaseGenerator):
         """
         self.execute_many(sql, sponsors, "브랜드 협찬 상품")
 
-    def generate_brand_sponsor_images(self):
-        """브랜드 협찬 상품 이미지 생성"""
-        print(f"\n[협찬 상품 이미지] 협찬 상품 이미지 생성 중...")
+    def generate_brand_categories(self):
+
+        if not self._table_exists('brand_category'):
+            return
+
+        columns = self._get_table_columns('brand_category')
 
         with self.connection.cursor() as cursor:
-            cursor.execute("SELECT id FROM brand_available_sponsor")
-            sponsor_ids = [row['id'] for row in cursor.fetchall()]
+            cursor.execute("SELECT id, industry_type FROM brand")
+            brands = cursor.fetchall()
 
-            cursor.execute("SELECT id FROM users WHERE role = 'BRAND' LIMIT 1")
-            brand_user = cursor.fetchone()
-            created_by = brand_user['id'] if brand_user else 1
+        if not brands:
+            print("[경고] 브랜드가 없습니다.")
+            return
 
+        categories = []
+
+        category_values = ['FASHION', 'BEAUTY']
+        for category in category_values:
+            categories.append({
+                "name": category,
+                "is_deleted": False,
+                "created_at": datetime.now(),
+            })
+
+        if categories:
+            sql = """
+                INSERT INTO brand_category (name, is_deleted, created_at)
+                VALUES (%(name)s, %(is_deleted)s, %(created_at)s)
+            """
+            self.execute_many(sql, categories, "브랜드 카테고리")
+        else:
+            print("  - 생성할 데이터가 없습니다.")
+
+    def generate_brand_available_sponsors(self):
+
+        if not self._table_exists('brand_available_sponsor'):
+            return
+
+        columns = self._get_table_columns('brand_available_sponsor')
+
+        with self.connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM brand")
+            brand_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not brand_ids:
+            print("[경고] 브랜드가 없습니다.")
+            return
+
+        # ENUM 값 동적 조회
+        sponsor_types = self._get_enum_values('brand_available_sponsor', 'sponsor_type')
+        if not sponsor_types:
+            sponsor_types = self._get_enum_values('brand_available_sponsor', 'type')
+        if not sponsor_types:
+            sponsor_types = ['PRODUCT', 'MONEY', 'BOTH']
+
+        sponsors = []
+        for brand_id in brand_ids:
+            data = {}
+            if 'brand_id' in columns:
+                data['brand_id'] = brand_id
+            if 'sponsor_type' in columns:
+                data['sponsor_type'] = self.fake.random_element(sponsor_types)
+            if 'type' in columns:
+                data['type'] = self.fake.random_element(sponsor_types)
+            if 'name' in columns:
+                data['name'] = self.fake.word()
+            if 'description' in columns:
+                data['description'] = self.fake.sentence()
+            if 'is_deleted' in columns:
+                data['is_deleted'] = False
+            if 'created_at' in columns:
+                data['created_at'] = datetime.now()
+            if 'updated_at' in columns:
+                data['updated_at'] = datetime.now()
+            if data:
+                sponsors.append(data)
+
+        if sponsors:
+            cols = list(sponsors[0].keys())
+            col_names = ', '.join(cols)
+            placeholders = ', '.join([f'%({c})s' for c in cols])
+            sql = f"INSERT IGNORE INTO brand_available_sponsor ({col_names}) VALUES ({placeholders})"
+            self.execute_many(sql, sponsors, "브랜드 스폰서")
+        else:
+            print("  - 생성할 데이터가 없습니다.")
+
+    def generate_brand_sponsor_images(self):
+
+        columns = self._get_table_columns('brand_sponsor_image')
+
+        # brand_available_sponsor가 있으면 그것을 사용, 없으면 brand에서 직접 가져옴
+        sponsor_ids = []
+        if self._table_exists('brand_available_sponsor'):
+            with self.connection.cursor() as cursor:
+                cursor.execute("SELECT id FROM brand_available_sponsor")
+                sponsor_ids = [row['id'] for row in cursor.fetchall()]
+
+        # sponsor가 없으면 brand_id를 사용
+        brand_ids = []
         if not sponsor_ids:
-            print("[경고] 협찬 상품이 없습니다.")
+            with self.connection.cursor() as cursor:
+                cursor.execute("SELECT id FROM brand")
+                brand_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not sponsor_ids and not brand_ids:
+            print("[경고] 브랜드 스폰서 또는 브랜드가 없습니다.")
             return
 
         images = []
-        for sponsor_id in sponsor_ids:
-            # 각 협찬 상품당 1~4개의 이미지 생성
-            num_images = self.fake.random_int(1, 4)
+        source_ids = sponsor_ids if sponsor_ids else brand_ids
+        for source_id in source_ids:
+            num_images = self.fake.random_int(1, 3)
             for _ in range(num_images):
-                images.append({
-                    'sponsor_id': sponsor_id,
-                    'image_url': f"https://picsum.photos/600/600?random={self.fake.uuid4()}",
-                    'created_by': created_by,
-                    'is_deleted': False,
-                    'created_at': datetime.now(),
-                    'updated_at': datetime.now()
-                })
+                data = {}
+                if 'brand_available_sponsor_id' in columns:
+                    data['brand_available_sponsor_id'] = source_id
+                if 'sponsor_id' in columns:
+                    data['sponsor_id'] = source_id
+                if 'brand_id' in columns:
+                    data['brand_id'] = source_id
+                if 'image_url' in columns:
+                    data['image_url'] = f"https://picsum.photos/400/300?random={self.fake.random_int(1, 999999)}"
+                if 'url' in columns:
+                    data['url'] = f"https://picsum.photos/400/300?random={self.fake.random_int(1, 999999)}"
+                if 'is_deleted' in columns:
+                    data['is_deleted'] = False
+                if 'created_at' in columns:
+                    data['created_at'] = datetime.now()
+                if 'updated_at' in columns:
+                    data['updated_at'] = datetime.now()
+                if data:
+                    images.append(data)
 
-        sql = """
-            INSERT INTO brand_sponsor_image (sponsor_id, image_url, created_by,
-                is_deleted, created_at, updated_at)
-            VALUES (%(sponsor_id)s, %(image_url)s, %(created_by)s,
-                %(is_deleted)s, %(created_at)s, %(updated_at)s)
-        """
-        self.execute_many(sql, images, "협찬 상품 이미지")
+        if images:
+            cols = list(images[0].keys())
+            col_names = ', '.join(cols)
+            placeholders = ', '.join([f'%({c})s' for c in cols])
+            sql = f"INSERT IGNORE INTO brand_sponsor_image ({col_names}) VALUES ({placeholders})"
+            self.execute_many(sql, images, "브랜드 스폰서 이미지")
+        else:
+            print("  - 생성할 데이터가 없습니다.")
 
+    def generate_brand_category_views(self):
+
+        if not self._table_exists('brand_category_view'):
+            return
+
+        with self.connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM brand")
+            brand_ids = [row['id'] for row in cursor.fetchall()]
+
+            cursor.execute("SELECT id FROM brand_category")
+            category_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not brand_ids or not category_ids:
+            print("[경고] 브랜드 또는 카테고리가 없습니다.")
+            return
+
+        views = []
+        for brand_id in brand_ids:
+            category_id = self.fake.random_element(category_ids)
+            views.append({
+                'brand_id': brand_id,
+                'category_id': category_id,
+                'created_at': datetime.now(),
+                'updated_at': None,
+                'is_deleted': False,
+            })
+
+        if views:
+            sql = """
+                INSERT IGNORE INTO brand_category_view (brand_id, category_id, created_at, updated_at, is_deleted)
+                VALUES (%(brand_id)s, %(category_id)s, %(created_at)s, %(updated_at)s, %(is_deleted)s)
+            """
+            self.execute_many(sql, views, "브랜드 카테고리 뷰")
+        else:
+            print("[에러] 생성할 데이터가 없습니다.")
+
+    def generate_brand_like_reads(self):
+
+        if not self._table_exists('brand_like_read'):
+            return
+
+        columns = self._get_table_columns('brand_like_read')
+
+        with self.connection.cursor() as cursor:
+            # brand_like에서 가져오기
+            like_ids = []
+            if self._table_exists('brand_like'):
+                cursor.execute("SELECT id FROM brand_like")
+                like_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not like_ids:
+            print("[경고] 브랜드 좋아요가 없습니다.")
+            return
+
+        reads = []
+        for like_id in like_ids:
+            if self.fake.boolean(chance_of_getting_true=70):
+                data = {}
+                if 'brand_like_id' in columns:
+                    data['brand_like_id'] = like_id
+                if 'like_id' in columns:
+                    data['like_id'] = like_id
+                if 'id' in columns and 'brand_like_id' not in columns and 'like_id' not in columns:
+                    # id가 FK로 사용될 수 있음
+                    pass
+                if 'is_read' in columns:
+                    data['is_read'] = True
+                if 'read_at' in columns:
+                    data['read_at'] = datetime.now() - timedelta(days=self.fake.random_int(0, 10))
+                if 'is_deleted' in columns:
+                    data['is_deleted'] = False
+                if 'created_at' in columns:
+                    data['created_at'] = datetime.now()
+                if 'updated_at' in columns:
+                    data['updated_at'] = datetime.now()
+                if data:
+                    reads.append(data)
+
+        if reads:
+            cols = list(reads[0].keys())
+            col_names = ', '.join(cols)
+            placeholders = ', '.join([f'%({c})s' for c in cols])
+            sql = f"INSERT IGNORE INTO brand_like_read ({col_names}) VALUES ({placeholders})"
+            self.execute_many(sql, reads, "브랜드 좋아요 읽음")
+        else:
+            print("  - 생성할 데이터가 없습니다.")
+
+    def _run_generator(self, name, func):
+        try:
+            func()
+            print(f"{name} 완료")
+        except Exception as e:
+            print(f"{name} 실패: {e}")
+
+            
     def generate_all(self, brand_count=20):
-        self.generate_brands(brand_count)
-        self.generate_brand_images()
-        self.generate_brand_likes()
+        print("\n========== 브랜드 데이터 생성 ==========")
+        self._run_generator("브랜드", lambda: self.generate_brands(brand_count))
+        self._run_generator("브랜드 설명 태그", self.generate_brand_describe_tag)
+        self._run_generator("브랜드 이미지", self.generate_brand_images)
+        self._run_generator("브랜드 좋아요", self.generate_brand_likes)
+        self._run_generator("브랜드 카테고리", self.generate_brand_categories)
+        self._run_generator("브랜드 스폰서", self.generate_brand_available_sponsors)
+        self._run_generator("브랜드 카테고리 뷰", self.generate_brand_category_views)
+        self._run_generator("브랜드 좋아요 읽음", self.generate_brand_like_reads)
+        print("\n========== 브랜드 데이터 생성 완료 ==========")
 
     def generate_sponsors(self):
         """협찬 관련 데이터 생성 (캠페인 생성 후 호출 필요)"""
