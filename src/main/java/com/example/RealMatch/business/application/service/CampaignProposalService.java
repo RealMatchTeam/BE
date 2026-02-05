@@ -228,6 +228,21 @@ public class CampaignProposalService {
         throw new CustomException(GeneralErrorCode.INVALID_DATA);
     }
 
+    public void cancelCampaignProposal(Long userId, Long campaignProposalId) {
+        CampaignProposal proposal = campaignProposalRepository
+                .findById(campaignProposalId)
+                .orElseThrow(() ->
+                        new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
+                );
+
+
+        proposal.validateCancelable(userId);
+        proposal.cancel();
+
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.CANCELED, userId);
+    }
+
+
     private void validateReceiver(CampaignProposal proposal, Long userId) {
         if (!proposal.getReceiverUserId().equals(userId)) {
             throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_FORBIDDEN);

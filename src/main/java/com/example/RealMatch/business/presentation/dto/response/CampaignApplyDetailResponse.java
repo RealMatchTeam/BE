@@ -10,6 +10,7 @@ import lombok.Getter;
 public class CampaignApplyDetailResponse {
 
     private Long campaignId;
+    private Long campaignApplyId;
     private String campaignTitle;
     private String campaignReason;
     private ProposalStatus status;

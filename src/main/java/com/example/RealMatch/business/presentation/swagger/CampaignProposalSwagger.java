@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
 public interface CampaignProposalSwagger {
@@ -175,5 +177,56 @@ public interface CampaignProposalSwagger {
             @PathVariable Long campaignProposalId,
             @RequestBody(required = false) @Valid CampaignProposalRejectRequest request
     );
+
+    @Operation(
+            summary = "캠페인 제안 취소 API by 박지영",
+            description = """
+                사용자가 보낸 캠페인 제안을 취소합니다.   
+                
+                - 제안 상태가 REVIEWING 인 경우에만 취소할 수 있습니다.    
+                - 이미 수락되었거나 거절된 제안은 취소할 수 없습니다.   
+                
+                /api/v1/campaigns/proposal/{campaignProposalId}에서 status가 CANCELED로 바뀌었는지 확인해주세요. 
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200",
+                    description = "캠페인 제안 취소 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "success",
+                                    value = """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200_1",
+                                  "message": "정상적인 요청입니다.",
+                                  "result": "캠페인 제안을 취소했습니다."
+                                }
+                                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "BUSINESS_CAMPAIGN_PROPOSAL_400_6 - 검토중인 캠페인이 아님",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "BUSINESS_CAMPAIGN_PROPOSAL_403_3 - 제안 취소 권한 없음",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "BUSINESS_CAMPAIGN_PROPOSAL_404_2 - 캠페인 제안 없음",
+                    content = @Content
+            )
+    })
+    CustomResponse<String> cancelCampaignProposal(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long campaignProposalId
+    );
+
 
 }

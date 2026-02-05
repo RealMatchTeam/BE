@@ -25,6 +25,7 @@ public enum BusinessErrorCode implements BaseErrorCode {
     CAMPAIGN_PROPOSAL_NOT_REVIEWING(HttpStatus.BAD_REQUEST, "BUSINESS_CAMPAIGN_PROPOSAL_400_6", "검토중인 캠페인이 아닙니다."),
     CAMPAIGN_PROPOSAL_FORBIDDEN(HttpStatus.FORBIDDEN, "BUSINESS_CAMPAIGN_PROPOSAL_403_1", "해당 캠페인 제안에 대한 권한이 없습니다."),
     CAMPAIGN_PROPOSAL_ROLE_MISMATCH(HttpStatus.FORBIDDEN, "BUSINESS_CAMPAIGN_PROPOSAL_403_2", "캠페인 제안 주체와 요청자의 역할이 일치하지 않습니다."),
+    CAMPAIGN_PROPOSAL_USER_MISMATCH(HttpStatus.FORBIDDEN, "BUSINESS_CAMPAIGN_PROPOSAL_403_3", "캠페인 제안 주체와 요청자가 일치하지 않습니다."),
     CAMPAIGN_PROPOSAL_NOT_FOUND(HttpStatus.NOT_FOUND, "BUSINESS_CAMPAIGN_PROPOSAL_404_2", "캠페인 제안 내역이 없습니다.");
 
     private final HttpStatus status;
