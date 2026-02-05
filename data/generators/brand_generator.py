@@ -76,6 +76,47 @@ class BrandGenerator(BaseGenerator):
             pass
         return []
 
+    # 브랜드 설명 태그 단어 목록
+    BRAND_DESCRIBE_TAGS = [
+        "트렌디", "감성적", "고급스러운", "캐주얼", "모던",
+        "빈티지", "심플", "유니크", "자연친화", "프리미엄",
+        "세련된", "편안한", "실용적", "클래식", "스타일리시",
+        "젊은", "우아한", "힙한", "미니멀", "럭셔리",
+        "친환경", "비건", "오가닉", "데일리", "베이직"
+    ]
+
+    def generate_brand_describe_tag(self, count=3):
+
+        if not self._table_exists('brand_describe_tag'):
+            return
+
+        with self.connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM brand")
+            brand_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not brand_ids:
+            print("[경고] 브랜드가 없습니다.")
+            return
+
+        tags = []
+        for brand_id in brand_ids:
+            selected_tags = self.fake.random_sample(self.BRAND_DESCRIBE_TAGS, length=min(count, len(self.BRAND_DESCRIBE_TAGS)))
+            for tag in selected_tags:
+                tags.append({
+                    'brand_id': brand_id,
+                    'brand_describe_tag': tag,
+                    'created_at': datetime.now(),
+                })
+
+        if tags:
+            sql = """
+                INSERT IGNORE INTO brand_describe_tag (brand_id, brand_describe_tag, created_at)
+                VALUES (%(brand_id)s, %(brand_describe_tag)s, %(created_at)s)
+            """
+            self.execute_many(sql, tags, "브랜드 설명 태그")
+        else:
+            print("[에러] 생성할 데이터가 없습니다.")
+
     def generate_brands(self, count=20):
         print(f"\n[브랜드] {count}개의 브랜드 생성 중...")
 
@@ -493,6 +534,7 @@ class BrandGenerator(BaseGenerator):
     def generate_all(self, brand_count=20):
         print("\n========== 브랜드 데이터 생성 ==========")
         self._run_generator("브랜드", lambda: self.generate_brands(brand_count))
+        self._run_generator("브랜드 설명 태그", self.generate_brand_describe_tag)
         self._run_generator("브랜드 이미지", self.generate_brand_images)
         self._run_generator("브랜드 좋아요", self.generate_brand_likes)
         self._run_generator("브랜드 카테고리", self.generate_brand_categories)
