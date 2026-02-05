@@ -314,5 +314,5 @@ class BusinessGenerator(BaseGenerator):
         self._run_generator("캠페인 지원", lambda: self.generate_campaign_applies(applies_per_campaign))
         self._run_generator("캠페인 태그", self.generate_campaign_tags)
         self._run_generator("캠페인 좋아요 읽음", self.generate_campaign_like_reads)
-        self._run_generator("캠페인 제안", self.generate_campaign_proposals)
+        # self._run_generator("캠페인 제안", self.generate_campaign_proposals)
         self._run_generator("캠페인 제안 콘텐츠 태그", self.generate_campaign_proposal_content_tags)
