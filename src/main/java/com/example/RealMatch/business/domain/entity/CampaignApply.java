@@ -48,7 +48,7 @@ public class CampaignApply extends BaseEntity {
     @JoinColumn(name = "campaign_id", nullable = false)
     private Campaign campaign;
 
-    @Column(nullable = false)
+    @Column(name = "apply_status", nullable = false)
     @Enumerated(EnumType.STRING)
     private ProposalStatus applyStatus;
 
