@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
+import com.example.RealMatch.brand.domain.repository.BrandDescribeTagRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.business.domain.repository.CampaignApplyRepository;
@@ -61,6 +63,7 @@ public class MatchServiceImpl implements MatchService {
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
     private final BrandLikeRepository brandLikeRepository;
+    private final BrandDescribeTagRepository brandDescribeTagRepository;
     private final CampaignLikeRepository campaignLikeRepository;
     private final CampaignApplyRepository campaignApplyRepository;
     private final UserRepository userRepository;
@@ -395,11 +398,23 @@ public class MatchServiceImpl implements MatchService {
         Set<Long> recruitingBrandIds = getRecruitingBrandIds();
         Map<Long, Long> brandLikeCountMap = getBrandLikeCountMap();
 
+        // BrandDescribeTag 조회하여 Map으로 변환
+        List<Long> brandIds = brandHistories.stream()
+                .map(h -> h.getBrand().getId())
+                .toList();
+        Map<Long, List<String>> brandDescribeTagMap = brandIds.stream()
+                .collect(Collectors.toMap(
+                        brandId -> brandId,
+                        brandId -> brandDescribeTagRepository.findAllByBrandId(brandId).stream()
+                                .map(BrandDescribeTag::getBrandDescribeTag)
+                                .toList()
+                ));
+
         List<MatchBrandResponseDto.BrandDto> matchedBrands = brandHistories.stream()
                 .filter(history -> filterBrandByCategory(history.getBrand(), category))
                 .sorted(getBrandHistoryComparator(sortBy, brandLikeCountMap))
                 .limit(TOP_MATCH_COUNT)
-                .map(history -> toMatchBrandDtoFromHistory(history, likedBrandIds, recruitingBrandIds))
+                .map(history -> toMatchBrandDtoFromHistory(history, likedBrandIds, recruitingBrandIds, brandDescribeTagMap))
                 .toList();
 
         return MatchBrandResponseDto.builder()
@@ -507,7 +522,8 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private MatchBrandResponseDto.BrandDto toMatchBrandDtoFromHistory(
-            MatchBrandHistory history, Set<Long> likedBrandIds, Set<Long> recruitingBrandIds) {
+            MatchBrandHistory history, Set<Long> likedBrandIds, Set<Long> recruitingBrandIds,
+            Map<Long, List<String>> brandDescribeTagMap) {
         Brand brand = history.getBrand();
         return MatchBrandResponseDto.BrandDto.builder()
                 .brandId(brand.getId())
@@ -516,9 +532,7 @@ public class MatchServiceImpl implements MatchService {
                 .brandMatchingRatio(history.getMatchingRatio() != null ? history.getMatchingRatio().intValue() : 0)
                 .brandIsLiked(likedBrandIds.contains(brand.getId()))
                 .brandIsRecruiting(recruitingBrandIds.contains(brand.getId()))
-                .brandTags(brand.getBrandTags().stream()
-                        .map(brandTag -> brandTag.getTag().getTagName())
-                        .toList())
+                .brandTags(brandDescribeTagMap.getOrDefault(brand.getId(), List.of()))
                 .build();
     }
 

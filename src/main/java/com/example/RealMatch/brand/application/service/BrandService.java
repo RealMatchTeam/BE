@@ -87,7 +87,7 @@ public class BrandService {
         boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
 
         // 사용자 맞춤 브랜드 매칭률 조회
-        Long brandMatchingRatio = matchBrandHistoryRepository.findByUserIdAndBrandId(currentUserId, brandId)
+        Long brandMatchingRatio = matchBrandHistoryRepository.findByUserIdAndBrandIdAndIsDeprecatedFalse(currentUserId, brandId)
                 .map(history -> history.getMatchingRatio())
                 .orElse(0L);
 
