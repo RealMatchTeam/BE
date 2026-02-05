@@ -13,17 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.brand.domain.entity.Brand;
-import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
-import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
-import com.example.RealMatch.brand.domain.entity.BrandLike;
+import com.example.RealMatch.brand.domain.entity.*;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
-import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
-import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
-import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
-import com.example.RealMatch.brand.domain.repository.BrandDescribeTagRepository;
-import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
-import com.example.RealMatch.brand.domain.repository.BrandRepository;
+import com.example.RealMatch.brand.domain.repository.*;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
@@ -66,6 +58,7 @@ public class BrandService {
     private final BrandCategoryRepository brandCategoryRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
     private final BrandDescribeTagRepository brandDescribeTagRepository;
+    private final BrandImageRepository brandImageRepository;
 
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
 
@@ -84,6 +77,11 @@ public class BrandService {
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new IllegalArgumentException("Brand not found"));
 
+        // 브랜드 이미지 조회
+        List<String> brandImages = brandImageRepository.findAllByBrandId(brandId).stream()
+                .map(BrandImage::getImageUrl)
+                .collect(Collectors.toList());
+
         boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
 
         // 사용자 맞춤 브랜드 매칭률 조회
@@ -100,6 +98,7 @@ public class BrandService {
         BrandDetailResponseDto.BrandDetailResponseDtoBuilder responseBuilder = BrandDetailResponseDto.builder()
                 .userId(currentUserId)
                 .brandName(brand.getBrandName())
+                .brandImages(brandImages)
                 .logoUrl(brand.getLogoUrl())
                 .simpleIntro(brand.getSimpleIntro())
                 .detailIntro(brand.getDetailIntro())
