@@ -10,7 +10,6 @@ from generators import (
     TagGenerator,
     BusinessGenerator,
     ChatGenerator,
-    MatchGenerator,
     RedisDataGenerator,
     SeedGenerator
 )
@@ -33,9 +32,6 @@ class DummyDataOrchestrator:
             'chat_message',
             'chat_room_member',
             'chat_room',
-            'user_matching_detail',
-            'match_brand_history',
-            'match_campaign_history',
             'campaign_proposal_content_tag',
             'campaign_proposal',
             'campaign_like_read',
@@ -45,6 +41,7 @@ class DummyDataOrchestrator:
             'campaign_like',
             'brand_like_read',
             'brand_category_view',
+            'brand_describe_tag',
             'brand_sponsor_image',
             'brand_available_sponsor',
             'brand_category',
@@ -143,9 +140,6 @@ class DummyDataOrchestrator:
 
             chat_gen = ChatGenerator(self.connection)
             chat_gen.generate_all(room_count, messages_per_room)
-
-            match_gen = MatchGenerator(self.connection)
-            match_gen.generate_all()
 
             redis_gen = RedisDataGenerator()
             redis_gen.generate_all(clear_existing=True)
