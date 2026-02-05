@@ -98,7 +98,7 @@ public class BrandService {
 
         // 공통 메서드 응답 빌드
         BrandDetailResponseDto.BrandDetailResponseDtoBuilder responseBuilder = BrandDetailResponseDto.builder()
-                .userId(brand.getUser().getId())
+                .userId(currentUserId)
                 .brandName(brand.getBrandName())
                 .logoUrl(brand.getLogoUrl())
                 .simpleIntro(brand.getSimpleIntro())
