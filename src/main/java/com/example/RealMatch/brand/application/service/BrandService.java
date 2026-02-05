@@ -13,9 +13,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.brand.domain.entity.*;
+import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
+import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
+import com.example.RealMatch.brand.domain.entity.BrandImage;
+import com.example.RealMatch.brand.domain.entity.BrandLike;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
-import com.example.RealMatch.brand.domain.repository.*;
+import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
+import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
+import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
+import com.example.RealMatch.brand.domain.repository.BrandDescribeTagRepository;
+import com.example.RealMatch.brand.domain.repository.BrandImageRepository;
+import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
+import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
@@ -115,7 +125,7 @@ public class BrandService {
             // 매칭: 관심 스타일   <-> 카테고리
             // 매칭: 피부 타입     <-> 스킨케어 태그: 피부 타입
             // 매칭: 관심 기능     <-> 스킨케어 태그: 주요 기능
-            // 매칭: 메이크업 스타일 <-> 메이크업 태그: 메이크업 스타일 
+            // 매칭: 메이크업 스타일 <-> 메이크업 태그: 메이크업 스타일
 
             brandCategories = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(                   // 매칭: 관심 스타일
                                                         brandId, TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
@@ -261,7 +271,7 @@ public class BrandService {
     // ******** //
     // 브랜드 생성 //
     // ******** //
-    
+
     // 브랜드가 뷰티인지, 패션인지에 따라 저장하는 형태가 달라짐.
 
     @Transactional
@@ -522,7 +532,7 @@ public class BrandService {
     // ******** //
     @Transactional
     public void deleteBrand(Long brandId, Long currentUserId) {
-        
+
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
         brand.softDelete(currentUserId);
