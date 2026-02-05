@@ -264,7 +264,6 @@ public class BrandService {
     // ******** //
     
     // 브랜드가 뷰티인지, 패션인지에 따라 저장하는 형태가 달라짐.
-    // 컨텐츠는 공통으로 저장됨. -> 아직, UI가 없어서 getBrandDetail에서는 보여지지 않아도 됨.
 
     @Transactional
     public BrandCreateResponseDto createBeautyBrand(BrandBeautyCreateRequestDto requestDto, Long currentUserId) {
