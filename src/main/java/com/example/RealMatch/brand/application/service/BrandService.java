@@ -31,16 +31,7 @@ import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateReq
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
-import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.*;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
@@ -555,5 +546,33 @@ public class BrandService {
         if (url != null && !url.isEmpty() && !URL_PATTERN.matcher(url).matches()) {
             throw new CustomException(BrandErrorCode.INVALID_URL_FORMAT);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public BrandSimpleDetailResponse getSimpleBrandDetail(Long brandId, Long userId) {
+        // 1. 브랜드 조회 (기존 brandRepository 활용)
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
+
+        // 2. 브랜드 설명 태그 리스트 추출 (brandDescribeTagRepository 활용)
+        // BrandDescribeTag 엔티티의 필드명이 getBrandDescribeTag()임을 확인했습니다.
+        List<String> tags = brandDescribeTagRepository.findAllByBrandId(brandId).stream()
+                .map(BrandDescribeTag::getBrandDescribeTag)
+                .collect(Collectors.toList());
+
+        // 3. 매칭률 조회 (matchBrandHistoryRepository 활용)
+        // 기존 getBrandDetail 로직과 동일하게 DB에 기록된 최신 매칭률을 가져옵니다.
+        Integer matchingRate = matchBrandHistoryRepository.findByUserIdAndBrandIdAndIsDeprecatedFalse(userId, brandId)
+                .map(history -> history.getMatchingRatio().intValue())
+                .orElse(0);
+
+        // 4. DTO 생성 및 반환
+        return BrandSimpleDetailResponse.builder()
+                .brandId(brand.getId())
+                .brandName(brand.getBrandName())   // 엔티티 필드명: brandName
+                .brandImageUrl(brand.getLogoUrl()) // 엔티티 필드명: logoUrl (이미지의 브랜드 로고)
+                .brandTags(tags)
+                .matchingRate(matchingRate)
+                .build();
     }
 }

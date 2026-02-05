@@ -6,19 +6,14 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.*;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
@@ -173,5 +168,17 @@ public interface BrandSwagger {
     })
     ResponseEntity<Long> getBrandIdByUserId(
             @Parameter(description = "조회할 유저의 ID", required = true) @PathVariable Long userId
+    );
+
+    @Operation(summary = "브랜드 개별 요약 조회 API", description = "사진 클릭 시 하단에 노출되는 브랜드의 기본 정보(이미지, 이름, 태그, 매칭률)를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = BrandSimpleDetailResponse.class))),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 브랜드입니다.",
+                    content = @Content(schema = @Schema(implementation = CustomResponse.class)))
+    })
+    CustomResponse<BrandSimpleDetailResponse> getBrandSummary(
+            @Parameter(description = "조회할 브랜드의 ID", example = "1") Long brandId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }

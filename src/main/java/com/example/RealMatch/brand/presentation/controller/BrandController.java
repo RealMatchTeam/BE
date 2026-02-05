@@ -22,13 +22,7 @@ import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateReq
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
-import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.*;
 import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
@@ -92,6 +86,17 @@ public class BrandController implements BrandSwagger {
             @PathVariable Long brandId
     ) {
         return CustomResponse.ok(brandService.getSponsorProducts(brandId));
+    }
+
+    @GetMapping("/{brandId}/summary")
+    public CustomResponse<BrandSimpleDetailResponse> getBrandSummary(
+            @PathVariable Long brandId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        // 유저 정보는 security context에서 가져온 userDetails.getUserId() 사용
+        BrandSimpleDetailResponse result = brandService.getSimpleBrandDetail(brandId, userDetails.getUserId());
+
+        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, result);
     }
 
     // ******** //
