@@ -176,7 +176,7 @@ public class CampaignProposal extends BaseEntity {
         this.status = ProposalStatus.CANCELED;
     }
 
-    public void isCancelable(Long userId) {
+    public void validateCancelable(Long userId) {
         if (!this.senderUserId.equals(userId)) {
             throw new CustomException(
                     BusinessErrorCode.CAMPAIGN_PROPOSAL_USER_MISMATCH

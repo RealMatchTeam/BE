@@ -236,7 +236,7 @@ public class CampaignProposalService {
                 );
 
 
-        proposal.isCancelable(userId);
+        proposal.validateCancelable(userId);
         proposal.cancel();
 
         publishProposalStatusChangedEvent(proposal, ProposalStatus.CANCELED, userId);
