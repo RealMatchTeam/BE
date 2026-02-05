@@ -31,7 +31,17 @@ import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateReq
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.response.*;
+import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
+import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandSimpleDetailResponse;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
@@ -47,6 +57,7 @@ import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -22,7 +22,14 @@ import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateReq
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.response.*;
+import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandSimpleDetailResponse;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
