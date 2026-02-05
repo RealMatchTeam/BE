@@ -6,8 +6,10 @@ import java.util.List;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.business.exception.BusinessErrorCode;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 
@@ -170,8 +172,24 @@ public class CampaignProposal extends BaseEntity {
         this.refusalReason = refusalReason;
     }
 
-    // TODO: 제안 취소 기능 구현 필요
-    // 제안을 제시한 유저(senderUserId)가 자신의 제안을 취소할 수 있어야 함
+    public void cancel() {
+        this.status = ProposalStatus.CANCELED;
+    }
+
+    public void isCancelable(Long userId) {
+        if (!this.senderUserId.equals(userId)) {
+            throw new CustomException(
+                    BusinessErrorCode.CAMPAIGN_PROPOSAL_USER_MISMATCH
+            );
+        }
+
+        if (this.status != ProposalStatus.REVIEWING) {
+            throw new CustomException(
+                    BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_REVIEWING
+            );
+        }
+    }
+
 
     public void addTag(CampaignProposalContentTag tag) {
         this.tags.add(tag);
