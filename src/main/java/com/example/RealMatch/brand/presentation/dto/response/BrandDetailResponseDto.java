@@ -17,7 +17,7 @@ public class BrandDetailResponseDto {
     private List<String> brandTag;
     private Integer brandMatchingRatio;
     private Boolean brandIsLiked;
-    private List<String> brandCategory;
+    private List<String> brandDescriptionTags;
 
     private BrandBeautyResponse beautyResponse;
     private BrandFashionResponse fashionResponse;

@@ -22,9 +22,11 @@ import com.example.RealMatch.brand.domain.entity.BrandCategory;
 import com.example.RealMatch.brand.domain.entity.BrandCategoryView;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
+import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
+import com.example.RealMatch.brand.domain.repository.BrandDescribeTagRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
@@ -69,6 +71,7 @@ public class BrandService {
     private final BrandCategoryViewRepository brandCategoryViewRepository;
     private final BrandCategoryRepository brandCategoryRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
+    private final BrandDescribeTagRepository brandDescribeTagRepository;
 
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
 
@@ -94,6 +97,11 @@ public class BrandService {
                 .map(history -> history.getMatchingRatio())
                 .orElse(0L);
 
+        List<String> brandDescriptionTags = brandDescribeTagRepository.findAllByBrandId(brandId)
+                .stream()
+                .map(BrandDescribeTag::getBrandDescribeTag)
+                .collect(Collectors.toList());
+
         // 공통 메서드 응답 빌드
         BrandDetailResponseDto.BrandDetailResponseDtoBuilder responseBuilder = BrandDetailResponseDto.builder()
                 .userId(brand.getUser().getId())
@@ -104,7 +112,7 @@ public class BrandService {
                 .homepageUrl(brand.getHomepageUrl())
                 .brandMatchingRatio(brandMatchingRatio.intValue())
                 .brandIsLiked(isLiked)
-                .brandTag(Collections.emptyList());
+                .brandDescriptionTags(brandDescriptionTags);
 
         List<String> brandCategories;
 
