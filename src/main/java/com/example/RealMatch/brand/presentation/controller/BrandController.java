@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.brand.application.service.BrandService;
-import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
@@ -41,6 +43,9 @@ public class BrandController implements BrandSwagger {
 
     private final BrandService brandService;
 
+    // ******** //
+    // 브랜드 조회 //
+    // ******** //
     @Override
     @GetMapping("/{brandId}")
     public CustomResponse<java.util.List<BrandDetailResponseDto>> getBrandDetail(
@@ -89,29 +94,61 @@ public class BrandController implements BrandSwagger {
         return CustomResponse.ok(brandService.getSponsorProducts(brandId));
     }
 
+    // ******** //
+    // 브랜드 생성 //
+    // ******** //
     @Override
-    @PostMapping
-    public CustomResponse<BrandCreateResponseDto> createBrand(
-        @RequestBody BrandCreateRequestDto requestDto,
+    @PostMapping("/beauty")
+    public CustomResponse<BrandCreateResponseDto> createBeautyBrand(
+        @RequestBody BrandBeautyCreateRequestDto requestDto,
         @AuthenticationPrincipal CustomUserDetails principal
     ) {
         Long currentUserId = principal.getUserId();
-        BrandCreateResponseDto responseDto = brandService.createBrand(requestDto, currentUserId);
+        BrandCreateResponseDto responseDto = brandService.createBeautyBrand(requestDto, currentUserId);
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, responseDto);
     }
 
     @Override
-    @PatchMapping("/{brandId}")
-    public ResponseEntity<Void> updateBrand(
-        @PathVariable Long brandId, 
-        @RequestBody BrandUpdateRequestDto requestDto,
+    @PostMapping("/fashion")
+    public CustomResponse<BrandCreateResponseDto> createFashionBrand(
+        @RequestBody BrandFashionCreateRequestDto requestDto,
         @AuthenticationPrincipal CustomUserDetails principal
     ) {
         Long currentUserId = principal.getUserId();
-        brandService.updateBrand(brandId, requestDto, currentUserId);
+        BrandCreateResponseDto responseDto = brandService.createFashionBrand(requestDto, currentUserId);
+        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, responseDto);
+    }
+
+    // *********** //
+    // 브랜드 업데이트 //
+    // *********** //
+    @Override
+    @PatchMapping("/beauty/{brandId}")
+    public ResponseEntity<Void> updateBeautyBrand(
+        @PathVariable Long brandId,
+        @RequestBody BrandBeautyUpdateRequestDto requestDto,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        Long currentUserId = principal.getUserId();
+        brandService.updateBeautyBrand(brandId, requestDto, currentUserId);
         return ResponseEntity.noContent().build();
     }
 
+    @Override
+    @PatchMapping("/fashion/{brandId}")
+    public ResponseEntity<Void> updateFashionBrand(
+        @PathVariable Long brandId,
+        @RequestBody BrandFashionUpdateRequestDto requestDto,
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        Long currentUserId = principal.getUserId();
+        brandService.updateFashionBrand(brandId, requestDto, currentUserId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ******** //
+    // 브랜드 삭제 //
+    // ******** //
     @Override
     @DeleteMapping("/{brandId}")
     public ResponseEntity<Void> deleteBrand(

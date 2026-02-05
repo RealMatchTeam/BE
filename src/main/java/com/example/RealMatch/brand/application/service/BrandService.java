@@ -28,8 +28,10 @@ import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
-import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
@@ -258,56 +260,105 @@ public class BrandService {
     // ******** //
     // 브랜드 생성 //
     // ******** //
+    
+    // 브랜드가 뷰티인지, 패션인지에 따라 저장하는 형태가 달라짐.
+    // 컨텐츠는 공통으로 저장됨. -> 아직, UI가 없어서 getBrandDetail에서는 보여지지 않아도 됨.
+
     @Transactional
-    public BrandCreateResponseDto createBrand(BrandCreateRequestDto requestDto, Long currentUserId) {
-        
+    public BrandCreateResponseDto createBeautyBrand(BrandBeautyCreateRequestDto requestDto, Long currentUserId) {
+
         validateHomepageUrl(requestDto.getHomepageUrl());
 
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
 
+        // 이미 브랜드가 존재하는지 확인
         Optional<Brand> existingBrand = brandRepository.findByUser(user);
         if (existingBrand.isPresent()) {
-            throw new CustomException(BrandErrorCode.BRAND_ALREADY_EXISTS, "이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
+            throw new CustomException(BrandErrorCode.BRAND_ALREADY_EXISTS,
+                "이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
         }
 
-        Brand brand = requestDto.toEntity(user);
+        // 브랜드 생성
+        Brand brand = Brand.builder()
+                .brandName(requestDto.getBrandName())
+                .industryType(IndustryType.BEAUTY)
+                .logoUrl(requestDto.getLogoUrl())
+                .simpleIntro(requestDto.getSimpleIntro())
+                .detailIntro(requestDto.getDetailIntro())
+                .homepageUrl(requestDto.getHomepageUrl())
+                .createdBy(currentUserId)
+                .user(user)
+                .build();
 
-        if (requestDto.getBrandCategory() != null) {
-            for (String categoryName : requestDto.getBrandCategory()) {
-                BrandCategory category = brandCategoryRepository.findByName(categoryName)
-                        .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryName));
-                brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build());
-            }
-        }
-
-        // *** 브랜드 매칭용 카테고리 추가 *** //
-        if (requestDto.getBrandSkinCareTag() != null) {
-            BrandCreateRequestDto.BrandSkinCareTagDto skinCareTags = requestDto.getBrandSkinCareTag();
-            if (skinCareTags.getSkinType() != null) {
-                addTagsToBrand(brand, skinCareTags.getSkinType(), TagType.BEAUTY, TagCategory.SKIN_TYPE.getDescription());
-            }
-            if (skinCareTags.getMainFunction() != null) {
-                addTagsToBrand(brand, skinCareTags.getMainFunction(), TagType.BEAUTY, TagCategory.SKIN_CARE_MAIN_FUNCTION.getDescription());
-            }
-        }
-        if (requestDto.getBrandMakeUpTag() != null) {
-            BrandCreateRequestDto.BrandMakeUpTagDto makeUpTags = requestDto.getBrandMakeUpTag();
-            if (makeUpTags.getBrandMakeUpStyle() != null) {
-                addTagsToBrand(brand, makeUpTags.getBrandMakeUpStyle(), TagType.BEAUTY, TagCategory.MAKEUP_STYLE.getDescription());
-            }
-        }
-        if (requestDto.getBrandClothingTag() != null) {
-            BrandCreateRequestDto.BrandClothingTagDto clothingTags = requestDto.getBrandClothingTag();
-            if (clothingTags.getBrandType() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandType(), TagType.FASHION, TagCategory.FASHION_BRAND_TYPE.getDescription());
-            }
-            if (clothingTags.getBrandStyle() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandStyle(), TagType.FASHION, TagCategory.FASHION_STYLE.getDescription());
-            }
-        }
-
+        // 브랜드 먼저 저장
         Brand savedBrand = brandRepository.save(brand);
+
+        // *** 브랜드 매칭용/상세 페이지용 뷰티 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandBeautyCreateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
+
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestStyle(), TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
+
+            // 관심 기능 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestFunction(), TagCategory.BEAUTY_INTEREST_FUNCTION.getDescription());
+
+            // 피부 타입 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getSkinType(), TagCategory.BEAUTY_SKIN_TYPE.getDescription());
+
+            // 메이크업 스타일 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getMakeupStyle(), TagCategory.BEAUTY_MAKEUP_STYLE.getDescription());
+        }
+
+        return BrandCreateResponseDto.builder()
+                .brandId(savedBrand.getId())
+                .build();
+    }
+
+    @Transactional
+    public BrandCreateResponseDto createFashionBrand(BrandFashionCreateRequestDto requestDto, Long currentUserId) {
+
+        validateHomepageUrl(requestDto.getHomepageUrl());
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
+
+        // 이미 브랜드가 존재하는지 확인
+        Optional<Brand> existingBrand = brandRepository.findByUser(user);
+        if (existingBrand.isPresent()) {
+            throw new CustomException(BrandErrorCode.BRAND_ALREADY_EXISTS,
+                "이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
+        }
+
+        // 브랜드 생성
+        Brand brand = Brand.builder()
+                .brandName(requestDto.getBrandName())
+                .industryType(IndustryType.FASHION)
+                .logoUrl(requestDto.getLogoUrl())
+                .simpleIntro(requestDto.getSimpleIntro())
+                .detailIntro(requestDto.getDetailIntro())
+                .homepageUrl(requestDto.getHomepageUrl())
+                .createdBy(currentUserId)
+                .user(user)
+                .build();
+
+        // 브랜드 먼저 저장
+        Brand savedBrand = brandRepository.save(brand);
+
+        // *** 브랜드 매칭용/상세 페이지용 패션 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandFashionCreateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
+
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestStyle(), TagCategory.FASHION_INTEREST_STYLE.getDescription());
+
+            // 관심 아이템/분야 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestItem(), TagCategory.FASHION_INTEREST_ITEM.getDescription());
+
+            // 관심 브랜드 종류 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestBrand(), TagCategory.FASHION_INTEREST_TYPE.getDescription());
+        }
 
         return BrandCreateResponseDto.builder()
                 .brandId(savedBrand.getId())
@@ -318,8 +369,8 @@ public class BrandService {
     // 브랜드 업데이트 //
     // *********** //
     @Transactional
-    public void updateBrand(Long brandId, BrandUpdateRequestDto requestDto, Long currentUserId) {
-        
+    public void updateBeautyBrand(Long brandId, BrandBeautyUpdateRequestDto requestDto, Long currentUserId) {
+
         validateHomepageUrl(requestDto.getHomepageUrl());
 
         Brand brand = brandRepository.findById(brandId)
@@ -327,6 +378,11 @@ public class BrandService {
 
         if (!brand.getUser().getId().equals(currentUserId)) {
             throw new CustomException(GeneralErrorCode.FORBIDDEN);
+        }
+
+        // 브랜드가 뷰티 타입인지 확인
+        if (brand.getIndustryType() != IndustryType.BEAUTY) {
+            throw new CustomException(BrandErrorCode.INVALID_INDUSTRY_TYPE, "해당 브랜드는 뷰티 브랜드가 아닙니다.");
         }
 
         brand.update(
@@ -338,58 +394,68 @@ public class BrandService {
                 currentUserId
         );
 
-        updateCategories(brand, requestDto.getBrandCategory());
-        updateTags(brand, requestDto);
-    }
-
-    private void updateCategories(Brand brand, List<String> requestedCategoryNames) {
-        if (requestedCategoryNames == null) {
-            requestedCategoryNames = new ArrayList<>();
-        }
-
-        Set<String> existingCategoryNames = brand.getBrandCategoryViews().stream()
-                .map(bcv -> bcv.getCategory().getName())
-                .collect(Collectors.toSet());
-
-        Set<String> requestedCategoryNamesSet = Set.copyOf(requestedCategoryNames);
-
-        brand.getBrandCategoryViews().removeIf(bcv -> !requestedCategoryNamesSet.contains(bcv.getCategory().getName()));
-
-        requestedCategoryNamesSet.stream()
-                .filter(name -> !existingCategoryNames.contains(name))
-                .forEach(name -> {
-                    BrandCategory category = brandCategoryRepository.findByName(name)
-                            .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + name));
-                    brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build());
-                });
-    }
-
-    private void updateTags(Brand brand, BrandUpdateRequestDto requestDto) {
+        // 기존 태그 삭제
         brand.getBrandTags().clear();
 
-        if (requestDto.getBrandSkinCareTag() != null) {
-            BrandUpdateRequestDto.BrandSkinCareTagDto skinCareTags = requestDto.getBrandSkinCareTag();
-            if (skinCareTags.getSkinType() != null) {
-                addTagsToBrand(brand, skinCareTags.getSkinType(), TagType.BEAUTY, TagCategory.SKIN_TYPE.getDescription());
-            }
-            if (skinCareTags.getMainFunction() != null) {
-                addTagsToBrand(brand, skinCareTags.getMainFunction(), TagType.BEAUTY, TagCategory.SKIN_CARE_MAIN_FUNCTION.getDescription());
-            }
+        // *** 브랜드 매칭용/상세 페이지용 뷰티 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandBeautyUpdateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
+
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestStyle(), TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
+
+            // 관심 기능 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestFunction(), TagCategory.BEAUTY_INTEREST_FUNCTION.getDescription());
+
+            // 피부 타입 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getSkinType(), TagCategory.BEAUTY_SKIN_TYPE.getDescription());
+
+            // 메이크업 스타일 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getMakeupStyle(), TagCategory.BEAUTY_MAKEUP_STYLE.getDescription());
         }
-        if (requestDto.getBrandMakeUpTag() != null) {
-            BrandUpdateRequestDto.BrandMakeUpTagDto makeUpTags = requestDto.getBrandMakeUpTag();
-            if (makeUpTags.getBrandMakeUpStyle() != null) {
-                addTagsToBrand(brand, makeUpTags.getBrandMakeUpStyle(), TagType.BEAUTY, TagCategory.MAKEUP_STYLE.getDescription());
-            }
+    }
+
+    @Transactional
+    public void updateFashionBrand(Long brandId, BrandFashionUpdateRequestDto requestDto, Long currentUserId) {
+
+        validateHomepageUrl(requestDto.getHomepageUrl());
+
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
+
+        if (!brand.getUser().getId().equals(currentUserId)) {
+            throw new CustomException(GeneralErrorCode.FORBIDDEN);
         }
-        if (requestDto.getBrandClothingTag() != null) {
-            BrandUpdateRequestDto.BrandClothingTagDto clothingTags = requestDto.getBrandClothingTag();
-            if (clothingTags.getBrandType() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandType(), TagType.FASHION, TagCategory.FASHION_BRAND_TYPE.getDescription());
-            }
-            if (clothingTags.getBrandStyle() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandStyle(), TagType.FASHION, TagCategory.FASHION_STYLE.getDescription());
-            }
+
+        // 브랜드가 패션 타입인지 확인
+        if (brand.getIndustryType() != IndustryType.FASHION) {
+            throw new CustomException(BrandErrorCode.INVALID_INDUSTRY_TYPE, "해당 브랜드는 패션 브랜드가 아닙니다.");
+        }
+
+        brand.update(
+                requestDto.getBrandName(),
+                requestDto.getLogoUrl(),
+                requestDto.getSimpleIntro(),
+                requestDto.getDetailIntro(),
+                requestDto.getHomepageUrl(),
+                currentUserId
+        );
+
+        // 기존 태그 삭제
+        brand.getBrandTags().clear();
+
+        // *** 브랜드 매칭용/상세 페이지용 패션 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandFashionUpdateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
+
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestStyle(), TagCategory.FASHION_INTEREST_STYLE.getDescription());
+
+            // 관심 아이템/분야 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestItem(), TagCategory.FASHION_INTEREST_ITEM.getDescription());
+
+            // 관심 브랜드 종류 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestBrand(), TagCategory.FASHION_INTEREST_TYPE.getDescription());
         }
     }
 
@@ -423,6 +489,30 @@ public class BrandService {
                     .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
             if (!isAlreadyLinked) {
                 brand.addBrandTag(BrandTag.builder().tag(tag).build());
+            }
+        }
+    }
+
+    private void addTagsToBrandByIds(Brand brand, List<Integer> tagIds, String category) {
+        if (tagIds == null || tagIds.isEmpty()) {
+            return;
+        }
+
+        // Integer를 Long으로 변환하여 태그 조회
+        List<Long> tagIdsLong = tagIds.stream()
+                .map(Integer::longValue)
+                .collect(Collectors.toList());
+
+        List<Tag> tags = tagRepository.findAllById(tagIdsLong);
+
+        for (Tag tag : tags) {
+            // 해당 카테고리의 태그인지 확인
+            if (category.equals(tag.getTagCategory())) {
+                boolean isAlreadyLinked = brand.getBrandTags().stream()
+                        .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
+                if (!isAlreadyLinked) {
+                    brand.addBrandTag(BrandTag.builder().tag(tag).build());
+                }
             }
         }
     }
