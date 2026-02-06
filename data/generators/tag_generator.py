@@ -8,7 +8,7 @@ class TagGenerator(BaseGenerator):
 
         tag_data = {
             '뷰티': {
-                '관심 스타일': ['스킨케어', '메이크업', '향수', '바디', '헤어'],
+                '관심 스타일': ['스킨케어', '메이크업', '바디'],
                 '관심 기능': ['트러블', '수분/보습', '진정', '미백', '안티에이징', '각질/모공'],
                 '피부 타입': ['건성', '지성', '복합성', '민감성'],
                 '피부 밝기': ['17호 이하', '17-21호', '21-23호', '23호 이상'],
@@ -17,8 +17,8 @@ class TagGenerator(BaseGenerator):
             '패션': {
                 '관심 스타일': ['미니멀', '페미닌', '러블리', '비지니스 캐주얼', '캐주얼', '스트리트'],
                 '관심 아이템/분야': ['의류', '가방', '신발', '주얼리', '패션 소품'],
-                '선호 브랜드 종류': ['SPA', '빈티지', '증가 브랜드', '디자이너 브랜드', '명품 브랜드'],
-                '키': [f"{i}cm" for i in range(140, 201)],
+                '관심 브랜드 종류': ['SPA', '빈티지', '증가 브랜드', '디자이너 브랜드', '명품 브랜드'],
+                '키': [f"{i}cm" for i in range(140, 201)],  # 이거 태그에서 분리해야 함.
                 "체형": ["웨이브", "스트레이트", "내추럴", "커브"],
                 "상의 사이즈": ['33', '44', '55', '66', '77'],
                 "하의 사이즈": [str(i) for i in range(23, 66)]
@@ -88,40 +88,77 @@ class TagGenerator(BaseGenerator):
         """
         self.execute_many(sql, user_tags, "사용자 태그")
 
-    def generate_brand_tags(self):
+    def generate_brand_tags(self, tags_per_category=2):
         print(f"\n[브랜드 태그] 브랜드 태그 매핑 생성 중...")
 
         with self.connection.cursor() as cursor:
-            cursor.execute("SELECT id FROM brand")
-            brand_ids = [row['id'] for row in cursor.fetchall()]
+            cursor.execute("SELECT id, industry_type FROM brand")
+            brands = cursor.fetchall()
 
-            cursor.execute("SELECT id FROM tag WHERE tag_type IN ('뷰티', '패션')")
-            tags = cursor.fetchall()
+            # 뷰티 태그 (카테고리별로 그룹화)
+            cursor.execute("SELECT id, tag_category FROM tag WHERE tag_type = '뷰티'")
+            beauty_tags = cursor.fetchall()
 
-        if not brand_ids or not tags:
-            print("[경고] 브랜드 또는 태그가 없습니다.")
+            # 패션 태그 (카테고리별로 그룹화)
+            cursor.execute("SELECT id, tag_category FROM tag WHERE tag_type = '패션'")
+            fashion_tags = cursor.fetchall()
+
+        if not brands:
+            print("[경고] 브랜드가 없습니다.")
             return
 
+        # 카테고리별로 태그 그룹화
+        def group_by_category(tags):
+            grouped = {}
+            for tag in tags:
+                category = tag['tag_category']
+                if category not in grouped:
+                    grouped[category] = []
+                grouped[category].append(tag['id'])
+            return grouped
+
+        beauty_grouped = group_by_category(beauty_tags)
+        fashion_grouped = group_by_category(fashion_tags)
+
         brand_tags = []
-        for brand_id in brand_ids:
-            num_tags = self.fake.random_int(3, 10)
-            selected_tags = self.fake.random_sample(tags, length=min(num_tags, len(tags)))
+        for brand in brands:
+            brand_id = brand['id']
+            industry_type = brand['industry_type']
 
-            for tag in selected_tags:
-                brand_tags.append({
-                    'brand_id': brand_id,
-                    'tag_id': tag['id'],
-                    'created_at': datetime.now(),
-                    'updated_at': datetime.now()
-                })
+            # 브랜드 카테고리에 맞는 태그 그룹 선택
+            if industry_type == 'BEAUTY':
+                tag_groups = beauty_grouped
+            elif industry_type == 'FASHION':
+                tag_groups = fashion_grouped
+            else:
+                continue
 
-        sql = """
-            INSERT IGNORE INTO brand_tag (brand_id, tag_id, created_at, updated_at)
-            VALUES (%(brand_id)s, %(tag_id)s, %(created_at)s, %(updated_at)s)
-        """
-        self.execute_many(sql, brand_tags, "브랜드 태그")
+            # 각 카테고리에서 최소 2개씩 선택
+            for category, tag_ids in tag_groups.items():
+                selected = self.fake.random_sample(
+                    tag_ids,
+                    length=min(tags_per_category, len(tag_ids))
+                )
+                for tag_id in selected:
+                    brand_tags.append({
+                        'brand_id': brand_id,
+                        'tag_id': tag_id,
+                        'created_at': datetime.now(),
+                        'updated_at': datetime.now()
+                    })
+
+        if brand_tags:
+            sql = """
+                INSERT IGNORE INTO brand_tag (brand_id, tag_id, created_at, updated_at)
+                VALUES (%(brand_id)s, %(tag_id)s, %(created_at)s, %(updated_at)s)
+            """
+            self.execute_many(sql, brand_tags, "브랜드 태그")
+        else:
+            print("[경고] 생성할 브랜드 태그가 없습니다.")
 
     def generate_all(self):
         self.generate_tags()
         self.generate_user_tags()
         self.generate_brand_tags()
+
+        # generate campign tags?

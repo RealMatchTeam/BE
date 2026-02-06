@@ -6,8 +6,10 @@ import java.util.List;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.business.exception.BusinessErrorCode;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 
@@ -169,6 +171,25 @@ public class CampaignProposal extends BaseEntity {
         this.status = ProposalStatus.REJECTED;
         this.refusalReason = refusalReason;
     }
+
+    public void cancel() {
+        this.status = ProposalStatus.CANCELED;
+    }
+
+    public void validateCancelable(Long userId) {
+        if (!this.senderUserId.equals(userId)) {
+            throw new CustomException(
+                    BusinessErrorCode.CAMPAIGN_PROPOSAL_USER_MISMATCH
+            );
+        }
+
+        if (this.status != ProposalStatus.REVIEWING) {
+            throw new CustomException(
+                    BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_REVIEWING
+            );
+        }
+    }
+
 
     public void addTag(CampaignProposalContentTag tag) {
         this.tags.add(tag);

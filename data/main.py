@@ -10,7 +10,6 @@ from generators import (
     TagGenerator,
     BusinessGenerator,
     ChatGenerator,
-    MatchGenerator,
     RedisDataGenerator,
     SeedGenerator
 )
@@ -26,17 +25,13 @@ class DummyDataOrchestrator:
             self.connection.close()
             print("\n[성공] 데이터베이스 연결 종료")
 
-    def clear_existing_data(self):
-        """기존 더미 데이터 삭제"""
+    def _clear_existing_data(self):
         print("\n[정리] 기존 데이터 삭제 중...")
 
         tables = [
             'chat_message',
             'chat_room_member',
             'chat_room',
-            'user_matching_detail',
-            'match_brand_history',
-            'match_campaign_history',
             'campaign_proposal_content_tag',
             'campaign_proposal',
             'campaign_like_read',
@@ -46,6 +41,7 @@ class DummyDataOrchestrator:
             'campaign_like',
             'brand_like_read',
             'brand_category_view',
+            'brand_describe_tag',
             'brand_sponsor_image',
             'brand_available_sponsor',
             'brand_category',
@@ -80,7 +76,7 @@ class DummyDataOrchestrator:
         self.connection.commit()
         print("[완료] 기존 데이터 삭제 완료\n")
 
-    def create_master_account(self):
+    def _create_master_account(self):
         print("\n[마스터] 마스터 계정 생성 중...")
 
         with self.connection.cursor() as cursor:
@@ -109,8 +105,8 @@ class DummyDataOrchestrator:
                      room_count=20, messages_per_room=10, applies_per_campaign=3,
                      reset=True):
         if reset:
-            self.clear_existing_data()
-            self.create_master_account()
+            self._clear_existing_data()
+            self._create_master_account()
 
         print("[시작] 더미 데이터 생성 시작...\n")
         print(f"생성할 데이터:")
@@ -144,9 +140,6 @@ class DummyDataOrchestrator:
 
             chat_gen = ChatGenerator(self.connection)
             chat_gen.generate_all(room_count, messages_per_room)
-
-            match_gen = MatchGenerator(self.connection)
-            match_gen.generate_all()
 
             redis_gen = RedisDataGenerator()
             redis_gen.generate_all(clear_existing=True)

@@ -10,6 +10,7 @@ public record CampaignProposalStatusChangedEvent(
         Long campaignId,
         Long brandUserId,
         Long creatorUserId,
-        ProposalStatus newStatus
+        ProposalStatus newStatus,
+        Long actorUserId  // 상태 변경을 수행한 사용자 ID (수락/거절한 사용자)
 ) {
 }

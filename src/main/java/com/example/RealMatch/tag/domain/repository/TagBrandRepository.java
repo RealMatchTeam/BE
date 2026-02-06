@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.tag.domain.entity.BrandTag;
 
-public interface BrandTagRepository extends JpaRepository<BrandTag, Long> {
+public interface TagBrandRepository extends JpaRepository<BrandTag, Long> {
 
     @Query("""
         select bt
@@ -18,6 +18,24 @@ public interface BrandTagRepository extends JpaRepository<BrandTag, Long> {
         where bt.brand.id = :brandId
     """)
     List<BrandTag> findAllByBrandIdWithTag(@Param("brandId") Long brandId);
+
+    @Query("""
+        select bt
+        from BrandTag bt
+        join fetch bt.tag t
+        where bt.brand.id = :brandId
+        and t.tagCategory = :tagCategory
+    """)
+    List<BrandTag> findAllByBrandIdAndTagCategory(@Param("brandId") Long brandId, @Param("tagCategory") String tagCategory);
+
+    @Query("""
+        select t.tagName
+        from BrandTag bt
+        join bt.tag t
+        where bt.brand.id = :brandId
+        and t.tagCategory = :tagCategory
+    """)
+    List<String> findTagNamesByBrandIdAndTagCategory(@Param("brandId") Long brandId, @Param("tagCategory") String tagCategory);
 
     List<BrandTag> findAllByBrandId(Long brandId);
 
