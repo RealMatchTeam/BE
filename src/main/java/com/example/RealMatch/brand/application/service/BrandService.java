@@ -304,6 +304,17 @@ public class BrandService {
         // 브랜드 먼저 저장
         Brand savedBrand = brandRepository.save(brand);
 
+        // 브랜드 이미지 저장
+        if (requestDto.getBrandImages() != null && !requestDto.getBrandImages().isEmpty()) {
+            List<BrandImage> brandImages = requestDto.getBrandImages().stream()
+                    .map(imageUrl -> BrandImage.builder()
+                            .brand(savedBrand)
+                            .imageUrl(imageUrl)
+                            .build())
+                    .collect(Collectors.toList());
+            brandImageRepository.saveAll(brandImages);
+        }
+
         // *** 브랜드 매칭용/상세 페이지용 뷰티 태그 추가 *** //
         if (requestDto.getBrandTags() != null) {
             BrandBeautyCreateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
@@ -355,6 +366,17 @@ public class BrandService {
 
         // 브랜드 먼저 저장
         Brand savedBrand = brandRepository.save(brand);
+
+        // 브랜드 이미지 저장
+        if (requestDto.getBrandImages() != null && !requestDto.getBrandImages().isEmpty()) {
+            List<BrandImage> brandImages = requestDto.getBrandImages().stream()
+                    .map(imageUrl -> BrandImage.builder()
+                            .brand(savedBrand)
+                            .imageUrl(imageUrl)
+                            .build())
+                    .collect(Collectors.toList());
+            brandImageRepository.saveAll(brandImages);
+        }
 
         // *** 브랜드 매칭용/상세 페이지용 패션 태그 추가 *** //
         if (requestDto.getBrandTags() != null) {
