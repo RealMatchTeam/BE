@@ -462,9 +462,10 @@ public class MatchServiceImpl implements MatchService {
                 .map(h -> h.getCampaign().getId())
                 .toList();
         Map<Long, Long> applyCountMap = getApplyCountMapForCampaignIds(pageCampaignIds);
+        Map<Long, Long> likeCountMap = getLikeCountMapForCampaignIds(pageCampaignIds);
 
         List<MatchCampaignResponseDto.CampaignDto> brands = historyPage.getContent().stream()
-                .map(h -> toCampaignCardDto(h, likedCampaignIds, applyCountMap))
+                .map(h -> toCampaignCardDto(h, likedCampaignIds, applyCountMap, likeCountMap))
                 .toList();
 
         return MatchCampaignResponseDto.builder()
@@ -494,6 +495,20 @@ public class MatchServiceImpl implements MatchService {
             return Map.of();
         }
         return campaignApplyRepository.countByCampaignIdIn(campaignIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
+    /**
+     * 지정한 캠페인 ID별 좋아요 수 조회.
+     */
+    private Map<Long, Long> getLikeCountMapForCampaignIds(List<Long> campaignIds) {
+        if (campaignIds == null || campaignIds.isEmpty()) {
+            return Map.of();
+        }
+        return campaignLikeRepository.countByCampaignIdIn(campaignIds).stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Long) row[1]
@@ -552,7 +567,8 @@ public class MatchServiceImpl implements MatchService {
     private MatchCampaignResponseDto.CampaignDto toCampaignCardDto(
             MatchCampaignHistory history,
             Set<Long> likedCampaignIds,
-            Map<Long, Long> applyCountMap
+            Map<Long, Long> applyCountMap,
+            Map<Long, Long> likeCountMap
     ) {
         Campaign campaign = history.getCampaign();
         Brand brand = campaign.getBrand();
@@ -581,6 +597,7 @@ public class MatchServiceImpl implements MatchService {
                 .campaignIsLiked(likedCampaignIds.contains(campaign.getId()))
                 .campaignTotalRecruit(campaign.getQuota())
                 .campaignTotalCurrentRecruit(applyCountMap.getOrDefault(campaign.getId(), 0L).intValue())
+                .campaignLikeCount(likeCountMap.getOrDefault(campaign.getId(), 0L))
                 .build();
     }
 

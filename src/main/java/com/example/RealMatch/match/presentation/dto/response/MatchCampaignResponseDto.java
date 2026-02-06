@@ -34,6 +34,7 @@ public class MatchCampaignResponseDto {
         private Boolean campaignIsLiked;
         private Integer campaignTotalRecruit;
         private Integer campaignTotalCurrentRecruit;
+        private Long campaignLikeCount;
     }
 
     public static MatchCampaignResponseDto empty() {
