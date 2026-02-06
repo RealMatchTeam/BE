@@ -73,9 +73,13 @@ public class MatchServiceImpl implements MatchService {
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
 
-    // ******* //
     // 매칭 요청 //
-    // ******* //
+    /**
+     * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
+     * - 기존 UserMatchingDetail 폐기
+     * - 새 UserMatchingDetail 생성
+     * - 브랜드/캠페인 매칭 히스토리 갱신
+     */
     @Override
     @Transactional
     public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
@@ -585,124 +589,13 @@ public class MatchServiceImpl implements MatchService {
                 });
 
         // 2) 새 detail 생성 (requestDto → entity 매핑)
-        UserMatchingDetail newDetail = createDetailFromRequest(userId, requestDto);
+        UserMatchingDetail newDetail = UserMatchingDetail.from(userId, requestDto);
 
         // 3) 결과 저장(원하면)
-        newDetail.updateCreatorType(userType);
+        newDetail.setMatchingResult(userType);
 
         // 4) 저장
         userMatchingDetailRepository.save(newDetail);
-    }
-
-    private UserMatchingDetail createDetailFromRequest(Long userId, MatchRequestDto requestDto) {
-
-        // Fashion
-        String height = null;
-        String bodyShape = null;
-        String topSize = null;
-        String bottomSize = null;
-        String interestFields = null;
-        String interestStyles = null;
-        String interestBrands = null;
-
-        if (requestDto.getFashion() != null) {
-            var f = requestDto.getFashion();
-            height = toCsv(f.getHeightTag());
-            bodyShape = toCsv(f.getWeightTypeTag());
-            topSize = toCsv(f.getTopSizeTag());
-            bottomSize = toCsv(f.getBottomSizeTag());
-            interestFields = toCsvList(f.getPreferredItemTags());
-            interestStyles = toCsvList(f.getInterestStyleTags());
-            interestBrands = toCsvList(f.getPreferredBrandTags());
-        }
-
-        // Beauty
-        String skinType = null;
-        String skinBrightness = null;
-        String makeupStyle = null;
-        String interestCategories = null;
-        String interestFunctions = null;
-
-        if (requestDto.getBeauty() != null) {
-            var b = requestDto.getBeauty();
-            skinType = toCsv(b.getSkinTypeTags());
-            skinBrightness = toCsv(b.getSkinToneTags());
-            makeupStyle = toCsv(b.getMakeupStyleTags());
-            interestCategories = toCsvList(b.getInterestStyleTags());
-            interestFunctions = toCsvList(b.getPrefferedFunctionTags());
-        }
-
-        // Contents
-        String snsUrl = null;
-        String avgVideoLength = null;
-        String avgViews = null;
-        String viewerGender = null;
-        String viewerAge = null;
-        String contentFormats = null;
-        String contentTones = null;
-        String desiredInvolvement = null;
-        String desiredUsageScope = null;
-
-        if (requestDto.getContent() != null) {
-            var c = requestDto.getContent();
-
-            contentFormats = toCsvList(c.getTypeTags());
-            contentTones = toCsvList(c.getToneTags());
-            desiredInvolvement = toCsvList(c.getPrefferedInvolvementTags());
-            desiredUsageScope = toCsvList(c.getPrefferedCoverageTags());
-
-            if (c.getSns() != null) {
-                var sns = c.getSns();
-
-                // ⚠️ 여기 URL 필드명은 네 dto 실제 이름으로 변경
-                snsUrl = sns.getUrl();
-
-                if (sns.getMainAudience() != null) {
-                    viewerAge = toCsvList(sns.getMainAudience().getAgeTags());
-                    viewerGender = toCsvList(sns.getMainAudience().getGenderTags());
-                }
-                if (sns.getAverageAudience() != null) {
-                    avgVideoLength = toCsvList(sns.getAverageAudience().getVideoLengthTags());
-                    avgViews = toCsvList(sns.getAverageAudience().getVideoViewsTags());
-                }
-            }
-        }
-
-        return UserMatchingDetail.builder()
-                .userId(userId)
-                .height(height)
-                .bodyShape(bodyShape)
-                .topSize(topSize)
-                .bottomSize(bottomSize)
-                .interestFields(interestFields)
-                .interestStyles(interestStyles)
-                .interestBrands(interestBrands)
-                .skinType(skinType)
-                .skinBrightness(skinBrightness)
-                .makeupStyle(makeupStyle)
-                .interestCategories(interestCategories)
-                .interestFunctions(interestFunctions)
-                .snsUrl(snsUrl)
-                .avgVideoLength(avgVideoLength)
-                .avgViews(avgViews)
-                .viewerGender(viewerGender)
-                .viewerAge(viewerAge)
-                .contentFormats(contentFormats)
-                .contentTones(contentTones)
-                .desiredInvolvement(desiredInvolvement)
-                .desiredUsageScope(desiredUsageScope)
-                .build();
-    }
-
-    private String toCsv(Integer tag) {
-        return tag == null ? null : String.valueOf(tag);
-    }
-
-    private String toCsvList(List<Integer> tags) {
-        if (tags == null || tags.isEmpty()) {
-            return null;
-        }
-        return tags.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
     }
 
     private record BrandMatchResult(

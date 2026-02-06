@@ -62,7 +62,7 @@ public class UserService {
 
         UserMatchingDetail detail = userMatchingDetailRepository
                 .findByUserIdAndIsDeprecatedFalse(userId)
-                .orElse(null);
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
         List<UserSignupPurpose> purposes = userSignupPurposeRepository.findByUserId(userId);
 
