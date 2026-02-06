@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.business.domain.entity.CampaignApply;
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
+import com.example.RealMatch.business.domain.enums.CollaborationType;
 import com.example.RealMatch.business.domain.repository.CampaignApplyRepository;
 import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
@@ -125,7 +126,7 @@ public class UserService {
                     b.getId(),
                     b.getBrandName(),
                     c.getTitle(),
-                    "APPLIED",
+                    CollaborationType.APPLIED.name(),
                     apply.getApplyStatus().name(),
                     c.getRecruitEndDate().toLocalDate()
             ));
@@ -133,32 +134,28 @@ public class UserService {
     }
 
     private void getReceivedProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
-        List<Long> ids = campaignProposalRepository.findReceivedProposalIds(userId, null);
-        if (ids.isEmpty()) {
-            return;
-        }
-
-        // ✅ FETCH JOIN으로 N+1 방지
-        List<CampaignProposal> proposals = campaignProposalRepository.findAllByIdWithDetails(ids);
-        for (CampaignProposal p : proposals) {
-            campaigns.add(convertToCampaignInfo(p, "RECEIVED"));
-        }
+        getProposals(userId, campaigns, CollaborationType.RECEIVED);
     }
 
     private void getSentProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
-        List<Long> ids = campaignProposalRepository.findSentProposalIds(userId, null);
-        if (ids.isEmpty()) {
+        getProposals(userId, campaigns, CollaborationType.SENT);
+    }
+
+    private void getProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns,
+                              CollaborationType type) {
+        List<Long> ids = (type == CollaborationType.RECEIVED)
+                ? campaignProposalRepository.findReceivedProposalIds(userId, null)
+                : campaignProposalRepository.findSentProposalIds(userId, null);
+
+        if (ids == null || ids.isEmpty()) {
             return;
         }
 
-        // ✅ FETCH JOIN으로 N+1 방지
         List<CampaignProposal> proposals = campaignProposalRepository.findAllByIdWithDetails(ids);
-        for (CampaignProposal p : proposals) {
-            campaigns.add(convertToCampaignInfo(p, "SENT"));
-        }
+        proposals.forEach(p -> campaigns.add(convertToCampaignInfo(p, type)));
     }
 
-    private MyProfileCardResponseDto.CampaignInfo convertToCampaignInfo(CampaignProposal p, String type) {
+    private MyProfileCardResponseDto.CampaignInfo convertToCampaignInfo(CampaignProposal p, CollaborationType type) {
         boolean hasCampaign = p.getCampaign() != null;
         Long campaignId = hasCampaign ? p.getCampaign().getId() : null;
 
@@ -172,11 +169,12 @@ public class UserService {
                 brand.getId(),
                 brand.getBrandName(),
                 title,
-                type,
+                type.name(),  // 이제 정상 작동
                 p.getStatus().name(),
                 endDate
         );
     }
+
         public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
         // 유저 조회
         User user = userRepository.findById(userId)
