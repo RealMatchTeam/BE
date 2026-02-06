@@ -35,15 +35,13 @@ public class UserFeatureService {
         UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        log.info("사용자 프로필 조회 완료: userId={}, creatorType={}", userId, detail.getCreatorType());
-
         // 각 영역별로 데이터 존재 여부 확인 및 조회
         MyFeatureResponseDto.BeautyType beautyType = buildBeautyType(detail);
         MyFeatureResponseDto.FashionType fashionType = buildFashionType(detail);
         MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail);
 
         // creatorType(매칭 결과) 포함하여 반환
-        return new MyFeatureResponseDto(detail.getCreatorType(), beautyType, fashionType, contentsType);
+        return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
     }
 
     /**

@@ -79,7 +79,7 @@ public interface UserSwagger {
 
     @Operation(
             summary = "내 특성 조회 API By 고경수",
-            description = "로그인한 사용자의 특성 정보를 조회합니다. (하드코딩)"
+            description = "로그인한 사용자의 특성 정보를 조회합니다."
     )
     CustomResponse<MyFeatureResponseDto> getMyFeature(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
@@ -87,7 +87,7 @@ public interface UserSwagger {
 
     @Operation(
             summary = "내 특성 수정 API By 고경수",
-            description = "로그인한 사용자의 특성 정보를 수정합니다. (하드코딩)"
+            description = "로그인한 사용자의 특성 정보를 수정합니다. 수정 예정"
     )
     CustomResponse<Void> updateMyFeature(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

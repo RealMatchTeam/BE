@@ -256,6 +256,10 @@ public class UserMatchingDetail extends BaseEntity {
         }
     }
 
+    public void updateCreatorType(String creatorType) {
+        this.creatorType = creatorType;
+    }
+
     /**
      * 매칭 결과 설정 (검사 완료 후 호출)
      */

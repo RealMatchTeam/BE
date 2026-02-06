@@ -45,7 +45,7 @@ public class UserController implements UserSwagger {
     }
 
     @Override
-    @GetMapping("/my/profile-card")
+    @GetMapping("/me/profile-card")
     public CustomResponse<MyProfileCardResponseDto> getMyProfileCard(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {

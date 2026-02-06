@@ -3,7 +3,6 @@ package com.example.RealMatch.user.presentation.dto.response;
 import java.util.List;
 
 public record MyFeatureResponseDto(
-        String creatorType,
         BeautyType beautyType,
         FashionType fashionType,
         ContentsType contentsType
