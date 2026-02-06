@@ -34,7 +34,6 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
             @Param("status") ProposalStatus status
     );
 
-
     @Query("""
         select distinct cp
         from CampaignProposal cp
@@ -44,4 +43,10 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
     """)
     Optional<CampaignProposal> findByIdWithTags(Long proposalId);
 
+    @Query("SELECT p FROM CampaignProposal p " +
+            "LEFT JOIN FETCH p.campaign c " +
+            "LEFT JOIN FETCH c.brand " +
+            "LEFT JOIN FETCH p.brand " +
+            "WHERE p.id IN :ids")
+    List<CampaignProposal> findAllByIdWithDetails(@Param("ids") List<Long> ids);
 }

@@ -30,7 +30,10 @@ public interface UserSwagger {
             @Parameter(hidden = true) CustomUserDetails userDetails
     );
 
-    @Operation(summary = "마이페이지 프로필 카드 조회 API By 고경수", description = "로그인한 사용자의 마이페이지 프로필 카드 정보를 조회합니다. (하드코딩 - 프로필 카드 데이터 삽입 안했습니다!!)")
+    @Operation(
+            summary = "마이페이지 프로필 카드 조회 API",
+            description = "로그인한 사용자의 프로필 카드 정보와 매칭검사 결과를 조회합니다"
+    )
     CustomResponse<MyProfileCardResponseDto> getMyProfileCard(
             @Parameter(hidden = true) CustomUserDetails userDetails
     );

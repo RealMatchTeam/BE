@@ -119,6 +119,18 @@ public enum UserErrorCode implements BaseErrorCode {
             HttpStatus.BAD_REQUEST,
             "USER400_7",
             "닉네임은 2~10자 사이여야 합니다."
+    ),
+
+    INVALID_PAGE_INDEX(
+            HttpStatus.BAD_REQUEST,
+            "USER400_8",
+            "페이지 번호는 0보다 작을 수 없습니다."
+    ),
+
+    INVALID_PAGE_SIZE(
+            HttpStatus.BAD_REQUEST,
+            "USER400_9",
+            "페이지 크기는 1보다 커야 합니다."
     );
 
     private final HttpStatus status;

@@ -45,11 +45,13 @@ public class UserController implements UserSwagger {
     }
 
     @Override
-    @GetMapping("/me/profile-card")
+    @GetMapping("/my/profile-card")
     public CustomResponse<MyProfileCardResponseDto> getMyProfileCard(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return CustomResponse.ok(userService.getMyProfileCard(userDetails.getUserId()));
+        return CustomResponse.ok(
+                userService.getMyProfileCard(userDetails.getUserId())
+        );
     }
 
     @Override
