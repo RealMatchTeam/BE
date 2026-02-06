@@ -23,10 +23,32 @@ public class CampaignProposalRepositoryImpl
 
     private final JPAQueryFactory queryFactory;
 
+    // ✅ /me 조회용
     @Override
     public List<CollaborationProjection> findProposalCollaborations(
-            List<Long> ids,
+            List<Long> proposalIds,
             CollaborationType type
+    ) {
+        return baseProposalQuery(proposalIds, type, null);
+    }
+
+    // ✅ search 조회용
+    @Override
+    public List<CollaborationProjection> searchProposalCollaborations(
+            List<Long> proposalIds,
+            CollaborationType type,
+            List<Long> brandIds
+    ) {
+        return baseProposalQuery(proposalIds, type, brandIds);
+    }
+
+    /**
+     * 공통 Querydsl 베이스
+     */
+    private List<CollaborationProjection> baseProposalQuery(
+            List<Long> proposalIds,
+            CollaborationType type,
+            List<Long> brandIds
     ) {
         return queryFactory
                 .select(Projections.constructor(
@@ -39,12 +61,15 @@ public class CampaignProposalRepositoryImpl
                         campaignProposal.status,
                         campaignProposal.startDate,
                         campaignProposal.endDate,
-                        Expressions.constant(type) // ⭐ 마지막
+                        Expressions.constant(type)
                 ))
                 .from(campaignProposal)
                 .join(campaignProposal.brand, brand)
                 .leftJoin(campaignProposal.campaign, campaign)
-                .where(campaignProposal.id.in(ids))
+                .where(
+                        campaignProposal.id.in(proposalIds),
+                        brandIds != null ? brand.id.in(brandIds) : null
+                )
                 .fetch();
     }
 }

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
@@ -23,4 +25,11 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     List<Brand> findByCreatedByIn(List<Long> createdByList);
 
     Optional<Brand> findByUser(User user);
+
+    @Query("""
+        select b.id
+        from Brand b
+        where b.brandName like %:keyword%
+    """)
+    List<Long> findIdsByBrandNameContaining(@Param("keyword") String keyword);
 }

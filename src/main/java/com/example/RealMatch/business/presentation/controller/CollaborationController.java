@@ -51,4 +51,24 @@ public class CollaborationController implements CollaborationSwagger {
                 )
         );
     }
+
+    @Override
+    @GetMapping("/search")
+    public CustomResponse<List<CollaborationResponse>> searchMyCollaborations(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(required = false) String keyword,
+            @RequestParam CollaborationType type,
+            @RequestParam(required = false) ProposalStatus status
+    ) {
+        return CustomResponse.onSuccess(
+                GeneralSuccessCode.FOUND,
+                collaborationQueryService.searchMyCollaborations(
+                        principal.getUserId(),
+                        Role.from(principal.getRole()),
+                        keyword,
+                        type,
+                        status
+                )
+        );
+    }
 }
