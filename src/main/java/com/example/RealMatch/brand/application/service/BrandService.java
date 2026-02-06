@@ -16,12 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
 import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
+import com.example.RealMatch.brand.domain.entity.BrandImage;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
 import com.example.RealMatch.brand.domain.repository.BrandDescribeTagRepository;
+import com.example.RealMatch.brand.domain.repository.BrandImageRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
@@ -35,6 +37,7 @@ import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponse
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandSimpleDetailResponse;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
@@ -54,6 +57,7 @@ import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -66,6 +70,7 @@ public class BrandService {
     private final BrandCategoryRepository brandCategoryRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
     private final BrandDescribeTagRepository brandDescribeTagRepository;
+    private final BrandImageRepository brandImageRepository;
 
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
 
@@ -84,6 +89,11 @@ public class BrandService {
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new IllegalArgumentException("Brand not found"));
 
+        // 브랜드 이미지 조회
+        List<String> brandImages = brandImageRepository.findAllByBrandId(brandId).stream()
+                .map(BrandImage::getImageUrl)
+                .collect(Collectors.toList());
+
         boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
 
         // 사용자 맞춤 브랜드 매칭률 조회
@@ -100,6 +110,7 @@ public class BrandService {
         BrandDetailResponseDto.BrandDetailResponseDtoBuilder responseBuilder = BrandDetailResponseDto.builder()
                 .userId(currentUserId)
                 .brandName(brand.getBrandName())
+                .brandImages(brandImages)
                 .logoUrl(brand.getLogoUrl())
                 .simpleIntro(brand.getSimpleIntro())
                 .detailIntro(brand.getDetailIntro())
@@ -116,7 +127,7 @@ public class BrandService {
             // 매칭: 관심 스타일   <-> 카테고리
             // 매칭: 피부 타입     <-> 스킨케어 태그: 피부 타입
             // 매칭: 관심 기능     <-> 스킨케어 태그: 주요 기능
-            // 매칭: 메이크업 스타일 <-> 메이크업 태그: 메이크업 스타일 
+            // 매칭: 메이크업 스타일 <-> 메이크업 태그: 메이크업 스타일
 
             brandCategories = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(                   // 매칭: 관심 스타일
                                                         brandId, TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
@@ -262,7 +273,7 @@ public class BrandService {
     // ******** //
     // 브랜드 생성 //
     // ******** //
-    
+
     // 브랜드가 뷰티인지, 패션인지에 따라 저장하는 형태가 달라짐.
 
     @Transactional
@@ -523,7 +534,7 @@ public class BrandService {
     // ******** //
     @Transactional
     public void deleteBrand(Long brandId, Long currentUserId) {
-        
+
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
         brand.softDelete(currentUserId);
@@ -546,5 +557,33 @@ public class BrandService {
         if (url != null && !url.isEmpty() && !URL_PATTERN.matcher(url).matches()) {
             throw new CustomException(BrandErrorCode.INVALID_URL_FORMAT);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public BrandSimpleDetailResponse getSimpleBrandDetail(Long brandId, Long userId) {
+        // 1. 브랜드 조회 (기존 brandRepository 활용)
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
+
+        // 2. 브랜드 설명 태그 리스트 추출 (brandDescribeTagRepository 활용)
+        // BrandDescribeTag 엔티티의 필드명이 getBrandDescribeTag()임을 확인했습니다.
+        List<String> tags = brandDescribeTagRepository.findAllByBrandId(brandId).stream()
+                .map(BrandDescribeTag::getBrandDescribeTag)
+                .collect(Collectors.toList());
+
+        // 3. 매칭률 조회 (matchBrandHistoryRepository 활용)
+        // 기존 getBrandDetail 로직과 동일하게 DB에 기록된 최신 매칭률을 가져옵니다.
+        Integer matchingRate = matchBrandHistoryRepository.findByUserIdAndBrandIdAndIsDeprecatedFalse(userId, brandId)
+                .map(history -> history.getMatchingRatio().intValue())
+                .orElse(0);
+
+        // 4. DTO 생성 및 반환
+        return BrandSimpleDetailResponse.builder()
+                .brandId(brand.getId())
+                .brandName(brand.getBrandName())   // 엔티티 필드명: brandName
+                .brandImageUrl(brand.getLogoUrl()) // 엔티티 필드명: logoUrl (이미지의 브랜드 로고)
+                .brandTags(tags)
+                .matchingRate(matchingRate)
+                .build();
     }
 }

@@ -10,6 +10,7 @@ import lombok.Getter;
 public class BrandDetailResponseDto {
     private Long userId;
     private String brandName;
+    private List<String> brandImages;
     private String logoUrl;
     private String simpleIntro;
     private String detailIntro;

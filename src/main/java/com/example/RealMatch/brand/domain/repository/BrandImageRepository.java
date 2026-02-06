@@ -8,5 +8,5 @@ import com.example.RealMatch.brand.domain.entity.BrandImage;
 
 public interface BrandImageRepository extends JpaRepository<BrandImage, Long> {
 
-    List<BrandImage> findByBrandId(Long brandId);
+    List<BrandImage> findAllByBrandId(Long brandId);
 }
