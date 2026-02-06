@@ -179,8 +179,11 @@ public class UserMatchingDetail extends BaseEntity {
             bodyShape = toCsv(f.getWeightTypeTag());
             topSize = toCsv(f.getTopSizeTag());
             bottomSize = toCsv(f.getBottomSizeTag());
-            interestFields = toCsvList(f.getPreferredItemTags());
-            interestStyles = toCsvList(f.getInterestStyleTags());
+            // MatchRequestDto.FashionDto.interestStyleTags  -> UserMatchingDetail.interestFields (관심 분야)
+            // MatchRequestDto.FashionDto.preferredItemTags  -> UserMatchingDetail.interestStyles (관심 스타일)
+            interestFields = toCsvList(f.getInterestStyleTags());
+            interestStyles = toCsvList(f.getPreferredItemTags());
+
             interestBrands = toCsvList(f.getPreferredBrandTags());
         }
 
