@@ -11,13 +11,22 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "campaign_like")
+@Table(
+        name = "campaign_like",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_campaign_like_user_campaign",
+                        columnNames = {"user_id", "campaign_id"}
+                )
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CampaignLike extends BaseEntity {
