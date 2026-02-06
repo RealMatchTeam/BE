@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
-import com.example.RealMatch.user.presentation.dto.request.MyFeatureUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -102,7 +102,7 @@ public class UserController implements UserSwagger {
     @PatchMapping("/me/feature")
     public CustomResponse<Void> updateMyFeature(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody MyFeatureUpdateRequestDto request
+            @RequestBody MatchRequestDto request
     ) {
         userFeatureService.updateMyFeatures(userDetails.getUserId(), request);
         return CustomResponse.ok(null);

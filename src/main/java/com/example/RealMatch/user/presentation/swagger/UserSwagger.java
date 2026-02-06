@@ -1,13 +1,14 @@
 package com.example.RealMatch.user.presentation.swagger;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
-import com.example.RealMatch.user.presentation.dto.request.MyFeatureUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -87,10 +88,31 @@ public interface UserSwagger {
 
     @Operation(
             summary = "내 특성 수정 API By 고경수",
-            description = "로그인한 사용자의 특성 정보를 수정합니다. 수정 예정"
+            description = """
+                    로그인한 사용자의 특성(뷰티/패션/콘텐츠)을 부분 수정(PATCH)합니다.
+                    
+                    요청 규칙 (PATCH / merge)
+                    - 요청 Body는 MatchRequestDto 형태로 받습니다. (tagId 기반)
+                    - 요청에 포함된 필드만 변경되고, 포함되지 않은 필드는 기존 값이 유지됩니다.
+                    
+                    처리 흐름
+                    1) 현재 활성 UserMatchingDetail(삭제되지 않은 상태)을 조회합니다.
+                    2) 기존(UserMatchingDetail)을 MatchRequestDto로 복원합니다.
+                    3) 복원한 DTO와 요청 DTO를 merge하여 최종 MatchRequestDto(완성본)를 생성합니다.
+                    4) 최종 DTO로 매칭을 재실행합니다. (matchService.match)
+                       - MatchService 내부에서 기존 UserMatchingDetail은 deprecated 처리되고
+                         새로운 UserMatchingDetail이 생성/저장됩니다.
+                       - 매칭 결과(userType/creatorType)는 새로운 UserMatchingDetail에 저장됩니다.
+                       - 브랜드/캠페인 매칭 히스토리도 최신 결과로 갱신됩니다.
+                    
+                    - 태그 값은 반드시 "정수 tagId"로 전달되어야 합니다.
+                    - 본 API는 결과 응답을 반환하지 않으며(200 OK / null),
+                      갱신된 creatorType은 프로필 카드/매칭 결과 조회 API에서 확인합니다.
+                    """
     )
+    @PatchMapping("/me/feature")
     CustomResponse<Void> updateMyFeature(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody MyFeatureUpdateRequestDto request
+            @RequestBody MatchRequestDto request
     );
 }
