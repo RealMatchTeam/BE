@@ -74,6 +74,7 @@ public class MatchServiceImpl implements MatchService {
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
 
     // 매칭 요청 //
+
     /**
      * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
      * - 기존 UserMatchingDetail 폐기
@@ -313,7 +314,7 @@ public class MatchServiceImpl implements MatchService {
 
         return tags.stream().limit(3).toList();
     }
-    
+
     // **************** //
     // Redis에서 매칭 요청 //
     // **************** //
@@ -571,6 +572,7 @@ public class MatchServiceImpl implements MatchService {
                 .campaignManuscriptFee(campaign.getRewardAmount() != null ? campaign.getRewardAmount().intValue() : null)
                 .campaignName(campaign.getTitle())
                 .campaignDDay(Math.max(dDay, 0))
+                .campaignIsLiked(likedCampaignIds.contains(campaign.getId()))
                 .campaignTotalRecruit(campaign.getQuota())
                 .campaignTotalCurrentRecruit(applyCountMap.getOrDefault(campaign.getId(), 0L).intValue())
                 .build();
@@ -603,12 +605,14 @@ public class MatchServiceImpl implements MatchService {
             int matchScore,
             boolean isLiked,
             boolean isRecruiting
-    ) {}
+    ) {
+    }
 
     private record CampaignMatchResult(
             CampaignTagDocument campaignDoc,
             int matchScore,
             boolean isLiked,
             int currentApplyCount
-    ) {}
+    ) {
+    }
 }

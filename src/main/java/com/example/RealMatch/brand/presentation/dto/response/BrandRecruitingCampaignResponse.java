@@ -17,6 +17,7 @@ public class BrandRecruitingCampaignResponse {
         private Long campaignId;
         private String brandName;
         private String title;
+        private boolean isLike;
         private Integer recruitQuota;     // ex) 10명
         private Integer dDay;              // D-DAY = 0, D-3 = 3
         private Long rewardAmount;         // 원고료 (200000)
