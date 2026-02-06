@@ -1,5 +1,6 @@
 package com.example.RealMatch.brand.presentation.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +11,7 @@ import com.example.RealMatch.brand.application.service.BrandCampaignService;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandExistingCampaignResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandRecruitingCampaignResponse;
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +45,7 @@ public class BrandCampaignController {
     )
     @GetMapping("/{brandId}/campaigns")
     public CustomResponse<BrandCampaignSliceResponse> getBrandCampaigns(
+            @AuthenticationPrincipal CustomUserDetails principal,
             @Parameter(description = "브랜드 ID", example = "1")
             @PathVariable Long brandId,
             @RequestParam(required = false) Long cursor,
@@ -62,6 +65,7 @@ public class BrandCampaignController {
     )
     @GetMapping("/{brandId}/existing-campaigns")
     public CustomResponse<BrandExistingCampaignResponse> getExistingCampaigns(
+            @AuthenticationPrincipal CustomUserDetails principal,
             @Parameter(description = "브랜드 ID", example = "1")
             @PathVariable Long brandId
     ) {
@@ -81,10 +85,11 @@ public class BrandCampaignController {
     )
     @GetMapping("/{brandId}/campaigns/recruiting")
     public CustomResponse<BrandRecruitingCampaignResponse> getRecruitingCampaigns(
+            @AuthenticationPrincipal CustomUserDetails principal,
             @Parameter(description = "브랜드 ID", example = "1")
             @PathVariable Long brandId
     ) {
-        BrandRecruitingCampaignResponse response = brandCampaignService.getRecruitingCampaigns(brandId);
+        BrandRecruitingCampaignResponse response = brandCampaignService.getRecruitingCampaigns(principal.getUserId(),brandId);
         return CustomResponse.ok(response);
     }
 

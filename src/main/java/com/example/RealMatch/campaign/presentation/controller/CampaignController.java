@@ -44,15 +44,17 @@ public class CampaignController {
             @PathVariable Long campaignId
     ) {
         return CustomResponse.ok(
-                campaignQueryService.getCampaignDetail(campaignId)
+                campaignQueryService.getCampaignDetail(principal.getUserId(),campaignId)
         );
     }
 
     @Operation(
-            summary = "캠페인 좋아요 / 좋아요 취소 API",
+            summary = "캠페인 좋아요 / 좋아요 취소 API  by 박지영",
             description = """
                     캠페인에 좋아요를 누르거나,
-                    이미 좋아요가 되어있다면 취소합니다.
+                    이미 좋아요가 되어있다면 취소합니다.    
+                    
+                    /api/v1/campaigns/{campaignId}에서 like 값이 변경된 것을 확인해주세요.
                     """
     )
     @PostMapping("/{campaignId}/like")
@@ -69,4 +71,5 @@ public class CampaignController {
                 isLike ? "캠페인 좋아요가 반영되었습니다." : "캠페인 좋아요가 취소되었습니다."
         );
     }
+
 }
