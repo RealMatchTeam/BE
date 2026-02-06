@@ -27,6 +27,7 @@ public class MatchCampaignResponseDto {
         private Integer brandMatchingRatio;
         private Boolean brandIsLiked;
         private Boolean brandIsRecruiting;
+        private Long campaignId;
         private Integer campaignManuscriptFee;
         private String campaignName;   // 캠페인명 (keyword 검색 대상)
         private Integer campaignDDay;
