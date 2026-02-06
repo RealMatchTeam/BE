@@ -2,11 +2,15 @@ package com.example.RealMatch.match.presentation.dto.request;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class MatchRequestDto {
 
     private BeautyDto beauty;
@@ -18,6 +22,8 @@ public class MatchRequestDto {
     // ******* //
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class BeautyDto {
         private List<Integer> interestStyleTags;
         private List<Integer> prefferedFunctionTags;
@@ -25,12 +31,14 @@ public class MatchRequestDto {
         private Integer skinToneTags;
         private Integer makeupStyleTags;
     }
-    
+
     // ******* //
     // 패션 정보 //
     // ******* //
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class FashionDto {
         private List<Integer> interestStyleTags;
         private List<Integer> preferredItemTags;
@@ -46,6 +54,8 @@ public class MatchRequestDto {
     // ******** //
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class ContentDto {
         private SnsDto sns;
         private List<Integer> typeTags;
@@ -56,6 +66,8 @@ public class MatchRequestDto {
 
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class SnsDto {
         private String url;
         private MainAudienceDto mainAudience;
@@ -64,6 +76,8 @@ public class MatchRequestDto {
 
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class MainAudienceDto {
         private List<Integer> genderTags;
         private List<Integer> ageTags;
@@ -71,6 +85,8 @@ public class MatchRequestDto {
 
     @Getter
     @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class AverageAudienceDto {
         private List<Integer> videoLengthTags;
         private List<Integer> videoViewsTags;
