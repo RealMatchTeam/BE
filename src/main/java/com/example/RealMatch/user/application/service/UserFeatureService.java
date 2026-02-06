@@ -73,47 +73,113 @@ public class UserFeatureService {
     private MatchRequestDto toMatchRequestDto(UserMatchingDetail d) {
 
         MatchRequestDto.BeautyDto beauty = null;
-        if (hasAny(d.getInterestCategories(), d.getInterestFunctions(), d.getSkinType(), d.getSkinBrightness(), d.getMakeupStyle())) {
+        if (hasAny(
+                d.getInterestCategories(),
+                d.getInterestFunctions(),
+                d.getSkinType(),
+                d.getSkinBrightness(),
+                d.getMakeupStyle()
+        )) {
             beauty = MatchRequestDto.BeautyDto.builder()
+
+                    // interestStyleTags -> interestCategories
+                    // (뷰티 관심 스타일 태그 -> 유저의 관심 카테고리)
                     .interestStyleTags(parseIntList(d.getInterestCategories()))
+
+                    // prefferedFunctionTags -> interestFunctions
+                    // (선호 기능 태그 -> 관심 기능)
                     .prefferedFunctionTags(parseIntList(d.getInterestFunctions()))
+
+                    // skinTypeTags -> skinType
+                    // (피부 타입 태그 -> 피부 타입)
                     .skinTypeTags(parseFirstInt(d.getSkinType()))
+
+                    // skinToneTags -> skinBrightness
+                    // (피부 톤 태그 -> 피부 밝기)
                     .skinToneTags(parseFirstInt(d.getSkinBrightness()))
+
+                    // makeupStyleTags -> makeupStyle
+                    // (메이크업 스타일 태그 -> 메이크업 스타일)
                     .makeupStyleTags(parseFirstInt(d.getMakeupStyle()))
+
                     .build();
         }
 
         MatchRequestDto.FashionDto fashion = null;
-        if (hasAny(d.getInterestFields(), d.getInterestStyles(), d.getInterestBrands(), d.getHeight(), d.getBodyShape(), d.getTopSize(), d.getBottomSize())) {
+        if (hasAny(
+                d.getInterestFields(),
+                d.getInterestStyles(),
+                d.getInterestBrands(),
+                d.getHeight(),
+                d.getBodyShape(),
+                d.getTopSize(),
+                d.getBottomSize()
+        )) {
             fashion = MatchRequestDto.FashionDto.builder()
+
+                    // interestStyleTags -> interestFields
+                    // (패션 관심 스타일 태그 -> 관심 분야)
                     .interestStyleTags(parseIntList(d.getInterestFields()))
+
+                    // preferredItemTags -> interestStyles
+                    // (선호 아이템 태그 -> 관심 스타일)
                     .preferredItemTags(parseIntList(d.getInterestStyles()))
+
+                    // preferredBrandTags -> interestBrands
+                    // (선호 브랜드 태그 -> 관심 브랜드)
                     .preferredBrandTags(parseIntList(d.getInterestBrands()))
+
+                    // heightTag -> height
                     .heightTag(parseFirstInt(d.getHeight()))
+
+                    // weightTypeTag -> bodyShape
                     .weightTypeTag(parseFirstInt(d.getBodyShape()))
+
+                    // topSizeTag -> topSize
                     .topSizeTag(parseFirstInt(d.getTopSize()))
+
+                    // bottomSizeTag -> bottomSize
                     .bottomSizeTag(parseFirstInt(d.getBottomSize()))
+
                     .build();
         }
 
         MatchRequestDto.ContentDto content = null;
-        if (hasAny(d.getSnsUrl(), d.getViewerGender(), d.getViewerAge(), d.getAvgVideoLength(), d.getAvgViews(),
-                d.getContentFormats(), d.getContentTones(), d.getDesiredInvolvement(), d.getDesiredUsageScope())) {
+        if (hasAny(
+                d.getSnsUrl(),
+                d.getViewerGender(),
+                d.getViewerAge(),
+                d.getAvgVideoLength(),
+                d.getAvgViews(),
+                d.getContentFormats(),
+                d.getContentTones(),
+                d.getDesiredInvolvement(),
+                d.getDesiredUsageScope()
+        )) {
 
             MatchRequestDto.MainAudienceDto mainAudience = null;
             if (hasAny(d.getViewerGender(), d.getViewerAge())) {
                 mainAudience = MatchRequestDto.MainAudienceDto.builder()
+
+                        // genderTags -> viewerGender
                         .genderTags(parseIntList(d.getViewerGender()))
+
+                        // ageTags -> viewerAge
                         .ageTags(parseIntList(d.getViewerAge()))
+
                         .build();
             }
 
             MatchRequestDto.AverageAudienceDto averageAudience = null;
             if (hasAny(d.getAvgVideoLength(), d.getAvgViews())) {
-                // DB가 "228,229" 형태로 저장되어 있어야 함
                 averageAudience = MatchRequestDto.AverageAudienceDto.builder()
+
+                        // videoLengthTags -> avgVideoLength
                         .videoLengthTags(parseIntList(d.getAvgVideoLength()))
+
+                        // videoViewsTags -> avgViews
                         .videoViewsTags(parseIntList(d.getAvgViews()))
+
                         .build();
             }
 
@@ -128,10 +194,19 @@ public class UserFeatureService {
 
             content = MatchRequestDto.ContentDto.builder()
                     .sns(sns)
+
+                    // typeTags -> contentFormats
                     .typeTags(parseIntList(d.getContentFormats()))
+
+                    // toneTags -> contentTones
                     .toneTags(parseIntList(d.getContentTones()))
+
+                    // prefferedInvolvementTags -> desiredInvolvement
                     .prefferedInvolvementTags(parseIntList(d.getDesiredInvolvement()))
+
+                    // prefferedCoverageTags -> desiredUsageScope
                     .prefferedCoverageTags(parseIntList(d.getDesiredUsageScope()))
+
                     .build();
         }
 
@@ -401,18 +476,14 @@ public class UserFeatureService {
     }
 
     private static boolean hasAny(Object... values) {
-        for (Object v : values) {
+        return Arrays.stream(values).anyMatch(v -> {
             if (v == null) {
-                continue;
+                return false;
             }
             if (v instanceof String s) {
-                if (!s.isBlank()) {
-                    return true;
-                }
-            } else {
-                return true;
+                return !s.isBlank();
             }
-        }
-        return false;
+            return true;
+        });
     }
 }
