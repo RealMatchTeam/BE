@@ -6,5 +6,5 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface ChatRoomMemberCommandService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    void updateLastReadMessage(@NonNull Long memberId, @NonNull Long messageId);
+    void updateLastReadMessage(@NonNull Long memberId, @NonNull Long userId, @NonNull Long messageId);
 }
