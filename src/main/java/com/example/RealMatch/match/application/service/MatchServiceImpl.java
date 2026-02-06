@@ -560,7 +560,7 @@ public class MatchServiceImpl implements MatchService {
                 ? (int) ChronoUnit.DAYS.between(LocalDate.now(), campaign.getRecruitEndDate().toLocalDate())
                 : 0;
 
-        Set<Long> likedBrandIds = brandLikeRepository.findByUserId(userIdLong).stream()
+        Set<Long> likedBrandIds = brandLikeRepository.findByUserId(history.getUser().getId()).stream()
                                                      .map(like -> like.getBrand().getId())
                                                      .collect(Collectors.toSet());
 
