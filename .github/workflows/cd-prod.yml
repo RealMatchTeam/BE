@@ -62,3 +62,6 @@ jobs:
               docker compose logs
               exit 1
             fi
+            
+            echo "🧹 Pruning old docker images..."
+            docker image prune -a --filter "until=24h" -f

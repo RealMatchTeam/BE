@@ -4,53 +4,60 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
-import com.example.RealMatch.brand.domain.entity.BrandCategory;
-import com.example.RealMatch.brand.domain.entity.BrandCategoryView;
+import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
+import com.example.RealMatch.brand.domain.entity.BrandImage;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
+import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryViewRepository;
+import com.example.RealMatch.brand.domain.repository.BrandDescribeTagRepository;
+import com.example.RealMatch.brand.domain.repository.BrandImageRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
-import com.example.RealMatch.brand.presentation.dto.request.BrandCreateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.request.BrandUpdateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
+import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandSimpleDetailResponse;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorInfoDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorItemDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
-import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
+import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
 import com.example.RealMatch.tag.domain.entity.BrandTag;
 import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.enums.TagCategory;
 import com.example.RealMatch.tag.domain.enums.TagType;
-import com.example.RealMatch.tag.domain.repository.BrandTagRepository;
+import com.example.RealMatch.tag.domain.repository.TagBrandRepository;
 import com.example.RealMatch.tag.domain.repository.TagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -58,84 +65,118 @@ import lombok.extern.slf4j.Slf4j;
 public class BrandService {
 
     private final BrandRepository brandRepository;
-    private final BrandTagRepository brandTagRepository;
-    private final TagRepository tagRepository;
     private final BrandLikeRepository brandLikeRepository;
     private final BrandCategoryViewRepository brandCategoryViewRepository;
     private final BrandCategoryRepository brandCategoryRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
+    private final BrandDescribeTagRepository brandDescribeTagRepository;
+    private final BrandImageRepository brandImageRepository;
+
+    private final MatchBrandHistoryRepository matchBrandHistoryRepository;
+
+    private final TagBrandRepository tagBrandRepository;
+    private final TagRepository tagRepository;
+
     private final UserRepository userRepository;
 
-    private Long getCurrentUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    private static final Pattern URL_PATTERN = Pattern.compile("^https?://([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?$");
 
-        if (principal instanceof CustomUserDetails) {
-            return ((CustomUserDetails) principal).getUserId();
-        }
-        log.warn("Authentication principal is not of type CustomUserDetails: {}", principal.getClass().getName());
-        throw new CustomException(GeneralErrorCode.UNAUTHORIZED);
-    }
-
-    public BrandDetailResponseDto getBrandDetail(Long brandId) {
-        Long currentUserId = getCurrentUserId();
+    // ******** //
+    // 브랜드 조회 //
+    // ******** //
+    public BrandDetailResponseDto getBrandDetail(Long brandId, Long currentUserId) {
 
         Brand brand = brandRepository.findById(brandId)
-                .orElseThrow(() -> new IllegalArgumentException("Brand not found with id: " + brandId));
+                .orElseThrow(() -> new IllegalArgumentException("Brand not found"));
 
-        List<BrandTag> brandTags = brandTagRepository.findAllByBrandIdWithTag(brandId);
-
-        List<String> brandTagNames = brandTags.stream()
-                .map(bt -> bt.getTag().getTagName())
+        // 브랜드 이미지 조회
+        List<String> brandImages = brandImageRepository.findAllByBrandId(brandId).stream()
+                .map(BrandImage::getImageUrl)
                 .collect(Collectors.toList());
 
         boolean isLiked = brandLikeRepository.existsByUserIdAndBrandId(currentUserId, brandId);
 
-        List<String> brandCategories = brandCategoryViewRepository.findByBrandId(brandId).stream()
-                .map(brandCategoryView -> brandCategoryView.getCategory().getName())
+        // 사용자 맞춤 브랜드 매칭률 조회
+        Long brandMatchingRatio = matchBrandHistoryRepository.findByUserIdAndBrandIdAndIsDeprecatedFalse(currentUserId, brandId)
+                .map(history -> history.getMatchingRatio())
+                .orElse(0L);
+
+        List<String> brandDescriptionTags = brandDescribeTagRepository.findAllByBrandId(brandId)
+                .stream()
+                .map(BrandDescribeTag::getBrandDescribeTag)
                 .collect(Collectors.toList());
 
-        Map<String, List<String>> skincareTagsMap = brandTags.stream()
-                .filter(bt -> TagType.BEAUTY.getDescription().equals(bt.getTag().getTagType()))
-                .filter(bt -> "스킨케어".equals(bt.getTag().getTagCategory()))
-                .collect(Collectors.groupingBy(
-                        bt -> bt.getTag().getTagCategory(),
-                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
-                ));
-
-        Map<String, List<String>> makeupTagsMap = brandTags.stream()
-                .filter(bt -> TagType.BEAUTY.getDescription().equals(bt.getTag().getTagType()))
-                .filter(bt -> "메이크업".equals(bt.getTag().getTagCategory()))
-                .collect(Collectors.groupingBy(
-                        bt -> bt.getTag().getTagCategory(),
-                        Collectors.mapping(bt -> bt.getTag().getTagName(), Collectors.toList())
-                ));
-
-        BrandDetailResponseDto.BrandSkinCareTagDto skinCareTagDto = BrandDetailResponseDto.BrandSkinCareTagDto.builder()
-                .brandSkinType(skincareTagsMap.getOrDefault("스킨케어", List.of()))
-                .brandMainFunction(List.of())
-                .build();
-
-        BrandDetailResponseDto.BrandMakeUpTagDto makeUpTagDto = BrandDetailResponseDto.BrandMakeUpTagDto.builder()
-                .brandSkinType(List.of())
-                .brandMakeUpStyle(makeupTagsMap.getOrDefault("메이크업", List.of()))
-                .build();
-
-        return BrandDetailResponseDto.builder()
-                .userId(brand.getUser().getId())
+        // 공통 메서드 응답 빌드
+        BrandDetailResponseDto.BrandDetailResponseDtoBuilder responseBuilder = BrandDetailResponseDto.builder()
+                .userId(currentUserId)
                 .brandName(brand.getBrandName())
-                .brandTag(brandTagNames)
-                .brandDescription(brand.getDetailIntro())
-                .brandMatchingRatio(brand.getMatchingRate())
+                .brandImages(brandImages)
+                .logoUrl(brand.getLogoUrl())
+                .simpleIntro(brand.getSimpleIntro())
+                .detailIntro(brand.getDetailIntro())
+                .homepageUrl(brand.getHomepageUrl())
+                .brandMatchingRatio(brandMatchingRatio.intValue())
                 .brandIsLiked(isLiked)
-                .brandCategory(brandCategories)
-                .brandSkinCareTag(skinCareTagDto)
-                .brandMakeUpTag(makeUpTagDto)
-                .build();
+                .brandDescriptionTags(brandDescriptionTags);
+
+        List<String> brandCategories;
+
+        // **** 브랜드가 뷰티 카테고리인 경우 **** //
+        if (brand.getIndustryType() == IndustryType.BEAUTY) {
+
+            // 매칭: 관심 스타일   <-> 카테고리
+            // 매칭: 피부 타입     <-> 스킨케어 태그: 피부 타입
+            // 매칭: 관심 기능     <-> 스킨케어 태그: 주요 기능
+            // 매칭: 메이크업 스타일 <-> 메이크업 태그: 메이크업 스타일
+
+            brandCategories = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(                   // 매칭: 관심 스타일
+                                                        brandId, TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
+
+            // 코드 가독성을 위해 각각 분리함. -> 성능적으로는 좋지는 않음.
+            List<String> brandSkinType = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(        // 매칭: 피부 타입
+                                                        brandId, TagCategory.BEAUTY_SKIN_TYPE.getDescription());
+
+            List<String> brandMainFunction = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(    // 매칭: 관심 기능
+                                                        brandId, TagCategory.BEAUTY_INTEREST_FUNCTION.getDescription());
+
+            List<String> brandMakeUpStyle = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(     // 매칭: 메이크업 스타일
+                                                        brandId, TagCategory.BEAUTY_MAKEUP_STYLE.getDescription());
+
+            responseBuilder.beautyResponse(BrandDetailResponseDto.BrandBeautyResponse.builder()
+                    .categories(brandCategories)        // 뷰티: 카테고리
+                    .skinType(brandSkinType)            // 스킨케어 태그: 피부타입
+                    .mainFunction(brandMainFunction)    // 스킨케어 태그: 주요 기능
+                    .makeUpStyle(brandMakeUpStyle)      // 메이크업 태그: 메이크업 스타일
+                    .build());
+
+        // **** 브랜드가 패션 카테고리인 경우 **** //
+        } else if (brand.getIndustryType() == IndustryType.FASHION) {
+
+            // 매칭: 관심 아이템/분야 <-> 카테고리
+            // 매칭: 관심 브랜드 종류 <-> 의류 태그: 브랜드 종류
+            // 매칭: 관심 스타일     <-> 의류 태그: 브랜드 스타일
+
+            brandCategories = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(           // 매칭: 관심 아이템/분야
+                                                        brandId, TagCategory.FASHION_INTEREST_ITEM.getDescription());
+
+            List<String> brandType = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(    // 매칭: 관심 브랜드 종류
+                                                        brandId, TagCategory.FASHION_INTEREST_TYPE.getDescription());
+
+            List<String> brandStyle = tagBrandRepository.findTagNamesByBrandIdAndTagCategory(   // 매칭: 관심 스타일
+                                                        brandId, TagCategory.FASHION_INTEREST_STYLE.getDescription());
+
+            responseBuilder.fashionResponse(BrandDetailResponseDto.BrandFashionResponse.builder()
+                    .categories(brandCategories)        // 패션: 카테고리
+                    .brandType(brandType)               // 의류 태그: 브랜드 종류
+                    .brandStyle(brandStyle)             // 의류 태그: 브랜드 스타일
+                    .build());
+        }
+
+        return responseBuilder.build();
     }
 
     @Transactional
-    public Boolean likeBrand(Long brandId) {
-        Long currentUserId = getCurrentUserId();
+    public Boolean likeBrand(Long brandId, Long currentUserId) {
 
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + currentUserId));
@@ -229,57 +270,69 @@ public class BrandService {
                 .collect(Collectors.toList());
     }
 
+    // ******** //
+    // 브랜드 생성 //
+    // ******** //
+
+    // 브랜드가 뷰티인지, 패션인지에 따라 저장하는 형태가 달라짐.
+
     @Transactional
-    public BrandCreateResponseDto createBrand(BrandCreateRequestDto requestDto) {
-        Long currentUserId = getCurrentUserId();
+    public BrandCreateResponseDto createBeautyBrand(BrandBeautyCreateRequestDto requestDto, Long currentUserId) {
+
+        validateHomepageUrl(requestDto.getHomepageUrl());
 
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
 
+        // 이미 브랜드가 존재하는지 확인
         Optional<Brand> existingBrand = brandRepository.findByUser(user);
         if (existingBrand.isPresent()) {
-            throw new CustomException(BrandErrorCode.BRAND_ALREADY_EXISTS, "이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
+            throw new CustomException(BrandErrorCode.BRAND_ALREADY_EXISTS,
+                "이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
         }
 
-        Brand brand = requestDto.toEntity(user);
+        // 브랜드 생성
+        Brand brand = Brand.builder()
+                .brandName(requestDto.getBrandName())
+                .industryType(IndustryType.BEAUTY)
+                .logoUrl(requestDto.getLogoUrl())
+                .simpleIntro(requestDto.getSimpleIntro())
+                .detailIntro(requestDto.getDetailIntro())
+                .homepageUrl(requestDto.getHomepageUrl())
+                .createdBy(currentUserId)
+                .user(user)
+                .build();
 
-        if (requestDto.getBrandCategory() != null) {
-            for (String categoryName : requestDto.getBrandCategory()) {
-                BrandCategory category = brandCategoryRepository.findByName(categoryName)
-                        .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryName));
-                brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build());
-            }
-        }
-
-        if (requestDto.getBrandSkinCareTag() != null) {
-            BrandCreateRequestDto.BrandSkinCareTagDto skinCareTags = requestDto.getBrandSkinCareTag();
-            if (skinCareTags.getSkinType() != null) {
-                addTagsToBrand(brand, skinCareTags.getSkinType(), TagType.BEAUTY, "스킨케어");
-            }
-            if (skinCareTags.getMainFunction() != null) {
-                addTagsToBrand(brand, skinCareTags.getMainFunction(), TagType.BEAUTY, "스킨케어");
-            }
-        }
-        if (requestDto.getBrandMakeUpTag() != null) {
-            BrandCreateRequestDto.BrandMakeUpTagDto makeUpTags = requestDto.getBrandMakeUpTag();
-            if (makeUpTags.getSkinType() != null) {
-                addTagsToBrand(brand, makeUpTags.getSkinType(), TagType.BEAUTY, "메이크업");
-            }
-            if (makeUpTags.getBrandMakeUpStyle() != null) {
-                addTagsToBrand(brand, makeUpTags.getBrandMakeUpStyle(), TagType.BEAUTY, "메이크업");
-            }
-        }
-        if (requestDto.getBrandClothingTag() != null) {
-            BrandCreateRequestDto.BrandClothingTagDto clothingTags = requestDto.getBrandClothingTag();
-            if (clothingTags.getBrandType() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandType(), TagType.FASHION, "의류");
-            }
-            if (clothingTags.getBrandStyle() != null) {
-                addTagsToBrand(brand, clothingTags.getBrandStyle(), TagType.FASHION, "의류");
-            }
-        }
-
+        // 브랜드 먼저 저장
         Brand savedBrand = brandRepository.save(brand);
+
+        // 브랜드 이미지 저장
+        if (requestDto.getBrandImages() != null && !requestDto.getBrandImages().isEmpty()) {
+            List<BrandImage> brandImages = requestDto.getBrandImages().stream()
+                    .map(imageUrl -> BrandImage.builder()
+                            .brand(savedBrand)
+                            .imageUrl(imageUrl)
+                            .build())
+                    .collect(Collectors.toList());
+            brandImageRepository.saveAll(brandImages);
+        }
+
+        // *** 브랜드 매칭용/상세 페이지용 뷰티 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandBeautyCreateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
+
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestStyle(), TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
+
+            // 관심 기능 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestFunction(), TagCategory.BEAUTY_INTEREST_FUNCTION.getDescription());
+
+            // 피부 타입 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getSkinType(), TagCategory.BEAUTY_SKIN_TYPE.getDescription());
+
+            // 메이크업 스타일 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getMakeupStyle(), TagCategory.BEAUTY_MAKEUP_STYLE.getDescription());
+        }
 
         return BrandCreateResponseDto.builder()
                 .brandId(savedBrand.getId())
@@ -287,14 +340,83 @@ public class BrandService {
     }
 
     @Transactional
-    public void updateBrand(Long brandId, BrandUpdateRequestDto requestDto) {
-        Long currentUserId = getCurrentUserId();
+    public BrandCreateResponseDto createFashionBrand(BrandFashionCreateRequestDto requestDto, Long currentUserId) {
+
+        validateHomepageUrl(requestDto.getHomepageUrl());
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
+
+        // 이미 브랜드가 존재하는지 확인
+        Optional<Brand> existingBrand = brandRepository.findByUser(user);
+        if (existingBrand.isPresent()) {
+            throw new CustomException(BrandErrorCode.BRAND_ALREADY_EXISTS,
+                "이미 해당 유저(ID: " + user.getId() + ")의 브랜드(ID: " + existingBrand.get().getId() + ")가 존재합니다.");
+        }
+
+        // 브랜드 생성
+        Brand brand = Brand.builder()
+                .brandName(requestDto.getBrandName())
+                .industryType(IndustryType.FASHION)
+                .logoUrl(requestDto.getLogoUrl())
+                .simpleIntro(requestDto.getSimpleIntro())
+                .detailIntro(requestDto.getDetailIntro())
+                .homepageUrl(requestDto.getHomepageUrl())
+                .createdBy(currentUserId)
+                .user(user)
+                .build();
+
+        // 브랜드 먼저 저장
+        Brand savedBrand = brandRepository.save(brand);
+
+        // 브랜드 이미지 저장
+        if (requestDto.getBrandImages() != null && !requestDto.getBrandImages().isEmpty()) {
+            List<BrandImage> brandImages = requestDto.getBrandImages().stream()
+                    .map(imageUrl -> BrandImage.builder()
+                            .brand(savedBrand)
+                            .imageUrl(imageUrl)
+                            .build())
+                    .collect(Collectors.toList());
+            brandImageRepository.saveAll(brandImages);
+        }
+
+        // *** 브랜드 매칭용/상세 페이지용 패션 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandFashionCreateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
+
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestStyle(), TagCategory.FASHION_INTEREST_STYLE.getDescription());
+
+            // 관심 아이템/분야 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestItem(), TagCategory.FASHION_INTEREST_ITEM.getDescription());
+
+            // 관심 브랜드 종류 태그 추가
+            addTagsToBrandByIds(savedBrand, brandTags.getInterestBrand(), TagCategory.FASHION_INTEREST_TYPE.getDescription());
+        }
+
+        return BrandCreateResponseDto.builder()
+                .brandId(savedBrand.getId())
+                .build();
+    }
+
+    // *********** //
+    // 브랜드 업데이트 //
+    // *********** //
+    @Transactional
+    public void updateBeautyBrand(Long brandId, BrandBeautyUpdateRequestDto requestDto, Long currentUserId) {
+
+        validateHomepageUrl(requestDto.getHomepageUrl());
 
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
 
         if (!brand.getUser().getId().equals(currentUserId)) {
             throw new CustomException(GeneralErrorCode.FORBIDDEN);
+        }
+
+        // 브랜드가 뷰티 타입인지 확인
+        if (brand.getIndustryType() != IndustryType.BEAUTY) {
+            throw new CustomException(BrandErrorCode.INVALID_INDUSTRY_TYPE, "해당 브랜드는 뷰티 브랜드가 아닙니다.");
         }
 
         brand.update(
@@ -306,85 +428,69 @@ public class BrandService {
                 currentUserId
         );
 
-        updateCategories(brand, requestDto.getBrandCategory());
-        updateTags(brand, requestDto);
+        // 기존 태그 삭제
+        brand.getBrandTags().clear();
+
+        // *** 브랜드 매칭용/상세 페이지용 뷰티 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandBeautyUpdateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
+
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestStyle(), TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
+
+            // 관심 기능 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestFunction(), TagCategory.BEAUTY_INTEREST_FUNCTION.getDescription());
+
+            // 피부 타입 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getSkinType(), TagCategory.BEAUTY_SKIN_TYPE.getDescription());
+
+            // 메이크업 스타일 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getMakeupStyle(), TagCategory.BEAUTY_MAKEUP_STYLE.getDescription());
+        }
     }
 
-    private void updateCategories(Brand brand, List<String> requestedCategoryNames) {
-        if (requestedCategoryNames == null) {
-            requestedCategoryNames = new ArrayList<>();
+    @Transactional
+    public void updateFashionBrand(Long brandId, BrandFashionUpdateRequestDto requestDto, Long currentUserId) {
+
+        validateHomepageUrl(requestDto.getHomepageUrl());
+
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
+
+        if (!brand.getUser().getId().equals(currentUserId)) {
+            throw new CustomException(GeneralErrorCode.FORBIDDEN);
         }
 
-        Set<String> existingCategoryNames = brand.getBrandCategoryViews().stream()
-                .map(bcv -> bcv.getCategory().getName())
-                .collect(Collectors.toSet());
-
-        Set<String> requestedCategoryNamesSet = Set.copyOf(requestedCategoryNames);
-
-        // Remove categories that are no longer requested
-        brand.getBrandCategoryViews().removeIf(bcv -> !requestedCategoryNamesSet.contains(bcv.getCategory().getName()));
-
-        // Add new categories
-        requestedCategoryNamesSet.stream()
-                .filter(name -> !existingCategoryNames.contains(name))
-                .forEach(name -> {
-                    BrandCategory category = brandCategoryRepository.findByName(name)
-                            .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + name));
-                    brand.addBrandCategoryView(BrandCategoryView.builder().category(category).build());
-                });
-    }
-
-    private void updateTags(Brand brand, BrandUpdateRequestDto requestDto) {
-        List<String> requestedTagNames = new ArrayList<>();
-        if (requestDto.getBrandSkinCareTag() != null) {
-            if (requestDto.getBrandSkinCareTag().getSkinType() != null) {
-                requestedTagNames.addAll(requestDto.getBrandSkinCareTag().getSkinType());
-            }
-            if (requestDto.getBrandSkinCareTag().getMainFunction() != null) {
-                requestedTagNames.addAll(requestDto.getBrandSkinCareTag().getMainFunction());
-            }
-        }
-        if (requestDto.getBrandMakeUpTag() != null) {
-            if (requestDto.getBrandMakeUpTag().getSkinType() != null) {
-                requestedTagNames.addAll(requestDto.getBrandMakeUpTag().getSkinType());
-            }
-            if (requestDto.getBrandMakeUpTag().getBrandMakeUpStyle() != null) {
-                requestedTagNames.addAll(requestDto.getBrandMakeUpTag().getBrandMakeUpStyle());
-            }
-        }
-        if (requestDto.getBrandClothingTag() != null) {
-            if (requestDto.getBrandClothingTag().getBrandType() != null) {
-                requestedTagNames.addAll(requestDto.getBrandClothingTag().getBrandType());
-            }
-            if (requestDto.getBrandClothingTag().getBrandStyle() != null) {
-                requestedTagNames.addAll(requestDto.getBrandClothingTag().getBrandStyle());
-            }
+        // 브랜드가 패션 타입인지 확인
+        if (brand.getIndustryType() != IndustryType.FASHION) {
+            throw new CustomException(BrandErrorCode.INVALID_INDUSTRY_TYPE, "해당 브랜드는 패션 브랜드가 아닙니다.");
         }
 
-        Set<String> existingTagNames = brand.getBrandTags().stream()
-                .map(bt -> bt.getTag().getTagName())
-                .collect(Collectors.toSet());
+        brand.update(
+                requestDto.getBrandName(),
+                requestDto.getLogoUrl(),
+                requestDto.getSimpleIntro(),
+                requestDto.getDetailIntro(),
+                requestDto.getHomepageUrl(),
+                currentUserId
+        );
 
-        Set<String> requestedTagNamesSet = Set.copyOf(requestedTagNames);
+        // 기존 태그 삭제
+        brand.getBrandTags().clear();
 
-        // Remove tags that are no longer requested
-        brand.getBrandTags().removeIf(bt -> !requestedTagNamesSet.contains(bt.getTag().getTagName()));
+        // *** 브랜드 매칭용/상세 페이지용 패션 태그 추가 *** //
+        if (requestDto.getBrandTags() != null) {
+            BrandFashionUpdateRequestDto.BrandTagsDto brandTags = requestDto.getBrandTags();
 
-        // Add new tags
-        requestedTagNamesSet.stream()
-                .filter(name -> !existingTagNames.contains(name))
-                .forEach(name -> {
-                    // This is a simplified logic. You might need to determine TagType and category based on the request DTO.
-                    // For now, let's assume a default or find the first one.
-                    Tag tag = tagRepository.findByTagName(name).stream().findFirst()
-                            .orElseGet(() -> {
-                                // This part is tricky without more context on how to create a new tag.
-                                // You need to decide the TagType and category for a new tag.
-                                // For this example, I'll throw an exception.
-                                throw new ResourceNotFoundException("Tag not found and cannot create new one without type/category: " + name);
-                            });
-                    brand.addBrandTag(BrandTag.builder().tag(tag).build());
-                });
+            // 관심 스타일 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestStyle(), TagCategory.FASHION_INTEREST_STYLE.getDescription());
+
+            // 관심 아이템/분야 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestItem(), TagCategory.FASHION_INTEREST_ITEM.getDescription());
+
+            // 관심 브랜드 종류 태그 추가
+            addTagsToBrandByIds(brand, brandTags.getInterestBrand(), TagCategory.FASHION_INTEREST_TYPE.getDescription());
+        }
     }
 
 
@@ -393,11 +499,9 @@ public class BrandService {
             return;
         }
 
-        // 1. Find existing tags in one query
         Map<String, Tag> existingTags = tagRepository.findAllByTagNameInAndTagCategory(tagNames, category).stream()
                 .collect(Collectors.toMap(Tag::getTagName, Function.identity()));
 
-        // 2. Find new tag names and create them in one batch
         List<Tag> newTags = tagNames.stream()
                 .filter(name -> !existingTags.containsKey(name))
                 .map(name -> Tag.builder()
@@ -411,11 +515,9 @@ public class BrandService {
             tagRepository.saveAll(newTags);
         }
 
-        // 3. Combine existing and new tags
         List<Tag> allTags = new ArrayList<>(existingTags.values());
         allTags.addAll(newTags);
 
-        // 4. Link all tags to the brand
         for (Tag tag : allTags) {
             boolean isAlreadyLinked = brand.getBrandTags().stream()
                     .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
@@ -425,9 +527,36 @@ public class BrandService {
         }
     }
 
+    private void addTagsToBrandByIds(Brand brand, List<Integer> tagIds, String category) {
+        if (tagIds == null || tagIds.isEmpty()) {
+            return;
+        }
+
+        // Integer를 Long으로 변환하여 태그 조회
+        List<Long> tagIdsLong = tagIds.stream()
+                .map(Integer::longValue)
+                .collect(Collectors.toList());
+
+        List<Tag> tags = tagRepository.findAllById(tagIdsLong);
+
+        for (Tag tag : tags) {
+            // 해당 카테고리의 태그인지 확인
+            if (category.equals(tag.getTagCategory())) {
+                boolean isAlreadyLinked = brand.getBrandTags().stream()
+                        .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
+                if (!isAlreadyLinked) {
+                    brand.addBrandTag(BrandTag.builder().tag(tag).build());
+                }
+            }
+        }
+    }
+
+    // ******** //
+    // 브랜드 삭제 //
+    // ******** //
     @Transactional
-    public void deleteBrand(Long brandId) {
-        Long currentUserId = getCurrentUserId();
+    public void deleteBrand(Long brandId, Long currentUserId) {
+
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
         brand.softDelete(currentUserId);
@@ -444,5 +573,39 @@ public class BrandService {
         Brand brand = brandRepository.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found for user: " + userId));
         return brand.getId();
+    }
+
+    private void validateHomepageUrl(String url) {
+        if (url != null && !url.isEmpty() && !URL_PATTERN.matcher(url).matches()) {
+            throw new CustomException(BrandErrorCode.INVALID_URL_FORMAT);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public BrandSimpleDetailResponse getSimpleBrandDetail(Long brandId, Long userId) {
+        // 1. 브랜드 조회 (기존 brandRepository 활용)
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
+
+        // 2. 브랜드 설명 태그 리스트 추출 (brandDescribeTagRepository 활용)
+        // BrandDescribeTag 엔티티의 필드명이 getBrandDescribeTag()임을 확인했습니다.
+        List<String> tags = brandDescribeTagRepository.findAllByBrandId(brandId).stream()
+                .map(BrandDescribeTag::getBrandDescribeTag)
+                .collect(Collectors.toList());
+
+        // 3. 매칭률 조회 (matchBrandHistoryRepository 활용)
+        // 기존 getBrandDetail 로직과 동일하게 DB에 기록된 최신 매칭률을 가져옵니다.
+        Integer matchingRate = matchBrandHistoryRepository.findByUserIdAndBrandIdAndIsDeprecatedFalse(userId, brandId)
+                .map(history -> history.getMatchingRatio().intValue())
+                .orElse(0);
+
+        // 4. DTO 생성 및 반환
+        return BrandSimpleDetailResponse.builder()
+                .brandId(brand.getId())
+                .brandName(brand.getBrandName())   // 엔티티 필드명: brandName
+                .brandImageUrl(brand.getLogoUrl()) // 엔티티 필드명: logoUrl (이미지의 브랜드 로고)
+                .brandTags(tags)
+                .matchingRate(matchingRate)
+                .build();
     }
 }

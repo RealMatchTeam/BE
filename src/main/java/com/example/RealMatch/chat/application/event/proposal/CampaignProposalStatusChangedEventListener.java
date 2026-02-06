@@ -1,4 +1,4 @@
-package com.example.RealMatch.chat.application.event;
+package com.example.RealMatch.chat.application.event.proposal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,25 +28,29 @@ public class CampaignProposalStatusChangedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCampaignProposalStatusChanged(CampaignProposalStatusChangedEvent event) {
         if (event == null) {
-            LOG.warn("Invalid CampaignProposalStatusChangedEvent: event is null");
+            LOG.warn("[ProposalBoundary] Invalid CampaignProposalStatusChangedEvent: event is null");
             return;
         }
 
-        LOG.info("CampaignProposalStatusChangedEvent received. proposalId={}, newStatus={}",
+        LOG.info("[ProposalBoundary] Received business event. proposalId={}, newStatus={}",
                 event.proposalId(), event.newStatus());
 
         ChatProposalStatus chatStatus = toChatProposalStatus(event.newStatus());
+        String eventId = ProposalStatusChangedEvent.generateEventId(event.proposalId(), chatStatus);
+
         ProposalStatusChangedEvent chatEvent = new ProposalStatusChangedEvent(
+                eventId,
                 event.proposalId(),
                 event.campaignId(),
                 event.brandUserId(),
                 event.creatorUserId(),
-                chatStatus
+                chatStatus,
+                event.actorUserId()
         );
         eventPublisher.publishEvent(chatEvent);
 
-        LOG.info("ProposalStatusChangedEvent published. proposalId={}, newStatus={}",
-                event.proposalId(), chatStatus);
+        LOG.info("[ProposalBoundary] Published internal event. eventId={}, proposalId={}, newStatus={}",
+                eventId, event.proposalId(), chatStatus);
     }
 
     private static ChatProposalStatus toChatProposalStatus(ProposalStatus status) {

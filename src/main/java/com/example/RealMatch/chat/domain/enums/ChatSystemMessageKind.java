@@ -4,7 +4,9 @@ public enum ChatSystemMessageKind {
     PROPOSAL_CARD(true),
     RE_PROPOSAL_CARD(true),
     PROPOSAL_STATUS_NOTICE(true),
-    MATCHED_CAMPAIGN_CARD(true);
+    MATCHED_CAMPAIGN_CARD(true),
+    APPLY_CARD(true),
+    APPLY_STATUS_NOTICE(true);
 
     private final boolean payloadRequired;
 

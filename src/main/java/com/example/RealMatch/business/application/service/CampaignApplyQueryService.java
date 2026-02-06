@@ -28,6 +28,7 @@ public class CampaignApplyQueryService {
 
         return new CampaignApplyDetailResponse(
                 apply.getCampaign().getId(),
+                apply.getId(),
                 apply.getCampaign().getTitle(),
                 apply.getReason(),
                 apply.getApplyStatus()

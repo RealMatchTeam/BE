@@ -55,9 +55,6 @@ public class Brand extends DeleteBaseEntity {
     @Column(name = "homepage_url", length = 500)
     private String homepageUrl;
 
-    @Column(name = "matching_rate")
-    private Integer matchingRate;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "user_id",
@@ -85,14 +82,13 @@ public class Brand extends DeleteBaseEntity {
     @Builder
     public Brand(String brandName, IndustryType industryType, String logoUrl,
                  String simpleIntro, String detailIntro, String homepageUrl,
-                 Integer matchingRate, Long createdBy, User user) {
+                 Long createdBy, User user) {
         this.brandName = brandName;
         this.industryType = industryType;
         this.logoUrl = logoUrl;
         this.simpleIntro = simpleIntro;
         this.detailIntro = detailIntro;
         this.homepageUrl = homepageUrl;
-        this.matchingRate = matchingRate;
         this.createdBy = createdBy;
         this.user = user;
     }
@@ -128,7 +124,6 @@ public class Brand extends DeleteBaseEntity {
         this.simpleIntro = null;
         this.detailIntro = null;
         this.homepageUrl = null;
-        this.matchingRate = null;
         this.updatedBy = updatedBy;
     }
 

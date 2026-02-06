@@ -96,6 +96,21 @@ public class CampaignProposalController implements CampaignProposalSwagger {
         return CustomResponse.ok("캠페인 제안을 거절했습니다.");
     }
 
+    @Override
+    @PatchMapping("/{campaignProposalId}/cancel")
+    public CustomResponse<String> cancelCampaignProposal(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long campaignProposalId
+    ) {
+        campaignProposalService.cancelCampaignProposal(
+                userDetails.getUserId(),
+                campaignProposalId
+        );
+
+        return CustomResponse.ok("캠페인 제안을 취소했습니다.");
+    }
+
+
 
 
 }

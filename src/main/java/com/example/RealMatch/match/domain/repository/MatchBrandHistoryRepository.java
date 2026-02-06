@@ -20,6 +20,8 @@ public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHis
 
     Optional<MatchBrandHistory> findByUserIdAndBrandId(Long userId, Long brandId);
 
+    Optional<MatchBrandHistory> findByUserIdAndBrandIdAndIsDeprecatedFalse(Long userId, Long brandId);
+
     List<MatchBrandHistory> findByUserIdOrderByMatchingRatioDesc(Long userId);
 
     List<MatchBrandHistory> findByUserIdAndIsDeprecatedFalse(Long userId);

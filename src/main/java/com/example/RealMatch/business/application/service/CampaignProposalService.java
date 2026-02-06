@@ -138,7 +138,7 @@ public class CampaignProposalService {
 
         proposal.match();
 
-        publishProposalStatusChangedEvent(proposal, ProposalStatus.MATCHED);
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.MATCHED, userId);
     }
 
     public void rejectCampaignProposal(
@@ -161,10 +161,8 @@ public class CampaignProposalService {
         proposal.reject(rejectReason);
 
         // 4. 상태 변경 이벤트 발행
-        publishProposalStatusChangedEvent(proposal, ProposalStatus.REJECTED);
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.REJECTED, userId);
     }
-
-
 
     private void saveAllContentTags(CampaignProposalRequestDto request, CampaignProposal proposal) {
         saveContentTags(proposal, request.getFormats());
@@ -224,6 +222,21 @@ public class CampaignProposalService {
         }
         throw new CustomException(GeneralErrorCode.INVALID_DATA);
     }
+
+    public void cancelCampaignProposal(Long userId, Long campaignProposalId) {
+        CampaignProposal proposal = campaignProposalRepository
+                .findById(campaignProposalId)
+                .orElseThrow(() ->
+                        new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
+                );
+
+
+        proposal.validateCancelable(userId);
+        proposal.cancel();
+
+        publishProposalStatusChangedEvent(proposal, ProposalStatus.CANCELED, userId);
+    }
+
 
     private void validateReceiver(CampaignProposal proposal, Long userId) {
         if (!proposal.getReceiverUserId().equals(userId)) {
@@ -335,7 +348,7 @@ public class CampaignProposalService {
         eventPublisher.publishEvent(event);
     }
 
-    private void publishProposalStatusChangedEvent(CampaignProposal proposal, ProposalStatus newStatus) {
+    private void publishProposalStatusChangedEvent(CampaignProposal proposal, ProposalStatus newStatus, Long actorUserId) {
         Long brandUserId = proposal.getBrand().getUser().getId();
         Long creatorUserId = proposal.getCreator().getId();
         Long campaignId = proposal.getCampaign() != null ? proposal.getCampaign().getId() : null;
@@ -345,7 +358,8 @@ public class CampaignProposalService {
                 campaignId,
                 brandUserId,
                 creatorUserId,
-                newStatus
+                newStatus,
+                actorUserId
         );
         eventPublisher.publishEvent(event);
     }
