@@ -44,7 +44,7 @@ public class CampaignController {
             @PathVariable Long campaignId
     ) {
         return CustomResponse.ok(
-                campaignQueryService.getCampaignDetail(principal.getUserId(),campaignId)
+                campaignQueryService.getCampaignDetail(principal.getUserId(), campaignId)
         );
     }
 
