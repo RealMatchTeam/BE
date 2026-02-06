@@ -103,7 +103,7 @@ public class BrandController implements BrandSwagger {
         // 유저 정보는 security context에서 가져온 userDetails.getUserId() 사용
         BrandSimpleDetailResponse result = brandService.getSimpleBrandDetail(brandId, userDetails.getUserId());
 
-        return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, result);
+        return CustomResponse.ok(result);
     }
 
     // ******** //

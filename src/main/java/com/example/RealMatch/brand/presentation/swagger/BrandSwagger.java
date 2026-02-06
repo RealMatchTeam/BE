@@ -186,6 +186,8 @@ public interface BrandSwagger {
     })
     CustomResponse<BrandSimpleDetailResponse> getBrandSummary(
             @Parameter(description = "조회할 브랜드의 ID", example = "1") Long brandId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails
     );
 }
