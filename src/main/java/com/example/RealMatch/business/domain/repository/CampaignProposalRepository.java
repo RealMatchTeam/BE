@@ -1,5 +1,6 @@
 package com.example.RealMatch.business.domain.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,10 +18,14 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
     from CampaignProposal cp
     where cp.senderUserId= :userId
       and (:status is null or cp.status = :status)
+    and (:startDate is null or cp.endDate >= :startDate)
+    and (:endDate is null or cp.startDate <= :endDate)
 """)
     List<Long> findSentProposalIds(
             @Param("userId") Long userId,
-            @Param("status") ProposalStatus status
+            @Param("status") ProposalStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 
     @Query("""
@@ -28,10 +33,14 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
     from CampaignProposal cp
     where cp.receiverUserId = :userId
       and (:status is null or cp.status = :status)
+      and (:startDate is null or cp.endDate >= :startDate)
+      and (:endDate is null or cp.startDate <= :endDate)
 """)
     List<Long> findReceivedProposalIds(
             @Param("userId") Long userId,
-            @Param("status") ProposalStatus status
+            @Param("status") ProposalStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 
     @Query("""
@@ -49,4 +58,5 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
             "LEFT JOIN FETCH p.brand " +
             "WHERE p.id IN :ids")
     List<CampaignProposal> findAllByIdWithDetails(@Param("ids") List<Long> ids);
+
 }

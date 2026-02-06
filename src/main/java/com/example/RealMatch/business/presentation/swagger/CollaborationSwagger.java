@@ -34,13 +34,15 @@ public interface CollaborationSwagger {
                     * 신규 캠페인에 제안하거나/받은 경우 campaignId가 null이고, 기존 캠페인에 제안하거나/받은 경우 campaignId가 존재합니다.
 
                     2) 상태
-                    REVIEWING : 검토중
-                    MATCHED : 매칭됨
-                    REJECTED : 거절
+                    - REVIEWING : 검토중    
+                    - MATCHED : 매칭됨    
+                    - REJECTED : 거절    
 
                     3) 날짜
-                    startDate : 제작 시작 날짜
-                    endDate : 제작 마감 날짜
+                    - startDate : 제작 시작 날짜  
+                    - endDate : 제작 마감 날짜      
+                    * 날짜가 겹치는 기간이 모두 조회됩니다.         
+                    startDate : 2월 1일, endDate : 2월 10일 이라면, 2월 1일 ~ 2월 10일 사이의 제작기간에 해당되는 캠페인이 모두 조회됩니다.
                     """
     )
     CustomResponse<List<CollaborationResponse>> getMyCollaborations(
