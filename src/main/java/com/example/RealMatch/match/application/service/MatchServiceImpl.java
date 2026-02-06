@@ -569,6 +569,7 @@ public class MatchServiceImpl implements MatchService {
                 .brandMatchingRatio(matchRatio)
                 .brandIsLiked(likedCampaignIds.contains(campaign.getId()))
                 .brandIsRecruiting(isRecruiting)
+                .campaignId(campaign.getId())
                 .campaignManuscriptFee(campaign.getRewardAmount() != null ? campaign.getRewardAmount().intValue() : null)
                 .campaignName(campaign.getTitle())
                 .campaignDDay(Math.max(dDay, 0))
