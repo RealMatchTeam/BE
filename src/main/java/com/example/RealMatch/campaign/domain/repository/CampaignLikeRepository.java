@@ -34,4 +34,12 @@ public interface CampaignLikeRepository extends JpaRepository<CampaignLike, Long
     );
 
     long countByCampaignId(Long campaignId);
+
+    @Query("""
+        select cl.campaign.id, count(cl)
+        from CampaignLike cl
+        where cl.campaign.id in :campaignIds
+        group by cl.campaign.id
+    """)
+    List<Object[]> countByCampaignIdIn(@Param("campaignIds") List<Long> campaignIds);
 }
