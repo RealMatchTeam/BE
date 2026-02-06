@@ -27,6 +27,7 @@ import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponse
 import com.example.RealMatch.brand.presentation.dto.response.BrandFilterResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandLikeResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandListResponseDto;
+import com.example.RealMatch.brand.presentation.dto.response.BrandSimpleDetailResponse;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetailResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
@@ -92,6 +93,17 @@ public class BrandController implements BrandSwagger {
             @PathVariable Long brandId
     ) {
         return CustomResponse.ok(brandService.getSponsorProducts(brandId));
+    }
+
+    @GetMapping("/{brandId}/summary")
+    public CustomResponse<BrandSimpleDetailResponse> getBrandSummary(
+            @PathVariable Long brandId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        // 유저 정보는 security context에서 가져온 userDetails.getUserId() 사용
+        BrandSimpleDetailResponse result = brandService.getSimpleBrandDetail(brandId, userDetails.getUserId());
+
+        return CustomResponse.ok(result);
     }
 
     // ******** //
