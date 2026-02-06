@@ -88,6 +88,10 @@ public class BrandCampaignService {
         List<Campaign> campaigns =
                 campaignRepository.findRecruitingCampaignsByBrandId(brand.getId());
 
+        if (campaigns.isEmpty()) {
+            return new BrandRecruitingCampaignResponse(java.util.Collections.emptyList());
+        }
+
         List<Long> campaignIds = campaigns.stream()
                 .map(Campaign::getId)
                 .toList();

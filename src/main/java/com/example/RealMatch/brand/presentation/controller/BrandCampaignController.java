@@ -45,7 +45,6 @@ public class BrandCampaignController {
     )
     @GetMapping("/{brandId}/campaigns")
     public CustomResponse<BrandCampaignSliceResponse> getBrandCampaigns(
-            @AuthenticationPrincipal CustomUserDetails principal,
             @Parameter(description = "브랜드 ID", example = "1")
             @PathVariable Long brandId,
             @RequestParam(required = false) Long cursor,
@@ -65,7 +64,6 @@ public class BrandCampaignController {
     )
     @GetMapping("/{brandId}/existing-campaigns")
     public CustomResponse<BrandExistingCampaignResponse> getExistingCampaigns(
-            @AuthenticationPrincipal CustomUserDetails principal,
             @Parameter(description = "브랜드 ID", example = "1")
             @PathVariable Long brandId
     ) {
