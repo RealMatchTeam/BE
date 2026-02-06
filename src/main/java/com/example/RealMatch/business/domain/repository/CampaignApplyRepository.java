@@ -52,5 +52,30 @@ public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Lo
             LocalDate endDate
     );
 
+    @Query("""
+    select new com.example.RealMatch.business.presentation.dto.response.CollaborationProjection(
+        c.id,
+        null,
+        b.brandName,
+        b.logoUrl,
+        c.title,
+        ca.applyStatus,
+        c.startDate,
+        c.endDate,
+        com.example.RealMatch.business.domain.enums.CollaborationType.APPLIED
+    )
+    from CampaignApply ca
+    join ca.campaign c
+    join c.brand b
+    where ca.user.id = :userId
+      and (:status is null or ca.applyStatus = :status)
+      and b.id in :brandIds
+    """)
+    List<CollaborationProjection> findMyAppliedCollaborationsWithBrand(
+            @Param("userId") Long userId,
+            @Param("status") ProposalStatus status,
+            @Param("brandIds") List<Long> brandIds
+    );
+
 
 }
