@@ -47,12 +47,10 @@ public class UserController implements UserSwagger {
     @Override
     @GetMapping("/my/profile-card")
     public CustomResponse<MyProfileCardResponseDto> getMyProfileCard(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam(defaultValue = "0") int page, // cursor 대신 page (기본값 0)
-            @RequestParam(defaultValue = "3") int size  // 이미지 UI에 맞춰 기본값 3으로 변경
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return CustomResponse.ok(
-                userService.getMyProfileCard(userDetails.getUserId(), page, size)
+                userService.getMyProfileCard(userDetails.getUserId())
         );
     }
 

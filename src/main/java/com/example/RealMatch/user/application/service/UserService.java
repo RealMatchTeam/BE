@@ -1,32 +1,22 @@
 package com.example.RealMatch.user.application.service;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.brand.domain.entity.Brand;
-import com.example.RealMatch.business.domain.entity.CampaignApply;
-import com.example.RealMatch.business.domain.entity.CampaignProposal;
-import com.example.RealMatch.business.domain.enums.CollaborationType;
-import com.example.RealMatch.business.domain.repository.CampaignApplyRepository;
-import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
-import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
+import com.example.RealMatch.user.domain.entity.UserSignupPurpose;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.AuthenticationMethodRepository;
-import com.example.RealMatch.user.domain.repository.UserContentCategoryRepository;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
+import com.example.RealMatch.user.domain.repository.UserSignupPurposeRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
@@ -48,9 +38,7 @@ public class UserService {
     private final ScrapMockDataProvider scrapMockDataProvider;
     private final AuthenticationMethodRepository authenticationMethodRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
-    private final CampaignApplyRepository campaignApplyRepository;
-    private final CampaignProposalRepository campaignProposalRepository;
-    private final UserContentCategoryRepository userContentCategoryRepository;
+    private final UserSignupPurposeRepository userSignupPurposeRepository;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -64,20 +52,11 @@ public class UserService {
         return MyPageResponseDto.from(user, hasMatchingTest);
     }
 
-    // 파라미터 cursor를 page로 변경
-    public MyProfileCardResponseDto getMyProfileCard(Long userId, int page, int size) {
-
-        if (page < 0) {
-            throw new CustomException(UserErrorCode.INVALID_PAGE_INDEX);
-        }
-        if (size <= 0) {
-            throw new CustomException(UserErrorCode.INVALID_PAGE_SIZE);
-        }
-
+    public MyProfileCardResponseDto getMyProfileCard(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
+        if (user.getRole() == Role.GUEST) {
             throw new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
         }
 
@@ -85,95 +64,17 @@ public class UserService {
                 .findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        // 2️⃣ 모든 데이터 수집 (개선된 private 메서드 사용)
-        List<MyProfileCardResponseDto.CampaignInfo> allCampaigns = new ArrayList<>();
-        getAppliedCampaigns(userId, allCampaigns);
-        getReceivedProposals(userId, allCampaigns);
-        getSentProposals(userId, allCampaigns);
+        // 1. 유저 아이디(userId)로 직접 조회
+        List<UserSignupPurpose> purposes = userSignupPurposeRepository.findByUserId(userId);
 
-        // 3️⃣ 정렬 및 페이징 (메모리 방식 유지 - 데이터 100건 내외면 충분)
-        allCampaigns.sort(Comparator.comparing(MyProfileCardResponseDto.CampaignInfo::endDate).reversed());
+        // 2. 가입 목적 텍스트 추출
+        List<String> interestNames = purposes.stream()
+                .map(p -> p.getPurpose().getPurposeName())
+                .toList();
 
-        int totalElements = allCampaigns.size();
-        int start = Math.min(page * size, totalElements);
-        int end = Math.min(start + size, totalElements);
-
-        List<MyProfileCardResponseDto.CampaignInfo> pagedCampaigns = (start < totalElements)
-                ? allCampaigns.subList(start, end)
-                : Collections.emptyList();
-
-        List<String> interests = userContentCategoryRepository.findByUserId(userId)
-                .stream().map(uc -> uc.getContentCategory().getCategoryName()).toList();
-
-        return MyProfileCardResponseDto.from(user, detail, interests, pagedCampaigns, totalElements, size);
+        return MyProfileCardResponseDto.from(user, detail, interestNames);
     }
 
-    private void getAppliedCampaigns(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
-        // 전체 조회를 위해 status, startDate, endDate 위치에 null 전달
-        List<CampaignApply> applies = campaignApplyRepository.findMyApplies(
-                userId,
-                null,
-                null,
-                null
-        );
-
-        for (CampaignApply apply : applies) {
-            Campaign c = apply.getCampaign();
-            Brand b = c.getBrand(); // JOIN FETCH 덕분에 추가 쿼리 없이 즉시 접근
-
-            campaigns.add(new MyProfileCardResponseDto.CampaignInfo(
-                    c.getId(),
-                    b.getId(),
-                    b.getBrandName(),
-                    c.getTitle(),
-                    CollaborationType.APPLIED.name(),
-                    apply.getApplyStatus().name(),
-                    c.getRecruitEndDate().toLocalDate()
-            ));
-        }
-    }
-
-    private void getReceivedProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
-        getProposals(userId, campaigns, CollaborationType.RECEIVED);
-    }
-
-    private void getSentProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns) {
-        getProposals(userId, campaigns, CollaborationType.SENT);
-    }
-
-    private void getProposals(Long userId, List<MyProfileCardResponseDto.CampaignInfo> campaigns,
-                              CollaborationType type) {
-        List<Long> ids = (type == CollaborationType.RECEIVED)
-                ? campaignProposalRepository.findReceivedProposalIds(userId, null)
-                : campaignProposalRepository.findSentProposalIds(userId, null);
-
-        if (ids == null || ids.isEmpty()) {
-            return;
-        }
-
-        List<CampaignProposal> proposals = campaignProposalRepository.findAllByIdWithDetails(ids);
-        proposals.forEach(p -> campaigns.add(convertToCampaignInfo(p, type)));
-    }
-
-    private MyProfileCardResponseDto.CampaignInfo convertToCampaignInfo(CampaignProposal p, CollaborationType type) {
-        boolean hasCampaign = p.getCampaign() != null;
-        Long campaignId = hasCampaign ? p.getCampaign().getId() : null;
-
-        // 브랜드 정보 추출 (Campaign이 있으면 거기서, 없으면 Proposal에서)
-        Brand brand = hasCampaign ? p.getCampaign().getBrand() : p.getBrand();
-        String title = hasCampaign ? p.getCampaign().getTitle() : p.getTitle();
-        LocalDate endDate = hasCampaign ? p.getCampaign().getRecruitEndDate().toLocalDate() : p.getEndDate();
-
-        return new MyProfileCardResponseDto.CampaignInfo(
-                campaignId,
-                brand.getId(),
-                brand.getBrandName(),
-                title,
-                type.name(),  // 이제 정상 작동
-                p.getStatus().name(),
-                endDate
-        );
-    }
 
         public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
         // 유저 조회

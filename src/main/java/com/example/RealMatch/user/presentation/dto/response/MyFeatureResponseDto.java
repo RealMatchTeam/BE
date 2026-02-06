@@ -27,7 +27,6 @@ public record MyFeatureResponseDto(
     ) {}
 
     public record ContentsType(
-            String snsUrl,
             List<String> viewerGender,
             List<String> viewerAge,
             String avgVideoLength,
