@@ -64,10 +64,8 @@ public class UserService {
                 .findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        // 1. 유저 아이디(userId)로 직접 조회
         List<UserSignupPurpose> purposes = userSignupPurposeRepository.findByUserId(userId);
 
-        // 2. 가입 목적 텍스트 추출
         List<String> interestNames = purposes.stream()
                 .map(p -> p.getPurpose().getPurposeName())
                 .toList();

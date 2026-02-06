@@ -46,6 +46,8 @@ import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.BrandDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingBrandListDto;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
+import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -67,12 +69,17 @@ public class MatchServiceImpl implements MatchService {
     private final CampaignLikeRepository campaignLikeRepository;
     private final CampaignApplyRepository campaignApplyRepository;
     private final UserRepository userRepository;
+    private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
-    
-    // ******* //
+
     // 매칭 요청 //
-    // ******* //
+    /**
+     * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
+     * - 기존 UserMatchingDetail 폐기
+     * - 새 UserMatchingDetail 생성
+     * - 브랜드/캠페인 매칭 히스토리 갱신
+     */
     @Override
     @Transactional
     public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
@@ -80,6 +87,8 @@ public class MatchServiceImpl implements MatchService {
 
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
+
+        replaceUserMatchingDetail(userId, requestDto, userType);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
 
@@ -565,6 +574,28 @@ public class MatchServiceImpl implements MatchService {
                 .campaignTotalRecruit(campaign.getQuota())
                 .campaignTotalCurrentRecruit(applyCountMap.getOrDefault(campaign.getId(), 0L).intValue())
                 .build();
+    }
+
+    /**
+     * 사용자의 마지막 매칭 상세 정보를 저장합니다 By 고경수
+     */
+    private void replaceUserMatchingDetail(Long userId, MatchRequestDto requestDto, String userType) {
+
+        // 1) 기존 활성 detail 폐기
+        userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
+                .ifPresent(detail -> {
+                    detail.deprecated();
+                    userMatchingDetailRepository.save(detail); // 명시적으로
+                });
+
+        // 2) 새 detail 생성 (requestDto → entity 매핑)
+        UserMatchingDetail newDetail = UserMatchingDetail.from(userId, requestDto);
+
+        // 3) 결과 저장(원하면)
+        newDetail.setMatchingResult(userType);
+
+        // 4) 저장
+        userMatchingDetailRepository.save(newDetail);
     }
 
     private record BrandMatchResult(
