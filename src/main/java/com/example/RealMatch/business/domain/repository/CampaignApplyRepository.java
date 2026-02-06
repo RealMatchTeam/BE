@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.RealMatch.business.domain.entity.CampaignApply;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.business.presentation.dto.response.CollaborationProjection;
 
 public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Long> {
 
@@ -23,21 +24,33 @@ public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Lo
     boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
     Optional<CampaignApply> findByCampaignIdAndUserId(Long campaignId, Long userId);
 
+
     @Query("""
-    select ca
+    select new com.example.RealMatch.business.presentation.dto.response.CollaborationProjection(
+        c.id,
+        null,
+        b.brandName,
+        b.logoUrl,
+        c.title,
+        ca.applyStatus,
+        c.startDate,
+        c.endDate,
+        com.example.RealMatch.business.domain.enums.CollaborationType.APPLIED
+    )
     from CampaignApply ca
-    join fetch ca.campaign c
-    join fetch c.brand b
+    join ca.campaign c
+    join c.brand b
     where ca.user.id = :userId
       and (:status is null or ca.applyStatus = :status)
-      and (:startDate is null or c.startDate >= :startDate)
-      and (:endDate is null or c.endDate <= :endDate)
-""")
-    List<CampaignApply> findMyApplies(
-            @Param("userId") Long userId,
-            @Param("status") ProposalStatus status,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+      and (:startDate is null or c.endDate >= :startDate)
+      and (:endDate is null or c.startDate <= :endDate)
+    """)
+    List<CollaborationProjection> findMyAppliedCollaborations(
+            Long userId,
+            ProposalStatus status,
+            LocalDate startDate,
+            LocalDate endDate
     );
+
 
 }
