@@ -156,6 +156,16 @@ public class CollaborationQueryService {
 
         List<CollaborationProjection> projections = new ArrayList<>();
 
+        if (type == null || type == CollaborationType.APPLIED) {
+            projections.addAll(
+                    campaignApplyRepository.findMyAppliedCollaborationsForSearch(
+                            userId,
+                            status,
+                            brandIds
+                    )
+            );
+        }
+
         if (type == null || type == CollaborationType.SENT) {
             List<Long> sentIds = campaignProposalRepository
                     .findSentProposalIds(userId, status, null, null);
