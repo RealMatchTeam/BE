@@ -9,7 +9,7 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 import com.example.RealMatch.business.domain.enums.CollaborationType;
-import com.example.RealMatch.business.presentation.dto.response.CollaborationResponse;
+import com.example.RealMatch.business.presentation.dto.response.CollaborationProjection;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -24,15 +24,15 @@ public class CampaignProposalRepositoryImpl
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<CollaborationResponse> findProposalCollaborations(
+    public List<CollaborationProjection> findProposalCollaborations(
             List<Long> ids,
             CollaborationType type
     ) {
         return queryFactory
                 .select(Projections.constructor(
-                        CollaborationResponse.class,
-                        campaign.id,               // Long
-                        campaignProposal.id,               // UUID
+                        CollaborationProjection.class,
+                        campaign.id,
+                        campaignProposal.id,
                         brand.brandName,
                         brand.logoUrl,
                         campaignProposal.title,

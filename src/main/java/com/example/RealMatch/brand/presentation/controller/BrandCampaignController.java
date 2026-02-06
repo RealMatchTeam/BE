@@ -1,5 +1,6 @@
 package com.example.RealMatch.brand.presentation.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +11,7 @@ import com.example.RealMatch.brand.application.service.BrandCampaignService;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandExistingCampaignResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandRecruitingCampaignResponse;
+import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,10 +57,10 @@ public class BrandCampaignController {
     @Operation(
             summary = "브랜드의 기존 캠페인 제안 목록 조회 API by 박지영",
             description = """
-                브랜드의 기존 캠페인 목록을 조회합니다.
-                
-                캠페인 제안(기존 캠페인 선택) 시 사용되는 API입니다.
-                """
+                    브랜드의 기존 캠페인 목록을 조회합니다.
+                    
+                    캠페인 제안(기존 캠페인 선택) 시 사용되는 API입니다.
+                    """
     )
     @GetMapping("/{brandId}/existing-campaigns")
     public CustomResponse<BrandExistingCampaignResponse> getExistingCampaigns(
@@ -73,21 +75,21 @@ public class BrandCampaignController {
     @Operation(
             summary = "브랜드의 진행 중인 캠페인 조회 API by 박지영",
             description = """
-                해당 브랜드의 현재 모집 중인 캠페인 목록을 조회합니다. (Day 남은 일수 포함)
-                
-                - 모집 상태가 RECRUITING 인 캠페인만 조회됩니다.
-                - 브랜드 홈 상단 '진행 중인 캠페인' 영역에 사용됩니다.
-                """
+                    해당 브랜드의 현재 모집 중인 캠페인 목록을 조회합니다. (Day 남은 일수 포함)
+                    
+                    - 모집 상태가 RECRUITING 인 캠페인만 조회됩니다.
+                    - 브랜드 홈 상단 '진행 중인 캠페인' 영역에 사용됩니다.
+                    """
     )
     @GetMapping("/{brandId}/campaigns/recruiting")
     public CustomResponse<BrandRecruitingCampaignResponse> getRecruitingCampaigns(
+            @AuthenticationPrincipal CustomUserDetails principal,
             @Parameter(description = "브랜드 ID", example = "1")
             @PathVariable Long brandId
     ) {
-        BrandRecruitingCampaignResponse response = brandCampaignService.getRecruitingCampaigns(brandId);
+        BrandRecruitingCampaignResponse response = brandCampaignService.getRecruitingCampaigns(principal.getUserId(), brandId);
         return CustomResponse.ok(response);
     }
-
 
 
 }

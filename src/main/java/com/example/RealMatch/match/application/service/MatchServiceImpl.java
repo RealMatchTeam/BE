@@ -74,6 +74,7 @@ public class MatchServiceImpl implements MatchService {
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
 
     // 매칭 요청 //
+
     /**
      * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
      * - 기존 UserMatchingDetail 폐기
@@ -313,7 +314,7 @@ public class MatchServiceImpl implements MatchService {
 
         return tags.stream().limit(3).toList();
     }
-    
+
     // **************** //
     // Redis에서 매칭 요청 //
     // **************** //
@@ -461,9 +462,10 @@ public class MatchServiceImpl implements MatchService {
                 .map(h -> h.getCampaign().getId())
                 .toList();
         Map<Long, Long> applyCountMap = getApplyCountMapForCampaignIds(pageCampaignIds);
+        Map<Long, Long> likeCountMap = getLikeCountMapForCampaignIds(pageCampaignIds);
 
         List<MatchCampaignResponseDto.CampaignDto> brands = historyPage.getContent().stream()
-                .map(h -> toCampaignCardDto(h, likedCampaignIds, applyCountMap))
+                .map(h -> toCampaignCardDto(h, likedCampaignIds, applyCountMap, likeCountMap))
                 .toList();
 
         return MatchCampaignResponseDto.builder()
@@ -493,6 +495,20 @@ public class MatchServiceImpl implements MatchService {
             return Map.of();
         }
         return campaignApplyRepository.countByCampaignIdIn(campaignIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
+    /**
+     * 지정한 캠페인 ID별 좋아요 수 조회.
+     */
+    private Map<Long, Long> getLikeCountMapForCampaignIds(List<Long> campaignIds) {
+        if (campaignIds == null || campaignIds.isEmpty()) {
+            return Map.of();
+        }
+        return campaignLikeRepository.countByCampaignIdIn(campaignIds).stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Long) row[1]
@@ -551,13 +567,19 @@ public class MatchServiceImpl implements MatchService {
     private MatchCampaignResponseDto.CampaignDto toCampaignCardDto(
             MatchCampaignHistory history,
             Set<Long> likedCampaignIds,
-            Map<Long, Long> applyCountMap
+            Map<Long, Long> applyCountMap,
+            Map<Long, Long> likeCountMap
     ) {
         Campaign campaign = history.getCampaign();
         Brand brand = campaign.getBrand();
         int dDay = campaign.getRecruitEndDate() != null
                 ? (int) ChronoUnit.DAYS.between(LocalDate.now(), campaign.getRecruitEndDate().toLocalDate())
                 : 0;
+
+        Set<Long> likedBrandIds = brandLikeRepository.findByUserId(history.getUser().getId()).stream()
+                                                     .map(like -> like.getBrand().getId())
+                                                     .collect(Collectors.toSet());
+
         boolean isRecruiting = campaign.getRecruitEndDate() == null
                 || campaign.getRecruitEndDate().isAfter(LocalDateTime.now());
         Integer matchRatio = history.getMatchingRatio() != null ? history.getMatchingRatio().intValue() : 0;
@@ -566,13 +588,16 @@ public class MatchServiceImpl implements MatchService {
                 .brandName(brand != null ? brand.getBrandName() : null)
                 .brandLogoUrl(brand != null ? brand.getLogoUrl() : null)
                 .brandMatchingRatio(matchRatio)
-                .brandIsLiked(likedCampaignIds.contains(campaign.getId()))
+                .brandIsLiked(brand != null && likedBrandIds.contains(brand.getId()))
                 .brandIsRecruiting(isRecruiting)
+                .campaignId(campaign.getId())
                 .campaignManuscriptFee(campaign.getRewardAmount() != null ? campaign.getRewardAmount().intValue() : null)
                 .campaignName(campaign.getTitle())
                 .campaignDDay(Math.max(dDay, 0))
+                .campaignIsLiked(likedCampaignIds.contains(campaign.getId()))
                 .campaignTotalRecruit(campaign.getQuota())
                 .campaignTotalCurrentRecruit(applyCountMap.getOrDefault(campaign.getId(), 0L).intValue())
+                .campaignLikeCount(likeCountMap.getOrDefault(campaign.getId(), 0L))
                 .build();
     }
 
@@ -603,12 +628,14 @@ public class MatchServiceImpl implements MatchService {
             int matchScore,
             boolean isLiked,
             boolean isRecruiting
-    ) {}
+    ) {
+    }
 
     private record CampaignMatchResult(
             CampaignTagDocument campaignDoc,
             int matchScore,
             boolean isLiked,
             int currentApplyCount
-    ) {}
+    ) {
+    }
 }
