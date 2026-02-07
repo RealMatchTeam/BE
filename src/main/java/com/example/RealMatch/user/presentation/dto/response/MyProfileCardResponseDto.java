@@ -18,10 +18,12 @@ public record MyProfileCardResponseDto(
 ) {
 
     public record UserContentCategoryInfo(
-            Long userContentCategoryId
+            String categoryName
     ) {
         public static UserContentCategoryInfo from(UserContentCategory ucc) {
-            return new UserContentCategoryInfo(ucc.getId());
+            return new UserContentCategoryInfo(
+                    ucc.getContentCategory().getCategoryName()
+            );
         }
     }
 
