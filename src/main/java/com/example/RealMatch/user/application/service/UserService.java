@@ -9,14 +9,14 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.UserContentCategory;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
-import com.example.RealMatch.user.domain.entity.UserSignupPurpose;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.AuthenticationMethodRepository;
+import com.example.RealMatch.user.domain.repository.UserContentCategoryRepository;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
-import com.example.RealMatch.user.domain.repository.UserSignupPurposeRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
@@ -38,7 +38,7 @@ public class UserService {
     private final ScrapMockDataProvider scrapMockDataProvider;
     private final AuthenticationMethodRepository authenticationMethodRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
-    private final UserSignupPurposeRepository userSignupPurposeRepository;
+    private final UserContentCategoryRepository userContentCategoryRepository;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -64,17 +64,12 @@ public class UserService {
                 .findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        List<UserSignupPurpose> purposes = userSignupPurposeRepository.findByUserId(userId);
+        List<UserContentCategory> categories = userContentCategoryRepository.findByUserId(userId);
 
-        List<String> interestNames = purposes.stream()
-                .map(p -> p.getPurpose().getPurposeName())
-                .toList();
-
-        return MyProfileCardResponseDto.from(user, detail, interestNames);
+        return MyProfileCardResponseDto.from(user, detail, categories);
     }
 
-
-        public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
+    public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
         // 유저 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));

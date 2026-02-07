@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.UserContentCategory;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 
 public record MyProfileCardResponseDto(
@@ -12,15 +13,33 @@ public record MyProfileCardResponseDto(
         String gender,
         int age,
         String snsAccount,
-        List<String> interestFields,
+        List<UserContentCategoryInfo> contentCategories,
         MyMatchingResultResponseDto matchingResult
 ) {
 
-    public static MyProfileCardResponseDto from(User user, UserMatchingDetail detail, List<String> interestFields) {
+    public record UserContentCategoryInfo(
+            Long userContentCategoryId
+    ) {
+        public static UserContentCategoryInfo from(UserContentCategory ucc) {
+            return new UserContentCategoryInfo(ucc.getId());
+        }
+    }
+
+    public static MyProfileCardResponseDto from(
+            User user,
+            UserMatchingDetail detail,
+            List<UserContentCategory> categories
+    ) {
         int age = 0;
         if (user.getBirth() != null) {
             age = LocalDate.now().getYear() - user.getBirth().getYear();
         }
+
+        List<UserContentCategoryInfo> categoryInfos =
+                categories == null ? List.of()
+                        : categories.stream()
+                        .map(UserContentCategoryInfo::from)
+                        .toList();
 
         return new MyProfileCardResponseDto(
                 user.getNickname(),
@@ -28,7 +47,7 @@ public record MyProfileCardResponseDto(
                 user.getGender() != null ? user.getGender().name() : "",
                 age,
                 detail != null ? detail.getSnsUrl() : "",
-                interestFields,
+                categoryInfos,
                 detail != null ? MyMatchingResultResponseDto.from(detail) : null
         );
     }
