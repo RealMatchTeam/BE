@@ -11,10 +11,10 @@ import com.example.RealMatch.tag.domain.entity.UserTag;
 public interface UserTagRepository extends JpaRepository<UserTag, Long> {
 
     @Query("""
-        select ut
-        from UserTag ut
-        join fetch ut.tag t
-        where ut.user.id = :userId
+    select ut from UserTag ut
+    join fetch ut.tag t
+    where ut.user.id = :userId
+    and ut.isDeprecated = false
     """)
     List<UserTag> findAllByUserIdWithTag(@Param("userId") Long userId);
 

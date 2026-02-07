@@ -8,31 +8,31 @@ public record MyFeatureResponseDto(
         ContentsType contentsType
 ) {
     public record BeautyType(
-            List<String> skinType,
-            String skinBrightness,
-            List<String> makeupStyle,
-            List<String> interestCategories,
-            List<String> interestFunctions
+            List<Integer> skinType,
+            List<Integer> skinBrightness,
+            List<Integer> makeupStyle,
+            List<Integer> interestCategories,
+            List<Integer> interestFunctions
     ) {}
 
     public record FashionType(
-            String height,
-            String bodyShape,
-            String topSize,
-            String bottomSize,
-            List<String> interestFields,
-            List<String> interestStyles,
-            List<String> interestBrands
+            List<Integer> height,
+            List<Integer> bodyShape,
+            List<Integer> topSize,
+            List<Integer> bottomSize,
+            List<Integer> interestFields,
+            List<Integer> interestStyles,
+            List<Integer> interestBrands
     ) {}
 
     public record ContentsType(
-            List<String> viewerGender,
-            List<String> viewerAge,
-            String avgVideoLength,
-            String avgViews,
-            List<String> contentFormats,
-            List<String> contentTones,
-            List<String> desiredInvolvement,
-            List<String> desiredUsageScope
+            List<Integer> viewerGender,
+            List<Integer> viewerAge,
+            List<Integer> avgVideoLength,
+            List<Integer> avgViews,
+            List<Integer> contentFormats,
+            List<Integer> contentTones,
+            List<Integer> desiredInvolvement,
+            List<Integer> desiredUsageScope
     ) {}
 }

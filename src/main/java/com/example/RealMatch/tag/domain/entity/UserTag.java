@@ -3,6 +3,7 @@ package com.example.RealMatch.tag.domain.entity;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -40,12 +41,17 @@ public class UserTag extends BaseEntity {
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
 
+    @Column(name = "is_deprecated", nullable = false)
+    private boolean isDeprecated = false;
+
     @Builder
     public UserTag(
             User user,
-            Tag tag
+            Tag tag,
+            Boolean isDeprecated
     ) {
         this.user = user;
         this.tag = tag;
+        this.isDeprecated = (isDeprecated != null) ? isDeprecated : false;
     }
 }
