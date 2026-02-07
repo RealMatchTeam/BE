@@ -7,7 +7,14 @@ import com.example.RealMatch.business.presentation.dto.response.CollaborationPro
 
 public interface CampaignProposalRepositoryCustom {
     List<CollaborationProjection> findProposalCollaborations(
-            List<Long> ids,
+            List<Long> proposalIds,
             CollaborationType type
     );
+
+    List<CollaborationProjection> searchProposalCollaborations(
+            List<Long> proposalIds,
+            CollaborationType type,
+            List<Long> brandIds
+    );
+
 }
