@@ -2,7 +2,6 @@ package com.example.RealMatch.user.application.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,38 +48,32 @@ public class UserFeatureService {
 
 
         MyFeatureResponseDto.BeautyType beautyType = new MyFeatureResponseDto.BeautyType(
-                tagIds(userTags, "뷰티", "피부 타입"),
+                tagIds(userTags, "뷰티", "피부타입"),
                 tagIds(userTags, "뷰티", "피부 밝기"),
                 tagIds(userTags, "뷰티", "메이크업 스타일"),
-                tagIds(userTags, "뷰티", "관심 스타일"),
+                tagIds(userTags, "뷰티", "관심 카테고리"),
                 tagIds(userTags, "뷰티", "관심 기능")
         );
 
         MyFeatureResponseDto.FashionType fashionType = new MyFeatureResponseDto.FashionType(
                 tagIds(userTags, "패션", "키"),
-                tagIds(userTags, "패션", "체형"),
+                tagIds(userTags, "패션", "체형 실루엣"),
                 tagIds(userTags, "패션", "상의 사이즈"),
                 tagIds(userTags, "패션", "하의 사이즈"),
-                tagIds(userTags, "패션", "관심 아이템/분야"),
+                tagIds(userTags, "패션", "관심 분야"),
                 tagIds(userTags, "패션", "관심 스타일"),
-                tagIds(userTags, "패션", "관심 브랜드 종류")
-        );
-
-        // ✅ 콘텐츠 형식 = 콘텐츠 유형 + 콘텐츠 종류
-        List<Integer> contentFormats = concat(
-                tagIds(userTags, "콘텐츠", "콘텐츠 유형"),
-                tagIds(userTags, "콘텐츠", "콘텐츠 종류")
+                tagIds(userTags, "패션", "관심 브랜드")
         );
 
         MyFeatureResponseDto.ContentsType contentsType = new MyFeatureResponseDto.ContentsType(
-                tagIds(userTags, "콘텐츠", "시청자 성별"),
-                tagIds(userTags, "콘텐츠", "시청자 나이대"),
+                tagIds(userTags, "콘텐츠", "주 시청자 성별"),
+                tagIds(userTags, "콘텐츠", "주 시청자 나이대"),
                 tagIds(userTags, "콘텐츠", "평균 영상 길이"),
-                tagIds(userTags, "콘텐츠", "영상 조회수"),
-                contentFormats,
+                tagIds(userTags, "콘텐츠", "평균 조회수"),
+                tagIds(userTags, "콘텐츠", "콘텐츠 형식"),
                 tagIds(userTags, "콘텐츠", "콘텐츠 톤"),
-                tagIds(userTags, "콘텐츠", "콘텐츠 희망 관여도"),
-                tagIds(userTags, "콘텐츠", "콘텐츠 희망 활용 범위")
+                tagIds(userTags, "콘텐츠", "희망 관여도"),
+                tagIds(userTags, "콘텐츠", "희망 활용 범위")
         );
 
         return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
@@ -121,26 +114,9 @@ public class UserFeatureService {
                 .map(UserTag::getTag)
                 .filter(t -> t != null)
                 .filter(t -> !t.isDeleted())
-                // 🔥 현재 엔티티 매핑이 뒤집혀 있으니 비교도 뒤집기
-                .filter(t -> tagType.equals(t.getTagCategory()))   // 원래는 getTagType 이어야 함
-                .filter(t -> tagCategory.equals(t.getTagType()))   // 원래는 getTagCategory 이어야 함
+                .filter(t -> tagType.equals(t.getTagType()))   // 원래는 getTagType 이어야 함
+                .filter(t -> tagCategory.equals(t.getTagCategory()))   // 원래는 getTagCategory 이어야 함
                 .map(t -> t.getId().intValue())
-                .toList();
-    }
-
-    private static List<Integer> concat(List<Integer> a, List<Integer> b) {
-        if ((a == null || a.isEmpty()) && (b == null || b.isEmpty())) {
-            return List.of();
-        }
-        if (a == null || a.isEmpty()) {
-            return b;
-        }
-        if (b == null || b.isEmpty()) {
-            return a;
-        }
-
-        return Stream.concat(a.stream(), b.stream())
-                .distinct()
                 .toList();
     }
 
@@ -171,7 +147,7 @@ public class UserFeatureService {
         List<Integer> ageTags = new ArrayList<>();
         List<Integer> videoLengthTags = new ArrayList<>();
         List<Integer> videoViewsTags = new ArrayList<>();
-        List<Integer> typeTags = new ArrayList<>(); // ✅ 콘텐츠 형식: (콘텐츠 유형 + 콘텐츠 종류)
+        List<Integer> typeTags = new ArrayList<>();
         List<Integer> toneTags = new ArrayList<>();
         List<Integer> preferredInvolvementTags = new ArrayList<>();
         List<Integer> preferredCoverageTags = new ArrayList<>();
@@ -189,10 +165,10 @@ public class UserFeatureService {
             // ---- Beauty ----
             if ("뷰티".equals(type)) {
                 switch (category) {
-                    case "피부 타입" -> skinTypeTag = tagId;
+                    case "피부타입" -> skinTypeTag = tagId;
                     case "피부 밝기" -> skinBrightnessTag = tagId;
                     case "메이크업 스타일" -> makeupStyleTag = tagId;
-                    case "관심 스타일" -> beautyInterestStyleTags.add(tagId);
+                    case "관심 카테고리" -> beautyInterestStyleTags.add(tagId);
                     case "관심 기능" -> beautyPreferredFunctionTags.add(tagId);
                     default -> {
                     }
@@ -204,12 +180,12 @@ public class UserFeatureService {
             if ("패션".equals(type)) {
                 switch (category) {
                     case "키" -> heightTag = tagId;
-                    case "체형" -> weightTypeTag = tagId;
+                    case "체형 실루엣" -> weightTypeTag = tagId;
                     case "상의 사이즈" -> topSizeTag = tagId;
                     case "하의 사이즈" -> bottomSizeTag = tagId;
-                    case "관심 아이템/분야" -> fashionPreferredItemTags.add(tagId);
+                    case "관심 분야" -> fashionPreferredItemTags.add(tagId);
                     case "관심 스타일" -> fashionInterestStyleTags.add(tagId);
-                    case "관심 브랜드 종류" -> fashionPreferredBrandTypeTags.add(tagId);
+                    case "관심 브랜드" -> fashionPreferredBrandTypeTags.add(tagId);
                     default -> {
                     }
                 }
@@ -219,17 +195,14 @@ public class UserFeatureService {
             // ---- Content ----
             if ("콘텐츠".equals(type)) {
                 switch (category) {
-                    case "시청자 성별" -> genderTags.add(tagId);
-                    case "시청자 나이대" -> ageTags.add(tagId);
+                    case "주 시청자 성별" -> genderTags.add(tagId);
+                    case "주 시청자 나이대" -> ageTags.add(tagId);
                     case "평균 영상 길이" -> videoLengthTags.add(tagId);
-                    case "영상 조회수" -> videoViewsTags.add(tagId);
-
-                    // ✅ 형식은 "콘텐츠 유형" + "콘텐츠 종류"를 둘 다 typeTags에 넣음
-                    case "콘텐츠 유형", "콘텐츠 종류" -> typeTags.add(tagId);
-
+                    case "평균 조회수" -> videoViewsTags.add(tagId);
+                    case "콘텐츠 형식" -> typeTags.add(tagId);
                     case "콘텐츠 톤" -> toneTags.add(tagId);
-                    case "콘텐츠 희망 관여도" -> preferredInvolvementTags.add(tagId);
-                    case "콘텐츠 희망 활용 범위" -> preferredCoverageTags.add(tagId);
+                    case "희망 관여도" -> preferredInvolvementTags.add(tagId);
+                    case "희망 활용 범위" -> preferredCoverageTags.add(tagId);
                     default -> {
                     }
                 }
