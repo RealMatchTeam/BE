@@ -2,6 +2,8 @@ package com.example.RealMatch.user.application.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,9 @@ import com.example.RealMatch.match.application.service.MatchService;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.tag.domain.entity.Tag;
 import com.example.RealMatch.tag.domain.entity.UserTag;
+import com.example.RealMatch.tag.domain.enums.ContentTagType;
+import com.example.RealMatch.tag.domain.enums.TagCategory;
+import com.example.RealMatch.tag.domain.enums.TagType;
 import com.example.RealMatch.tag.domain.repository.UserTagRepository;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
@@ -30,59 +35,57 @@ public class UserFeatureService {
     private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final MatchService matchService;
 
+    /**
+     *  내 특성 조회
+     * - UserTag에서 tagType/tagCategory 기반으로 그룹핑해서 반환
+     * - "키"는 현재 DB에서 tag_category="키" 로 태그화되어 있으므로 그대로 태그로 조회
+     */
     public MyFeatureResponseDto getMyFeatures(Long userId) {
-
         List<UserTag> userTags = userTagRepository.findAllByUserIdWithTag(userId);
         log.info("userId={}, userTags.size={}", userId, userTags.size());
 
-        userTags.stream()
-                .limit(30)
-                .forEach(ut -> log.info("utId={}, dep={}, tagId={}, type={}, category={}, deleted={}",
-                        ut.getId(),
-                        ut.isDeprecated(),
-                        ut.getTag() != null ? ut.getTag().getId() : null,
-                        ut.getTag() != null ? ut.getTag().getTagType() : null,
-                        ut.getTag() != null ? ut.getTag().getTagCategory() : null,
-                        ut.getTag() != null ? ut.getTag().isDeleted() : null
-                ));
+        // (tagType|tagCategory) -> tagId 리스트
+        Map<String, List<Integer>> grouped = groupTagIds(userTags);
 
-
+        // Beauty
         MyFeatureResponseDto.BeautyType beautyType = new MyFeatureResponseDto.BeautyType(
-                tagIds(userTags, "뷰티", "피부타입"),
-                tagIds(userTags, "뷰티", "피부 밝기"),
-                tagIds(userTags, "뷰티", "메이크업 스타일"),
-                tagIds(userTags, "뷰티", "관심 카테고리"),
-                tagIds(userTags, "뷰티", "관심 기능")
+                get(grouped, TagType.BEAUTY.getDescription(), TagCategory.BEAUTY_SKIN_TYPE.getDescription()),
+                get(grouped, TagType.BEAUTY.getDescription(), TagCategory.BEAUTY_SKIN_BRIGHTNESS.getDescription()),
+                get(grouped, TagType.BEAUTY.getDescription(), TagCategory.BEAUTY_MAKEUP_STYLE.getDescription()),
+                get(grouped, TagType.BEAUTY.getDescription(), TagCategory.BEAUTY_INTEREST_STYLE.getDescription()),
+                get(grouped, TagType.BEAUTY.getDescription(), TagCategory.BEAUTY_INTEREST_FUNCTION.getDescription())
         );
 
+        // Fashion
         MyFeatureResponseDto.FashionType fashionType = new MyFeatureResponseDto.FashionType(
-                tagIds(userTags, "패션", "키"),
-                tagIds(userTags, "패션", "체형 실루엣"),
-                tagIds(userTags, "패션", "상의 사이즈"),
-                tagIds(userTags, "패션", "하의 사이즈"),
-                tagIds(userTags, "패션", "관심 분야"),
-                tagIds(userTags, "패션", "관심 스타일"),
-                tagIds(userTags, "패션", "관심 브랜드")
+                get(grouped, TagType.FASHION.getDescription(), TagCategory.FASHION_BODY_HEIGHT.getDescription()),
+                get(grouped, TagType.FASHION.getDescription(), TagCategory.FASHION_BODY_WEIGHT.getDescription()),
+                get(grouped, TagType.FASHION.getDescription(), TagCategory.FASHION_BODY_TOP.getDescription()),
+                get(grouped, TagType.FASHION.getDescription(), TagCategory.FASHION_BODY_BOTTOM.getDescription()),
+                get(grouped, TagType.FASHION.getDescription(), TagCategory.FASHION_INTEREST_ITEM.getDescription()),
+                get(grouped, TagType.FASHION.getDescription(), TagCategory.FASHION_INTEREST_STYLE.getDescription()),
+                get(grouped, TagType.FASHION.getDescription(), TagCategory.FASHION_INTEREST_TYPE.getDescription())
         );
 
+        // Content
         MyFeatureResponseDto.ContentsType contentsType = new MyFeatureResponseDto.ContentsType(
-                tagIds(userTags, "콘텐츠", "주 시청자 성별"),
-                tagIds(userTags, "콘텐츠", "주 시청자 나이대"),
-                tagIds(userTags, "콘텐츠", "평균 영상 길이"),
-                tagIds(userTags, "콘텐츠", "평균 조회수"),
-                tagIds(userTags, "콘텐츠", "콘텐츠 형식"),
-                tagIds(userTags, "콘텐츠", "콘텐츠 톤"),
-                tagIds(userTags, "콘텐츠", "희망 관여도"),
-                tagIds(userTags, "콘텐츠", "희망 활용 범위")
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.VIEWER_GENDER.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.VIEWER_AGE.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.AVG_VIDEO_LENGTH.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.AVG_VIDEO_VIEWS.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.FORMAT.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.TONE.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.INVOLVEMENT.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.USAGE_RANGE.getKorName())
         );
 
         return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
     }
 
     /**
-     * 프론트가 MatchRequestDto 형태(정수 id 태그)로 보내는 PATCH 요청
-     * - patch(부분)만 보내도 서버에서 기존값과 merge해서 완성본 만들고
-     * - matchService.match() 호출 (UserTag 업데이트 + 매칭 재실행)
+     *  내 특성 수정 (PATCH)
+     * - 현재 UserTag들을 MatchRequestDto로 복원
+     * - patchRequest와 머지 후 match 재실행
      */
     @Transactional
     public void updateMyFeatures(Long userId, MatchRequestDto patchRequest) {
@@ -90,42 +93,42 @@ public class UserFeatureService {
             throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
         }
 
-        // 1) 기존 UserTag 조회
         List<UserTag> existingUserTags = userTagRepository.findAllByUserIdWithTag(userId);
-
-        // 2) 기존 UserTag -> MatchRequestDto 복원
         MatchRequestDto currentRequest = toMatchRequestDtoFromUserTags(existingUserTags, userId);
-
-        // 3) patch merge (보낸 값만 덮고 나머지는 유지)
         MatchRequestDto merged = mergeMatchRequest(currentRequest, patchRequest);
 
-        // 4) 매칭 재실행 (MatchService 내부에서 UserTag 업데이트도 같이 해야 함)
         matchService.match(userId, merged);
-
         log.info("특성 PATCH 후 매칭 재실행 완료: userId={}", userId);
     }
 
     // =====================================================
-    // 🔧 helpers (UserTag -> DTO)
+    // 그룹핑 헬퍼 (TagServiceImpl 스타일)
     // =====================================================
 
-    private static List<Integer> tagIds(List<UserTag> userTags, String tagType, String tagCategory) {
+    private static Map<String, List<Integer>> groupTagIds(List<UserTag> userTags) {
+        if (userTags == null || userTags.isEmpty()) {
+            return Map.of();
+        }
+
         return userTags.stream()
                 .map(UserTag::getTag)
-                .filter(t -> t != null)
-                .filter(t -> !t.isDeleted())
-                .filter(t -> tagType.equals(t.getTagType()))   // 원래는 getTagType 이어야 함
-                .filter(t -> tagCategory.equals(t.getTagCategory()))   // 원래는 getTagCategory 이어야 함
-                .map(t -> t.getId().intValue())
-                .toList();
+                .filter(t -> t != null && !t.isDeleted())
+                .filter(t -> t.getTagType() != null && t.getTagCategory() != null)
+                .collect(Collectors.groupingBy(
+                        t -> key(t.getTagType(), t.getTagCategory()),
+                        Collectors.mapping(t -> t.getId().intValue(), Collectors.toList())
+                ));
     }
 
-    // =====================================================
-    // 🔧 helpers (UserTag -> MatchRequestDto 복원)
-    // =====================================================
+    private static String key(String tagType, String tagCategory) {
+        return tagType + "|" + tagCategory;
+    }
+
+    private static List<Integer> get(Map<String, List<Integer>> grouped, String type, String category) {
+        return grouped.getOrDefault(key(type, category), List.of());
+    }
 
     private MatchRequestDto toMatchRequestDtoFromUserTags(List<UserTag> userTags, Long userId) {
-
         // ===== Beauty =====
         List<Integer> beautyInterestStyleTags = new ArrayList<>();
         List<Integer> beautyPreferredFunctionTags = new ArrayList<>();
@@ -152,60 +155,74 @@ public class UserFeatureService {
         List<Integer> preferredInvolvementTags = new ArrayList<>();
         List<Integer> preferredCoverageTags = new ArrayList<>();
 
-        for (UserTag ut : userTags) {
-            Tag tag = ut.getTag();
-            if (tag == null || tag.isDeleted() || tag.getTagType() == null || tag.getTagCategory() == null) {
-                continue;
-            }
+        if (userTags != null) {
+            for (UserTag ut : userTags) {
+                Tag tag = ut.getTag();
+                if (tag == null || tag.isDeleted() || tag.getTagType() == null || tag.getTagCategory() == null) {
+                    continue;
+                }
 
-            String type = tag.getTagType();
-            String category = tag.getTagCategory();
-            Integer tagId = tag.getId().intValue();
+                String type = tag.getTagType();
+                String category = tag.getTagCategory();
+                Integer tagId = tag.getId().intValue();
 
-            // ---- Beauty ----
-            if ("뷰티".equals(type)) {
-                switch (category) {
-                    case "피부타입" -> skinTypeTag = tagId;
-                    case "피부 밝기" -> skinBrightnessTag = tagId;
-                    case "메이크업 스타일" -> makeupStyleTag = tagId;
-                    case "관심 카테고리" -> beautyInterestStyleTags.add(tagId);
-                    case "관심 기능" -> beautyPreferredFunctionTags.add(tagId);
-                    default -> {
+                // ===== Beauty =====
+                if (TagType.BEAUTY.getDescription().equals(type)) {
+                    if (TagCategory.BEAUTY_SKIN_TYPE.getDescription().equals(category)) {
+                        skinTypeTag = tagId;
+                    } else if (TagCategory.BEAUTY_SKIN_BRIGHTNESS.getDescription().equals(category)) {
+                        skinBrightnessTag = tagId;
+                    } else if (TagCategory.BEAUTY_MAKEUP_STYLE.getDescription().equals(category)) {
+                        makeupStyleTag = tagId;
+                    } else if (TagCategory.BEAUTY_INTEREST_STYLE.getDescription().equals(category)) {
+                        beautyInterestStyleTags.add(tagId);
+                    } else if (TagCategory.BEAUTY_INTEREST_FUNCTION.getDescription().equals(category)) {
+                        beautyPreferredFunctionTags.add(tagId);
+                    }
+                    continue;
+                }
+
+                // ===== Fashion =====
+                if (TagType.FASHION.getDescription().equals(type)) {
+                    if (TagCategory.FASHION_BODY_HEIGHT.getDescription().equals(category)) {
+                        heightTag = tagId;
+                    } else if (TagCategory.FASHION_BODY_WEIGHT.getDescription().equals(category)) {
+                        weightTypeTag = tagId;
+                    } else if (TagCategory.FASHION_BODY_TOP.getDescription().equals(category)) {
+                        topSizeTag = tagId;
+                    } else if (TagCategory.FASHION_BODY_BOTTOM.getDescription().equals(category)) {
+                        bottomSizeTag = tagId;
+                    } else if (TagCategory.FASHION_INTEREST_ITEM.getDescription().equals(category)) {
+                        fashionPreferredItemTags.add(tagId);
+                    } else if (TagCategory.FASHION_INTEREST_STYLE.getDescription().equals(category)) {
+                        fashionInterestStyleTags.add(tagId);
+                    } else if (TagCategory.FASHION_INTEREST_TYPE.getDescription().equals(category)) {
+                        fashionPreferredBrandTypeTags.add(tagId);
+                    }
+                    continue;
+                }
+
+                // ===== Content =====
+                if (TagType.CONTENT.getDescription().equals(type)) {
+                    if (ContentTagType.VIEWER_GENDER.getKorName().equals(category)) {
+                        genderTags.add(tagId);
+                    } else if (ContentTagType.VIEWER_AGE.getKorName().equals(category)) {
+                        ageTags.add(tagId);
+                    } else if (ContentTagType.AVG_VIDEO_LENGTH.getKorName().equals(category)) {
+                        videoLengthTags.add(tagId);
+                    } else if (ContentTagType.AVG_VIDEO_VIEWS.getKorName().equals(category)) {
+                        videoViewsTags.add(tagId);
+                    } else if (ContentTagType.FORMAT.getKorName().equals(category)) {
+                        typeTags.add(tagId);
+                    } else if (ContentTagType.TONE.getKorName().equals(category)) {
+                        toneTags.add(tagId);
+                    } else if (ContentTagType.INVOLVEMENT.getKorName().equals(category)) {
+                        preferredInvolvementTags.add(tagId);
+                    } else if (ContentTagType.USAGE_RANGE.getKorName().equals(category)) {
+                        preferredCoverageTags.add(tagId);
                     }
                 }
-                continue;
-            }
 
-            // ---- Fashion ----
-            if ("패션".equals(type)) {
-                switch (category) {
-                    case "키" -> heightTag = tagId;
-                    case "체형 실루엣" -> weightTypeTag = tagId;
-                    case "상의 사이즈" -> topSizeTag = tagId;
-                    case "하의 사이즈" -> bottomSizeTag = tagId;
-                    case "관심 분야" -> fashionPreferredItemTags.add(tagId);
-                    case "관심 스타일" -> fashionInterestStyleTags.add(tagId);
-                    case "관심 브랜드" -> fashionPreferredBrandTypeTags.add(tagId);
-                    default -> {
-                    }
-                }
-                continue;
-            }
-
-            // ---- Content ----
-            if ("콘텐츠".equals(type)) {
-                switch (category) {
-                    case "주 시청자 성별" -> genderTags.add(tagId);
-                    case "주 시청자 나이대" -> ageTags.add(tagId);
-                    case "평균 영상 길이" -> videoLengthTags.add(tagId);
-                    case "평균 조회수" -> videoViewsTags.add(tagId);
-                    case "콘텐츠 형식" -> typeTags.add(tagId);
-                    case "콘텐츠 톤" -> toneTags.add(tagId);
-                    case "희망 관여도" -> preferredInvolvementTags.add(tagId);
-                    case "희망 활용 범위" -> preferredCoverageTags.add(tagId);
-                    default -> {
-                    }
-                }
             }
         }
 
@@ -227,44 +244,36 @@ public class UserFeatureService {
                 .bottomSizeTag(bottomSizeTag)
                 .build();
 
-        // snsUrl은 UserMatchingDetail에서 가져오는 정책 유지
-        UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
-                .orElse(null);
+        UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId).orElse(null);
         String snsUrl = (detail != null) ? detail.getSnsUrl() : null;
-
-        MatchRequestDto.MainAudienceDto mainAudience = MatchRequestDto.MainAudienceDto.builder()
-                .genderTags(genderTags.isEmpty() ? null : genderTags)
-                .ageTags(ageTags.isEmpty() ? null : ageTags)
-                .build();
-
-        MatchRequestDto.AverageAudienceDto averageAudience = MatchRequestDto.AverageAudienceDto.builder()
-                .videoLengthTags(videoLengthTags.isEmpty() ? null : videoLengthTags)
-                .videoViewsTags(videoViewsTags.isEmpty() ? null : videoViewsTags)
-                .build();
 
         MatchRequestDto.SnsDto sns = MatchRequestDto.SnsDto.builder()
                 .url(snsUrl)
-                .mainAudience(mainAudience)
-                .averageAudience(averageAudience)
-                .build();
-
-        MatchRequestDto.ContentDto content = MatchRequestDto.ContentDto.builder()
-                .sns(sns)
-                .typeTags(typeTags.isEmpty() ? null : typeTags)
-                .toneTags(toneTags.isEmpty() ? null : toneTags)
-                .prefferedInvolvementTags(preferredInvolvementTags.isEmpty() ? null : preferredInvolvementTags)
-                .prefferedCoverageTags(preferredCoverageTags.isEmpty() ? null : preferredCoverageTags)
+                .mainAudience(MatchRequestDto.MainAudienceDto.builder()
+                        .genderTags(genderTags.isEmpty() ? null : genderTags)
+                        .ageTags(ageTags.isEmpty() ? null : ageTags)
+                        .build())
+                .averageAudience(MatchRequestDto.AverageAudienceDto.builder()
+                        .videoLengthTags(videoLengthTags.isEmpty() ? null : videoLengthTags)
+                        .videoViewsTags(videoViewsTags.isEmpty() ? null : videoViewsTags)
+                        .build())
                 .build();
 
         return MatchRequestDto.builder()
                 .beauty(beauty)
                 .fashion(fashion)
-                .content(content)
+                .content(MatchRequestDto.ContentDto.builder()
+                        .sns(sns)
+                        .typeTags(typeTags.isEmpty() ? null : typeTags)
+                        .toneTags(toneTags.isEmpty() ? null : toneTags)
+                        .prefferedInvolvementTags(preferredInvolvementTags.isEmpty() ? null : preferredInvolvementTags)
+                        .prefferedCoverageTags(preferredCoverageTags.isEmpty() ? null : preferredCoverageTags)
+                        .build())
                 .build();
     }
 
     // =====================================================
-    // 🔧 helpers (PATCH merge)
+    //  merge 메소드들
     // =====================================================
 
     private MatchRequestDto mergeMatchRequest(MatchRequestDto current, MatchRequestDto patch) {
@@ -275,14 +284,10 @@ public class UserFeatureService {
             return current;
         }
 
-        MatchRequestDto.BeautyDto mergedBeauty = mergeBeauty(current.getBeauty(), patch.getBeauty());
-        MatchRequestDto.FashionDto mergedFashion = mergeFashion(current.getFashion(), patch.getFashion());
-        MatchRequestDto.ContentDto mergedContent = mergeContent(current.getContent(), patch.getContent());
-
         return MatchRequestDto.builder()
-                .beauty(mergedBeauty)
-                .fashion(mergedFashion)
-                .content(mergedContent)
+                .beauty(mergeBeauty(current.getBeauty(), patch.getBeauty()))
+                .fashion(mergeFashion(current.getFashion(), patch.getFashion()))
+                .content(mergeContent(current.getContent(), patch.getContent()))
                 .build();
     }
 
@@ -330,18 +335,12 @@ public class UserFeatureService {
             return cur;
         }
 
-        MatchRequestDto.SnsDto mergedSns = mergeSns(cur.getSns(), p.getSns());
-
         return MatchRequestDto.ContentDto.builder()
-                .sns(mergedSns)
+                .sns(mergeSns(cur.getSns(), p.getSns()))
                 .typeTags(p.getTypeTags() != null ? p.getTypeTags() : cur.getTypeTags())
                 .toneTags(p.getToneTags() != null ? p.getToneTags() : cur.getToneTags())
-                .prefferedInvolvementTags(p.getPrefferedInvolvementTags() != null
-                        ? p.getPrefferedInvolvementTags()
-                        : cur.getPrefferedInvolvementTags())
-                .prefferedCoverageTags(p.getPrefferedCoverageTags() != null
-                        ? p.getPrefferedCoverageTags()
-                        : cur.getPrefferedCoverageTags())
+                .prefferedInvolvementTags(p.getPrefferedInvolvementTags() != null ? p.getPrefferedInvolvementTags() : cur.getPrefferedInvolvementTags())
+                .prefferedCoverageTags(p.getPrefferedCoverageTags() != null ? p.getPrefferedCoverageTags() : cur.getPrefferedCoverageTags())
                 .build();
     }
 
@@ -353,18 +352,17 @@ public class UserFeatureService {
             return cur;
         }
 
-        MatchRequestDto.MainAudienceDto main = mergeMainAudience(cur.getMainAudience(), p.getMainAudience());
-        MatchRequestDto.AverageAudienceDto avg = mergeAverageAudience(cur.getAverageAudience(), p.getAverageAudience());
-
         return MatchRequestDto.SnsDto.builder()
                 .url(p.getUrl() != null ? p.getUrl() : cur.getUrl())
-                .mainAudience(main)
-                .averageAudience(avg)
+                .mainAudience(mergeMainAudience(cur.getMainAudience(), p.getMainAudience()))
+                .averageAudience(mergeAverageAudience(cur.getAverageAudience(), p.getAverageAudience()))
                 .build();
     }
 
-    private MatchRequestDto.MainAudienceDto mergeMainAudience(MatchRequestDto.MainAudienceDto cur,
-                                                              MatchRequestDto.MainAudienceDto p) {
+    private MatchRequestDto.MainAudienceDto mergeMainAudience(
+            MatchRequestDto.MainAudienceDto cur,
+            MatchRequestDto.MainAudienceDto p
+    ) {
         if (cur == null) {
             return p;
         }
@@ -378,8 +376,10 @@ public class UserFeatureService {
                 .build();
     }
 
-    private MatchRequestDto.AverageAudienceDto mergeAverageAudience(MatchRequestDto.AverageAudienceDto cur,
-                                                                    MatchRequestDto.AverageAudienceDto p) {
+    private MatchRequestDto.AverageAudienceDto mergeAverageAudience(
+            MatchRequestDto.AverageAudienceDto cur,
+            MatchRequestDto.AverageAudienceDto p
+    ) {
         if (cur == null) {
             return p;
         }
