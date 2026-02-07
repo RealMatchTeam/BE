@@ -45,6 +45,10 @@ import com.example.RealMatch.match.presentation.dto.response.MatchCampaignRespon
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.BrandDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingBrandListDto;
+import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.entity.UserTag;
+import com.example.RealMatch.tag.domain.repository.TagRepository;
+import com.example.RealMatch.tag.domain.repository.UserTagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
@@ -72,24 +76,28 @@ public class MatchServiceImpl implements MatchService {
     private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
+    private final UserTagRepository userTagRepository;
+    private final TagRepository tagRepository;
 
     // 매칭 요청 //
 
     /**
      * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
      * - 기존 UserMatchingDetail 폐기
-     * - 새 UserMatchingDetail 생성
+     * - 새 UserMatchingDetail 생성 (creatorType + snsUrl만)
+     * - UserTag 전량 교체 저장 (나머지 정보 전부 user_tag로)
      * - 브랜드/캠페인 매칭 히스토리 갱신
      */
     @Override
     @Transactional
     public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
+
         UserTagDocument userDoc = convertToUserTagDocument(userId, requestDto);
 
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
 
-        replaceUserMatchingDetail(userId, requestDto, userType);
+        replaceUserMatchingDetailAndTags(userId, requestDto, userType);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
 
@@ -122,6 +130,53 @@ public class MatchServiceImpl implements MatchService {
                 .typeTag(typeTag)
                 .highMatchingBrandList(brandListDto)
                 .build();
+    }
+
+    /**
+     *  매칭검사 결과 저장 (트랜잭션 1개로 원자 처리)
+     * - UserMatchingDetail(유저매칭결과): creatorType + snsUrl만 저장
+     * - UserTag(유저태그): 그 외 태그 전부 저장
+     */
+    private void replaceUserMatchingDetailAndTags(Long userId, MatchRequestDto dto, String creatorType) {
+
+        // A. 기존 Detail 폐기 및 새 Detail 생성 (creatorType + snsUrl만)
+        userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
+                .ifPresent(UserMatchingDetail::deprecated);
+
+        String snsUrl = (dto.getContent() != null && dto.getContent().getSns() != null)
+                ? dto.getContent().getSns().getUrl()
+                : null;
+
+        UserMatchingDetail newDetail = UserMatchingDetail.builder()
+                .userId(userId)
+                .snsUrl(snsUrl)
+                .build();
+
+        // ✅ 프로젝트 엔티티 메서드명에 맞춰 사용 (현재 너 코드 기준: setMatchingResult)
+        newDetail.setMatchingResult(creatorType);
+
+        userMatchingDetailRepository.save(newDetail);
+
+        // B. 기존 태그 삭제 및 새 태그 저장 (나머지 정보 전부 user_tag로)
+        userTagRepository.deleteByUserId(userId);
+
+        Set<Integer> tagIds = collectAllTagIds(dto);
+        if (tagIds.isEmpty()) {
+            return;
+        }
+
+        User userRef = userRepository.getReferenceById(userId); // DB조회 없이 프록시만 (성능)
+        List<Tag> tags = tagRepository.findAllById(tagIds.stream().map(Long::valueOf).toList());
+
+        List<UserTag> userTags = tags.stream()
+                .map(tag -> UserTag.builder()
+                        .user(userRef)
+                        .tag(tag)
+                        .isDeprecated(false)
+                        .build())
+                .toList();
+
+        userTagRepository.saveAll(userTags);
     }
 
     private void saveMatchHistory(Long userId, List<BrandMatchResult> brandResults, List<CampaignMatchResult> campaignResults) {
@@ -375,7 +430,6 @@ public class MatchServiceImpl implements MatchService {
                 .toList();
     }
 
-
     private Map<Long, Long> getBrandLikeCountMap() {
         return brandLikeRepository.findAll().stream()
                 .collect(Collectors.groupingBy(
@@ -577,12 +631,13 @@ public class MatchServiceImpl implements MatchService {
                 : 0;
 
         Set<Long> likedBrandIds = brandLikeRepository.findByUserId(history.getUser().getId()).stream()
-                                                     .map(like -> like.getBrand().getId())
-                                                     .collect(Collectors.toSet());
+                .map(like -> like.getBrand().getId())
+                .collect(Collectors.toSet());
 
         boolean isRecruiting = campaign.getRecruitEndDate() == null
                 || campaign.getRecruitEndDate().isAfter(LocalDateTime.now());
         Integer matchRatio = history.getMatchingRatio() != null ? history.getMatchingRatio().intValue() : 0;
+
         return MatchCampaignResponseDto.CampaignDto.builder()
                 .brandId(brand != null ? brand.getId() : null)
                 .brandName(brand != null ? brand.getBrandName() : null)
@@ -601,28 +656,6 @@ public class MatchServiceImpl implements MatchService {
                 .build();
     }
 
-    /**
-     * 사용자의 마지막 매칭 상세 정보를 저장합니다 By 고경수
-     */
-    private void replaceUserMatchingDetail(Long userId, MatchRequestDto requestDto, String userType) {
-
-        // 1) 기존 활성 detail 폐기
-        userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
-                .ifPresent(detail -> {
-                    detail.deprecated();
-                    userMatchingDetailRepository.save(detail); // 명시적으로
-                });
-
-        // 2) 새 detail 생성 (requestDto → entity 매핑)
-        UserMatchingDetail newDetail = UserMatchingDetail.from(userId, requestDto);
-
-        // 3) 결과 저장(원하면)
-        newDetail.setMatchingResult(userType);
-
-        // 4) 저장
-        userMatchingDetailRepository.save(newDetail);
-    }
-
     private record BrandMatchResult(
             BrandTagDocument brandDoc,
             int matchScore,
@@ -637,5 +670,64 @@ public class MatchServiceImpl implements MatchService {
             boolean isLiked,
             int currentApplyCount
     ) {
+    }
+
+    /**
+     *  “유저태그로 들어가야 하는 모든 태그”를 한 번에 수집
+     * (creatorType/snsUrl 제외한 나머지 정보는 전부 user_tag로 저장)
+     */
+    private Set<Integer> collectAllTagIds(MatchRequestDto dto) {
+        Set<Integer> tagIds = new HashSet<>();
+
+        if (dto.getFashion() != null) {
+            addAll(tagIds, dto.getFashion().getInterestStyleTags());
+            addAll(tagIds, dto.getFashion().getPreferredItemTags());
+            addAll(tagIds, dto.getFashion().getPreferredBrandTags());
+            addOne(tagIds, dto.getFashion().getHeightTag());
+            addOne(tagIds, dto.getFashion().getWeightTypeTag());
+            addOne(tagIds, dto.getFashion().getTopSizeTag());
+            addOne(tagIds, dto.getFashion().getBottomSizeTag());
+        }
+
+        if (dto.getBeauty() != null) {
+            addAll(tagIds, dto.getBeauty().getInterestStyleTags());
+            addAll(tagIds, dto.getBeauty().getPrefferedFunctionTags());
+            addOne(tagIds, dto.getBeauty().getSkinTypeTags());
+            addOne(tagIds, dto.getBeauty().getSkinToneTags());
+            addOne(tagIds, dto.getBeauty().getMakeupStyleTags());
+        }
+
+        if (dto.getContent() != null) {
+            addAll(tagIds, dto.getContent().getTypeTags());
+            addAll(tagIds, dto.getContent().getToneTags());
+            addAll(tagIds, dto.getContent().getPrefferedInvolvementTags());
+            addAll(tagIds, dto.getContent().getPrefferedCoverageTags());
+
+            if (dto.getContent().getSns() != null) {
+                var sns = dto.getContent().getSns();
+                if (sns.getMainAudience() != null) {
+                    addAll(tagIds, sns.getMainAudience().getAgeTags());
+                    addAll(tagIds, sns.getMainAudience().getGenderTags());
+                }
+                if (sns.getAverageAudience() != null) {
+                    addAll(tagIds, sns.getAverageAudience().getVideoLengthTags());
+                    addAll(tagIds, sns.getAverageAudience().getVideoViewsTags());
+                }
+            }
+        }
+
+        return tagIds;
+    }
+
+    private void addAll(Set<Integer> set, List<Integer> values) {
+        if (values != null) {
+            set.addAll(values);
+        }
+    }
+
+    private void addOne(Set<Integer> set, Integer value) {
+        if (value != null) {
+            set.add(value);
+        }
     }
 }

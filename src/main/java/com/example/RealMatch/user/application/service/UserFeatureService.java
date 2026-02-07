@@ -1,7 +1,8 @@
 package com.example.RealMatch.user.application.service;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.application.service.MatchService;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
+import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.entity.UserTag;
+import com.example.RealMatch.tag.domain.repository.UserTagRepository;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -23,27 +27,69 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class UserFeatureService {
 
+    private final UserTagRepository userTagRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final MatchService matchService;
 
     public MyFeatureResponseDto getMyFeatures(Long userId) {
 
-        // UserMatchingDetail 조회 (삭제되지 않은 데이터만 조회)
-        UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
+        List<UserTag> userTags = userTagRepository.findAllByUserIdWithTag(userId);
+        log.info("userId={}, userTags.size={}", userId, userTags.size());
 
-        // 각 영역별로 데이터 존재 여부 확인 및 조회
-        MyFeatureResponseDto.BeautyType beautyType = buildBeautyType(detail);
-        MyFeatureResponseDto.FashionType fashionType = buildFashionType(detail);
-        MyFeatureResponseDto.ContentsType contentsType = buildContentsType(detail);
+        userTags.stream()
+                .limit(30)
+                .forEach(ut -> log.info("utId={}, dep={}, tagId={}, type={}, category={}, deleted={}",
+                        ut.getId(),
+                        ut.isDeprecated(),
+                        ut.getTag() != null ? ut.getTag().getId() : null,
+                        ut.getTag() != null ? ut.getTag().getTagType() : null,
+                        ut.getTag() != null ? ut.getTag().getTagCategory() : null,
+                        ut.getTag() != null ? ut.getTag().isDeleted() : null
+                ));
+
+
+        MyFeatureResponseDto.BeautyType beautyType = new MyFeatureResponseDto.BeautyType(
+                tagIds(userTags, "뷰티", "피부 타입"),
+                tagIds(userTags, "뷰티", "피부 밝기"),
+                tagIds(userTags, "뷰티", "메이크업 스타일"),
+                tagIds(userTags, "뷰티", "관심 스타일"),
+                tagIds(userTags, "뷰티", "관심 기능")
+        );
+
+        MyFeatureResponseDto.FashionType fashionType = new MyFeatureResponseDto.FashionType(
+                tagIds(userTags, "패션", "키"),
+                tagIds(userTags, "패션", "체형"),
+                tagIds(userTags, "패션", "상의 사이즈"),
+                tagIds(userTags, "패션", "하의 사이즈"),
+                tagIds(userTags, "패션", "관심 아이템/분야"),
+                tagIds(userTags, "패션", "관심 스타일"),
+                tagIds(userTags, "패션", "관심 브랜드 종류")
+        );
+
+        // ✅ 콘텐츠 형식 = 콘텐츠 유형 + 콘텐츠 종류
+        List<Integer> contentFormats = concat(
+                tagIds(userTags, "콘텐츠", "콘텐츠 유형"),
+                tagIds(userTags, "콘텐츠", "콘텐츠 종류")
+        );
+
+        MyFeatureResponseDto.ContentsType contentsType = new MyFeatureResponseDto.ContentsType(
+                tagIds(userTags, "콘텐츠", "시청자 성별"),
+                tagIds(userTags, "콘텐츠", "시청자 나이대"),
+                tagIds(userTags, "콘텐츠", "평균 영상 길이"),
+                tagIds(userTags, "콘텐츠", "영상 조회수"),
+                contentFormats,
+                tagIds(userTags, "콘텐츠", "콘텐츠 톤"),
+                tagIds(userTags, "콘텐츠", "콘텐츠 희망 관여도"),
+                tagIds(userTags, "콘텐츠", "콘텐츠 희망 활용 범위")
+        );
 
         return new MyFeatureResponseDto(beautyType, fashionType, contentsType);
     }
 
     /**
-     *  프론트가 MatchRequestDto 형태(정수 id 태그)로 보내는 PATCH 요청
+     * 프론트가 MatchRequestDto 형태(정수 id 태그)로 보내는 PATCH 요청
      * - patch(부분)만 보내도 서버에서 기존값과 merge해서 완성본 만들고
-     * - matchService.match() 호출 (기존 detail 폐기 + 새 detail 저장 + matchingResult 저장)
+     * - matchService.match() 호출 (UserTag 업데이트 + 매칭 재실행)
      */
     @Transactional
     public void updateMyFeatures(Long userId, MatchRequestDto patchRequest) {
@@ -51,164 +97,191 @@ public class UserFeatureService {
             throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
         }
 
-        UserMatchingDetail current = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
+        // 1) 기존 UserTag 조회
+        List<UserTag> existingUserTags = userTagRepository.findAllByUserIdWithTag(userId);
 
-        // 1) current(detail) -> 기존 매칭 요청 DTO로 복원
-        MatchRequestDto currentRequest = toMatchRequestDto(current);
+        // 2) 기존 UserTag -> MatchRequestDto 복원
+        MatchRequestDto currentRequest = toMatchRequestDtoFromUserTags(existingUserTags, userId);
 
-        // 2) patch merge (보낸 값만 덮고 나머지는 유지)
+        // 3) patch merge (보낸 값만 덮고 나머지는 유지)
         MatchRequestDto merged = mergeMatchRequest(currentRequest, patchRequest);
 
-        // 3) 매칭 재실행 (MatchService 내부에서 detail 교체 + 결과 저장)
+        // 4) 매칭 재실행 (MatchService 내부에서 UserTag 업데이트도 같이 해야 함)
         matchService.match(userId, merged);
 
         log.info("특성 PATCH 후 매칭 재실행 완료: userId={}", userId);
     }
 
-    /**
-     * DB(UserMatchingDetail) -> MatchRequestDto (id 기반)
-     * 전제: UserMatchingDetail의 태그 관련 값이 "1,2,3" 처럼 id 콤마 문자열로 저장되어 있음
-     */
-    private MatchRequestDto toMatchRequestDto(UserMatchingDetail d) {
+    // =====================================================
+    // 🔧 helpers (UserTag -> DTO)
+    // =====================================================
 
-        MatchRequestDto.BeautyDto beauty = null;
-        if (hasAny(
-                d.getInterestCategories(),
-                d.getInterestFunctions(),
-                d.getSkinType(),
-                d.getSkinBrightness(),
-                d.getMakeupStyle()
-        )) {
-            beauty = MatchRequestDto.BeautyDto.builder()
+    private static List<Integer> tagIds(List<UserTag> userTags, String tagType, String tagCategory) {
+        return userTags.stream()
+                .map(UserTag::getTag)
+                .filter(t -> t != null)
+                .filter(t -> !t.isDeleted())
+                // 🔥 현재 엔티티 매핑이 뒤집혀 있으니 비교도 뒤집기
+                .filter(t -> tagType.equals(t.getTagCategory()))   // 원래는 getTagType 이어야 함
+                .filter(t -> tagCategory.equals(t.getTagType()))   // 원래는 getTagCategory 이어야 함
+                .map(t -> t.getId().intValue())
+                .toList();
+    }
 
-                    // interestStyleTags -> interestCategories
-                    // (뷰티 관심 스타일 태그 -> 유저의 관심 카테고리)
-                    .interestStyleTags(parseIntList(d.getInterestCategories()))
-
-                    // prefferedFunctionTags -> interestFunctions
-                    // (선호 기능 태그 -> 관심 기능)
-                    .prefferedFunctionTags(parseIntList(d.getInterestFunctions()))
-
-                    // skinTypeTags -> skinType
-                    // (피부 타입 태그 -> 피부 타입)
-                    .skinTypeTags(parseFirstInt(d.getSkinType()))
-
-                    // skinToneTags -> skinBrightness
-                    // (피부 톤 태그 -> 피부 밝기)
-                    .skinToneTags(parseFirstInt(d.getSkinBrightness()))
-
-                    // makeupStyleTags -> makeupStyle
-                    // (메이크업 스타일 태그 -> 메이크업 스타일)
-                    .makeupStyleTags(parseFirstInt(d.getMakeupStyle()))
-
-                    .build();
+    private static List<Integer> concat(List<Integer> a, List<Integer> b) {
+        if ((a == null || a.isEmpty()) && (b == null || b.isEmpty())) {
+            return List.of();
+        }
+        if (a == null || a.isEmpty()) {
+            return b;
+        }
+        if (b == null || b.isEmpty()) {
+            return a;
         }
 
-        MatchRequestDto.FashionDto fashion = null;
-        if (hasAny(
-                d.getInterestFields(),
-                d.getInterestStyles(),
-                d.getInterestBrands(),
-                d.getHeight(),
-                d.getBodyShape(),
-                d.getTopSize(),
-                d.getBottomSize()
-        )) {
-            fashion = MatchRequestDto.FashionDto.builder()
+        return Stream.concat(a.stream(), b.stream())
+                .distinct()
+                .toList();
+    }
 
-                    // interestStyleTags -> interestFields
-                    // (패션 관심 스타일 태그 -> 관심 분야)
-                    .interestStyleTags(parseIntList(d.getInterestFields()))
+    // =====================================================
+    // 🔧 helpers (UserTag -> MatchRequestDto 복원)
+    // =====================================================
 
-                    // preferredItemTags -> interestStyles
-                    // (선호 아이템 태그 -> 관심 스타일)
-                    .preferredItemTags(parseIntList(d.getInterestStyles()))
+    private MatchRequestDto toMatchRequestDtoFromUserTags(List<UserTag> userTags, Long userId) {
 
-                    // preferredBrandTags -> interestBrands
-                    // (선호 브랜드 태그 -> 관심 브랜드)
-                    .preferredBrandTags(parseIntList(d.getInterestBrands()))
+        // ===== Beauty =====
+        List<Integer> beautyInterestStyleTags = new ArrayList<>();
+        List<Integer> beautyPreferredFunctionTags = new ArrayList<>();
+        Integer skinTypeTag = null;
+        Integer skinBrightnessTag = null;
+        Integer makeupStyleTag = null;
 
-                    // heightTag -> height
-                    .heightTag(parseFirstInt(d.getHeight()))
+        // ===== Fashion =====
+        List<Integer> fashionInterestStyleTags = new ArrayList<>();
+        List<Integer> fashionPreferredItemTags = new ArrayList<>();
+        List<Integer> fashionPreferredBrandTypeTags = new ArrayList<>();
+        Integer heightTag = null;
+        Integer weightTypeTag = null;
+        Integer topSizeTag = null;
+        Integer bottomSizeTag = null;
 
-                    // weightTypeTag -> bodyShape
-                    .weightTypeTag(parseFirstInt(d.getBodyShape()))
+        // ===== Content =====
+        List<Integer> genderTags = new ArrayList<>();
+        List<Integer> ageTags = new ArrayList<>();
+        List<Integer> videoLengthTags = new ArrayList<>();
+        List<Integer> videoViewsTags = new ArrayList<>();
+        List<Integer> typeTags = new ArrayList<>(); // ✅ 콘텐츠 형식: (콘텐츠 유형 + 콘텐츠 종류)
+        List<Integer> toneTags = new ArrayList<>();
+        List<Integer> preferredInvolvementTags = new ArrayList<>();
+        List<Integer> preferredCoverageTags = new ArrayList<>();
 
-                    // topSizeTag -> topSize
-                    .topSizeTag(parseFirstInt(d.getTopSize()))
+        for (UserTag ut : userTags) {
+            Tag tag = ut.getTag();
+            if (tag == null || tag.isDeleted() || tag.getTagType() == null || tag.getTagCategory() == null) {
+                continue;
+            }
 
-                    // bottomSizeTag -> bottomSize
-                    .bottomSizeTag(parseFirstInt(d.getBottomSize()))
+            String type = tag.getTagType();
+            String category = tag.getTagCategory();
+            Integer tagId = tag.getId().intValue();
 
-                    .build();
+            // ---- Beauty ----
+            if ("뷰티".equals(type)) {
+                switch (category) {
+                    case "피부 타입" -> skinTypeTag = tagId;
+                    case "피부 밝기" -> skinBrightnessTag = tagId;
+                    case "메이크업 스타일" -> makeupStyleTag = tagId;
+                    case "관심 스타일" -> beautyInterestStyleTags.add(tagId);
+                    case "관심 기능" -> beautyPreferredFunctionTags.add(tagId);
+                    default -> {
+                    }
+                }
+                continue;
+            }
+
+            // ---- Fashion ----
+            if ("패션".equals(type)) {
+                switch (category) {
+                    case "키" -> heightTag = tagId;
+                    case "체형" -> weightTypeTag = tagId;
+                    case "상의 사이즈" -> topSizeTag = tagId;
+                    case "하의 사이즈" -> bottomSizeTag = tagId;
+                    case "관심 아이템/분야" -> fashionPreferredItemTags.add(tagId);
+                    case "관심 스타일" -> fashionInterestStyleTags.add(tagId);
+                    case "관심 브랜드 종류" -> fashionPreferredBrandTypeTags.add(tagId);
+                    default -> {
+                    }
+                }
+                continue;
+            }
+
+            // ---- Content ----
+            if ("콘텐츠".equals(type)) {
+                switch (category) {
+                    case "시청자 성별" -> genderTags.add(tagId);
+                    case "시청자 나이대" -> ageTags.add(tagId);
+                    case "평균 영상 길이" -> videoLengthTags.add(tagId);
+                    case "영상 조회수" -> videoViewsTags.add(tagId);
+
+                    // ✅ 형식은 "콘텐츠 유형" + "콘텐츠 종류"를 둘 다 typeTags에 넣음
+                    case "콘텐츠 유형", "콘텐츠 종류" -> typeTags.add(tagId);
+
+                    case "콘텐츠 톤" -> toneTags.add(tagId);
+                    case "콘텐츠 희망 관여도" -> preferredInvolvementTags.add(tagId);
+                    case "콘텐츠 희망 활용 범위" -> preferredCoverageTags.add(tagId);
+                    default -> {
+                    }
+                }
+            }
         }
 
-        MatchRequestDto.ContentDto content = null;
-        if (hasAny(
-                d.getSnsUrl(),
-                d.getViewerGender(),
-                d.getViewerAge(),
-                d.getAvgVideoLength(),
-                d.getAvgViews(),
-                d.getContentFormats(),
-                d.getContentTones(),
-                d.getDesiredInvolvement(),
-                d.getDesiredUsageScope()
-        )) {
+        MatchRequestDto.BeautyDto beauty = MatchRequestDto.BeautyDto.builder()
+                .interestStyleTags(beautyInterestStyleTags.isEmpty() ? null : beautyInterestStyleTags)
+                .prefferedFunctionTags(beautyPreferredFunctionTags.isEmpty() ? null : beautyPreferredFunctionTags)
+                .skinTypeTags(skinTypeTag)
+                .skinToneTags(skinBrightnessTag)
+                .makeupStyleTags(makeupStyleTag)
+                .build();
 
-            MatchRequestDto.MainAudienceDto mainAudience = null;
-            if (hasAny(d.getViewerGender(), d.getViewerAge())) {
-                mainAudience = MatchRequestDto.MainAudienceDto.builder()
+        MatchRequestDto.FashionDto fashion = MatchRequestDto.FashionDto.builder()
+                .interestStyleTags(fashionInterestStyleTags.isEmpty() ? null : fashionInterestStyleTags)
+                .preferredItemTags(fashionPreferredItemTags.isEmpty() ? null : fashionPreferredItemTags)
+                .preferredBrandTags(fashionPreferredBrandTypeTags.isEmpty() ? null : fashionPreferredBrandTypeTags)
+                .heightTag(heightTag)
+                .weightTypeTag(weightTypeTag)
+                .topSizeTag(topSizeTag)
+                .bottomSizeTag(bottomSizeTag)
+                .build();
 
-                        // genderTags -> viewerGender
-                        .genderTags(parseIntList(d.getViewerGender()))
+        // snsUrl은 UserMatchingDetail에서 가져오는 정책 유지
+        UserMatchingDetail detail = userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
+                .orElse(null);
+        String snsUrl = (detail != null) ? detail.getSnsUrl() : null;
 
-                        // ageTags -> viewerAge
-                        .ageTags(parseIntList(d.getViewerAge()))
+        MatchRequestDto.MainAudienceDto mainAudience = MatchRequestDto.MainAudienceDto.builder()
+                .genderTags(genderTags.isEmpty() ? null : genderTags)
+                .ageTags(ageTags.isEmpty() ? null : ageTags)
+                .build();
 
-                        .build();
-            }
+        MatchRequestDto.AverageAudienceDto averageAudience = MatchRequestDto.AverageAudienceDto.builder()
+                .videoLengthTags(videoLengthTags.isEmpty() ? null : videoLengthTags)
+                .videoViewsTags(videoViewsTags.isEmpty() ? null : videoViewsTags)
+                .build();
 
-            MatchRequestDto.AverageAudienceDto averageAudience = null;
-            if (hasAny(d.getAvgVideoLength(), d.getAvgViews())) {
-                averageAudience = MatchRequestDto.AverageAudienceDto.builder()
+        MatchRequestDto.SnsDto sns = MatchRequestDto.SnsDto.builder()
+                .url(snsUrl)
+                .mainAudience(mainAudience)
+                .averageAudience(averageAudience)
+                .build();
 
-                        // videoLengthTags -> avgVideoLength
-                        .videoLengthTags(parseIntList(d.getAvgVideoLength()))
-
-                        // videoViewsTags -> avgViews
-                        .videoViewsTags(parseIntList(d.getAvgViews()))
-
-                        .build();
-            }
-
-            MatchRequestDto.SnsDto sns = null;
-            if (d.getSnsUrl() != null || mainAudience != null || averageAudience != null) {
-                sns = MatchRequestDto.SnsDto.builder()
-                        .url(d.getSnsUrl())
-                        .mainAudience(mainAudience)
-                        .averageAudience(averageAudience)
-                        .build();
-            }
-
-            content = MatchRequestDto.ContentDto.builder()
-                    .sns(sns)
-
-                    // typeTags -> contentFormats
-                    .typeTags(parseIntList(d.getContentFormats()))
-
-                    // toneTags -> contentTones
-                    .toneTags(parseIntList(d.getContentTones()))
-
-                    // prefferedInvolvementTags -> desiredInvolvement
-                    .prefferedInvolvementTags(parseIntList(d.getDesiredInvolvement()))
-
-                    // prefferedCoverageTags -> desiredUsageScope
-                    .prefferedCoverageTags(parseIntList(d.getDesiredUsageScope()))
-
-                    .build();
-        }
+        MatchRequestDto.ContentDto content = MatchRequestDto.ContentDto.builder()
+                .sns(sns)
+                .typeTags(typeTags.isEmpty() ? null : typeTags)
+                .toneTags(toneTags.isEmpty() ? null : toneTags)
+                .prefferedInvolvementTags(preferredInvolvementTags.isEmpty() ? null : preferredInvolvementTags)
+                .prefferedCoverageTags(preferredCoverageTags.isEmpty() ? null : preferredCoverageTags)
+                .build();
 
         return MatchRequestDto.builder()
                 .beauty(beauty)
@@ -217,12 +290,17 @@ public class UserFeatureService {
                 .build();
     }
 
-    /**
-     * current + patch merge (PATCH 규칙)
-     * - patch dto가 null이면 current 유지
-     * - patch dto가 non-null이면 내부 필드도 null이면 유지 / non-null이면 덮기
-     */
+    // =====================================================
+    // 🔧 helpers (PATCH merge)
+    // =====================================================
+
     private MatchRequestDto mergeMatchRequest(MatchRequestDto current, MatchRequestDto patch) {
+        if (current == null) {
+            return patch;
+        }
+        if (patch == null) {
+            return current;
+        }
 
         MatchRequestDto.BeautyDto mergedBeauty = mergeBeauty(current.getBeauty(), patch.getBeauty());
         MatchRequestDto.FashionDto mergedFashion = mergeFashion(current.getFashion(), patch.getFashion());
@@ -236,9 +314,6 @@ public class UserFeatureService {
     }
 
     private MatchRequestDto.BeautyDto mergeBeauty(MatchRequestDto.BeautyDto cur, MatchRequestDto.BeautyDto p) {
-        if (cur == null && p == null) {
-            return null;
-        }
         if (cur == null) {
             return p;
         }
@@ -256,9 +331,6 @@ public class UserFeatureService {
     }
 
     private MatchRequestDto.FashionDto mergeFashion(MatchRequestDto.FashionDto cur, MatchRequestDto.FashionDto p) {
-        if (cur == null && p == null) {
-            return null;
-        }
         if (cur == null) {
             return p;
         }
@@ -278,9 +350,6 @@ public class UserFeatureService {
     }
 
     private MatchRequestDto.ContentDto mergeContent(MatchRequestDto.ContentDto cur, MatchRequestDto.ContentDto p) {
-        if (cur == null && p == null) {
-            return null;
-        }
         if (cur == null) {
             return p;
         }
@@ -288,10 +357,10 @@ public class UserFeatureService {
             return cur;
         }
 
-        MatchRequestDto.SnsDto sns = mergeSns(cur.getSns(), p.getSns());
+        MatchRequestDto.SnsDto mergedSns = mergeSns(cur.getSns(), p.getSns());
 
         return MatchRequestDto.ContentDto.builder()
-                .sns(sns)
+                .sns(mergedSns)
                 .typeTags(p.getTypeTags() != null ? p.getTypeTags() : cur.getTypeTags())
                 .toneTags(p.getToneTags() != null ? p.getToneTags() : cur.getToneTags())
                 .prefferedInvolvementTags(p.getPrefferedInvolvementTags() != null
@@ -304,9 +373,6 @@ public class UserFeatureService {
     }
 
     private MatchRequestDto.SnsDto mergeSns(MatchRequestDto.SnsDto cur, MatchRequestDto.SnsDto p) {
-        if (cur == null && p == null) {
-            return null;
-        }
         if (cur == null) {
             return p;
         }
@@ -324,10 +390,8 @@ public class UserFeatureService {
                 .build();
     }
 
-    private MatchRequestDto.MainAudienceDto mergeMainAudience(MatchRequestDto.MainAudienceDto cur, MatchRequestDto.MainAudienceDto p) {
-        if (cur == null && p == null) {
-            return null;
-        }
+    private MatchRequestDto.MainAudienceDto mergeMainAudience(MatchRequestDto.MainAudienceDto cur,
+                                                              MatchRequestDto.MainAudienceDto p) {
         if (cur == null) {
             return p;
         }
@@ -341,10 +405,8 @@ public class UserFeatureService {
                 .build();
     }
 
-    private MatchRequestDto.AverageAudienceDto mergeAverageAudience(MatchRequestDto.AverageAudienceDto cur, MatchRequestDto.AverageAudienceDto p) {
-        if (cur == null && p == null) {
-            return null;
-        }
+    private MatchRequestDto.AverageAudienceDto mergeAverageAudience(MatchRequestDto.AverageAudienceDto cur,
+                                                                    MatchRequestDto.AverageAudienceDto p) {
         if (cur == null) {
             return p;
         }
@@ -356,134 +418,5 @@ public class UserFeatureService {
                 .videoLengthTags(p.getVideoLengthTags() != null ? p.getVideoLengthTags() : cur.getVideoLengthTags())
                 .videoViewsTags(p.getVideoViewsTags() != null ? p.getVideoViewsTags() : cur.getVideoViewsTags())
                 .build();
-    }
-
-    // =========================
-    // getMyFeatures()용 build 메서드 (기존 그대로)
-    // =========================
-
-    private MyFeatureResponseDto.BeautyType buildBeautyType(UserMatchingDetail detail) {
-
-        if (detail.getSkinType() == null
-                && detail.getSkinBrightness() == null
-                && detail.getMakeupStyle() == null
-                && detail.getInterestCategories() == null
-                && detail.getInterestFunctions() == null) {
-
-            throw new CustomException(UserErrorCode.BEAUTY_PROFILE_NOT_FOUND);
-        }
-
-        return new MyFeatureResponseDto.BeautyType(
-                parseTagString(detail.getSkinType()),
-                detail.getSkinBrightness(),
-                parseTagString(detail.getMakeupStyle()),
-                parseTagString(detail.getInterestCategories()),
-                parseTagString(detail.getInterestFunctions())
-        );
-    }
-
-    private MyFeatureResponseDto.FashionType buildFashionType(UserMatchingDetail detail) {
-
-        if (detail.getHeight() == null
-                && detail.getBodyShape() == null
-                && detail.getTopSize() == null
-                && detail.getBottomSize() == null
-                && detail.getInterestFields() == null
-                && detail.getInterestStyles() == null
-                && detail.getInterestBrands() == null) {
-
-            throw new CustomException(UserErrorCode.FASHION_PROFILE_NOT_FOUND);
-        }
-
-        return new MyFeatureResponseDto.FashionType(
-                detail.getHeight(),
-                detail.getBodyShape(),
-                detail.getTopSize(),
-                detail.getBottomSize(),
-                parseTagString(detail.getInterestFields()),
-                parseTagString(detail.getInterestStyles()),
-                parseTagString(detail.getInterestBrands())
-        );
-    }
-
-    private MyFeatureResponseDto.ContentsType buildContentsType(UserMatchingDetail detail) {
-
-        if (detail.getViewerGender() == null
-                && detail.getViewerAge() == null
-                && detail.getAvgVideoLength() == null
-                && detail.getAvgViews() == null
-                && detail.getContentFormats() == null
-                && detail.getContentTones() == null
-                && detail.getDesiredInvolvement() == null
-                && detail.getDesiredUsageScope() == null) {
-
-            throw new CustomException(UserErrorCode.CONTENT_PROFILE_NOT_FOUND);
-        }
-
-        return new MyFeatureResponseDto.ContentsType(
-                parseTagString(detail.getViewerGender()),
-                parseTagString(detail.getViewerAge()),
-                detail.getAvgVideoLength(),
-                detail.getAvgViews(),
-                parseTagString(detail.getContentFormats()),
-                parseTagString(detail.getContentTones()),
-                parseTagString(detail.getDesiredInvolvement()),
-                parseTagString(detail.getDesiredUsageScope())
-        );
-    }
-
-    private List<String> parseTagString(String tagString) {
-        if (tagString == null || tagString.trim().isEmpty()) {
-            return List.of();
-        }
-
-        return Arrays.stream(tagString.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
-    }
-
-    // =========================
-    // parsing helpers (id 콤마 문자열 -> 정수 리스트)
-    // =========================
-
-    private static List<Integer> parseIntList(String s) {
-        if (s == null || s.trim().isEmpty()) {
-            return null;
-        }
-        try {
-            List<Integer> list = Arrays.stream(s.split(","))
-                    .map(String::trim)
-                    .filter(v -> !v.isEmpty())
-                    .map(Integer::parseInt)
-                    .toList();
-            return list.isEmpty() ? null : list;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static Integer parseFirstInt(String s) {
-        if (s == null || s.trim().isEmpty()) {
-            return null;
-        }
-        String first = s.contains(",") ? s.split(",")[0].trim() : s.trim();
-        try {
-            return Integer.parseInt(first);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static boolean hasAny(Object... values) {
-        return Arrays.stream(values).anyMatch(v -> {
-            if (v == null) {
-                return false;
-            }
-            if (v instanceof String s) {
-                return !s.isBlank();
-            }
-            return true;
-        });
     }
 }
