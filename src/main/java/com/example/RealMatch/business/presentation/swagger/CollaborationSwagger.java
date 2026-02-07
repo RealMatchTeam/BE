@@ -15,6 +15,7 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 
 public interface CollaborationSwagger {
 
@@ -24,20 +25,20 @@ public interface CollaborationSwagger {
                     내가 지원, 제안 보냄, 제안 받음을 한 모든 캠페인 내역을 조회합니다.
                     사용자와 연관된 캠페인을 조회할 때는 해당 api를 사용해주세요. (부족한 정보가 있다면 말해주세요. 응답에 추가하겠습니다.
                     쿼리 스트링으로 아래의 옵션들을 선택할 수 있습니다.
-
+                    
                     1) 참여 타입
                     - APPLIED : 지원
                     - SENT : 제안 보냄
                     - RECEIVED : 제안 받음
-
+                    
                     * 지원은 proposalId가 null입니다.
                     * 신규 캠페인에 제안하거나/받은 경우 campaignId가 null이고, 기존 캠페인에 제안하거나/받은 경우 campaignId가 존재합니다.
-
+                    
                     2) 상태
                     - REVIEWING : 검토중    
                     - MATCHED : 매칭됨    
                     - REJECTED : 거절    
-
+                    
                     3) 날짜
                     - startDate : 제작 시작 날짜  
                     - endDate : 제작 마감 날짜      
@@ -65,5 +66,47 @@ public interface CollaborationSwagger {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate endDate
+    );
+
+    @Operation(
+            summary = "내 협업 캠페인 검색",
+            description = """
+                    내가 지원하거나 제안을 주고받은 캠페인을 검색합니다.
+                    
+                    - 브랜드명(keyword) 기준 검색     
+                    - 협업 유형(지원/제안 보냄/제안 받음) 필터 (필수)    
+                    - 제안 상태(검토중/매칭/거절) 필터    
+                    
+                    * 선택한 협업유형 내에서 검색합니다.    
+                    * 키워드를 입력하지 않으면 전체가 조회됩니다.
+                    """
+    )
+    CustomResponse<List<CollaborationResponse>> searchMyCollaborations(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserDetails principal,
+
+            @Parameter(
+                    name = "keyword",
+                    description = "브랜드명 검색 키워드",
+                    in = ParameterIn.QUERY,
+                    example = "비플레인"
+            )
+            @RequestParam(required = false) String keyword,
+
+            @Parameter(
+                    name = "type",
+                    description = "협업 유형",
+                    in = ParameterIn.QUERY,
+                    example = "SENT"
+            )
+            @RequestParam CollaborationType type,
+
+            @Parameter(
+                    name = "status",
+                    description = "제안 상태",
+                    in = ParameterIn.QUERY,
+                    example = "REVIEWING"
+            )
+            @RequestParam(required = false) ProposalStatus status
     );
 }
