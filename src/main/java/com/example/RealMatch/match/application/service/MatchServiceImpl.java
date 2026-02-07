@@ -159,6 +159,7 @@ public class MatchServiceImpl implements MatchService {
 
         // B. 기존 태그 삭제 및 새 태그 저장 (나머지 정보 전부 user_tag로)
         userTagRepository.deleteByUserId(userId);
+        userTagRepository.flush();
 
         Set<Integer> tagIds = collectAllTagIds(dto);
         if (tagIds.isEmpty()) {

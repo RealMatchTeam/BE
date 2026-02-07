@@ -18,8 +18,8 @@ public enum TagCategory {
     FASHION_INTEREST_STYLE("관심 스타일"),
     FASHION_INTEREST_ITEM("관심 아이템/분야"),
     FASHION_INTEREST_TYPE("관심 브랜드 종류"),
-    // 체형 정보: 키는 태그로 저장하지 않음
-    FASHION_BODY_WEIGHT("체형 정보"),
+    FASHION_BODY_HEIGHT("키"),
+    FASHION_BODY_WEIGHT("체형"),
     FASHION_BODY_TOP("상의 사이즈"),
     FASHION_BODY_BOTTOM("하의 사이즈");
 
