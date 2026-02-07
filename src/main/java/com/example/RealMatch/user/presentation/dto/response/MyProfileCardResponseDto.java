@@ -13,19 +13,9 @@ public record MyProfileCardResponseDto(
         String gender,
         int age,
         String snsAccount,
-        List<UserContentCategoryInfo> contentCategories,
+        List<String> contentCategories,
         MyMatchingResultResponseDto matchingResult
 ) {
-
-    public record UserContentCategoryInfo(
-            String categoryName
-    ) {
-        public static UserContentCategoryInfo from(UserContentCategory ucc) {
-            return new UserContentCategoryInfo(
-                    ucc.getContentCategory().getCategoryName()
-            );
-        }
-    }
 
     public static MyProfileCardResponseDto from(
             User user,
@@ -37,10 +27,11 @@ public record MyProfileCardResponseDto(
             age = LocalDate.now().getYear() - user.getBirth().getYear();
         }
 
-        List<UserContentCategoryInfo> categoryInfos =
+        List<String> categoryNames =
                 categories == null ? List.of()
                         : categories.stream()
-                        .map(UserContentCategoryInfo::from)
+                        .map(ucc -> ucc.getContentCategory().getCategoryName())
+                        .distinct()
                         .toList();
 
         return new MyProfileCardResponseDto(
@@ -49,7 +40,7 @@ public record MyProfileCardResponseDto(
                 user.getGender() != null ? user.getGender().name() : "",
                 age,
                 detail != null ? detail.getSnsUrl() : "",
-                categoryInfos,
+                categoryNames,
                 detail != null ? MyMatchingResultResponseDto.from(detail) : null
         );
     }
