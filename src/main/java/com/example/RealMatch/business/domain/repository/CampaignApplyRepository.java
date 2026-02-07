@@ -21,35 +21,62 @@ public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Lo
             GROUP BY ca.campaign.id
             """)
     List<Object[]> countByCampaignIdIn(@Param("campaignIds") List<Long> campaignIds);
+
     boolean existsByUserIdAndCampaignId(Long userId, Long campaignId);
+
     Optional<CampaignApply> findByCampaignIdAndUserId(Long campaignId, Long userId);
 
 
     @Query("""
-    select new com.example.RealMatch.business.presentation.dto.response.CollaborationProjection(
-        c.id,
-        null,
-        b.brandName,
-        b.logoUrl,
-        c.title,
-        ca.applyStatus,
-        c.startDate,
-        c.endDate,
-        com.example.RealMatch.business.domain.enums.CollaborationType.APPLIED
-    )
-    from CampaignApply ca
-    join ca.campaign c
-    join c.brand b
-    where ca.user.id = :userId
-      and (:status is null or ca.applyStatus = :status)
-      and (:startDate is null or c.endDate >= :startDate)
-      and (:endDate is null or c.startDate <= :endDate)
-    """)
+            select new com.example.RealMatch.business.presentation.dto.response.CollaborationProjection(
+                c.id,
+                null,
+                b.brandName,
+                b.logoUrl,
+                c.title,
+                ca.applyStatus,
+                c.startDate,
+                c.endDate,
+                com.example.RealMatch.business.domain.enums.CollaborationType.APPLIED
+            )
+            from CampaignApply ca
+            join ca.campaign c
+            join c.brand b
+            where ca.user.id = :userId
+              and (:status is null or ca.applyStatus = :status)
+              and (:startDate is null or c.endDate >= :startDate)
+              and (:endDate is null or c.startDate <= :endDate)
+            """)
     List<CollaborationProjection> findMyAppliedCollaborations(
             Long userId,
             ProposalStatus status,
             LocalDate startDate,
             LocalDate endDate
+    );
+
+    @Query("""
+            select new com.example.RealMatch.business.presentation.dto.response.CollaborationProjection(
+                c.id,
+                null,
+                b.brandName,
+                b.logoUrl,
+                c.title,
+                ca.applyStatus,
+                c.startDate,
+                c.endDate,
+                com.example.RealMatch.business.domain.enums.CollaborationType.APPLIED
+            )
+            from CampaignApply ca
+            join ca.campaign c
+            join c.brand b
+            where ca.user.id = :userId
+              and (:status is null or ca.applyStatus = :status)
+              and (:brandIds is null or b.id in :brandIds)
+            """)
+    List<CollaborationProjection> findMyAppliedCollaborationsForSearch(
+            @Param("userId") Long userId,
+            @Param("status") ProposalStatus status,
+            @Param("brandIds") List<Long> brandIds
     );
 
 
