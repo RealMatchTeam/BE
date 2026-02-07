@@ -64,10 +64,12 @@ public class UserService {
                 .findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
 
-        List<UserContentCategory> categories = userContentCategoryRepository.findByUserId(userId);
+        List<UserContentCategory> categories =
+                userContentCategoryRepository.findByUserId(userId);
 
         return MyProfileCardResponseDto.from(user, detail, categories);
     }
+
 
     public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
         // 유저 조회
