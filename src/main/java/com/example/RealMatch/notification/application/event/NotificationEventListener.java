@@ -11,10 +11,8 @@ import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.business.application.event.CampaignApplySentEvent;
 import com.example.RealMatch.business.application.event.CampaignProposalSentEvent;
 import com.example.RealMatch.business.application.event.CampaignProposalStatusChangedEvent;
-import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
-import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
 import com.example.RealMatch.notification.application.dto.CreateNotificationCommand;
 import com.example.RealMatch.notification.application.service.NotificationMessageTemplateService;
 import com.example.RealMatch.notification.application.service.NotificationMessageTemplateService.MessageTemplate;
@@ -34,7 +32,6 @@ public class NotificationEventListener {
 
     private final NotificationService notificationService;
     private final NotificationMessageTemplateService messageTemplateService;
-    private final CampaignProposalRepository campaignProposalRepository;
     private final BrandRepository brandRepository;
     private final UserRepository userRepository;
 
@@ -150,10 +147,10 @@ public class NotificationEventListener {
     private void createProposalSentNotification(CampaignProposalStatusChangedEvent event, boolean isAccepted) {
         try {
             String eventId = generateProposalStatusChangedEventId(event.proposalId(), event.newStatus());
-            CampaignProposal proposal = campaignProposalRepository.findById(event.proposalId())
-                    .orElseThrow(() -> new IllegalStateException(
-                            "CampaignProposal not found: " + event.proposalId()));
-            Long senderUserId = proposal.getSenderUserId();
+            // proposalDirection을 이용해 senderUserId 결정 (DB 조회 불필요)
+            Long senderUserId = event.proposalDirection() == ProposalDirection.BRAND_TO_CREATOR
+                    ? event.brandUserId()
+                    : event.creatorUserId();
 
             String brandName = findBrandNameByUserId(event.brandUserId());
 

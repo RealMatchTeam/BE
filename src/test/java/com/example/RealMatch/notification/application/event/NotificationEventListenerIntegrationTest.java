@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +15,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.business.application.event.CampaignApplySentEvent;
 import com.example.RealMatch.business.application.event.CampaignProposalSentEvent;
 import com.example.RealMatch.business.application.event.CampaignProposalStatusChangedEvent;
@@ -23,8 +24,6 @@ import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.business.domain.repository.CampaignProposalRepository;
-import com.example.RealMatch.brand.domain.entity.Brand;
-import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.notification.domain.entity.NotificationDelivery;
 import com.example.RealMatch.notification.domain.entity.enums.DeliveryStatus;
@@ -74,7 +73,7 @@ class NotificationEventListenerIntegrationTest {
         // given
         User creator = createTestUserInTransaction("크리에이터", Role.CREATOR);
         User brandUser = createTestUserInTransaction("브랜드유저", Role.BRAND);
-        Brand brand = createTestBrandInTransaction("라운드랩", brandUser);
+        createTestBrandInTransaction("라운드랩", brandUser);
 
         Long proposalId = 1L;
         Long campaignId = 10L;
@@ -210,7 +209,7 @@ class NotificationEventListenerIntegrationTest {
         // given
         User creator = createTestUserInTransaction("크리에이터", Role.CREATOR);
         User brandUser = createTestUserInTransaction("브랜드유저", Role.BRAND);
-        Brand brand = createTestBrandInTransaction("라운드랩", brandUser);
+        createTestBrandInTransaction("라운드랩", brandUser);
 
         CampaignProposalSentEvent event = new CampaignProposalSentEvent(
                 100L,
