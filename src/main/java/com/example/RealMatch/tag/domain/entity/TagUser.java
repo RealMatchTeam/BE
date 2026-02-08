@@ -3,7 +3,6 @@ package com.example.RealMatch.tag.domain.entity;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
