@@ -31,7 +31,7 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
             Pattern.compile("^/topic/v1/rooms/(\\d+)$");
     private static final Pattern USER_ROOM_LIST_PATTERN =
             Pattern.compile("^/topic/v1/user/(\\d+)/rooms$");
-    private static final String USER_DESTINATION_PREFIX = "/user/";
+    private static final String USER_QUEUE_PREFIX = "/user/queue/";
 
     private final ChatRoomMemberService chatRoomMemberService;
     private final ChatUserIdResolver chatUserIdResolver;
@@ -84,8 +84,7 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
             return;
         }
 
-        // /user/** → Spring user-destination (인증된 사용자에게 허용)
-        if (destination.startsWith(USER_DESTINATION_PREFIX)) {
+        if (destination.startsWith(USER_QUEUE_PREFIX)) {
             return;
         }
 
@@ -117,18 +116,21 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
     // ── SEND 인가 ───────────────────────────────────────────────────
 
     private void requireAuthenticated(StompHeaderAccessor accessor) {
-        if (accessor.getUser() == null) {
-            throw new MessageDeliveryException("Authentication required");
-        }
+        getPrincipalOrThrow(accessor);
     }
 
     // ── 공통 헬퍼 ───────────────────────────────────────────────────
 
-    private Long resolveUserId(StompHeaderAccessor accessor) {
+    private Principal getPrincipalOrThrow(StompHeaderAccessor accessor) {
         Principal principal = accessor.getUser();
         if (principal == null) {
             throw new MessageDeliveryException("Authentication required");
         }
+        return principal;
+    }
+
+    private Long resolveUserId(StompHeaderAccessor accessor) {
+        Principal principal = getPrincipalOrThrow(accessor);
         try {
             return chatUserIdResolver.resolve(principal);
         } catch (RuntimeException ex) {

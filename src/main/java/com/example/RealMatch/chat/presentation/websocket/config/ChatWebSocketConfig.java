@@ -48,15 +48,7 @@ public class ChatWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
-        ChatWebSocketJwtInterceptor jwtInterceptor = jwtInterceptorProvider.getIfAvailable();
-        if (jwtInterceptor != null) {
-            registration.interceptors(jwtInterceptor);
-        }
-
-        ChatWebSocketAuthorizationInterceptor authzInterceptor =
-                authorizationInterceptorProvider.getIfAvailable();
-        if (authzInterceptor != null) {
-            registration.interceptors(authzInterceptor);
-        }
+        jwtInterceptorProvider.ifAvailable(registration::interceptors);
+        authorizationInterceptorProvider.ifAvailable(registration::interceptors);
     }
 }
