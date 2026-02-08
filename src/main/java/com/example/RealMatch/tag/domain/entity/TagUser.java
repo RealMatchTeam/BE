@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserTag extends BaseEntity {
+public class TagUser extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,7 +45,7 @@ public class UserTag extends BaseEntity {
     private boolean isDeleted = false;
 
     @Builder
-    public UserTag(
+    public TagUser(
             User user,
             Tag tag,
             Boolean isDeleted

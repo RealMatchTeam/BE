@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.example.RealMatch.tag.domain.entity.TagUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,11 +13,10 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.application.service.MatchService;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.tag.domain.entity.Tag;
-import com.example.RealMatch.tag.domain.entity.UserTag;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
 import com.example.RealMatch.tag.domain.enums.TagCategory;
 import com.example.RealMatch.tag.domain.enums.TagType;
-import com.example.RealMatch.tag.domain.repository.UserTagRepository;
+import com.example.RealMatch.tag.domain.repository.TagUserRepository;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class UserFeatureService {
 
-    private final UserTagRepository userTagRepository;
+    private final TagUserRepository tagUserRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final MatchService matchService;
 
@@ -41,11 +41,11 @@ public class UserFeatureService {
      * - "키"는 현재 DB에서 tag_category="키" 로 태그화되어 있으므로 그대로 태그로 조회
      */
     public MyFeatureResponseDto getMyFeatures(Long userId) {
-        List<UserTag> userTags = userTagRepository.findAllByUserIdWithTag(userId);
-        log.info("userId={}, userTags.size={}", userId, userTags.size());
+        List<TagUser> tagUsers = tagUserRepository.findAllByUserIdWithTag(userId);
+        log.info("userId={}, tagUsers.size={}", userId, tagUsers.size());
 
         // (tagType|tagCategory) -> tagId 리스트
-        Map<String, List<Integer>> grouped = groupTagIds(userTags);
+        Map<String, List<Integer>> grouped = groupTagIds(tagUsers);
 
         // Beauty
         MyFeatureResponseDto.BeautyType beautyType = new MyFeatureResponseDto.BeautyType(
@@ -93,8 +93,8 @@ public class UserFeatureService {
             throw new CustomException(UserErrorCode.TRAIT_UPDATE_FAILED);
         }
 
-        List<UserTag> existingUserTags = userTagRepository.findAllByUserIdWithTag(userId);
-        MatchRequestDto currentRequest = toMatchRequestDtoFromUserTags(existingUserTags, userId);
+        List<TagUser> existingTagUsers = tagUserRepository.findAllByUserIdWithTag(userId);
+        MatchRequestDto currentRequest = toMatchRequestDtoFromUserTags(existingTagUsers, userId);
         MatchRequestDto merged = mergeMatchRequest(currentRequest, patchRequest);
 
         matchService.match(userId, merged);
@@ -105,13 +105,13 @@ public class UserFeatureService {
     // 그룹핑 헬퍼 (TagServiceImpl 스타일)
     // =====================================================
 
-    private static Map<String, List<Integer>> groupTagIds(List<UserTag> userTags) {
-        if (userTags == null || userTags.isEmpty()) {
+    private static Map<String, List<Integer>> groupTagIds(List<TagUser> tagUsers) {
+        if (tagUsers == null || tagUsers.isEmpty()) {
             return Map.of();
         }
 
-        return userTags.stream()
-                .map(UserTag::getTag)
+        return tagUsers.stream()
+                .map(TagUser::getTag)
                 .filter(t -> t != null && !t.isDeleted())
                 .filter(t -> t.getTagType() != null && t.getTagCategory() != null)
                 .collect(Collectors.groupingBy(
@@ -128,7 +128,7 @@ public class UserFeatureService {
         return grouped.getOrDefault(key(type, category), List.of());
     }
 
-    private MatchRequestDto toMatchRequestDtoFromUserTags(List<UserTag> userTags, Long userId) {
+    private MatchRequestDto toMatchRequestDtoFromUserTags(List<TagUser> tagUsers, Long userId) {
         // ===== Beauty =====
         List<Integer> beautyInterestStyleTags = new ArrayList<>();
         List<Integer> beautyPreferredFunctionTags = new ArrayList<>();
@@ -155,8 +155,8 @@ public class UserFeatureService {
         List<Integer> preferredInvolvementTags = new ArrayList<>();
         List<Integer> preferredCoverageTags = new ArrayList<>();
 
-        if (userTags != null) {
-            for (UserTag ut : userTags) {
+        if (tagUsers != null) {
+            for (TagUser ut : tagUsers) {
                 Tag tag = ut.getTag();
                 if (tag == null || tag.isDeleted() || tag.getTagType() == null || tag.getTagCategory() == null) {
                     continue;
