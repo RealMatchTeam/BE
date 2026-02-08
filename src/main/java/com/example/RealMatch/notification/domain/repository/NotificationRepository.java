@@ -19,13 +19,13 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     Page<Notification> findByUserIdAndKindIn(Long userId, Collection<NotificationKind> kinds, Pageable pageable);
 
-    @Query("SELECT COUNT(n) FROM Notification n WHERE n.userId = :userId AND n.isRead = false")
+    @Query("SELECT COUNT(n) FROM Notification n WHERE n.userId = :userId AND n.isRead = false AND n.isDeleted = false")
     long countUnreadByUserId(@Param("userId") Long userId);
 
     /**
      * 해당 유저의 미읽음 알림을 모두 읽음 처리한다 (벌크 UPDATE)
      */
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId AND n.isRead = false")
+    @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId AND n.isRead = false AND n.isDeleted = false")
     int markAllAsRead(@Param("userId") Long userId);
 }

@@ -2,7 +2,7 @@ package com.example.RealMatch.notification.domain.entity;
 
 import java.util.UUID;
 
-import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
 import com.example.RealMatch.notification.domain.entity.enums.ReferenceType;
 
@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Notification extends BaseEntity {
+public class Notification extends DeleteBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
