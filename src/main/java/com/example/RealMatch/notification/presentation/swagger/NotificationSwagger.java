@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 public interface NotificationSwagger {
 
     @Operation(
-            summary = "알림 목록 조회 API",
+            summary = "알림 목록 조회 API by 여채현",
             description = """
                     로그인한 유저의 알림 목록을 조회합니다.
                     
@@ -40,7 +40,7 @@ public interface NotificationSwagger {
     );
 
     @Operation(
-            summary = "알림 단건 읽음 처리 API",
+            summary = "알림 단건 읽음 처리 API by 여채현",
             description = """
                     특정 알림을 읽음 처리합니다.
                     
@@ -59,7 +59,7 @@ public interface NotificationSwagger {
     );
 
     @Operation(
-            summary = "알림 전체 읽기 API",
+            summary = "알림 전체 읽기 API by 여채현",
             description = """
                     로그인한 유저의 미읽음 알림을 모두 읽음 처리합니다.
                     벌크 UPDATE로 처리되며, 업데이트된 건수가 반환됩니다.
@@ -73,7 +73,7 @@ public interface NotificationSwagger {
     );
 
     @Operation(
-            summary = "미읽음 알림 개수 조회 API",
+            summary = "미읽음 알림 개수 조회 API by 여채현",
             description = "로그인한 유저의 미읽음 알림 총 개수를 반환합니다."
     )
     @ApiResponses({
