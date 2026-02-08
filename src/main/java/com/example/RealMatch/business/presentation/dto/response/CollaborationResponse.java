@@ -8,6 +8,7 @@ import com.example.RealMatch.business.domain.enums.ProposalStatus;
 public record CollaborationResponse(
         Long campaignId,           // 캠페인 기반일 때만 채움
         Long proposalId,           // 제안 기반일 때만 채움
+        Long brandId,
 
         String brandName,
         String thumbnailUrl,
