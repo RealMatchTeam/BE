@@ -189,32 +189,31 @@ public class AuthService {
             userContentCategoryRepository.saveAll(userContentCategories);
         }
     }
+
     /**
      * 마케팅 알림 동의 시 알림 설정 생성/업데이트
      */
-    private void handleNotificationSettings(User user, List<SignupCompleteRequest.TermAgreementDto> terms) {
-        // MARKETING_NOTIFICATION 동의 여부 확인
+    private void handleNotificationSettings(
+            User user,
+            List<SignupCompleteRequest.TermAgreementDto> terms
+    ) {
         boolean marketingNotificationAgreed = terms.stream()
-                .anyMatch(term -> term.type() == TermName.MARKETING_NOTIFICATION && term.agreed());
+                .anyMatch(term ->
+                        term.type() == TermName.MARKETING_NOTIFICATION
+                                && term.agreed()
+                );
 
-        if (marketingNotificationAgreed) {
-            // 기존 알림 설정 조회 또는 새로 생성
-            NotificationSetting notificationSetting = notificationSettingRepository
-                    .findByUserId(user.getId())
-                    .orElseGet(() -> NotificationSetting.builder()
-                            .user(user)
-                            .appPushEnabled(false)
-                            .emailEnabled(false)
-                            .build());
+        NotificationSetting notificationSetting =
+                notificationSettingRepository.findByUserId(user.getId())
+                        .orElseGet(() -> NotificationSetting.builder()
+                                .user(user)
+                                .build());
 
-            // 동의 여부에 따라 알림 설정 업데이트
-            if (marketingNotificationAgreed) {
-                notificationSetting.update(true, true);
-            } else {
-                notificationSetting.update(false, false);
-            }
+        notificationSetting.update(
+                marketingNotificationAgreed,
+                marketingNotificationAgreed
+        );
 
-            notificationSettingRepository.save(notificationSetting);
-        }
+        notificationSettingRepository.save(notificationSetting);
     }
 }
