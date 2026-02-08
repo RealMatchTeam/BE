@@ -2,9 +2,10 @@ package com.example.RealMatch.chat.application.service.room;
 
 import java.util.Optional;
 
+import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 
 public interface MatchedCampaignPayloadProvider {
 
-    Optional<ChatMatchedCampaignPayloadResponse> getPayload(Long campaignId);
+    Optional<ChatMatchedCampaignPayloadResponse> getPayload(Long campaignId, ChatProposalDirection proposalDirection);
 }
