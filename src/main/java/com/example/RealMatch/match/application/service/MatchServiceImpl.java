@@ -46,9 +46,9 @@ import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.BrandDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingBrandListDto;
 import com.example.RealMatch.tag.domain.entity.Tag;
-import com.example.RealMatch.tag.domain.entity.UserTag;
+import com.example.RealMatch.tag.domain.entity.TagUser;
 import com.example.RealMatch.tag.domain.repository.TagRepository;
-import com.example.RealMatch.tag.domain.repository.UserTagRepository;
+import com.example.RealMatch.tag.domain.repository.TagUserRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
@@ -67,17 +67,22 @@ public class MatchServiceImpl implements MatchService {
     private final RedisDocumentHelper redisDocumentHelper;
 
     private final BrandRepository brandRepository;
-    private final CampaignRepository campaignRepository;
+    
     private final BrandLikeRepository brandLikeRepository;
     private final BrandDescribeTagRepository brandDescribeTagRepository;
+    
+    private final CampaignRepository campaignRepository;
     private final CampaignLikeRepository campaignLikeRepository;
     private final CampaignApplyRepository campaignApplyRepository;
-    private final UserRepository userRepository;
-    private final UserMatchingDetailRepository userMatchingDetailRepository;
+    
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
-    private final UserTagRepository userTagRepository;
+
+    private final TagUserRepository tagUserRepository;
     private final TagRepository tagRepository;
+
+    private final UserRepository userRepository;
+    private final UserMatchingDetailRepository userMatchingDetailRepository;
 
     // 매칭 요청 //
 
@@ -158,7 +163,7 @@ public class MatchServiceImpl implements MatchService {
         userMatchingDetailRepository.save(newDetail);
 
         // B. 기존 태그 삭제 및 새 태그 저장 (나머지 정보 전부 user_tag로)
-        userTagRepository.deleteByUserId(userId);
+        tagUserRepository.deleteByUserId(userId);
 
         Set<Integer> tagIds = collectAllTagIds(dto);
         if (tagIds.isEmpty()) {
@@ -168,15 +173,15 @@ public class MatchServiceImpl implements MatchService {
         User userRef = userRepository.getReferenceById(userId); // DB조회 없이 프록시만 (성능)
         List<Tag> tags = tagRepository.findAllById(tagIds.stream().map(Long::valueOf).toList());
 
-        List<UserTag> userTags = tags.stream()
-                .map(tag -> UserTag.builder()
+        List<TagUser> tagsUser = tags.stream()
+                .map(tag -> TagUser.builder()
                         .user(userRef)
                         .tag(tag)
                         .isDeprecated(false)
                         .build())
                 .toList();
 
-        userTagRepository.saveAll(userTags);
+        tagUserRepository.saveAll(tagsUser);
     }
 
     private void saveMatchHistory(Long userId, List<BrandMatchResult> brandResults, List<CampaignMatchResult> campaignResults) {
