@@ -24,10 +24,8 @@ public class MatchedCampaignPayloadProviderImpl implements MatchedCampaignPayloa
         if (campaignId == null) {
             return Optional.empty();
         }
-        ChatProposalDirection direction = proposalDirection != null ? proposalDirection : ChatProposalDirection.NONE;
-        return campaignRepository.findById(campaignId)
-                .filter(c -> !c.isDeleted())
-                .map(c -> toPayload(c, direction));
+        return campaignRepository.findByIdAndIsDeletedFalse(campaignId)
+                .map(c -> toPayload(c, proposalDirection));
     }
 
     private ChatMatchedCampaignPayloadResponse toPayload(Campaign campaign, ChatProposalDirection proposalDirection) {
