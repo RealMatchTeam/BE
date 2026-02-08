@@ -21,6 +21,7 @@ import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.NicknameAvailableResponseDto;
 import com.example.RealMatch.user.presentation.swagger.UserSwagger;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -106,5 +107,14 @@ public class UserController implements UserSwagger {
     ) {
         userFeatureService.updateMyFeatures(userDetails.getUserId(), request);
         return CustomResponse.ok(null);
+    }
+
+    @Override
+    @GetMapping("/nickname/available")
+    public CustomResponse<NicknameAvailableResponseDto> checkNicknameAvailable(
+            @RequestParam String nickname
+    ) {
+        boolean available = userService.isNicknameAvailable(nickname);
+        return CustomResponse.ok(new NicknameAvailableResponseDto(available));
     }
 }
