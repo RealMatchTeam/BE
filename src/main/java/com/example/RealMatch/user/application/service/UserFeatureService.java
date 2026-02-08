@@ -38,7 +38,6 @@ public class UserFeatureService {
     /**
      *  내 특성 조회
      * - UserTag에서 tagType/tagCategory 기반으로 그룹핑해서 반환
-     * - "키"는 현재 DB에서 tag_category="키" 로 태그화되어 있으므로 그대로 태그로 조회
      */
     public MyFeatureResponseDto getMyFeatures(Long userId) {
         List<TagUser> tagUsers = tagUserRepository.findAllByUserIdWithTag(userId);

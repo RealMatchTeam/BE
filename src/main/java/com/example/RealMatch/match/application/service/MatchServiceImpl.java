@@ -27,6 +27,7 @@ import com.example.RealMatch.business.domain.repository.CampaignApplyRepository;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignLikeRepository;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.application.util.MatchScoreCalculator;
 import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
@@ -53,6 +54,7 @@ import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
+import com.example.RealMatch.user.presentation.code.UserErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -141,6 +143,9 @@ public class MatchServiceImpl implements MatchService {
      * - TagUser(유저태그): 그 외 태그 전부 저장
      */
     private void replaceUserMatchingDetailAndTags(Long userId, MatchRequestDto dto, String creatorType) {
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
                 .ifPresent(UserMatchingDetail::deprecated);
