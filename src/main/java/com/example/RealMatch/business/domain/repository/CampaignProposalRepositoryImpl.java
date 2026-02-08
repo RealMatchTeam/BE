@@ -55,6 +55,7 @@ public class CampaignProposalRepositoryImpl
                         CollaborationProjection.class,
                         campaign.id,
                         campaignProposal.id,
+                        brand.id,
                         brand.brandName,
                         brand.logoUrl,
                         campaignProposal.title,
