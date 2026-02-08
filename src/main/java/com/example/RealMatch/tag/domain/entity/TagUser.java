@@ -41,17 +41,12 @@ public class TagUser extends BaseEntity {
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
 
-    @Column(name = "is_deprecated", nullable = false)
-    private boolean isDeprecated;
-
     @Builder
     public TagUser(
             User user,
-            Tag tag,
-            boolean isDeprecated
+            Tag tag
     ) {
         this.user = user;
         this.tag = tag;
-        this.isDeprecated = isDeprecated;
     }
 }
