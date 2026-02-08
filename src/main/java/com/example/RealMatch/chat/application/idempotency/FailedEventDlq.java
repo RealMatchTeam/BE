@@ -21,6 +21,12 @@ public class FailedEventDlq {
     private static final Logger LOG = LoggerFactory.getLogger(FailedEventDlq.class);
     private static final String DLQ_KEY = "chat:dlq";
 
+    /**
+     * DLQ 최대 보관 건수.
+     * RPUSH 후 LTRIM으로 최근 N건만 유지하여 Redis 메모리 무한 증가를 방지합니다.
+     */
+    private static final long MAX_DLQ_SIZE = 10_000;
+
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -43,6 +49,8 @@ public class FailedEventDlq {
 
             String json = objectMapper.writeValueAsString(entry);
             redisTemplate.opsForList().rightPush(DLQ_KEY, json);
+            // 최근 MAX_DLQ_SIZE 건만 유지하여 메모리 무한 증가 방지
+            redisTemplate.opsForList().trim(DLQ_KEY, -MAX_DLQ_SIZE, -1);
 
             LOG.info("[DLQ] Failed event enqueued. eventType={}, eventId={}, roomId={}, error={}",
                     eventType, eventId, roomId, error);

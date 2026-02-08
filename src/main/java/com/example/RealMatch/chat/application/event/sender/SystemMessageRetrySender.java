@@ -13,6 +13,8 @@ import com.example.RealMatch.chat.application.idempotency.ProcessedEventStore;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -34,13 +36,31 @@ public class SystemMessageRetrySender {
 
     private static final Logger LOG = LoggerFactory.getLogger(SystemMessageRetrySender.class);
 
+    private static final String METRIC_LOGICAL_FAILURE = "chat.system_message.logical_failure";
+
     private final ProcessedEventStore processedEventStore;
     private final SystemMessageSender systemMessageSender;
+    private final MeterRegistry meterRegistry;
 
-    private static final Duration EVENT_IDEMPOTENCY_TTL = Duration.ofHours(6);
+    /**
+     * IN_PROGRESS 상태의 TTL. 짧게 설정하여 프로세스 다운 시 빠르게 만료 → 재처리 가능.
+     * 전송 + 재시도(3회, backoff 최대 800ms)를 충분히 커버하는 시간으로 설정.
+     */
+    private static final Duration IN_PROGRESS_TTL = Duration.ofMinutes(3);
+
+    /**
+     * PROCESSED 상태의 TTL. 길게 설정하여 동일 이벤트의 중복 처리를 장기간 방지.
+     */
+    private static final Duration PROCESSED_TTL = Duration.ofHours(6);
 
     /**
      * 시스템 메시지를 멱등성 체크 후 전송합니다.
+     *
+     * <p>2단계 상태머신:
+     * <ol>
+     *   <li>IN_PROGRESS(짧은 TTL)로 선점 → 프로세스 다운 시 빠르게 만료되어 재처리 가능</li>
+     *   <li>전송 성공 시 PROCESSED(긴 TTL)로 승격 → 중복 처리 장기간 방지</li>
+     * </ol>
      *
      * <p>반환값은 전송 성공 여부를 의미합니다.
      * - true: 전송 성공 및 markAsProcessed 완료 (at-least-once 보장)
@@ -60,10 +80,11 @@ public class SystemMessageRetrySender {
             throw new IllegalArgumentException("idempotencyKey cannot be null");
         }
 
-        // 멱등성 체크: false=중복만, throw=Redis 장애 등 판단 불가 → 상위로 throw하여 DLQ 처리
-        boolean isNewEvent = processedEventStore.markIfNotProcessed(idempotencyKey, EVENT_IDEMPOTENCY_TTL);
+        // 멱등성 체크: IN_PROGRESS(짧은 TTL)로 선점
+        // false=중복만, throw=Redis 장애 등 판단 불가 → 상위로 throw하여 DLQ 처리
+        boolean isNewEvent = processedEventStore.markIfNotProcessed(idempotencyKey, IN_PROGRESS_TTL);
         if (!isNewEvent) {
-            LOG.info("[RetrySender] Event already processed, skipping. key={}, eventType={}",
+            LOG.info("[RetrySender] Event already processed or in progress, skipping. key={}, eventType={}",
                     idempotencyKey, eventType);
             return false;
         }
@@ -74,6 +95,7 @@ public class SystemMessageRetrySender {
         } catch (LogicalFailureException ex) {
             // 논리적 실패: removeProcessed로 키 제거하고 false 반환 (DLQ 기록 안 함)
             processedEventStore.removeProcessed(idempotencyKey);
+            recordLogicalFailure(eventType, resolveLogicalFailureReason(ex));
             LOG.warn("[RetrySender] Logical failure. key={}, eventType={}, error={}",
                     idempotencyKey, eventType, ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage(), ex);
             return false;
@@ -81,6 +103,7 @@ public class SystemMessageRetrySender {
             // fallback: @Recover가 동작하지 않은 경우 (proxy 비활성화 등)
             // 논리적 실패만 removeProcessed: 재시도해도 동일 결과이므로 키 제거 (레이스/중복 가능성 없음)
             processedEventStore.removeProcessed(idempotencyKey);
+            recordLogicalFailure(eventType, ex.getClass().getSimpleName());
             LOG.error("[RetrySender] Logical failure (fallback - proxy inactive suspected). " +
                             "key={}, eventType={}, error={}. " +
                             "This should be handled by @Recover. Check Spring Retry proxy configuration.",
@@ -95,10 +118,27 @@ public class SystemMessageRetrySender {
             throw ex;
         }
 
-        // 전송 성공 후 markAsProcessed: 실패 시 throw → 상위에서 DLQ 처리 (성공처럼 넘기지 않음)
-        processedEventStore.markAsProcessed(idempotencyKey, EVENT_IDEMPOTENCY_TTL);
+        // 전송 성공: IN_PROGRESS → PROCESSED로 승격 (긴 TTL)
+        // 실패 시 throw → 상위에서 DLQ 처리 (성공처럼 넘기지 않음)
+        processedEventStore.markAsProcessed(idempotencyKey, PROCESSED_TTL);
         LOG.info("[RetrySender] System message sent successfully. key={}, roomId={}, kind={}",
                 idempotencyKey, roomId, messageKind);
         return true;
+    }
+
+    private void recordLogicalFailure(String eventType, String reason) {
+        Counter.builder(METRIC_LOGICAL_FAILURE)
+                .description("Count of logical failures in system message processing")
+                .tag("eventType", eventType != null ? eventType : "unknown")
+                .tag("reason", reason != null ? reason : "unknown")
+                .register(meterRegistry)
+                .increment();
+    }
+
+    private static String resolveLogicalFailureReason(LogicalFailureException ex) {
+        if (ex.getCause() != null) {
+            return ex.getCause().getClass().getSimpleName();
+        }
+        return "LogicalFailureException";
     }
 }

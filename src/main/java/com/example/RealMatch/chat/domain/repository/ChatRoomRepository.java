@@ -22,7 +22,9 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>, ChatR
                 r.lastMessagePreview = :messagePreview,
                 r.lastMessageType = :messageType
             WHERE r.id = :roomId
-              AND (r.lastMessageAt IS NULL OR r.lastMessageAt < :messageAt)
+              AND (r.lastMessageAt IS NULL
+                   OR r.lastMessageAt < :messageAt
+                   OR (r.lastMessageAt = :messageAt AND r.lastMessageId < :messageId))
             """)
     int updateLastMessageIfNewer(
             @Param("roomId") Long roomId,
