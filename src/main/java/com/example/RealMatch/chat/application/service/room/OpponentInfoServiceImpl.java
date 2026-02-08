@@ -8,13 +8,13 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.chat.application.util.ChatConstants;
 import com.example.RealMatch.chat.application.util.ChatRoomValidator;
 import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
-import com.example.RealMatch.brand.domain.entity.Brand;
-import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.domain.entity.User;

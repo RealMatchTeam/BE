@@ -23,6 +23,7 @@ import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
+import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
@@ -151,17 +152,17 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     @Override
     public ChatRoomDetailResponse getChatRoomDetailWithOpponent(Long userId, Long roomId) {
-        chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);
+        ChatRoomMember myMember = chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);
 
         return chatRoomDetailCache.get(roomId, userId)
                 .orElseGet(() -> {
-                    ChatRoomDetailResponse response = loadChatRoomDetail(userId, roomId);
+                    ChatRoomDetailResponse response = loadChatRoomDetail(userId, roomId, myMember.getRole());
                     chatRoomDetailCache.put(roomId, userId, response);
                     return response;
                 });
     }
 
-    private ChatRoomDetailResponse loadChatRoomDetail(Long userId, Long roomId) {
+    private ChatRoomDetailResponse loadChatRoomDetail(Long userId, Long roomId, ChatRoomMemberRole myRole) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));
 
@@ -190,7 +191,8 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
                 opponent.profileImageUrl(),
                 isCollaborating,
                 campaignSummary,
-                latestProposalId
+                latestProposalId,
+                myRole
         );
     }
 
