@@ -144,8 +144,9 @@ public class MatchServiceImpl implements MatchService {
      */
     private void replaceUserMatchingDetailAndTags(Long userId, MatchRequestDto dto, String creatorType) {
 
-        userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+        if (!userRepository.existsById(userId)) {
+            throw new CustomException(UserErrorCode.USER_NOT_FOUND);
+        }
 
         userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
                 .ifPresent(UserMatchingDetail::deprecated);
