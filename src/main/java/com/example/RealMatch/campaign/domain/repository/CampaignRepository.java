@@ -16,6 +16,9 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
 
     Optional<Campaign> findById(Long id);
 
+    @Query("SELECT c FROM Campaign c WHERE c.id = :id AND c.isDeleted = false")
+    Optional<Campaign> findByIdAndIsDeletedFalse(@Param("id") Long id);
+
     List<Campaign> findAll();
 
     List<Campaign> findByCreatedBy(Long createdBy);

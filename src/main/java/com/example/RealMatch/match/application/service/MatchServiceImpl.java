@@ -27,6 +27,7 @@ import com.example.RealMatch.business.domain.repository.CampaignApplyRepository;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignLikeRepository;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.application.util.MatchScoreCalculator;
 import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 import com.example.RealMatch.match.domain.entity.MatchCampaignHistory;
@@ -53,6 +54,7 @@ import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
+import com.example.RealMatch.user.presentation.code.UserErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -84,9 +86,13 @@ public class MatchServiceImpl implements MatchService {
     private final UserRepository userRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
 
-    // ******* //
-    // 매칭 요청 //
-    // ******* //
+    /**
+     * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
+     * - 기존 UserMatchingDetail 폐기
+     * - 새 UserMatchingDetail 생성 (creatorType + snsUrl만)
+     * - TagUser 전량 교체 저장 (나머지 정보 전부 user_tag로)
+     * - 브랜드/캠페인 매칭 히스토리 갱신
+     */
     @Override
     @Transactional
     public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
@@ -96,7 +102,7 @@ public class MatchServiceImpl implements MatchService {
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
 
-        saveUserMatchingDetailAndTags(userId, requestDto, userType);
+        replaceUserMatchingDetailAndTags(userId, requestDto, userType);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
 
@@ -131,7 +137,16 @@ public class MatchServiceImpl implements MatchService {
                 .build();
     }
 
-    private void saveUserMatchingDetailAndTags(Long userId, MatchRequestDto dto, String creatorType) {
+    /**
+     *  매칭검사 결과 저장 (트랜잭션 1개로 원자 처리)
+     * - UserMatchingDetail(유저매칭결과): creatorType + snsUrl만 저장
+     * - TagUser(유저태그): 그 외 태그 전부 저장
+     */
+    private void replaceUserMatchingDetailAndTags(Long userId, MatchRequestDto dto, String creatorType) {
+
+        if (!userRepository.existsById(userId)) {
+            throw new CustomException(UserErrorCode.USER_NOT_FOUND);
+        }
 
         userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
                 .ifPresent(UserMatchingDetail::deprecated);
@@ -149,7 +164,9 @@ public class MatchServiceImpl implements MatchService {
 
         userMatchingDetailRepository.save(newDetail);
 
+        // B. 기존 태그 삭제 및 새 태그 저장 (나머지 정보 전부 user_tag로)
         tagUserRepository.deleteByUserId(userId);
+        tagUserRepository.flush();
 
         Set<Integer> tagIds = collectAllTagIds(dto);
         if (tagIds.isEmpty()) {

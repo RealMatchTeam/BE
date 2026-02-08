@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
+import com.example.RealMatch.user.application.util.NicknameValidator;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserContentCategory;
@@ -39,6 +40,7 @@ public class UserService {
     private final AuthenticationMethodRepository authenticationMethodRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final UserContentCategoryRepository userContentCategoryRepository;
+    private final NicknameValidator nicknameValidator;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -165,5 +167,10 @@ public class UserService {
 
         // DTO 변환 및 반환
         return MyLoginResponseDto.from(linkedProviders);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isNicknameAvailable(String nickname) {
+        return nicknameValidator.isAvailable(nickname);
     }
 }

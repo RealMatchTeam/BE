@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
+import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -19,16 +20,15 @@ public class MatchedCampaignPayloadProviderImpl implements MatchedCampaignPayloa
     private final CampaignRepository campaignRepository;
 
     @Override
-    public Optional<ChatMatchedCampaignPayloadResponse> getPayload(Long campaignId) {
+    public Optional<ChatMatchedCampaignPayloadResponse> getPayload(Long campaignId, ChatProposalDirection proposalDirection) {
         if (campaignId == null) {
             return Optional.empty();
         }
-        return campaignRepository.findById(campaignId)
-                .filter(c -> !c.isDeleted())
-                .map(this::toPayload);
+        return campaignRepository.findByIdAndIsDeletedFalse(campaignId)
+                .map(c -> toPayload(c, proposalDirection));
     }
 
-    private ChatMatchedCampaignPayloadResponse toPayload(Campaign campaign) {
+    private ChatMatchedCampaignPayloadResponse toPayload(Campaign campaign, ChatProposalDirection proposalDirection) {
         // TODO: orderNumber - 결제/주문 도메인에서 주문 번호 확정 시 채팅으로 전달하거나,
         //       ProposalStatusChangedEvent(또는 매칭 완료 이벤트)에 orderNumber 포함 후 여기서 사용
         return new ChatMatchedCampaignPayloadResponse(
@@ -37,7 +37,8 @@ public class MatchedCampaignPayloadProviderImpl implements MatchedCampaignPayloa
                 campaign.getRewardAmount() != null ? campaign.getRewardAmount() : 0L,
                 DEFAULT_CURRENCY,
                 "",
-                null
+                null,
+                proposalDirection
         );
     }
 }

@@ -1,5 +1,6 @@
 package com.example.RealMatch.business.application.event;
 
+import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 
 /**
@@ -11,6 +12,7 @@ public record CampaignProposalStatusChangedEvent(
         Long brandUserId,
         Long creatorUserId,
         ProposalStatus newStatus,
-        Long actorUserId  // 상태 변경을 수행한 사용자 ID (수락/거절한 사용자)
+        Long actorUserId,  // 상태 변경을 수행한 사용자 ID (수락/거절한 사용자)
+        ProposalDirection proposalDirection  // 누가 제안했는지 방향 (BRAND_TO_CREATOR / CREATOR_TO_BRAND)
 ) {
 }

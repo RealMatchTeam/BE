@@ -15,6 +15,7 @@ import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyProfileCardResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyScrapResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.NicknameAvailableResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -114,5 +115,31 @@ public interface UserSwagger {
     CustomResponse<Void> updateMyFeature(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody MatchRequestDto request
+    );
+
+    @Operation(
+            summary = "닉네임 중복 체크 API",
+            description = """
+                회원가입 및 닉네임 변경 시 사용할 닉네임 중복 체크 API입니다.
+
+                user 테이블의 nickname 컬럼에서 닉네임이 있으면 "available": false 반환
+                없으면 "available": true 반환
+                
+                닉네임 형식 및 길이 조건
+                - 형식: 한글, 영문, 숫자만 허용 (특수문자 및 공백 불가)
+                - 길이: 2자 이상 10자 이하 허용 
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "중복 체크 성공"),
+            @ApiResponse(responseCode = "400", description = "닉네임 형식 또는 길이 오류")
+    })
+    CustomResponse<NicknameAvailableResponseDto> checkNicknameAvailable(
+            @Parameter(
+                    description = "중복 여부를 확인할 닉네임",
+                    required = true,
+                    example = "비비"
+            )
+            @RequestParam String nickname
     );
 }
