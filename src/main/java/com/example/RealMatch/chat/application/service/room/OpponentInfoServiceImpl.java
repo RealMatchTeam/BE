@@ -12,6 +12,9 @@ import com.example.RealMatch.chat.application.util.ChatConstants;
 import com.example.RealMatch.chat.application.util.ChatRoomValidator;
 import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
+import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
+import com.example.RealMatch.brand.domain.entity.Brand;
+import com.example.RealMatch.brand.domain.repository.BrandRepository;
 import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.domain.entity.User;
@@ -25,9 +28,10 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
 
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final UserRepository userRepository;
+    private final BrandRepository brandRepository;
 
     @Override
-    public OpponentInfo getOpponentInfo(Long opponentUserId) {
+    public OpponentInfo getOpponentInfo(Long opponentUserId, ChatRoomMemberRole role) {
         if (opponentUserId == null) {
             return unknownOpponentInfo(null);
         }
@@ -37,7 +41,12 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
             return unknownOpponentInfo(opponentUserId);
         }
 
-        return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
+        Brand brand = null;
+        if (role == ChatRoomMemberRole.BRAND) {
+            brand = brandRepository.findByUserId(opponentUserId).orElse(null);
+        }
+
+        return toOpponentInfo(opponentUserId, role, user, brand);
     }
 
     @Override
@@ -47,13 +56,14 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
         }
 
         Map<Long, List<ChatRoomMember>> opponentByRoom = findOpponentMembersByRoom(userId, roomIds);
-        Map<Long, Long> roomToOpponentUserIdMap = buildOpponentUserIdMap(roomIds, opponentByRoom);
-        Map<Long, User> userMap = loadOpponentUsers(roomToOpponentUserIdMap);
+        Map<Long, OpponentMember> roomToOpponentMemberMap = buildOpponentMemberMap(roomIds, opponentByRoom);
+        Map<Long, User> userMap = loadOpponentUsers(roomToOpponentMemberMap);
+        Map<Long, Brand> brandMap = loadOpponentBrands(roomToOpponentMemberMap);
 
         return roomIds.stream()
                 .collect(Collectors.toMap(
                         roomId -> roomId,
-                        roomId -> toOpponentInfo(roomToOpponentUserIdMap.get(roomId), userMap)
+                        roomId -> toOpponentInfo(roomToOpponentMemberMap.get(roomId), userMap, brandMap)
                 ));
     }
 
@@ -73,7 +83,7 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
                 .collect(Collectors.groupingBy(ChatRoomMember::getRoomId));
     }
 
-    private Map<Long, Long> buildOpponentUserIdMap(
+    private Map<Long, OpponentMember> buildOpponentMemberMap(
             List<Long> roomIds,
             Map<Long, List<ChatRoomMember>> opponentByRoom
     ) {
@@ -83,13 +93,17 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
                         roomId -> {
                             List<ChatRoomMember> members = opponentByRoom.get(roomId);
                             ChatRoomValidator.validateDirectRoomOpponent(members, roomId);
-                            return members.getFirst().getUserId();
+                            ChatRoomMember member = members.getFirst();
+                            return new OpponentMember(member.getUserId(), member.getRole());
                         }
                 ));
     }
 
-    private Map<Long, User> loadOpponentUsers(Map<Long, Long> roomToOpponentUserIdMap) {
-        Set<Long> opponentUserIds = new HashSet<>(roomToOpponentUserIdMap.values());
+    private Map<Long, User> loadOpponentUsers(Map<Long, OpponentMember> roomToOpponentMemberMap) {
+        Set<Long> opponentUserIds = roomToOpponentMemberMap.values().stream()
+                .map(OpponentMember::userId)
+                .filter(id -> id != null)
+                .collect(Collectors.toCollection(HashSet::new));
         if (opponentUserIds.isEmpty()) {
             return Map.of();
         }
@@ -97,18 +111,50 @@ public class OpponentInfoServiceImpl implements OpponentInfoService {
                 .collect(Collectors.toMap(User::getId, u -> u));
     }
 
-    private OpponentInfo toOpponentInfo(Long opponentUserId, Map<Long, User> userMap) {
-        if (opponentUserId == null) {
+    private Map<Long, Brand> loadOpponentBrands(Map<Long, OpponentMember> roomToOpponentMemberMap) {
+        List<Long> brandUserIds = roomToOpponentMemberMap.values().stream()
+                .filter(member -> member.role() == ChatRoomMemberRole.BRAND)
+                .map(OpponentMember::userId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+        if (brandUserIds.isEmpty()) {
+            return Map.of();
+        }
+        return brandRepository.findByUserIdIn(brandUserIds).stream()
+                .collect(Collectors.toMap(b -> b.getUser().getId(), b -> b));
+    }
+
+    private OpponentInfo toOpponentInfo(
+            OpponentMember opponentMember,
+            Map<Long, User> userMap,
+            Map<Long, Brand> brandMap
+    ) {
+        if (opponentMember == null || opponentMember.userId() == null) {
             return unknownOpponentInfo(null);
         }
-        User user = userMap.get(opponentUserId);
+        User user = userMap.get(opponentMember.userId());
         if (user == null) {
-            return unknownOpponentInfo(opponentUserId);
+            return unknownOpponentInfo(opponentMember.userId());
+        }
+        Brand brand = brandMap.get(opponentMember.userId());
+        return toOpponentInfo(opponentMember.userId(), opponentMember.role(), user, brand);
+    }
+
+    private OpponentInfo toOpponentInfo(Long opponentUserId, ChatRoomMemberRole role, User user, Brand brand) {
+        if (role == ChatRoomMemberRole.BRAND) {
+            String brandName = brand != null ? brand.getBrandName() : ChatConstants.UNKNOWN_OPPONENT_NAME;
+            String brandImageUrl = brand != null ? brand.getLogoUrl() : null;
+            String profileImageUrl = brandImageUrl != null ? brandImageUrl : user.getProfileImageUrl();
+            return new OpponentInfo(opponentUserId, brandName, profileImageUrl);
         }
         return new OpponentInfo(opponentUserId, user.getNickname(), user.getProfileImageUrl());
     }
 
     private OpponentInfo unknownOpponentInfo(Long opponentUserId) {
         return new OpponentInfo(opponentUserId, ChatConstants.UNKNOWN_OPPONENT_NAME, null);
+    }
+
+    private record OpponentMember(Long userId, ChatRoomMemberRole role) {
     }
 }

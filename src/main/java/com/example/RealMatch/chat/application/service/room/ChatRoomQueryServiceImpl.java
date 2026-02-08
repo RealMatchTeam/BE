@@ -167,7 +167,10 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
         // 상대방 멤버 조회 (1:1 채팅방이므로 상대방은 1명)
         ChatRoomMember opponentMember = opponentInfoService.getOpponentMember(roomId, userId);
-        OpponentInfo opponent = opponentInfoService.getOpponentInfo(opponentMember.getUserId());
+        OpponentInfo opponent = opponentInfoService.getOpponentInfo(
+                opponentMember.getUserId(),
+                opponentMember.getRole()
+        );
 
         // 협업중 여부 판단
         boolean isCollaborating = room.isCollaborating();

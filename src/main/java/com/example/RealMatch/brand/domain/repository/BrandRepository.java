@@ -33,6 +33,12 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     Optional<Brand> findByUserId(@Param("userId") Long userId);
 
     @Query("""
+        select b from Brand b
+        where b.user.id in :userIds
+    """)
+    List<Brand> findByUserIdIn(@Param("userIds") List<Long> userIds);
+
+    @Query("""
         select b.id
         from Brand b
         where b.brandName like %:keyword%
