@@ -168,9 +168,9 @@ def main():
 
     parser.add_argument('--users', type=int, default=500,
                         help='생성할 사용자 수 (기본값: 50)')
-    parser.add_argument('--brands', type=int, default=20000,
+    parser.add_argument('--brands', type=int, default=2000,
                         help='생성할 브랜드 수 (기본값: 20)')
-    parser.add_argument('--campaigns', type=int, default=30000,
+    parser.add_argument('--campaigns', type=int, default=3000,
                         help='생성할 캠페인 수 (기본값: 30)')
     parser.add_argument('--rooms', type=int, default=2000,
                         help='생성할 채팅방 수 (기본값: 20)')
