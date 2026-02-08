@@ -173,7 +173,7 @@ public class MatchServiceImpl implements MatchService {
                 .map(tag -> UserTag.builder()
                         .user(userRef)
                         .tag(tag)
-                        .isDeprecated(false)
+                        .isDeleted(false)
                         .build())
                 .toList();
 

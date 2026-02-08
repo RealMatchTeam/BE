@@ -14,7 +14,7 @@ public interface UserTagRepository extends JpaRepository<UserTag, Long> {
     select ut from UserTag ut
     join fetch ut.tag t
     where ut.user.id = :userId
-    and ut.isDeprecated = false
+    and ut.isDeleted = false
     """)
     List<UserTag> findAllByUserIdWithTag(@Param("userId") Long userId);
 
