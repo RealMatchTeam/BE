@@ -32,6 +32,10 @@ public class ChatSocketController {
     @MessageMapping("/v1/chat.send")
     @SendToUser("/queue/v1/chat.ack")
     public ChatSendMessageAck sendMessage(@Valid @Payload ChatSendMessageCommand command, Principal principal) {
+        if (command == null) {
+            LOG.warn("Chat send received null command");
+            return ChatSendMessageAck.failure(null, GeneralErrorCode.BAD_REQUEST);
+        }
         try {
             Long senderId = chatUserIdResolver.resolve(principal);
             ChatMessageResponse response = chatMessageSocketService.sendMessage(command, senderId);
