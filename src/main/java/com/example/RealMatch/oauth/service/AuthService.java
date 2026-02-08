@@ -12,6 +12,7 @@ import com.example.RealMatch.oauth.dto.OAuthTokenResponse;
 import com.example.RealMatch.oauth.dto.request.SignupCompleteRequest;
 import com.example.RealMatch.user.application.util.NicknameValidator;
 import com.example.RealMatch.user.domain.entity.ContentCategory;
+import com.example.RealMatch.user.domain.entity.NotificationSetting;
 import com.example.RealMatch.user.domain.entity.SignupPurpose;
 import com.example.RealMatch.user.domain.entity.Term;
 import com.example.RealMatch.user.domain.entity.User;
@@ -19,7 +20,9 @@ import com.example.RealMatch.user.domain.entity.UserContentCategory;
 import com.example.RealMatch.user.domain.entity.UserSignupPurpose;
 import com.example.RealMatch.user.domain.entity.UserTerm;
 import com.example.RealMatch.user.domain.entity.enums.Role;
+import com.example.RealMatch.user.domain.entity.enums.TermName;
 import com.example.RealMatch.user.domain.repository.ContentCategoryRepository;
+import com.example.RealMatch.user.domain.repository.NotificationSettingRepository;
 import com.example.RealMatch.user.domain.repository.SignupPurposeRepository;
 import com.example.RealMatch.user.domain.repository.TermRepository;
 import com.example.RealMatch.user.domain.repository.UserContentCategoryRepository;
@@ -43,6 +46,7 @@ public class AuthService {
     private final UserContentCategoryRepository userContentCategoryRepository;
     private final JwtProvider jwtProvider;
     private final NicknameValidator nicknameValidator;
+    private final NotificationSettingRepository notificationSettingRepository;
 
     public OAuthTokenResponse completeSignup(Long userId, String providerId, SignupCompleteRequest request) {
         // 유저 조회
@@ -73,6 +77,9 @@ public class AuthService {
 
         // 콘텐츠 카테고리 저장
         saveContentCategories(user, request.contentCategoryIds());
+
+        // 마케팅 알림 동의 시 알림 설정 처리
+        handleNotificationSettings(user, request.terms());
 
         String currentRole = user.getRole().name();
 
@@ -181,5 +188,32 @@ public class AuthService {
                     .toList();
             userContentCategoryRepository.saveAll(userContentCategories);
         }
+    }
+
+    /**
+     * 마케팅 알림 동의 시 알림 설정 생성/업데이트
+     */
+    private void handleNotificationSettings(
+            User user,
+            List<SignupCompleteRequest.TermAgreementDto> terms
+    ) {
+        boolean marketingNotificationAgreed = terms.stream()
+                .anyMatch(term ->
+                        term.type() == TermName.MARKETING_NOTIFICATION
+                                && term.agreed()
+                );
+
+        NotificationSetting notificationSetting =
+                notificationSettingRepository.findByUserId(user.getId())
+                        .orElseGet(() -> NotificationSetting.builder()
+                                .user(user)
+                                .build());
+
+        notificationSetting.update(
+                marketingNotificationAgreed,
+                marketingNotificationAgreed
+        );
+
+        notificationSettingRepository.save(notificationSetting);
     }
 }
