@@ -10,6 +10,7 @@ import lombok.Getter;
 @Builder
 public class CreateNotificationCommand {
 
+    private final String eventId;  // 이벤트 식별자 (멱등성 보장용)
     private final Long userId;
     private final NotificationKind kind;
     private final String title;
