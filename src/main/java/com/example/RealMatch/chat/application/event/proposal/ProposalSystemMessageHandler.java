@@ -194,7 +194,7 @@ public class ProposalSystemMessageHandler extends BaseSystemMessageHandler {
         );
 
         // 매칭 완료 시 추가 카드 전송
-        if (event.newStatus() == ChatProposalStatus.MATCHED) {
+        if (event.newStatus() == ChatProposalStatus.MATCHED && event.campaignId() != null) {
             String matchedCardKey = String.format("%s:MATCHED_CARD", event.eventId());
 
             SystemEventMeta matchedMeta = new SystemEventMeta(
@@ -210,18 +210,17 @@ public class ProposalSystemMessageHandler extends BaseSystemMessageHandler {
                 matchedContextData.put("domainId", event.proposalId());
                 matchedContextData.put("proposalId", event.proposalId());
             }
-            if (event.campaignId() != null) {
-                matchedContextData.put("campaignId", event.campaignId());
-            }
+            matchedContextData.put("campaignId", event.campaignId());
 
+            Long campaignId = event.campaignId();
             execute(
                     matchedMeta,
                     matchedContextData,
-                    () -> matchedCampaignPayloadProvider.getPayload(event.campaignId())
+                    () -> matchedCampaignPayloadProvider.getPayload(campaignId, event.proposalDirection())
                             .orElseThrow(() -> {
                                 String message = String.format(
-                                        "Failed to get matched campaign payload. campaignId=%d may not exist or be deleted",
-                                        event.campaignId()
+                                        "Failed to get matched campaign payload. campaignId=%s may not exist or be deleted",
+                                        campaignId
                                 );
                                 LOG.warn("[Proposal] {}. eventId={}, roomId={}", message, event.eventId(), roomId);
                                 return new IllegalStateException(message);

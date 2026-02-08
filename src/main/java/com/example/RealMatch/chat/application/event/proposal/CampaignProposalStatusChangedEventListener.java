@@ -8,7 +8,9 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.example.RealMatch.business.application.event.CampaignProposalStatusChangedEvent;
+import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
 import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class CampaignProposalStatusChangedEventListener {
                 event.proposalId(), event.newStatus());
 
         ChatProposalStatus chatStatus = toChatProposalStatus(event.newStatus());
+        ChatProposalDirection direction = toChatProposalDirection(event.proposalDirection());
         String eventId = ProposalStatusChangedEvent.generateEventId(event.proposalId(), chatStatus);
 
         ProposalStatusChangedEvent chatEvent = new ProposalStatusChangedEvent(
@@ -45,7 +48,8 @@ public class CampaignProposalStatusChangedEventListener {
                 event.brandUserId(),
                 event.creatorUserId(),
                 chatStatus,
-                event.actorUserId()
+                event.actorUserId(),
+                direction
         );
         eventPublisher.publishEvent(chatEvent);
 
@@ -63,6 +67,16 @@ public class CampaignProposalStatusChangedEventListener {
             case REVIEWING -> ChatProposalStatus.REVIEWING;
             case MATCHED -> ChatProposalStatus.MATCHED;
             case REJECTED -> ChatProposalStatus.REJECTED;
+        };
+    }
+
+    private static ChatProposalDirection toChatProposalDirection(ProposalDirection direction) {
+        if (direction == null) {
+            return ChatProposalDirection.NONE;
+        }
+        return switch (direction) {
+            case BRAND_TO_CREATOR -> ChatProposalDirection.BRAND_TO_CREATOR;
+            case CREATOR_TO_BRAND -> ChatProposalDirection.CREATOR_TO_BRAND;
         };
     }
 }

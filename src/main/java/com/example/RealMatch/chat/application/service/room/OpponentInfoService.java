@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
+import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
 
 public interface OpponentInfoService {
 
-    OpponentInfo getOpponentInfo(Long opponentUserId);
+    OpponentInfo getOpponentInfo(Long opponentUserId, ChatRoomMemberRole role);
 
     Map<Long, OpponentInfo> getOpponentInfoMapBatch(Long userId, List<Long> roomIds);
 

@@ -11,6 +11,7 @@ import com.example.RealMatch.business.domain.enums.ProposalStatus;
 public record CollaborationProjection(
         Long campaignId,
         Long proposalId,
+        Long brandId,
 
         String brandName,
         String thumbnailS3Key,   // 내부 전용

@@ -69,7 +69,7 @@ public interface CollaborationSwagger {
     );
 
     @Operation(
-            summary = "내 협업 캠페인 검색",
+            summary = "내 협업 캠페인 검색 API by 박지영",
             description = """
                     내가 지원하거나 제안을 주고받은 캠페인을 검색합니다.
                     
