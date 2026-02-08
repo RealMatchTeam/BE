@@ -166,4 +166,32 @@ public class UserService {
         // DTO 변환 및 반환
         return MyLoginResponseDto.from(linkedProviders);
     }
+
+    @Transactional(readOnly = true)
+    public boolean isNicknameAvailable(String nickname) {
+
+        // 1. null / 공백
+        if (nickname == null) {
+            return false;
+        }
+
+        nickname = nickname.trim();
+        if (nickname.isEmpty()) {
+            return false;
+        }
+
+        // 2. 길이 체크 (사람 기준 2~10자)
+        int length = nickname.codePointCount(0, nickname.length());
+        if (length < 2 || length > 10) {
+            return false;
+        }
+
+        // 3. 형식 체크 (한글, 영문, 숫자만)
+        if (!nickname.matches("^[가-힣a-zA-Z0-9]+$")) {
+            return false;
+        }
+
+        // 4. 중복 체크
+        return !userRepository.existsByNickname(nickname);
+    }
 }
