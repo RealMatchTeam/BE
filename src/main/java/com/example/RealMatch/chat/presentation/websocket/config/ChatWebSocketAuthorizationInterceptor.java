@@ -121,7 +121,8 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
         String destination = accessor.getDestination();
         if (destination != null && !destination.startsWith(APPLICATION_DESTINATION_PREFIX)) {
             LOG.warn("SEND to non-application destination rejected. destination={}", destination);
-            throw new MessageDeliveryException("SEND only allowed to application destination: " + APPLICATION_DESTINATION_PREFIX);        }
+            throw new MessageDeliveryException("SEND only allowed to application destination: " + APPLICATION_DESTINATION_PREFIX);
+        }
     }
 
     // ── 공통 헬퍼 ───────────────────────────────────────────────────
