@@ -1,6 +1,7 @@
 package com.example.RealMatch.user.presentation.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
+import com.example.RealMatch.user.application.service.UserWithdrawService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
@@ -36,6 +38,7 @@ public class UserController implements UserSwagger {
 
     private final UserService userService;
     private final UserFeatureService userFeatureService;
+    private final UserWithdrawService userWithdrawService;
 
     @Override
     @GetMapping("/me")
@@ -116,5 +119,14 @@ public class UserController implements UserSwagger {
     ) {
         boolean available = userService.isNicknameAvailable(nickname);
         return CustomResponse.ok(new NicknameAvailableResponseDto(available));
+    }
+
+    @Override
+    @DeleteMapping("/me")
+    public CustomResponse<Void> withdraw(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        userWithdrawService.withdraw(userDetails.getUserId());
+        return CustomResponse.ok(null);
     }
 }
