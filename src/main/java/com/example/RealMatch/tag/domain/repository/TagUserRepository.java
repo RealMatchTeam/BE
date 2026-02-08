@@ -3,6 +3,7 @@ package com.example.RealMatch.tag.domain.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,11 +15,12 @@ public interface TagUserRepository extends JpaRepository<TagUser, Long> {
     select tu from TagUser tu
     join fetch tu.tag t
     where tu.user.id = :userId
-    and tu.isDeprecated = false
     """)
     List<TagUser> findAllByUserIdWithTag(@Param("userId") Long userId);
 
     List<TagUser> findAllByUserId(Long userId);
 
-    void deleteByUserId(Long userId);
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM TagUser tu WHERE tu.user.id = :userId")
+    void deleteByUserId(@Param("userId") Long userId);
 }

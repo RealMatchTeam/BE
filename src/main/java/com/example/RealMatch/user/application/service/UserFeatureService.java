@@ -38,9 +38,8 @@ public class UserFeatureService {
 
         userTags.stream()
                 .limit(30)
-                .forEach(ut -> log.info("utId={}, dep={}, tagId={}, type={}, category={}, deleted={}",
+                .forEach(ut -> log.info("utId={}, tagId={}, type={}, category={}, deleted={}",
                         ut.getId(),
-                        ut.isDeprecated(),
                         ut.getTag() != null ? ut.getTag().getId() : null,
                         ut.getTag() != null ? ut.getTag().getTagType() : null,
                         ut.getTag() != null ? ut.getTag().getTagCategory() : null,
