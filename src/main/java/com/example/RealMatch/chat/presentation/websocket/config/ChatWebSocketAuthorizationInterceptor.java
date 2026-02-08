@@ -32,6 +32,7 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
     private static final Pattern USER_ROOM_LIST_PATTERN =
             Pattern.compile("^/topic/v1/user/(\\d+)/rooms$");
     private static final String USER_QUEUE_PREFIX = "/user/queue/";
+    private static final String APPLICATION_DESTINATION_PREFIX = "/app/";
 
     private final ChatRoomMemberService chatRoomMemberService;
     private final ChatUserIdResolver chatUserIdResolver;
@@ -52,7 +53,7 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
         if (command == StompCommand.SUBSCRIBE) {
             authorizeSubscription(accessor);
         } else if (command == StompCommand.SEND) {
-            requireAuthenticated(accessor);
+            authorizeSend(accessor);
         }
 
         return message;
@@ -115,8 +116,12 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
 
     // ── SEND 인가 ───────────────────────────────────────────────────
 
-    private void requireAuthenticated(StompHeaderAccessor accessor) {
+    private void authorizeSend(StompHeaderAccessor accessor) {
         getPrincipalOrThrow(accessor);
+        String destination = accessor.getDestination();
+        if (destination != null && !destination.startsWith(APPLICATION_DESTINATION_PREFIX)) {
+            LOG.warn("SEND to non-application destination rejected. destination={}", destination);
+            throw new MessageDeliveryException("SEND only allowed to application destination: " + APPLICATION_DESTINATION_PREFIX);        }
     }
 
     // ── 공통 헬퍼 ───────────────────────────────────────────────────
