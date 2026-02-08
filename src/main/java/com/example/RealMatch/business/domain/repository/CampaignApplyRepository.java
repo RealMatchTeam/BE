@@ -31,6 +31,7 @@ public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Lo
             select new com.example.RealMatch.business.presentation.dto.response.CollaborationProjection(
                 c.id,
                 null,
+                b.id,
                 b.brandName,
                 b.logoUrl,
                 c.title,
@@ -58,6 +59,7 @@ public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Lo
             select new com.example.RealMatch.business.presentation.dto.response.CollaborationProjection(
                 c.id,
                 null,
+                b.id,
                 b.brandName,
                 b.logoUrl,
                 c.title,
