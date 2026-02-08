@@ -33,7 +33,8 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     Optional<Brand> findByUserId(@Param("userId") Long userId);
 
     @Query("""
-        select b from Brand b
+        select distinct b from Brand b
+        join fetch b.user
         where b.user.id in :userIds
     """)
     List<Brand> findByUserIdIn(@Param("userIds") List<Long> userIds);
