@@ -46,8 +46,8 @@ class DummyDataOrchestrator:
             'brand_available_sponsor',
             'brand_category',
             'brand_like',
-            'user_tag',
-            'brand_tag',
+            'tag_user',
+            'tag_brand',
             'tag',
             'campaign',
             'brand_image',
@@ -138,8 +138,8 @@ class DummyDataOrchestrator:
             business_gen = BusinessGenerator(self.connection)
             business_gen.generate_all(applies_per_campaign)
 
-            chat_gen = ChatGenerator(self.connection)
-            chat_gen.generate_all(room_count, messages_per_room)
+            #chat_gen = ChatGenerator(self.connection)
+            #chat_gen.generate_all(room_count, messages_per_room)
 
             redis_gen = RedisDataGenerator()
             redis_gen.generate_all(clear_existing=True)

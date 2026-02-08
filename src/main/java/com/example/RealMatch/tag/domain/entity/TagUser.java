@@ -1,8 +1,9 @@
 package com.example.RealMatch.tag.domain.entity;
 
-import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.user.domain.entity.User;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -20,36 +21,37 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "brand_tag",
+        name = "tag_user",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"brand_id", "tag_id"})
+                @UniqueConstraint(columnNames = {"user_id", "tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandTag extends BaseEntity {
+public class TagUser extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_id", nullable = false)
-    private Brand brand;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
 
-    @Builder
-    public BrandTag(
-            Brand brand,
-            Tag tag
-    ) {
-        this.brand = brand;
-        this.tag = tag;
-    }
+    @Column(name = "is_deprecated", nullable = false)
+    private boolean isDeprecated;
 
-    public void setBrand(Brand brand) {
-        this.brand = brand;
+    @Builder
+    public TagUser(
+            User user,
+            Tag tag,
+            boolean isDeprecated
+    ) {
+        this.user = user;
+        this.tag = tag;
+        this.isDeprecated = isDeprecated;
     }
 }

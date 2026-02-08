@@ -11,8 +11,8 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.application.service.MatchService;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.tag.domain.entity.Tag;
-import com.example.RealMatch.tag.domain.entity.UserTag;
-import com.example.RealMatch.tag.domain.repository.UserTagRepository;
+import com.example.RealMatch.tag.domain.entity.TagUser;
+import com.example.RealMatch.tag.domain.repository.TagUserRepository;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -27,13 +27,13 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class UserFeatureService {
 
-    private final UserTagRepository userTagRepository;
+    private final TagUserRepository tagUserRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final MatchService matchService;
 
     public MyFeatureResponseDto getMyFeatures(Long userId) {
 
-        List<UserTag> userTags = userTagRepository.findAllByUserIdWithTag(userId);
+        List<TagUser> userTags = tagUserRepository.findAllByUserIdWithTag(userId);
         log.info("userId={}, userTags.size={}", userId, userTags.size());
 
         userTags.stream()
@@ -98,7 +98,7 @@ public class UserFeatureService {
         }
 
         // 1) 기존 UserTag 조회
-        List<UserTag> existingUserTags = userTagRepository.findAllByUserIdWithTag(userId);
+        List<TagUser> existingUserTags = tagUserRepository.findAllByUserIdWithTag(userId);
 
         // 2) 기존 UserTag -> MatchRequestDto 복원
         MatchRequestDto currentRequest = toMatchRequestDtoFromUserTags(existingUserTags, userId);
@@ -116,9 +116,9 @@ public class UserFeatureService {
     // 🔧 helpers (UserTag -> DTO)
     // =====================================================
 
-    private static List<Integer> tagIds(List<UserTag> userTags, String tagType, String tagCategory) {
+    private static List<Integer> tagIds(List<TagUser> userTags, String tagType, String tagCategory) {
         return userTags.stream()
-                .map(UserTag::getTag)
+                .map(TagUser::getTag)
                 .filter(t -> t != null)
                 .filter(t -> !t.isDeleted())
                 // 🔥 현재 엔티티 매핑이 뒤집혀 있으니 비교도 뒤집기
@@ -148,7 +148,7 @@ public class UserFeatureService {
     // 🔧 helpers (UserTag -> MatchRequestDto 복원)
     // =====================================================
 
-    private MatchRequestDto toMatchRequestDtoFromUserTags(List<UserTag> userTags, Long userId) {
+    private MatchRequestDto toMatchRequestDtoFromUserTags(List<TagUser> userTags, Long userId) {
 
         // ===== Beauty =====
         List<Integer> beautyInterestStyleTags = new ArrayList<>();
@@ -176,8 +176,8 @@ public class UserFeatureService {
         List<Integer> preferredInvolvementTags = new ArrayList<>();
         List<Integer> preferredCoverageTags = new ArrayList<>();
 
-        for (UserTag ut : userTags) {
-            Tag tag = ut.getTag();
+        for (TagUser tu : userTags) {
+            Tag tag = tu.getTag();
             if (tag == null || tag.isDeleted() || tag.getTagType() == null || tag.getTagCategory() == null) {
                 continue;
             }

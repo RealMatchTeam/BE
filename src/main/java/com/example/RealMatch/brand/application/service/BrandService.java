@@ -46,7 +46,7 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.advice.ResourceNotFoundException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
 import com.example.RealMatch.match.domain.repository.MatchBrandHistoryRepository;
-import com.example.RealMatch.tag.domain.entity.BrandTag;
+import com.example.RealMatch.tag.domain.entity.TagBrand;
 import com.example.RealMatch.tag.domain.entity.Tag;
 import com.example.RealMatch.tag.domain.enums.TagCategory;
 import com.example.RealMatch.tag.domain.enums.TagType;
@@ -429,7 +429,7 @@ public class BrandService {
         );
 
         // 기존 태그 삭제
-        brand.getBrandTags().clear();
+        brand.getTagsBrand().clear();
 
         // *** 브랜드 매칭용/상세 페이지용 뷰티 태그 추가 *** //
         if (requestDto.getBrandTags() != null) {
@@ -476,7 +476,7 @@ public class BrandService {
         );
 
         // 기존 태그 삭제
-        brand.getBrandTags().clear();
+        brand.getTagsBrand().clear();
 
         // *** 브랜드 매칭용/상세 페이지용 패션 태그 추가 *** //
         if (requestDto.getBrandTags() != null) {
@@ -519,10 +519,10 @@ public class BrandService {
         allTags.addAll(newTags);
 
         for (Tag tag : allTags) {
-            boolean isAlreadyLinked = brand.getBrandTags().stream()
-                    .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
+            boolean isAlreadyLinked = brand.getTagsBrand().stream()
+                    .anyMatch(tb -> tb.getTag().getId().equals(tag.getId()));
             if (!isAlreadyLinked) {
-                brand.addBrandTag(BrandTag.builder().tag(tag).build());
+                brand.addTagBrand(TagBrand.builder().tag(tag).build());
             }
         }
     }
@@ -542,10 +542,10 @@ public class BrandService {
         for (Tag tag : tags) {
             // 해당 카테고리의 태그인지 확인
             if (category.equals(tag.getTagCategory())) {
-                boolean isAlreadyLinked = brand.getBrandTags().stream()
-                        .anyMatch(bt -> bt.getTag().getId().equals(tag.getId()));
+                boolean isAlreadyLinked = brand.getTagsBrand().stream()
+                        .anyMatch(tb -> tb.getTag().getId().equals(tag.getId()));
                 if (!isAlreadyLinked) {
-                    brand.addBrandTag(BrandTag.builder().tag(tag).build());
+                    brand.addTagBrand(TagBrand.builder().tag(tag).build());
                 }
             }
         }
