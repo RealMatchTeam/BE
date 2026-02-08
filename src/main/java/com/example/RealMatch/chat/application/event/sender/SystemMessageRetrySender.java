@@ -13,7 +13,6 @@ import com.example.RealMatch.chat.application.idempotency.ProcessedEventStore;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 
@@ -127,12 +126,11 @@ public class SystemMessageRetrySender {
     }
 
     private void recordLogicalFailure(String eventType, String reason) {
-        Counter.builder(METRIC_LOGICAL_FAILURE)
-                .description("Count of logical failures in system message processing")
-                .tag("eventType", eventType != null ? eventType : "unknown")
-                .tag("reason", reason != null ? reason : "unknown")
-                .register(meterRegistry)
-                .increment();
+        meterRegistry.counter(
+                METRIC_LOGICAL_FAILURE,
+                "eventType", eventType != null ? eventType : "unknown",
+                "reason", reason != null ? reason : "unknown"
+        ).increment();
     }
 
     private static String resolveLogicalFailureReason(LogicalFailureException ex) {
