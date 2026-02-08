@@ -9,5 +9,4 @@ public class NotificationSettingUpdateRequest {
     private boolean marketingConsent;
     private boolean appPushEnabled;
     private boolean emailEnabled;
-
 }
