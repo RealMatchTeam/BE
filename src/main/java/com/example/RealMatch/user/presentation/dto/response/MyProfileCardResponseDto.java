@@ -39,9 +39,17 @@ public record MyProfileCardResponseDto(
                 user.getProfileImageUrl(),
                 user.getGender() != null ? user.getGender().name() : "",
                 age,
-                detail != null ? detail.getSnsUrl() : "",
+                detail != null ? extractInstagramAccount(detail.getSnsUrl()) : "",
                 categoryNames,
                 detail != null ? MyMatchingResultResponseDto.from(detail) : null
         );
+    }
+
+    private static String extractInstagramAccount(String snsUrl) {
+        if (snsUrl == null || snsUrl.isBlank()) {
+            return "";
+        }
+        return snsUrl.replace("https://www.instagram.com/", "")
+                .replace("/", "");
     }
 }
