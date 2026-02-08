@@ -115,7 +115,7 @@ class RedisDataGenerator:
             # brand_tag 매핑 정보 조회
             cursor.execute("""
                 SELECT bt.brand_id, bt.tag_id, t.tag_type, t.tag_category
-                FROM brand_tag bt
+                FROM tag_brand bt
                 JOIN tag t ON bt.tag_id = t.id
             """)
             brand_tag_mappings = cursor.fetchall()
@@ -252,90 +252,90 @@ class RedisDataGenerator:
         print(f"[완료] {count}개의 캠페인 태그 문서 생성 완료")
         return count
 
-    def generate_user_documents(self):
-        print("\n[사용자] Redis 사용자 태그 문서 생성 중...")
+    # def generate_user_documents(self):
+    #     print("\n[사용자] Redis 사용자 태그 문서 생성 중...")
 
-        with self.mysql_conn.cursor() as cursor:
-            # 사용자 정보 조회
-            cursor.execute("SELECT id, gender FROM users WHERE role = 'CREATOR' AND is_deleted = FALSE")
-            users = cursor.fetchall()
+    #     with self.mysql_conn.cursor() as cursor:
+    #         # 사용자 정보 조회
+    #         cursor.execute("SELECT id, gender FROM users WHERE role = 'CREATOR' AND is_deleted = FALSE")
+    #         users = cursor.fetchall()
 
-            # user_tag 매핑 정보 조회
-            cursor.execute("""
-                SELECT ut.user_id, ut.tag_id, t.tag_type, t.tag_category
-                FROM user_tag ut
-                JOIN tag t ON ut.tag_id = t.id
-            """)
-            user_tag_mappings = cursor.fetchall()
+    #         # user_tag 매핑 정보 조회
+    #         cursor.execute("""
+    #             SELECT ut.user_id, ut.tag_id, t.tag_type, t.tag_category
+    #             FROM user_tag ut
+    #             JOIN tag t ON ut.tag_id = t.id
+    #         """)
+    #         user_tag_mappings = cursor.fetchall()
 
-        if not users:
-            print("[경고] CREATOR 역할의 사용자가 없습니다.")
-            return 0
+    #     if not users:
+    #         print("[경고] CREATOR 역할의 사용자가 없습니다.")
+    #         return 0
 
-        # user_id별 태그 그룹화
-        user_tags = {}
-        for mapping in user_tag_mappings:
-            user_id = mapping['user_id']
-            if user_id not in user_tags:
-                user_tags[user_id] = {'패션': [], '뷰티': [], '콘텐츠': []}
-            tag_type = mapping['tag_type']
-            if tag_type in user_tags[user_id]:
-                user_tags[user_id][tag_type].append(mapping['tag_id'])
+    #     # user_id별 태그 그룹화
+    #     user_tags = {}
+    #     for mapping in user_tag_mappings:
+    #         user_id = mapping['user_id']
+    #         if user_id not in user_tags:
+    #             user_tags[user_id] = {'패션': [], '뷰티': [], '콘텐츠': []}
+    #         tag_type = mapping['tag_type']
+    #         if tag_type in user_tags[user_id]:
+    #             user_tags[user_id][tag_type].append(mapping['tag_id'])
 
-        count = 0
-        for user in users:
-            user_id = user['id']
-            gender = user['gender']
+    #     count = 0
+    #     for user in users:
+    #         user_id = user['id']
+    #         gender = user['gender']
 
-            # 성별에 따른 키 범위 조정
-            if gender == 'MALE':
-                height = random.randint(165, 185)
-                top_size = str(random.randint(95, 110))
-                bottom_size = str(random.randint(30, 36))
-            elif gender == 'FEMALE':
-                height = random.randint(155, 175)
-                top_size = str(random.randint(44, 66))
-                bottom_size = str(random.randint(24, 30))
-            else:
-                height = random.randint(160, 180)
-                top_size = str(random.randint(50, 100))
-                bottom_size = str(random.randint(26, 34))
+    #         # 성별에 따른 키 범위 조정
+    #         if gender == 'MALE':
+    #             height = random.randint(165, 185)
+    #             top_size = str(random.randint(95, 110))
+    #             bottom_size = str(random.randint(30, 36))
+    #         elif gender == 'FEMALE':
+    #             height = random.randint(155, 175)
+    #             top_size = str(random.randint(44, 66))
+    #             bottom_size = str(random.randint(24, 30))
+    #         else:
+    #             height = random.randint(160, 180)
+    #             top_size = str(random.randint(50, 100))
+    #             bottom_size = str(random.randint(26, 34))
 
-            # 해당 사용자의 실제 태그 매핑 사용
-            user_tag_data = user_tags.get(user_id, {'패션': [], '뷰티': [], '콘텐츠': []})
+    #         # 해당 사용자의 실제 태그 매핑 사용
+    #         user_tag_data = user_tags.get(user_id, {'패션': [], '뷰티': [], '콘텐츠': []})
 
-            # 매핑된 태그가 없으면 랜덤 생성
-            fashion_tags = user_tag_data['패션'] if user_tag_data['패션'] else self._get_random_tag_ids_by_type('패션', 2, 5)
-            beauty_tags = user_tag_data['뷰티'] if user_tag_data['뷰티'] else self._get_random_tag_ids_by_type('뷰티', 2, 5)
-            content_tags = user_tag_data['콘텐츠'] if user_tag_data['콘텐츠'] else self._get_random_tag_ids_by_type('콘텐츠', 2, 4)
+    #         # 매핑된 태그가 없으면 랜덤 생성
+    #         fashion_tags = user_tag_data['패션'] if user_tag_data['패션'] else self._get_random_tag_ids_by_type('패션', 2, 5)
+    #         beauty_tags = user_tag_data['뷰티'] if user_tag_data['뷰티'] else self._get_random_tag_ids_by_type('뷰티', 2, 5)
+    #         content_tags = user_tag_data['콘텐츠'] if user_tag_data['콘텐츠'] else self._get_random_tag_ids_by_type('콘텐츠', 2, 4)
 
-            # 체형 및 기타 태그 ID
-            body_type_tag = self._get_random_tag_ids(['체형'], 1, 1)
-            audience_age_tags = self._get_random_tag_ids(['시청자 나이대'], 1, 2)
-            audience_gender_tags = self._get_random_tag_ids(['시청자 성별'], 1, 2)
-            video_length_tag = self._get_random_tag_ids(['평균 영상 길이'], 1, 1)
+    #         # 체형 및 기타 태그 ID
+    #         body_type_tag = self._get_random_tag_ids(['체형'], 1, 1)
+    #         audience_age_tags = self._get_random_tag_ids(['시청자 나이대'], 1, 2)
+    #         audience_gender_tags = self._get_random_tag_ids(['시청자 성별'], 1, 2)
+    #         video_length_tag = self._get_random_tag_ids(['평균 영상 길이'], 1, 1)
 
-            doc = {
-                'userId': user_id,
-                'fashionTags': fashion_tags,
-                'beautyTags': beauty_tags,
-                'contentTags': content_tags,
-                'heightTag': height,
-                'bodyTypeTag': body_type_tag[0] if body_type_tag else None,
-                'topSizeTag': int(top_size),
-                'bottomSizeTag': int(bottom_size),
-                'averageContentsViewsTags': self._get_random_tag_ids(['영상 조회수'], 1, 2),
-                'contentsAgeTags': audience_age_tags,
-                'contentsGenderTags': audience_gender_tags,
-                'contentsLengthTags': video_length_tag,
-            }
+    #         doc = {
+    #             'userId': user_id,
+    #             'fashionTags': fashion_tags,
+    #             'beautyTags': beauty_tags,
+    #             'contentTags': content_tags,
+    #             'heightTag': height,
+    #             'bodyTypeTag': body_type_tag[0] if body_type_tag else None,
+    #             'topSizeTag': int(top_size),
+    #             'bottomSizeTag': int(bottom_size),
+    #             'averageContentsViewsTags': self._get_random_tag_ids(['영상 조회수'], 1, 2),
+    #             'contentsAgeTags': audience_age_tags,
+    #             'contentsGenderTags': audience_gender_tags,
+    #             'contentsLengthTags': video_length_tag,
+    #         }
 
-            key = f"com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument:user:{user_id}"
-            self.redis_client.json().set(key, '$', doc)
-            count += 1
+    #         key = f"com.example.RealMatch.match.infrastructure.redis.document.UserTagDocument:user:{user_id}"
+    #         self.redis_client.json().set(key, '$', doc)
+    #         count += 1
 
-        print(f"[완료] {count}개의 사용자 태그 문서 생성 완료")
-        return count
+    #     print(f"[완료] {count}개의 사용자 태그 문서 생성 완료")
+    #     return count
 
     def clear_redis_documents(self):
         print("\n[정리] 기존 Redis 태그 문서 삭제 중...")
@@ -442,13 +442,13 @@ class RedisDataGenerator:
 
             brand_count = self.generate_brand_documents()
             campaign_count = self.generate_campaign_documents()
-            user_count = self.generate_user_documents()
+            # user_count = self.generate_user_documents()
 
             print("\n" + "=" * 60)
             print("[완료] Redis 태그 문서 생성 완료!")
             print(f"  - 브랜드 문서: {brand_count}개")
             print(f"  - 캠페인 문서: {campaign_count}개")
-            print(f"  - 사용자 문서: {user_count}개")
+            # print(f"  - 사용자 문서: {user_count}개")
             print("=" * 60)
 
         except Exception as e:
@@ -497,8 +497,8 @@ def main():
             generator.generate_brand_documents()
         if args.campaigns:
             generator.generate_campaign_documents()
-        if args.users:
-            generator.generate_user_documents()
+        # if args.users:
+        #     generator.generate_user_documents()
     else:
         # 전체 생성
         generator.generate_all(clear_existing=not args.no_clear)

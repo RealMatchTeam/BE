@@ -67,19 +67,22 @@ public class MatchServiceImpl implements MatchService {
     private final RedisDocumentHelper redisDocumentHelper;
 
     private final BrandRepository brandRepository;
-    private final CampaignRepository campaignRepository;
+    
     private final BrandLikeRepository brandLikeRepository;
     private final BrandDescribeTagRepository brandDescribeTagRepository;
+    
+    private final CampaignRepository campaignRepository;
     private final CampaignLikeRepository campaignLikeRepository;
     private final CampaignApplyRepository campaignApplyRepository;
-    private final UserRepository userRepository;
-    private final UserMatchingDetailRepository userMatchingDetailRepository;
+    
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
+
     private final TagUserRepository tagUserRepository;
     private final TagRepository tagRepository;
 
-    // 매칭 요청 //
+    private final UserRepository userRepository;
+    private final UserMatchingDetailRepository userMatchingDetailRepository;
 
     /**
      * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
@@ -97,7 +100,7 @@ public class MatchServiceImpl implements MatchService {
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
 
-        replaceUserMatchingDetailAndTags(userId, requestDto, userType);
+        saveUserMatchingDetailAndTags(userId, requestDto, userType);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
 
@@ -139,7 +142,6 @@ public class MatchServiceImpl implements MatchService {
      */
     private void replaceUserMatchingDetailAndTags(Long userId, MatchRequestDto dto, String creatorType) {
 
-        // A. 기존 Detail 폐기 및 새 Detail 생성 (creatorType + snsUrl만)
         userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
                 .ifPresent(UserMatchingDetail::deprecated);
 
@@ -152,7 +154,6 @@ public class MatchServiceImpl implements MatchService {
                 .snsUrl(snsUrl)
                 .build();
 
-        // ✅ 프로젝트 엔티티 메서드명에 맞춰 사용 (현재 너 코드 기준: setMatchingResult)
         newDetail.setMatchingResult(creatorType);
 
         userMatchingDetailRepository.save(newDetail);
@@ -169,15 +170,14 @@ public class MatchServiceImpl implements MatchService {
         User userRef = userRepository.getReferenceById(userId); // DB조회 없이 프록시만 (성능)
         List<Tag> tags = tagRepository.findAllById(tagIds.stream().map(Long::valueOf).toList());
 
-        List<TagUser> tagUsers = tags.stream()
+        List<TagUser> tagsUser = tags.stream()
                 .map(tag -> TagUser.builder()
                         .user(userRef)
                         .tag(tag)
-                        .isDeleted(false)
                         .build())
                 .toList();
 
-        tagUserRepository.saveAll(tagUsers);
+        tagUserRepository.saveAll(tagsUser);
     }
 
     private void saveMatchHistory(Long userId, List<BrandMatchResult> brandResults, List<CampaignMatchResult> campaignResults) {

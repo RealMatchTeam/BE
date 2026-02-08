@@ -83,7 +83,7 @@ class TagGenerator(BaseGenerator):
                 })
 
         sql = """
-            INSERT IGNORE INTO user_tag (user_id, tag_id, created_at, updated_at)
+            INSERT IGNORE INTO tag_user (user_id, tag_id, created_at, updated_at)
             VALUES (%(user_id)s, %(tag_id)s, %(created_at)s, %(updated_at)s)
         """
         self.execute_many(sql, user_tags, "사용자 태그")
@@ -149,7 +149,7 @@ class TagGenerator(BaseGenerator):
 
         if brand_tags:
             sql = """
-                INSERT IGNORE INTO brand_tag (brand_id, tag_id, created_at, updated_at)
+                INSERT IGNORE INTO tag_brand (brand_id, tag_id, created_at, updated_at)
                 VALUES (%(brand_id)s, %(tag_id)s, %(created_at)s, %(updated_at)s)
             """
             self.execute_many(sql, brand_tags, "브랜드 태그")
@@ -158,7 +158,7 @@ class TagGenerator(BaseGenerator):
 
     def generate_all(self):
         self.generate_tags()
-        self.generate_user_tags()
+        # self.generate_user_tags()
         self.generate_brand_tags()
 
         # generate campign tags?

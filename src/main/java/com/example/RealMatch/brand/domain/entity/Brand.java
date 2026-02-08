@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
-import com.example.RealMatch.tag.domain.entity.BrandTag;
+import com.example.RealMatch.tag.domain.entity.TagBrand;
 import com.example.RealMatch.user.domain.entity.User;
 
 import jakarta.persistence.CascadeType;
@@ -64,7 +64,7 @@ public class Brand extends DeleteBaseEntity {
     private User user;
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BrandTag> brandTags = new ArrayList<>();
+    private List<TagBrand> tagsBrand = new ArrayList<>();
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BrandCategoryView> brandCategoryViews = new ArrayList<>();
@@ -127,9 +127,9 @@ public class Brand extends DeleteBaseEntity {
         this.updatedBy = updatedBy;
     }
 
-    public void addBrandTag(BrandTag brandTag) {
-        brandTags.add(brandTag);
-        brandTag.setBrand(this);
+    public void addTagBrand(TagBrand tagBrand) {
+        tagsBrand.add(tagBrand);
+        tagBrand.setBrand(this);
     }
 
     public void addBrandCategoryView(BrandCategoryView brandCategoryView) {

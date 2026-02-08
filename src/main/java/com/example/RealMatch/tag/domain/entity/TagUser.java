@@ -3,7 +3,6 @@ package com.example.RealMatch.tag.domain.entity;
 import com.example.RealMatch.global.common.BaseEntity;
 import com.example.RealMatch.user.domain.entity.User;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -21,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "user_tag",
+        name = "tag_user",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "tag_id"})
         }
@@ -41,17 +40,12 @@ public class TagUser extends BaseEntity {
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
 
-    @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = false;
-
     @Builder
     public TagUser(
             User user,
-            Tag tag,
-            Boolean isDeleted
+            Tag tag
     ) {
         this.user = user;
         this.tag = tag;
-        this.isDeleted = isDeleted;
     }
 }

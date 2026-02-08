@@ -20,13 +20,13 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(
-        name = "brand_tag",
+        name = "tag_brand",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"brand_id", "tag_id"})
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BrandTag extends BaseEntity {
+public class TagBrand extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +41,7 @@ public class BrandTag extends BaseEntity {
     private Tag tag;
 
     @Builder
-    public BrandTag(
+    public TagBrand(
             Brand brand,
             Tag tag
     ) {

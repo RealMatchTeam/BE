@@ -7,37 +7,37 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
-import com.example.RealMatch.tag.domain.entity.BrandTag;
+import com.example.RealMatch.tag.domain.entity.TagBrand;
 
-public interface TagBrandRepository extends JpaRepository<BrandTag, Long> {
+public interface TagBrandRepository extends JpaRepository<TagBrand, Long> {
 
     @Query("""
-        select bt
-        from BrandTag bt
-        join fetch bt.tag t
-        where bt.brand.id = :brandId
+        select tb
+        from TagBrand tb
+        join fetch tb.tag t
+        where tb.brand.id = :brandId
     """)
-    List<BrandTag> findAllByBrandIdWithTag(@Param("brandId") Long brandId);
+    List<TagBrand> findAllByBrandIdWithTag(@Param("brandId") Long brandId);
 
     @Query("""
-        select bt
-        from BrandTag bt
-        join fetch bt.tag t
-        where bt.brand.id = :brandId
+        select tb
+        from TagBrand tb
+        join fetch tb.tag t
+        where tb.brand.id = :brandId
         and t.tagCategory = :tagCategory
     """)
-    List<BrandTag> findAllByBrandIdAndTagCategory(@Param("brandId") Long brandId, @Param("tagCategory") String tagCategory);
+    List<TagBrand> findAllByBrandIdAndTagCategory(@Param("brandId") Long brandId, @Param("tagCategory") String tagCategory);
 
     @Query("""
         select t.tagName
-        from BrandTag bt
-        join bt.tag t
-        where bt.brand.id = :brandId
+        from TagBrand tb
+        join tb.tag t
+        where tb.brand.id = :brandId
         and t.tagCategory = :tagCategory
     """)
     List<String> findTagNamesByBrandIdAndTagCategory(@Param("brandId") Long brandId, @Param("tagCategory") String tagCategory);
 
-    List<BrandTag> findAllByBrandId(Long brandId);
+    List<TagBrand> findAllByBrandId(Long brandId);
 
     void deleteByBrandId(Long brandId);
 
