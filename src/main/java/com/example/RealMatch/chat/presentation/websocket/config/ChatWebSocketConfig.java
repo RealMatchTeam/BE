@@ -22,6 +22,7 @@ public class ChatWebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private String allowedOrigin;
     private final ObjectProvider<HandshakeHandler> handshakeHandlerProvider;
     private final ObjectProvider<ChatWebSocketJwtInterceptor> jwtInterceptorProvider;
+    private final ObjectProvider<ChatWebSocketAuthorizationInterceptor> authorizationInterceptorProvider;
 
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
@@ -47,9 +48,7 @@ public class ChatWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
-        ChatWebSocketJwtInterceptor interceptor = jwtInterceptorProvider.getIfAvailable();
-        if (interceptor != null) {
-            registration.interceptors(interceptor);
-        }
+        jwtInterceptorProvider.ifAvailable(registration::interceptors);
+        authorizationInterceptorProvider.ifAvailable(registration::interceptors);
     }
 }
