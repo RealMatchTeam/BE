@@ -100,7 +100,7 @@ public class MatchServiceImpl implements MatchService {
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
 
-        saveUserMatchingDetailAndTags(userId, requestDto, userType);
+        replaceUserMatchingDetailAndTags(userId, requestDto, userType);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
 
