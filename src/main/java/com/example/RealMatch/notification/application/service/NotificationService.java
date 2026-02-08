@@ -36,13 +36,7 @@ public class NotificationService {
     }
 
     public void markAsRead(Long userId, UUID notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new CustomException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
-
-        if (!notification.getUserId().equals(userId)) {
-            throw new CustomException(NotificationErrorCode.NOTIFICATION_FORBIDDEN);
-        }
-
+        Notification notification = findNotificationForUser(userId, notificationId);
         notification.markAsRead();
     }
 
@@ -51,6 +45,11 @@ public class NotificationService {
     }
 
     public void softDelete(Long userId, UUID notificationId) {
+        Notification notification = findNotificationForUser(userId, notificationId);
+        notification.softDelete();
+    }
+
+    private Notification findNotificationForUser(Long userId, UUID notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
 
@@ -58,6 +57,6 @@ public class NotificationService {
             throw new CustomException(NotificationErrorCode.NOTIFICATION_FORBIDDEN);
         }
 
-        notification.softDelete();
+        return notification;
     }
 }

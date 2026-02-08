@@ -12,10 +12,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationCategory;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
 import com.example.RealMatch.notification.domain.repository.NotificationRepository;
+import com.example.RealMatch.notification.exception.NotificationErrorCode;
 import com.example.RealMatch.notification.presentation.dto.response.NotificationDateGroup;
 import com.example.RealMatch.notification.presentation.dto.response.NotificationListResponse;
 import com.example.RealMatch.notification.presentation.dto.response.NotificationResponse;
@@ -76,7 +78,7 @@ public class NotificationQueryService {
             NotificationCategory category = NotificationCategory.valueOf(filter.toUpperCase());
             return category.getKinds();
         } catch (IllegalArgumentException e) {
-            return null;
+            throw new CustomException(NotificationErrorCode.NOTIFICATION_INVALID_FILTER);
         }
     }
 
