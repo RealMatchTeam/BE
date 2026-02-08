@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
+import com.example.RealMatch.user.application.util.NicknameValidator;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserContentCategory;
@@ -39,6 +40,7 @@ public class UserService {
     private final AuthenticationMethodRepository authenticationMethodRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
     private final UserContentCategoryRepository userContentCategoryRepository;
+    private final NicknameValidator nicknameValidator;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -169,29 +171,6 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public boolean isNicknameAvailable(String nickname) {
-
-        // 1. null / 공백
-        if (nickname == null) {
-            return false;
-        }
-
-        nickname = nickname.trim();
-        if (nickname.isEmpty()) {
-            return false;
-        }
-
-        // 2. 길이 체크 (사람 기준 2~10자)
-        int length = nickname.codePointCount(0, nickname.length());
-        if (length < 2 || length > 10) {
-            return false;
-        }
-
-        // 3. 형식 체크 (한글, 영문, 숫자만)
-        if (!nickname.matches("^[가-힣a-zA-Z0-9]+$")) {
-            return false;
-        }
-
-        // 4. 중복 체크
-        return !userRepository.existsByNickname(nickname);
+        return nicknameValidator.isAvailable(nickname);
     }
 }
