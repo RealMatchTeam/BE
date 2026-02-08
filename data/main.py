@@ -46,8 +46,8 @@ class DummyDataOrchestrator:
             'brand_available_sponsor',
             'brand_category',
             'brand_like',
-            'user_tag',
-            'brand_tag',
+            'tag_user',
+            'tag_brand',
             'tag',
             'campaign',
             'brand_image',
@@ -138,8 +138,8 @@ class DummyDataOrchestrator:
             business_gen = BusinessGenerator(self.connection)
             business_gen.generate_all(applies_per_campaign)
 
-            chat_gen = ChatGenerator(self.connection)
-            chat_gen.generate_all(room_count, messages_per_room)
+            #chat_gen = ChatGenerator(self.connection)
+            #chat_gen.generate_all(room_count, messages_per_room)
 
             redis_gen = RedisDataGenerator()
             redis_gen.generate_all(clear_existing=True)
@@ -168,9 +168,9 @@ def main():
 
     parser.add_argument('--users', type=int, default=500,
                         help='생성할 사용자 수 (기본값: 50)')
-    parser.add_argument('--brands', type=int, default=20000,
+    parser.add_argument('--brands', type=int, default=2000,
                         help='생성할 브랜드 수 (기본값: 20)')
-    parser.add_argument('--campaigns', type=int, default=30000,
+    parser.add_argument('--campaigns', type=int, default=3000,
                         help='생성할 캠페인 수 (기본값: 30)')
     parser.add_argument('--rooms', type=int, default=2000,
                         help='생성할 채팅방 수 (기본값: 20)')

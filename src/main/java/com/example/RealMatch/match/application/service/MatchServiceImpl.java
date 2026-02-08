@@ -45,7 +45,13 @@ import com.example.RealMatch.match.presentation.dto.response.MatchCampaignRespon
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.BrandDto;
 import com.example.RealMatch.match.presentation.dto.response.MatchResponseDto.HighMatchingBrandListDto;
+import com.example.RealMatch.tag.domain.entity.Tag;
+import com.example.RealMatch.tag.domain.entity.TagUser;
+import com.example.RealMatch.tag.domain.repository.TagRepository;
+import com.example.RealMatch.tag.domain.repository.TagUserRepository;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
+import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -61,25 +67,36 @@ public class MatchServiceImpl implements MatchService {
     private final RedisDocumentHelper redisDocumentHelper;
 
     private final BrandRepository brandRepository;
-    private final CampaignRepository campaignRepository;
+    
     private final BrandLikeRepository brandLikeRepository;
     private final BrandDescribeTagRepository brandDescribeTagRepository;
+    
+    private final CampaignRepository campaignRepository;
     private final CampaignLikeRepository campaignLikeRepository;
     private final CampaignApplyRepository campaignApplyRepository;
-    private final UserRepository userRepository;
+    
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
-    
+
+    private final TagUserRepository tagUserRepository;
+    private final TagRepository tagRepository;
+
+    private final UserRepository userRepository;
+    private final UserMatchingDetailRepository userMatchingDetailRepository;
+
     // ******* //
     // 매칭 요청 //
     // ******* //
     @Override
     @Transactional
     public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
+
         UserTagDocument userDoc = convertToUserTagDocument(userId, requestDto);
 
         String userType = determineUserType(userDoc);
         List<String> typeTag = determineTypeTags(userDoc);
+
+        saveUserMatchingDetailAndTags(userId, requestDto, userType);
 
         List<BrandMatchResult> brandResults = findMatchingBrandResults(userDoc, userId);
 
@@ -112,6 +129,44 @@ public class MatchServiceImpl implements MatchService {
                 .typeTag(typeTag)
                 .highMatchingBrandList(brandListDto)
                 .build();
+    }
+
+    private void saveUserMatchingDetailAndTags(Long userId, MatchRequestDto dto, String creatorType) {
+
+        userMatchingDetailRepository.findByUserIdAndIsDeprecatedFalse(userId)
+                .ifPresent(UserMatchingDetail::deprecated);
+
+        String snsUrl = (dto.getContent() != null && dto.getContent().getSns() != null)
+                ? dto.getContent().getSns().getUrl()
+                : null;
+
+        UserMatchingDetail newDetail = UserMatchingDetail.builder()
+                .userId(userId)
+                .snsUrl(snsUrl)
+                .build();
+
+        newDetail.setMatchingResult(creatorType);
+
+        userMatchingDetailRepository.save(newDetail);
+
+        tagUserRepository.deleteByUserId(userId);
+
+        Set<Integer> tagIds = collectAllTagIds(dto);
+        if (tagIds.isEmpty()) {
+            return;
+        }
+
+        User userRef = userRepository.getReferenceById(userId); // DB조회 없이 프록시만 (성능)
+        List<Tag> tags = tagRepository.findAllById(tagIds.stream().map(Long::valueOf).toList());
+
+        List<TagUser> tagsUser = tags.stream()
+                .map(tag -> TagUser.builder()
+                        .user(userRef)
+                        .tag(tag)
+                        .build())
+                .toList();
+
+        tagUserRepository.saveAll(tagsUser);
     }
 
     private void saveMatchHistory(Long userId, List<BrandMatchResult> brandResults, List<CampaignMatchResult> campaignResults) {
@@ -304,7 +359,7 @@ public class MatchServiceImpl implements MatchService {
 
         return tags.stream().limit(3).toList();
     }
-    
+
     // **************** //
     // Redis에서 매칭 요청 //
     // **************** //
@@ -364,7 +419,6 @@ public class MatchServiceImpl implements MatchService {
                 .limit(TOP_MATCH_COUNT)
                 .toList();
     }
-
 
     private Map<Long, Long> getBrandLikeCountMap() {
         return brandLikeRepository.findAll().stream()
@@ -452,9 +506,10 @@ public class MatchServiceImpl implements MatchService {
                 .map(h -> h.getCampaign().getId())
                 .toList();
         Map<Long, Long> applyCountMap = getApplyCountMapForCampaignIds(pageCampaignIds);
+        Map<Long, Long> likeCountMap = getLikeCountMapForCampaignIds(pageCampaignIds);
 
         List<MatchCampaignResponseDto.CampaignDto> brands = historyPage.getContent().stream()
-                .map(h -> toCampaignCardDto(h, likedCampaignIds, applyCountMap))
+                .map(h -> toCampaignCardDto(h, likedCampaignIds, applyCountMap, likeCountMap))
                 .toList();
 
         return MatchCampaignResponseDto.builder()
@@ -484,6 +539,20 @@ public class MatchServiceImpl implements MatchService {
             return Map.of();
         }
         return campaignApplyRepository.countByCampaignIdIn(campaignIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
+    /**
+     * 지정한 캠페인 ID별 좋아요 수 조회.
+     */
+    private Map<Long, Long> getLikeCountMapForCampaignIds(List<Long> campaignIds) {
+        if (campaignIds == null || campaignIds.isEmpty()) {
+            return Map.of();
+        }
+        return campaignLikeRepository.countByCampaignIdIn(campaignIds).stream()
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Long) row[1]
@@ -542,28 +611,38 @@ public class MatchServiceImpl implements MatchService {
     private MatchCampaignResponseDto.CampaignDto toCampaignCardDto(
             MatchCampaignHistory history,
             Set<Long> likedCampaignIds,
-            Map<Long, Long> applyCountMap
+            Map<Long, Long> applyCountMap,
+            Map<Long, Long> likeCountMap
     ) {
         Campaign campaign = history.getCampaign();
         Brand brand = campaign.getBrand();
         int dDay = campaign.getRecruitEndDate() != null
                 ? (int) ChronoUnit.DAYS.between(LocalDate.now(), campaign.getRecruitEndDate().toLocalDate())
                 : 0;
+
+        Set<Long> likedBrandIds = brandLikeRepository.findByUserId(history.getUser().getId()).stream()
+                .map(like -> like.getBrand().getId())
+                .collect(Collectors.toSet());
+
         boolean isRecruiting = campaign.getRecruitEndDate() == null
                 || campaign.getRecruitEndDate().isAfter(LocalDateTime.now());
         Integer matchRatio = history.getMatchingRatio() != null ? history.getMatchingRatio().intValue() : 0;
+
         return MatchCampaignResponseDto.CampaignDto.builder()
                 .brandId(brand != null ? brand.getId() : null)
                 .brandName(brand != null ? brand.getBrandName() : null)
                 .brandLogoUrl(brand != null ? brand.getLogoUrl() : null)
                 .brandMatchingRatio(matchRatio)
-                .brandIsLiked(likedCampaignIds.contains(campaign.getId()))
+                .brandIsLiked(brand != null && likedBrandIds.contains(brand.getId()))
                 .brandIsRecruiting(isRecruiting)
+                .campaignId(campaign.getId())
                 .campaignManuscriptFee(campaign.getRewardAmount() != null ? campaign.getRewardAmount().intValue() : null)
                 .campaignName(campaign.getTitle())
                 .campaignDDay(Math.max(dDay, 0))
+                .campaignIsLiked(likedCampaignIds.contains(campaign.getId()))
                 .campaignTotalRecruit(campaign.getQuota())
                 .campaignTotalCurrentRecruit(applyCountMap.getOrDefault(campaign.getId(), 0L).intValue())
+                .campaignLikeCount(likeCountMap.getOrDefault(campaign.getId(), 0L))
                 .build();
     }
 
@@ -572,12 +651,73 @@ public class MatchServiceImpl implements MatchService {
             int matchScore,
             boolean isLiked,
             boolean isRecruiting
-    ) {}
+    ) {
+    }
 
     private record CampaignMatchResult(
             CampaignTagDocument campaignDoc,
             int matchScore,
             boolean isLiked,
             int currentApplyCount
-    ) {}
+    ) {
+    }
+
+    /**
+     *  “유저태그로 들어가야 하는 모든 태그”를 한 번에 수집
+     * (creatorType/snsUrl 제외한 나머지 정보는 전부 user_tag로 저장)
+     */
+    private Set<Integer> collectAllTagIds(MatchRequestDto dto) {
+        Set<Integer> tagIds = new HashSet<>();
+
+        if (dto.getFashion() != null) {
+            addAll(tagIds, dto.getFashion().getInterestStyleTags());
+            addAll(tagIds, dto.getFashion().getPreferredItemTags());
+            addAll(tagIds, dto.getFashion().getPreferredBrandTags());
+            addOne(tagIds, dto.getFashion().getHeightTag());
+            addOne(tagIds, dto.getFashion().getWeightTypeTag());
+            addOne(tagIds, dto.getFashion().getTopSizeTag());
+            addOne(tagIds, dto.getFashion().getBottomSizeTag());
+        }
+
+        if (dto.getBeauty() != null) {
+            addAll(tagIds, dto.getBeauty().getInterestStyleTags());
+            addAll(tagIds, dto.getBeauty().getPrefferedFunctionTags());
+            addOne(tagIds, dto.getBeauty().getSkinTypeTags());
+            addOne(tagIds, dto.getBeauty().getSkinToneTags());
+            addOne(tagIds, dto.getBeauty().getMakeupStyleTags());
+        }
+
+        if (dto.getContent() != null) {
+            addAll(tagIds, dto.getContent().getTypeTags());
+            addAll(tagIds, dto.getContent().getToneTags());
+            addAll(tagIds, dto.getContent().getPrefferedInvolvementTags());
+            addAll(tagIds, dto.getContent().getPrefferedCoverageTags());
+
+            if (dto.getContent().getSns() != null) {
+                var sns = dto.getContent().getSns();
+                if (sns.getMainAudience() != null) {
+                    addAll(tagIds, sns.getMainAudience().getAgeTags());
+                    addAll(tagIds, sns.getMainAudience().getGenderTags());
+                }
+                if (sns.getAverageAudience() != null) {
+                    addAll(tagIds, sns.getAverageAudience().getVideoLengthTags());
+                    addAll(tagIds, sns.getAverageAudience().getVideoViewsTags());
+                }
+            }
+        }
+
+        return tagIds;
+    }
+
+    private void addAll(Set<Integer> set, List<Integer> values) {
+        if (values != null) {
+            set.addAll(values);
+        }
+    }
+
+    private void addOne(Set<Integer> set, Integer value) {
+        if (value != null) {
+            set.add(value);
+        }
+    }
 }

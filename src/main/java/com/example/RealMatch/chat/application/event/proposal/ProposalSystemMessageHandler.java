@@ -173,7 +173,8 @@ public class ProposalSystemMessageHandler extends BaseSystemMessageHandler {
                 () -> new ChatProposalStatusNoticePayloadResponse(
                         event.proposalId(),
                         event.actorUserId(),
-                        LocalDateTime.now()
+                        LocalDateTime.now(),
+                        event.newStatus()
                 ),
                 payload -> {
                     boolean accepted = retrySender.sendWithIdempotency(

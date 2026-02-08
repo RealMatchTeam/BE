@@ -158,7 +158,8 @@ public class ApplySystemMessageHandler extends BaseSystemMessageHandler {
                 () -> new ChatApplyStatusNoticePayloadResponse(
                         event.applyId(),
                         event.actorUserId(),
-                        LocalDateTime.now()
+                        LocalDateTime.now(),
+                        event.newStatus()
                 ),
                 payload -> {
                     boolean accepted = retrySender.sendWithIdempotency(

@@ -1,6 +1,10 @@
 package com.example.RealMatch.user.domain.entity;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -147,6 +151,130 @@ public class UserMatchingDetail extends BaseEntity {
         this.desiredInvolvement = desiredInvolvement;
         this.desiredUsageScope = desiredUsageScope;
         this.isDeprecated = false;
+    }
+
+    // =======================
+    // 정적 팩토리 (DTO -> Entity)
+    // =======================
+    public static UserMatchingDetail from(Long userId, MatchRequestDto requestDto) {
+
+        if (requestDto == null) {
+            return UserMatchingDetail.builder()
+                    .userId(userId)
+                    .build();
+        }
+
+        // Fashion
+        String height = null;
+        String bodyShape = null;
+        String topSize = null;
+        String bottomSize = null;
+        String interestFields = null;
+        String interestStyles = null;
+        String interestBrands = null;
+
+        if (requestDto.getFashion() != null) {
+            var f = requestDto.getFashion();
+            height = toCsv(f.getHeightTag());
+            bodyShape = toCsv(f.getWeightTypeTag());
+            topSize = toCsv(f.getTopSizeTag());
+            bottomSize = toCsv(f.getBottomSizeTag());
+            // MatchRequestDto.FashionDto.interestStyleTags  -> UserMatchingDetail.interestFields (관심 분야)
+            // MatchRequestDto.FashionDto.preferredItemTags  -> UserMatchingDetail.interestStyles (관심 스타일)
+            interestFields = toCsvList(f.getInterestStyleTags());
+            interestStyles = toCsvList(f.getPreferredItemTags());
+
+            interestBrands = toCsvList(f.getPreferredBrandTags());
+        }
+
+        // Beauty
+        String skinType = null;
+        String skinBrightness = null;
+        String makeupStyle = null;
+        String interestCategories = null;
+        String interestFunctions = null;
+
+        if (requestDto.getBeauty() != null) {
+            var b = requestDto.getBeauty();
+            skinType = toCsv(b.getSkinTypeTags());
+            skinBrightness = toCsv(b.getSkinToneTags());
+            makeupStyle = toCsv(b.getMakeupStyleTags());
+            interestCategories = toCsvList(b.getInterestStyleTags());
+            interestFunctions = toCsvList(b.getPrefferedFunctionTags());
+        }
+
+        // Contents
+        String snsUrl = null;
+        String avgVideoLength = null;
+        String avgViews = null;
+        String viewerGender = null;
+        String viewerAge = null;
+        String contentFormats = null;
+        String contentTones = null;
+        String desiredInvolvement = null;
+        String desiredUsageScope = null;
+
+        if (requestDto.getContent() != null) {
+            var c = requestDto.getContent();
+
+            contentFormats = toCsvList(c.getTypeTags());
+            contentTones = toCsvList(c.getToneTags());
+            desiredInvolvement = toCsvList(c.getPrefferedInvolvementTags());
+            desiredUsageScope = toCsvList(c.getPrefferedCoverageTags());
+
+            if (c.getSns() != null) {
+                var sns = c.getSns();
+
+                snsUrl = sns.getUrl();
+
+                if (sns.getMainAudience() != null) {
+                    viewerAge = toCsvList(sns.getMainAudience().getAgeTags());
+                    viewerGender = toCsvList(sns.getMainAudience().getGenderTags());
+                }
+                if (sns.getAverageAudience() != null) {
+                    avgVideoLength = toCsvList(sns.getAverageAudience().getVideoLengthTags());
+                    avgViews = toCsvList(sns.getAverageAudience().getVideoViewsTags());
+                }
+            }
+        }
+
+        return UserMatchingDetail.builder()
+                .userId(userId)
+                .height(height)
+                .bodyShape(bodyShape)
+                .topSize(topSize)
+                .bottomSize(bottomSize)
+                .interestFields(interestFields)
+                .interestStyles(interestStyles)
+                .interestBrands(interestBrands)
+                .skinType(skinType)
+                .skinBrightness(skinBrightness)
+                .makeupStyle(makeupStyle)
+                .interestCategories(interestCategories)
+                .interestFunctions(interestFunctions)
+                .snsUrl(snsUrl)
+                .avgVideoLength(avgVideoLength)
+                .avgViews(avgViews)
+                .viewerGender(viewerGender)
+                .viewerAge(viewerAge)
+                .contentFormats(contentFormats)
+                .contentTones(contentTones)
+                .desiredInvolvement(desiredInvolvement)
+                .desiredUsageScope(desiredUsageScope)
+                .build();
+    }
+
+    private static String toCsv(Integer tag) {
+        return tag == null ? null : String.valueOf(tag);
+    }
+
+    private static String toCsvList(List<Integer> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+        return tags.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
     }
 
     // ========== 비즈니스 메서드 (도메인 로직) ==========

@@ -22,9 +22,13 @@ public class CampaignDetailResponse {
     private Long  campaignId;
     private String title;
     private String description;
+    private String imageUrl;
+
     private String preferredSkills;
     private String schedule;
     private String videoSpec;
+
+    private boolean isLike;
 
     // 협찬품 (수정 필요)
     private String product;
@@ -45,15 +49,19 @@ public class CampaignDetailResponse {
 
     public static CampaignDetailResponse from(
             Campaign campaign,
+            String imageUrl,
+            boolean isLike,
             List<CampaignContentTag> tags
     ) {
         return CampaignDetailResponse.builder()
                 .campaignId(campaign.getId())
                 .title(campaign.getTitle())
                 .description(campaign.getDescription())
+                .imageUrl(imageUrl)
                 .preferredSkills(campaign.getPreferredSkills())
                 .schedule(campaign.getSchedule())
                 .videoSpec(campaign.getVideoSpec())
+                .isLike(isLike)
                 .product(campaign.getProduct())
                 .rewardAmount(campaign.getRewardAmount())
                 .startDate(campaign.getStartDate())

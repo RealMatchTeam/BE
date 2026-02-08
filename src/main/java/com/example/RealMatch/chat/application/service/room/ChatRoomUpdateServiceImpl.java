@@ -40,10 +40,19 @@ public class ChatRoomUpdateServiceImpl implements ChatRoomUpdateService {
             String messagePreview,
             ChatMessageType messageType
     ) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));
+        LocalDateTime safeMessageAt = messageAt != null ? messageAt : LocalDateTime.now();
 
-        room.updateLastMessage(messageId, messageAt, messagePreview, messageType);
+        int updatedRows = chatRoomRepository.updateLastMessageIfNewer(
+                roomId, messageId, safeMessageAt, messagePreview, messageType
+        );
+
+        if (updatedRows == 0 && !chatRoomRepository.existsById(roomId)) {
+            throw new CustomException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
+        if (updatedRows > 1) {
+            LOG.warn("[ChatRoomUpdate] Unexpected update count. roomId={}, messageId={}, rows={}",
+                    roomId, messageId, updatedRows);
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import com.example.RealMatch.brand.presentation.dto.response.BrandCampaignSliceR
 import com.example.RealMatch.brand.presentation.dto.response.BrandExistingCampaignResponse;
 import com.example.RealMatch.brand.presentation.dto.response.BrandRecruitingCampaignResponse;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
+import com.example.RealMatch.campaign.domain.repository.CampaignLikeRepository;
 import com.example.RealMatch.campaign.domain.repository.CampaignRepository;
 import com.example.RealMatch.global.exception.CustomException;
 
@@ -31,9 +33,9 @@ public class BrandCampaignService {
     private final BrandRepository brandRepository;
     private final CampaignRepository campaignRepository;
     private final AttachmentUrlService attachmentUrlService;
+    private final CampaignLikeRepository campaignLikeRepository;
 
     // 브랜드의 캠페인 리스트 조회
-    @Transactional(readOnly = true)
     public BrandCampaignSliceResponse getBrandCampaigns(Long brandId, Long cursor, int size) {
         brandRepository.findById(brandId)
                 .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
@@ -78,13 +80,25 @@ public class BrandCampaignService {
         return new BrandExistingCampaignResponse(items);
     }
 
-    public BrandRecruitingCampaignResponse getRecruitingCampaigns(Long brandId) {
+    public BrandRecruitingCampaignResponse getRecruitingCampaigns(Long userId, Long brandId) {
 
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new CustomException(BrandErrorCode.BRAND_NOT_FOUND));
 
         List<Campaign> campaigns =
                 campaignRepository.findRecruitingCampaignsByBrandId(brand.getId());
+
+        if (campaigns.isEmpty()) {
+            return new BrandRecruitingCampaignResponse(java.util.Collections.emptyList());
+        }
+
+        List<Long> campaignIds = campaigns.stream()
+                .map(Campaign::getId)
+                .toList();
+
+        Set<Long> likedCampaignIds =
+                campaignLikeRepository.findLikedCampaignIds(userId, campaignIds);
+
 
         LocalDate today = LocalDate.now();
 
@@ -93,10 +107,12 @@ public class BrandCampaignService {
                 .map(campaign -> {
                     int dDay = (int) ChronoUnit.DAYS.between(today, campaign.getRecruitEndDate().toLocalDate());
                     String campaignImageUrl = attachmentUrlService.getAccessUrl(campaign.getImageUrl());
+                    boolean isLiked = likedCampaignIds.contains(campaign.getId());
                     return new BrandRecruitingCampaignResponse.CampaignCard(
                             campaign.getId(),
                             brand.getBrandName(),
                             campaign.getTitle(),
+                            isLiked,
                             campaign.getQuota(),
                             Math.max(dDay, 0), // D-DAY 보정
                             campaign.getRewardAmount(),

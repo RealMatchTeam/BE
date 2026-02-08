@@ -9,9 +9,13 @@ import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.entity.UserContentCategory;
+import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
 import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.AuthenticationMethodRepository;
+import com.example.RealMatch.user.domain.repository.UserContentCategoryRepository;
+import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
@@ -33,6 +37,8 @@ public class UserService {
     private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
     private final ScrapMockDataProvider scrapMockDataProvider;
     private final AuthenticationMethodRepository authenticationMethodRepository;
+    private final UserMatchingDetailRepository userMatchingDetailRepository;
+    private final UserContentCategoryRepository userContentCategoryRepository;
 
     public MyPageResponseDto getMyPage(Long userId) {
         // 유저 조회 (존재하지 않거나 삭제된 유저 예외 처리)
@@ -47,17 +53,23 @@ public class UserService {
     }
 
     public MyProfileCardResponseDto getMyProfileCard(Long userId) {
-        // 유저 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 프로필 카드를 볼 자격이 있는지 확인. GUEST 권한이거나, 매칭 테스트 기록이 없다면 예외 발생
-        if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
+        if (user.getRole() == Role.GUEST) {
             throw new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
         }
 
-        return MyProfileCardResponseDto.sample(user);
+        UserMatchingDetail detail = userMatchingDetailRepository
+                .findByUserIdAndIsDeprecatedFalse(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
+
+        List<UserContentCategory> categories =
+                userContentCategoryRepository.findByUserId(userId);
+
+        return MyProfileCardResponseDto.from(user, detail, categories);
     }
+
 
     public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
         // 유저 조회

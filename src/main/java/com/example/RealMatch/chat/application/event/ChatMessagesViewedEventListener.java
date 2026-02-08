@@ -15,9 +15,9 @@ public class ChatMessagesViewedEventListener {
 
     @EventListener
     public void handle(ChatMessagesViewedEvent event) {
-        if (event.memberId() == null || event.latestMessageId() == null) {
+        if (event.memberId() == null || event.userId() == null || event.latestMessageId() == null) {
             return;
         }
-        chatRoomMemberCommandService.updateLastReadMessage(event.memberId(), event.latestMessageId());
+        chatRoomMemberCommandService.updateLastReadMessage(event.memberId(), event.userId(), event.latestMessageId());
     }
 }

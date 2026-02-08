@@ -27,11 +27,14 @@ public class MatchCampaignResponseDto {
         private Integer brandMatchingRatio;
         private Boolean brandIsLiked;
         private Boolean brandIsRecruiting;
+        private Long campaignId;
         private Integer campaignManuscriptFee;
         private String campaignName;   // 캠페인명 (keyword 검색 대상)
         private Integer campaignDDay;
+        private Boolean campaignIsLiked;
         private Integer campaignTotalRecruit;
         private Integer campaignTotalCurrentRecruit;
+        private Long campaignLikeCount;
     }
 
     public static MatchCampaignResponseDto empty() {

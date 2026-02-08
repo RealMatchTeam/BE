@@ -63,7 +63,7 @@ public class ChatMessageQueryServiceImpl implements ChatMessageQueryService {
         if (cursorMessageId == null) {
             ChatMessage latestMessage = messages.get(0);
             eventPublisher.publishEvent(
-                    new ChatMessagesViewedEvent(member.getId(), latestMessage.getId())
+                    new ChatMessagesViewedEvent(member.getId(), member.getUserId(), latestMessage.getId())
             );
         }
 
