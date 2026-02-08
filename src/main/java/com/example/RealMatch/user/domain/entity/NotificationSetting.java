@@ -1,19 +1,15 @@
 package com.example.RealMatch.user.domain.entity;
 
 import com.example.RealMatch.global.common.BaseEntity;
-import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
-import com.example.RealMatch.user.domain.entity.enums.NotificationType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -30,34 +26,29 @@ public class NotificationSetting extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 30)
-    private NotificationType type;
+    @Column(name = "app_push_enabled", nullable = false)
+    private boolean appPushEnabled;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 30)
-    private NotificationChannel channel;
-
-    @Column(name = "is_enabled", nullable = false)
-    private boolean isEnabled;
+    @Column(name = "email_enabled", nullable = false)
+    private boolean emailEnabled;
 
     @Builder
-    public NotificationSetting(User user, NotificationType type, NotificationChannel channel, boolean isEnabled) {
+    public NotificationSetting(
+            User user,
+            boolean appPushEnabled,
+            boolean emailEnabled
+    ) {
         this.user = user;
-        this.type = type;
-        this.channel = channel;
-        this.isEnabled = isEnabled;
+        this.appPushEnabled = appPushEnabled;
+        this.emailEnabled = emailEnabled;
     }
 
-    public void enable() {
-        this.isEnabled = true;
-    }
-
-    public void disable() {
-        this.isEnabled = false;
+    public void update(boolean appPushEnabled, boolean emailEnabled) {
+        this.appPushEnabled = appPushEnabled;
+        this.emailEnabled = emailEnabled;
     }
 }
