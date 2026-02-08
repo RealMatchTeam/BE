@@ -19,7 +19,7 @@ public class UserWithdrawService {
 
     public void withdraw(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(GeneralErrorCode.INVALID_DATA));
+                .orElseThrow(() -> new CustomException(GeneralErrorCode.NOT_FOUND));
 
         user.withdraw(userId);
     }

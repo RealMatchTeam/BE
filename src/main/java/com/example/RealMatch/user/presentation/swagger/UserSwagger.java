@@ -145,6 +145,6 @@ public interface UserSwagger {
 
     @Operation(summary = "회원 탈퇴", description = "회원 탈퇴(Soft Delete) 처리 후 role을 WITHDRAWN으로 변경합니다.")
     CustomResponse<Void> withdraw(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }
