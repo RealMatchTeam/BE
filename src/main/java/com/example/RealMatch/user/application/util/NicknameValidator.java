@@ -1,11 +1,12 @@
 package com.example.RealMatch.user.application.util;
 
-import com.example.RealMatch.global.exception.CustomException;
-import com.example.RealMatch.user.presentation.code.UserErrorCode;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import com.example.RealMatch.user.domain.repository.UserRepository;
 
+import com.example.RealMatch.global.exception.CustomException;
+import com.example.RealMatch.user.domain.repository.UserRepository;
+import com.example.RealMatch.user.presentation.code.UserErrorCode;
+
+import lombok.RequiredArgsConstructor;
 /**
  * 닉네임 검증을 위한 공통 유틸리티 클래스
  * - 형식, 길이, 중복 검증을 한 곳에서 처리
