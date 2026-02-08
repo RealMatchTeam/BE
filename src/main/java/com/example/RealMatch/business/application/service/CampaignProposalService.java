@@ -359,7 +359,8 @@ public class CampaignProposalService {
                 brandUserId,
                 creatorUserId,
                 newStatus,
-                actorUserId
+                actorUserId,
+                ProposalDirection.fromWhoProposed(proposal.getWhoProposed())
         );
         eventPublisher.publishEvent(event);
     }
