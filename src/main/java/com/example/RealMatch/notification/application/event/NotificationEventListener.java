@@ -8,9 +8,12 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
+import com.example.RealMatch.business.application.event.AutoConfirmedEvent;
 import com.example.RealMatch.business.application.event.CampaignApplySentEvent;
+import com.example.RealMatch.business.application.event.CampaignCompletedEvent;
 import com.example.RealMatch.business.application.event.CampaignProposalSentEvent;
 import com.example.RealMatch.business.application.event.CampaignProposalStatusChangedEvent;
+import com.example.RealMatch.business.application.event.SettlementReadyEvent;
 import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.notification.application.dto.CreateNotificationCommand;
@@ -219,6 +222,129 @@ public class NotificationEventListener {
         } catch (Exception e) {
             LOG.error("[Notification] Failed to create CAMPAIGN_APPLIED. applyId={}, userId={}",
                     event.applyId(), event.brandUserId(), e);
+        }
+    }
+
+    // ==================== 데모데이 이후용: CampaignCompletedEvent ====================
+
+    /**
+     * CampaignCompletedEvent 구독.
+     * 크리에이터에게 CAMPAIGN_COMPLETED 알림 생성.
+     * (데모데이 이후 해당 플로우에서 이벤트 발행만 추가하면 동작)
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleCampaignCompleted(CampaignCompletedEvent event) {
+        if (event == null) {
+            LOG.warn("[Notification] Invalid CampaignCompletedEvent: event is null");
+            return;
+        }
+
+        try {
+            String eventId = String.format("CAMPAIGN_COMPLETED:%d", event.campaignId());
+            String brandName = findBrandNameByUserId(event.brandUserId());
+
+            MessageTemplate template = messageTemplateService.createCampaignCompletedMessage(brandName);
+
+            CreateNotificationCommand command = CreateNotificationCommand.builder()
+                    .eventId(eventId)
+                    .userId(event.creatorUserId())
+                    .kind(NotificationKind.CAMPAIGN_COMPLETED)
+                    .title(template.title())
+                    .body(template.body())
+                    .referenceType(ReferenceType.CAMPAIGN)
+                    .referenceId(String.valueOf(event.campaignId()))
+                    .campaignId(event.campaignId())
+                    .build();
+
+            notificationService.create(command);
+
+            LOG.info("[Notification] Created CAMPAIGN_COMPLETED. eventId={}, campaignId={}, userId={}",
+                    eventId, event.campaignId(), event.creatorUserId());
+        } catch (Exception e) {
+            LOG.error("[Notification] Failed to create CAMPAIGN_COMPLETED. campaignId={}, userId={}",
+                    event.campaignId(), event.creatorUserId(), e);
+        }
+    }
+
+    // ==================== 데모데이 이후용: SettlementReadyEvent ====================
+
+    /**
+     * SettlementReadyEvent 구독.
+     * 크리에이터에게 SETTLEMENT_READY 알림 생성.
+     * (데모데이 이후 해당 플로우에서 이벤트 발행만 추가하면 동작)
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleSettlementReady(SettlementReadyEvent event) {
+        if (event == null) {
+            LOG.warn("[Notification] Invalid SettlementReadyEvent: event is null");
+            return;
+        }
+
+        try {
+            String eventId = String.format("SETTLEMENT_READY:%d", event.campaignId());
+            String brandName = findBrandNameByUserId(event.brandUserId());
+
+            MessageTemplate template = messageTemplateService.createSettlementReadyMessage(brandName);
+
+            CreateNotificationCommand command = CreateNotificationCommand.builder()
+                    .eventId(eventId)
+                    .userId(event.creatorUserId())
+                    .kind(NotificationKind.SETTLEMENT_READY)
+                    .title(template.title())
+                    .body(template.body())
+                    .referenceType(ReferenceType.CAMPAIGN)
+                    .referenceId(String.valueOf(event.campaignId()))
+                    .campaignId(event.campaignId())
+                    .build();
+
+            notificationService.create(command);
+
+            LOG.info("[Notification] Created SETTLEMENT_READY. eventId={}, campaignId={}, userId={}",
+                    eventId, event.campaignId(), event.creatorUserId());
+        } catch (Exception e) {
+            LOG.error("[Notification] Failed to create SETTLEMENT_READY. campaignId={}, userId={}",
+                    event.campaignId(), event.creatorUserId(), e);
+        }
+    }
+
+    // ==================== 데모데이 이후용: AutoConfirmedEvent ====================
+
+    /**
+     * AutoConfirmedEvent 구독.
+     * 브랜드에게 AUTO_CONFIRMED 알림 생성.
+     * (데모데이 이후 해당 플로우에서 이벤트 발행만 추가하면 동작)
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleAutoConfirmed(AutoConfirmedEvent event) {
+        if (event == null) {
+            LOG.warn("[Notification] Invalid AutoConfirmedEvent: event is null");
+            return;
+        }
+
+        try {
+            String eventId = String.format("AUTO_CONFIRMED:%d", event.campaignId());
+            String brandName = findBrandNameByUserId(event.brandUserId());
+
+            MessageTemplate template = messageTemplateService.createAutoConfirmedMessage(brandName);
+
+            CreateNotificationCommand command = CreateNotificationCommand.builder()
+                    .eventId(eventId)
+                    .userId(event.brandUserId())
+                    .kind(NotificationKind.AUTO_CONFIRMED)
+                    .title(template.title())
+                    .body(template.body())
+                    .referenceType(ReferenceType.CAMPAIGN)
+                    .referenceId(String.valueOf(event.campaignId()))
+                    .campaignId(event.campaignId())
+                    .build();
+
+            notificationService.create(command);
+
+            LOG.info("[Notification] Created AUTO_CONFIRMED. eventId={}, campaignId={}, userId={}",
+                    eventId, event.campaignId(), event.brandUserId());
+        } catch (Exception e) {
+            LOG.error("[Notification] Failed to create AUTO_CONFIRMED. campaignId={}, userId={}",
+                    event.campaignId(), event.brandUserId(), e);
         }
     }
 
