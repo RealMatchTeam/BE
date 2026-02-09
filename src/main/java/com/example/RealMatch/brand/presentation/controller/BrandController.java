@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.brand.application.service.BrandService;
@@ -34,6 +35,10 @@ import com.example.RealMatch.brand.presentation.swagger.BrandSwagger;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.global.presentation.code.GeneralSuccessCode;
+import com.example.RealMatch.match.application.service.MatchService;
+import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
+import com.example.RealMatch.match.domain.entity.enums.CategoryType;
+import com.example.RealMatch.match.presentation.dto.response.MatchBrandResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,6 +48,7 @@ import lombok.RequiredArgsConstructor;
 public class BrandController implements BrandSwagger {
 
     private final BrandService brandService;
+    private final MatchService matchService;
 
     // ******** //
     // 브랜드 조회 //
@@ -56,6 +62,21 @@ public class BrandController implements BrandSwagger {
         Long currentUserId = principal.getUserId();
         BrandDetailResponseDto result = brandService.getBrandDetail(brandId, currentUserId);
         return CustomResponse.onSuccess(GeneralSuccessCode.GOOD_REQUEST, Collections.singletonList(result));
+    }
+
+    @Override
+    @GetMapping("/search")
+    public CustomResponse<MatchBrandResponseDto> searchBrands(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String title,
+            @RequestParam(defaultValue = "MATCH_SCORE") BrandSortType sortBy,
+            @RequestParam(defaultValue = "ALL") CategoryType category,
+            @RequestParam(required = false) List<String> tags,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        String userId = String.valueOf(userDetails.getUserId());
+        MatchBrandResponseDto result = matchService.searchMatchingBrands(userId, title, sortBy, category, tags, page, size);
+        return CustomResponse.ok(result);
     }
 
     @Override

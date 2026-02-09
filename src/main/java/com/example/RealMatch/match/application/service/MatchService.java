@@ -16,6 +16,16 @@ public interface MatchService {
 
     MatchBrandResponseDto getMatchingBrands(String userId, BrandSortType sortBy, CategoryType category, List<String> tags);
 
+    MatchBrandResponseDto searchMatchingBrands(
+            String userId,
+            String title,
+            BrandSortType sortBy,
+            CategoryType category,
+            List<String> tags,
+            int page,
+            int size
+    );
+
     MatchCampaignResponseDto getMatchingCampaigns(
             String userId,
             String keyword,

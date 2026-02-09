@@ -23,6 +23,9 @@ import com.example.RealMatch.brand.presentation.dto.response.SponsorProductDetai
 import com.example.RealMatch.brand.presentation.dto.response.SponsorProductListResponseDto;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
+import com.example.RealMatch.match.domain.entity.enums.CategoryType;
+import com.example.RealMatch.match.presentation.dto.response.MatchBrandResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -86,6 +89,28 @@ public interface BrandSwagger {
     CustomResponse<java.util.List<BrandDetailResponseDto>> getBrandDetail(
             @Parameter(description = "조회할 브랜드의 ID", required = true) @PathVariable Long brandId,
             @Parameter(hidden = true) CustomUserDetails principal
+    );
+
+    @Operation(summary = "브랜드 검색 by 이예림",
+            description = """
+                    JWT 토큰의 사용자 ID를 기반으로 매칭률이 높은 브랜드 목록을 검색합니다.
+                    **검색**: title을 입력하면 브랜드명(title)만 검색합니다.
+                    정렬 옵션: MATCH_SCORE(매칭률 순), POPULARITY(인기순), NEWEST(신규순)
+                    카테고리 필터: ALL(전체), FASHION(패션), BEAUTY(뷰티)
+                    태그 필터: 뷰티/패션 관련 태그로 필터링
+                    페이지네이션: page(0부터 시작), size(기본 20)
+                    """)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "브랜드 검색 성공")
+    })
+    CustomResponse<MatchBrandResponseDto> searchBrands(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "브랜드명 검색어 (브랜드명 title만 검색)") String title,
+            @Parameter(description = "정렬 기준 (MATCH_SCORE, POPULARITY, NEWEST)") BrandSortType sortBy,
+            @Parameter(description = "카테고리 필터 (ALL, FASHION, BEAUTY)") CategoryType category,
+            @Parameter(description = "태그 필터 (예: 스킨케어, 미니멀)") List<String> tags,
+            @Parameter(description = "페이지 번호 (0부터 시작)") int page,
+            @Parameter(description = "페이지 크기 (기본 20)") int size
     );
 
     @Operation(summary = "브랜드 좋아요 토글 by 이예림", description = "브랜드 ID로 좋아요를 추가하거나 취소합니다.")
@@ -177,7 +202,7 @@ public interface BrandSwagger {
             @Parameter(description = "조회할 유저의 ID", required = true) @PathVariable Long userId
     );
 
-    @Operation(summary = "브랜드 개별 요약 조회 API", description = "사진 클릭 시 하단에 노출되는 브랜드의 기본 정보(이미지, 이름, 태그, 매칭률)를 조회합니다.")
+    @Operation(summary = "브랜드 개별 요약 조회 API by 이예림", description = "사진 클릭 시 하단에 노출되는 브랜드의 기본 정보(이미지, 이름, 태그, 매칭률)를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = BrandSimpleDetailResponse.class))),
