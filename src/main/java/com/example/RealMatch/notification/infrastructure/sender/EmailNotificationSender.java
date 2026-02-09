@@ -83,7 +83,7 @@ public class EmailNotificationSender implements NotificationChannelSender {
                         <h2 style="color: #333; margin-bottom: 16px;">%s</h2>
                         <p style="color: #555; font-size: 16px; line-height: 1.6;">%s</p>
                         <div style="margin-top: 24px;">
-                            <a href="%s" style="display: inline-block; background: #4A90D9; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 14px;">
+                            <a href="%s" style="display: inline-block; background: #6666E5; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 14px;">
                                 알림 확인하기
                             </a>
                         </div>
