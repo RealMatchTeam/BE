@@ -11,4 +11,6 @@ import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
 public interface BrandDescribeTagRepository extends JpaRepository<BrandDescribeTag, Long> {
 
     List<BrandDescribeTag> findAllByBrandId(Long brandId);
+
+    List<BrandDescribeTag> findAllByBrandIdIn(List<Long> brandIds);
 }
