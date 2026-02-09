@@ -1,6 +1,7 @@
 package com.example.RealMatch.campaign.application.service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class CampaignQueryService {
 
         String imageUrl = attachmentUrlService.getAccessUrl(campaign.getImageUrl());
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
         return CampaignDetailResponse.from(campaign, imageUrl, isLike,  today, tags);
     }
 }
