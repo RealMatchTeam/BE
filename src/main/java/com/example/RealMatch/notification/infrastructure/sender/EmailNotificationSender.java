@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.HtmlUtils;
 
 import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.user.domain.entity.User;
@@ -69,20 +70,20 @@ public class EmailNotificationSender implements NotificationChannelSender {
 
     private String buildHtmlContent(Notification notification) {
         String notificationUrl = frontendUrl + "/notifications";
+        // HTML Injection 방지를 위해 사용자 입력값 이스케이프 처리
+        String escapedTitle = HtmlUtils.htmlEscape(notification.getTitle());
+        String escapedBody = HtmlUtils.htmlEscape(notification.getBody());
 
         return """
                 <!DOCTYPE html>
                 <html lang="ko">
                 <head><meta charset="UTF-8"></head>
-                <body style="font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; \
-                max-width: 600px; margin: 0 auto; padding: 20px;">
+                <body style="font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <div style="background: #f8f9fa; border-radius: 12px; padding: 32px;">
                         <h2 style="color: #333; margin-bottom: 16px;">%s</h2>
                         <p style="color: #555; font-size: 16px; line-height: 1.6;">%s</p>
                         <div style="margin-top: 24px;">
-                            <a href="%s"
-                               style="display: inline-block; background: #4A90D9; color: white; \
-                padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 14px;">
+                            <a href="%s" style="display: inline-block; background: #4A90D9; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 14px;">
                                 알림 확인하기
                             </a>
                         </div>
@@ -92,6 +93,6 @@ public class EmailNotificationSender implements NotificationChannelSender {
                     </p>
                 </body>
                 </html>
-                """.formatted(notification.getTitle(), notification.getBody(), notificationUrl);
+                """.formatted(escapedTitle, escapedBody, notificationUrl);
     }
 }
