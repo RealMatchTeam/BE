@@ -2,11 +2,13 @@ package com.example.RealMatch.campaign.presentation.dto.response;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.campaign.domain.entity.CampaignContentTag;
 import com.example.RealMatch.tag.domain.enums.ContentTagType;
@@ -19,10 +21,11 @@ import lombok.Getter;
 @Builder
 public class CampaignDetailResponse {
 
-    private Long  campaignId;
+    private Long campaignId;
     private String title;
     private String description;
     private String imageUrl;
+    private IndustryType category;
 
     private String preferredSkills;
     private String schedule;
@@ -42,6 +45,7 @@ public class CampaignDetailResponse {
 
     private LocalDateTime recruitStartDate;
     private LocalDateTime recruitEndDate;
+    private int dday;
 
     private Integer quota;
 
@@ -51,13 +55,19 @@ public class CampaignDetailResponse {
             Campaign campaign,
             String imageUrl,
             boolean isLike,
+            LocalDate today,
             List<CampaignContentTag> tags
     ) {
+        int dday = (int) ChronoUnit.DAYS.between(
+                today, campaign.getRecruitEndDate().toLocalDate()
+        );
+
         return CampaignDetailResponse.builder()
                 .campaignId(campaign.getId())
                 .title(campaign.getTitle())
                 .description(campaign.getDescription())
                 .imageUrl(imageUrl)
+                .category(campaign.getBrand().getIndustryType())
                 .preferredSkills(campaign.getPreferredSkills())
                 .schedule(campaign.getSchedule())
                 .videoSpec(campaign.getVideoSpec())
@@ -68,6 +78,7 @@ public class CampaignDetailResponse {
                 .endDate(campaign.getEndDate())
                 .recruitStartDate(campaign.getRecruitStartDate())
                 .recruitEndDate(campaign.getRecruitEndDate())
+                .dday(Math.max(dday, -1))
                 .quota(campaign.getQuota())
                 .contentTags(toContentTagResponse(tags))
                 .build();
