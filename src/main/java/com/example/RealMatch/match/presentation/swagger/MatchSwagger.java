@@ -54,35 +54,36 @@ public interface MatchSwagger {
                                                       "beauty": {
                                                         "interestStyleTags": [1, 2],
                                                         "prefferedFunctionTags": [6, 7],
-                                                        "skinTypeTags": 12,
-                                                        "skinToneTags": 13,
-                                                        "makeupStyleTags": 2
+                                                        "skinTypeTags": 11,
+                                                        "skinToneTags": 14,
+                                                        "makeupStyleTags": 19
                                                       },
                                                       "fashion": {
-                                                        "interestStyleTags": [16, 17],
-                                                        "preferredItemTags": [22, 23],
-                                                        "preferredBrandTags": [27, 28],
+                                                        "interestStyleTags": [24, 25],
+                                                        "preferredItemTags": [28, 29],
+                                                        "preferredBrandTags": [33, 24],
                                                         "heightTag": 72,
-                                                        "weightTypeTag": 94,
-                                                        "topSizeTag": 108,
-                                                        "bottomSizeTag": 178
+                                                        "weightTypeTag": 101,
+                                                        "topSizeTag": 104,
+                                                        "bottomSizeTag": 123
                                                       },
                                                       "content": {
                                                         "sns": {
                                                           "url": "https://www.instagram.com/vivi",
                                                           "mainAudience": {
-                                                            "genderTags": [221, 222],
-                                                            "ageTags": [223, 224]
+                                                            "genderTags": [156],
+                                                            "ageTags": [161]
                                                           },
                                                           "averageAudience": {
-                                                            "videoLengthTags": [228, 229],
-                                                            "videoViewsTags": [232, 233]
+                                                            "videoLengthTags": [164, 165],
+                                                            "videoViewsTags": [168, 169]
                                                           }
                                                         },
-                                                        "typeTags": [236, 237],
-                                                        "toneTags": [245, 246],
-                                                        "prefferedInvolvementTags": [251, 252],
-                                                        "prefferedCoverageTags": [255, 256]
+                                                        "typeTags": [171, 172],
+                                                        "categoryTags": [178],
+                                                        "toneTags": [181, 182],
+                                                        "prefferedInvolvementTags": [188, 189],
+                                                        "prefferedCoverageTags": [190, 191]
                                                       }
                                                     }
                                                     """
