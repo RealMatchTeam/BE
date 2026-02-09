@@ -59,6 +59,7 @@ public class MatchRequestDto {
     public static class ContentDto {
         private SnsDto sns;
         private List<Integer> typeTags;
+        private List<Integer> categoryTags;
         private List<Integer> toneTags;
         private List<Integer> prefferedInvolvementTags;
         private List<Integer> prefferedCoverageTags;
