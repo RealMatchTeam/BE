@@ -60,6 +60,7 @@ public class CollaborationQueryService {
                             .map(p -> new CollaborationResponse(
                                     p.campaignId(),
                                     null,
+                                    p.brandId(),
                                     p.brandName(),
 //                                    attachmentUrlService.getAccessUrl(p.thumbnailS3Key()),
                                     p.thumbnailS3Key(),
@@ -93,6 +94,7 @@ public class CollaborationQueryService {
                                 .map(p -> new CollaborationResponse(
                                         p.campaignId(),
                                         p.proposalId(),
+                                        p.brandId(),
                                         p.brandName(),
 //                                        attachmentUrlService.getAccessUrl(p.thumbnailS3Key()),
                                         p.thumbnailS3Key(),
@@ -127,6 +129,7 @@ public class CollaborationQueryService {
                                 .map(p -> new CollaborationResponse(
                                         p.campaignId(),
                                         p.proposalId(),
+                                        p.brandId(),
                                         p.brandName(),
 //                                        attachmentUrlService.getAccessUrl(p.thumbnailS3Key()),
                                         p.thumbnailS3Key(),
@@ -201,6 +204,7 @@ public class CollaborationQueryService {
                 .map(p -> new CollaborationResponse(
                         p.campaignId(),
                         p.proposalId(),
+                        p.brandId(),
                         p.brandName(),
                         // attachmentUrlService.getAccessUrl(p.thumbnailS3Key()),
                         p.thumbnailS3Key(),
