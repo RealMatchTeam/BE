@@ -31,6 +31,9 @@ public class CampaignController {
             description = """
                     캠페인 상세 정보를 조회합니다.
                     
+                    * dday가 -1인 것은은 dday가 지난 상태를 말합니다.    
+                    * 카테고리는 브랜드의 카테고리를 따라갑니다. (데모데이 이후 캠페인 카테고리로 수정 예정)    
+                    
                     formats : 형식, 
                     categories : 종류, 
                     tones : 톤, 
