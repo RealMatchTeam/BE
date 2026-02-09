@@ -58,10 +58,10 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 매칭 검사 진행 여부 예외 처리
+        // 매칭 검사 진행 여부 예외 처리 - 매칭 검사를 안하면 프로필 카드가 없음
         UserMatchingDetail detail = userMatchingDetailRepository
                 .findByUserIdAndIsDeprecatedFalse(userId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND));
 
         List<UserContentCategory> categories =
                 userContentCategoryRepository.findByUserId(userId);
@@ -71,7 +71,7 @@ public class UserService {
 
     public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) {
 
-        // 매칭 검사 진행 여부 예외 처리
+        // 매칭 검사 진행 여부 예외 처리 - 매칭 검사를 안하면 찜한 내역이 없음
         if (!userMatchingDetailRepository.existsByUserIdAndIsDeprecatedFalse(userId)) {
             throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         }
