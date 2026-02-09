@@ -104,6 +104,24 @@ spring:
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    default-encoding: UTF-8
+    from: ${MAIL_FROM:realmatch.lab@gmail.com}
+
   rabbitmq:
     host: ${RABBITMQ_URL}
     port: ${RABBITMQ_MQ_PORT}
@@ -133,6 +151,8 @@ management:
       enabled: false
 
 app:
+  frontend:
+    url: ${FRONT_DOMAIN_URL:https://realmatch.co.kr}
   s3:
     bucket-name: ${S3_BUCKET_NAME:realmatch-s3}
     region: ${S3_REGION:us-east-2}
@@ -142,3 +162,7 @@ app:
     key-prefix: ${S3_KEY_PREFIX:attachment}
     access-key-id: ${AWS_ACCESS_KEY_ID:}
     secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
+
+fcm:
+  credentials-path: ${FCM_CREDENTIALS_PATH:}
+  project-id: ${FCM_PROJECT_ID:}
