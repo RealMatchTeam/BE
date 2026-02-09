@@ -58,6 +58,8 @@ services:
       - rabbitmq
     env_file:
       - .env
+    volumes:
+      - ./config/firebase-service-account.json:/app/config/firebase-service-account.json:ro
     networks:
       - realmatch-network
 

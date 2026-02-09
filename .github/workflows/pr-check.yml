@@ -93,8 +93,18 @@ jobs:
       AWS_ACCESS_KEY_ID: AWSACCESSKEYIDISSECRET
       AWS_SECRET_ACCESS_KEY: AWSSECRETACCESSKEYISSECRET
       # FRONT
+      FRONT_DOMAIN_URL: http://localhost:3000
       FRONT_DOMAIN_URL_V2: http://localhost:3000
       FRONT_DOMAIN_URL_LOCAL: http://localhost:3000
+      # FCM
+      FCM_CREDENTIALS_PATH: ""
+      FCM_PROJECT_ID: ""
+      # SMTP
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: test@example.com
+      MAIL_PASSWORD: test_password
+      MAIL_FROM: test@example.com
 
     steps:
     - name: Checkout code

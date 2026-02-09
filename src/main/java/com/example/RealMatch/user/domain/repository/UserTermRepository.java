@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.example.RealMatch.user.domain.entity.UserTerm;
+import com.example.RealMatch.user.domain.entity.enums.TermName;
 
 public interface UserTermRepository extends JpaRepository<UserTerm, Long> {
 
@@ -14,4 +15,6 @@ public interface UserTermRepository extends JpaRepository<UserTerm, Long> {
     Optional<UserTerm> findByUserIdAndTermId(Long userId, Long termId);
 
     List<UserTerm> findByUserIdAndIsAgreed(Long userId, boolean isAgreed);
+
+    Optional<UserTerm> findByUserIdAndTermName(Long userId, TermName termName);
 }

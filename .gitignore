@@ -8,6 +8,11 @@ src/test/resources/application.yml
 .env
 .env.*
 
+# Firebase 서비스 계정 키
+config/firebase-service-account.json
+**/firebase-service-account.json
+**/*firebase-adminsdk*.json
+
 ### Gradle ###
 .gradle/
 build/
