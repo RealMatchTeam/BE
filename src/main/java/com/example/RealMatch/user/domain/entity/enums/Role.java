@@ -9,7 +9,8 @@ public enum Role {
     ADMIN,
     GUEST,
     BRAND,
-    CREATOR;
+    CREATOR,
+    WITHDRAWN;
 
     // !!! customDetails에서 role을 string에서 Role로 바꾸면 이거 없앨거임
     public static Role from(String value) {

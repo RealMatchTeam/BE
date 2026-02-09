@@ -101,10 +101,11 @@ public class User extends BaseEntity {
         this.detailAddress = detailAddress;
     }
 
-    public void softDelete(Long deletedBy) {
+    public void withdraw(Long deletedBy) {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
+        this.role = Role.WITHDRAWN;
     }
 
     public void completeSignup(String nickname, LocalDate birth, Gender gender, Role role) {

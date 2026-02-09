@@ -17,7 +17,7 @@ public enum ProposalDirection {
         return switch (whoProposed) {
             case BRAND -> BRAND_TO_CREATOR;
             case CREATOR -> CREATOR_TO_BRAND;
-            case ADMIN, GUEST -> throw new IllegalArgumentException(
+            case ADMIN, GUEST, WITHDRAWN -> throw new IllegalArgumentException(
                     "Proposal direction is only for BRAND or CREATOR, got: " + whoProposed);
         };
     }

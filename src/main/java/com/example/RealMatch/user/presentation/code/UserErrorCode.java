@@ -78,6 +78,13 @@ public enum UserErrorCode implements BaseErrorCode {
             "매칭 상세 정보를 불러오는데 실패하였습니다."
     ),
 
+    USER_NOTIFICATION_SETTING_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "USER404_12",
+            "알림 설정이 존재하지 않습니다."
+    ),
+
+
     // 400 - 요청 오류
     USER_UPDATE_BAD_REQUEST(
             HttpStatus.BAD_REQUEST,
@@ -131,6 +138,12 @@ public enum UserErrorCode implements BaseErrorCode {
             HttpStatus.BAD_REQUEST,
             "USER400_9",
             "페이지 크기는 1보다 커야 합니다."
+    ),
+
+    INVALID_TERM(
+            HttpStatus.BAD_REQUEST,
+            "USER400_10",
+            "Term이 존재하지 않습니다."
     );
 
     private final HttpStatus status;
