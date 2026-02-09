@@ -20,13 +20,13 @@ class NotificationChannelResolverTest {
     private final NotificationChannelResolver resolver = new NotificationChannelResolver();
 
     @Test
-    @DisplayName("PROPOSAL_RECEIVED는 PUSH만 반환")
-    void resolveChannels_shouldReturnPushOnly_whenProposalReceived() {
+    @DisplayName("PROPOSAL_RECEIVED는 PUSH와 EMAIL을 반환")
+    void resolveChannels_shouldReturnPushAndEmail_whenProposalReceived() {
         // when
         Set<NotificationChannel> channels = resolver.resolveChannels(NotificationKind.PROPOSAL_RECEIVED);
 
         // then
-        assertThat(channels).containsExactly(NotificationChannel.PUSH);
+        assertThat(channels).containsExactlyInAnyOrder(NotificationChannel.PUSH, NotificationChannel.EMAIL);
     }
 
     @Test
