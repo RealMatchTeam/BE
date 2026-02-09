@@ -8,4 +8,6 @@ import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 
 public interface UserMatchingDetailRepository extends JpaRepository<UserMatchingDetail, Long> {
     Optional<UserMatchingDetail> findByUserIdAndIsDeprecatedFalse(Long userId);
+
+    boolean existsByUserIdAndIsDeprecatedFalse(Long userId);
 }

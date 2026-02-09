@@ -62,6 +62,11 @@ public class UserService {
             throw new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
         }
 
+        // 프로필 카드 정보가 없는 경우 예외 처리
+        if (!userMatchingDetailRepository.existsByUserIdAndIsDeprecatedFalse(userId)) {
+            throw new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
+        }
+
         UserMatchingDetail detail = userMatchingDetailRepository
                 .findByUserIdAndIsDeprecatedFalse(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
@@ -79,7 +84,8 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
         // 내 찜 조회를 볼 자격이 있는지 확인
-        if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
+        if (user.getRole() == Role.GUEST ||
+                !userMatchingDetailRepository.existsByUserIdAndIsDeprecatedFalse(userId)) {
             throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         }
 
