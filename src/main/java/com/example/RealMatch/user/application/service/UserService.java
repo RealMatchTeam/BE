@@ -13,7 +13,6 @@ import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.UserContentCategory;
 import com.example.RealMatch.user.domain.entity.UserMatchingDetail;
 import com.example.RealMatch.user.domain.entity.enums.AuthProvider;
-import com.example.RealMatch.user.domain.entity.enums.Role;
 import com.example.RealMatch.user.domain.repository.AuthenticationMethodRepository;
 import com.example.RealMatch.user.domain.repository.UserContentCategoryRepository;
 import com.example.RealMatch.user.domain.repository.UserMatchingDetailRepository;
@@ -55,16 +54,14 @@ public class UserService {
     }
 
     public MyProfileCardResponseDto getMyProfileCard(Long userId) {
+        // 유저 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        if (user.getRole() == Role.GUEST) {
-            throw new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND);
-        }
-
+        // 매칭 검사 진행 여부 예외 처리 - 매칭 검사를 안하면 프로필 카드가 없음
         UserMatchingDetail detail = userMatchingDetailRepository
                 .findByUserIdAndIsDeprecatedFalse(userId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_MATCHING_DETAIL_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND));
 
         List<UserContentCategory> categories =
                 userContentCategoryRepository.findByUserId(userId);
@@ -72,33 +69,26 @@ public class UserService {
         return MyProfileCardResponseDto.from(user, detail, categories);
     }
 
+    public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) {
 
-    public MyScrapResponseDto getMyScrap(Long userId, String type, String sort) { // QueryDsl 적용 예정
-        // 유저 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
-
-        // 내 찜 조회를 볼 자격이 있는지 확인
-        if (user.getRole() == Role.GUEST || !matchCampaignHistoryRepository.existsByUserId(userId)) {
+        // 매칭 검사 진행 여부 예외 처리 - 매칭 검사를 안하면 찜한 내역이 없음
+        if (!userMatchingDetailRepository.existsByUserIdAndIsDeprecatedFalse(userId)) {
             throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         }
 
-        // type이 null일 경우
+        // 찜 타입이 null일 때 예외 처리
         if (type == null) {
             throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         }
 
-        // 하드코딩된 Mock 데이터 제공자를 통해 찜 목록 조회
+        // 찜 타입에 따른 분기 처리
         return switch (type.toLowerCase()) {
-            case "brand" -> {
-                List<MyScrapResponseDto.BrandScrap> brandList = scrapMockDataProvider.getBrandScraps(sort, null);
-                yield MyScrapResponseDto.ofBrandType(brandList);
-            }
-            case "campaign" -> {
-                List<MyScrapResponseDto.CampaignScrap> campaignList = scrapMockDataProvider.getCampaignScraps(sort, null);
-                yield MyScrapResponseDto.ofCampaignType(campaignList);
-            }
-            // 정의되지 않은 type이 들어올 경우
+            case "brand" -> MyScrapResponseDto.ofBrandType(
+                    scrapMockDataProvider.getBrandScraps(sort, null)
+            );
+            case "campaign" -> MyScrapResponseDto.ofCampaignType(
+                    scrapMockDataProvider.getCampaignScraps(sort, null)
+            );
             default -> throw new CustomException(UserErrorCode.SCRAP_NOT_FOUND);
         };
     }
