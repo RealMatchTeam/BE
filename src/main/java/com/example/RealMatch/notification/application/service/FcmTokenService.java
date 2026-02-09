@@ -32,7 +32,7 @@ public class FcmTokenService {
             FcmToken fcmToken = existing.get();
             if (!fcmToken.getUserId().equals(userId)) {
                 fcmToken.reassignTo(userId);
-                LOG.info("[FCM] Token reassigned. token={}..., newUserId={}", token.substring(0, 10), userId);
+                LOG.info("[FCM] Token reassigned. token={}..., newUserId={}", token.substring(0, Math.min(token.length(), 10)), userId);
             }
             return;
         }
