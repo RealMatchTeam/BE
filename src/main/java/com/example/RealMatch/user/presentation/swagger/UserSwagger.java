@@ -11,6 +11,7 @@ import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
 import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteBrandListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteCampaignListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
@@ -148,7 +149,7 @@ public interface UserSwagger {
             @RequestParam String nickname
     );
 
-    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴(Soft Delete) 처리 후 role을 WITHDRAWN으로 변경합니다.")
+    @Operation(summary = "회원 탈퇴 API By 고경수 ", description = "회원 탈퇴(Soft Delete) 처리 후 role을 WITHDRAWN으로 변경합니다.")
     CustomResponse<Void> withdraw(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
@@ -206,5 +207,12 @@ public interface UserSwagger {
             )
             @RequestParam(required = false)
             CampaignSortType sort
+    );
+
+    @Operation(summary = "프로필 이미지 수정 API By 고경수",
+            description = "Attachment API로 업로드된 이미지 URL을 받아 프로필 이미지를 변경합니다")
+    CustomResponse<MyProfileCardResponseDto> updateMyProfileImage(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @RequestBody MyProfileCardUpdateRequestDto request
     );
 }

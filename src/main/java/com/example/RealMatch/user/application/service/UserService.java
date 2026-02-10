@@ -20,6 +20,7 @@ import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyPageResponseDto;
@@ -144,6 +145,30 @@ public class UserService {
 
         // DTO 변환 및 반환
         return MyLoginResponseDto.from(linkedProviders);
+    }
+
+    @Transactional
+    public MyProfileCardResponseDto updateMyProfileImage(
+            Long userId,
+            MyProfileCardUpdateRequestDto request
+    ) {
+        // 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        // 매칭 검사 진행 여부 예외 처리 - 매칭 검사를 안하면 프로필 카드가 없음
+        UserMatchingDetail detail = userMatchingDetailRepository
+                .findByUserIdAndIsDeprecatedFalse(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND));
+
+        // 이미지 URL만 교체
+        user.updateProfileImage(request.getProfileImageUrl());
+
+        // 변경된 프로필 이미지로 프로필 카드 DTO 재생성
+        List<UserContentCategory> categories =
+                userContentCategoryRepository.findByUserId(userId);
+
+        return MyProfileCardResponseDto.from(user, detail, categories);
     }
 
     @Transactional(readOnly = true)
