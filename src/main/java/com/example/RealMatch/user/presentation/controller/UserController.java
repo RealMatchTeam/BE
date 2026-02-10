@@ -20,6 +20,7 @@ import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.application.service.UserWithdrawService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyInstagramUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteBrandListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteCampaignListResponseDto;
@@ -167,6 +168,8 @@ public class UserController implements UserSwagger {
                 )
         );
     }
+
+    @Override
     @PatchMapping("/me/profile-image")
     public CustomResponse<MyProfileCardResponseDto> updateMyProfileImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -174,6 +177,17 @@ public class UserController implements UserSwagger {
     ) {
         return CustomResponse.ok(
                 userService.updateMyProfileImage(userDetails.getUserId(), request)
+        );
+    }
+
+    @Override
+    @PatchMapping("/me/instagram")
+    public CustomResponse<MyProfileCardResponseDto> updateMySns(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid MyInstagramUpdateRequestDto request
+    ) {
+        return CustomResponse.ok(
+                userService.updateSns(userDetails.getUserId(), request)
         );
     }
 }

@@ -50,4 +50,15 @@ public class UserMatchingDetail extends BaseEntity {
     public void deprecated() {
         this.isDeprecated = true;
     }
+
+    // 인스타 아이디 업데이트 메서드
+    public void updateSns(String snsAccount) {
+        if (snsAccount != null && !snsAccount.isBlank()) {
+            // URL 형식으로 저장 (기존 방식 유지)
+            String cleanAccount = snsAccount.trim().replace("@", "");
+            this.snsUrl = "https://www.instagram.com/" + cleanAccount + "/";
+        } else {
+            this.snsUrl = null;
+        }
+    }
 }
