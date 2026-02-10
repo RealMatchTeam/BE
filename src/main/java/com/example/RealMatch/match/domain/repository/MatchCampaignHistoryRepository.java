@@ -47,4 +47,6 @@ ORDER BY h.id DESC
             Long cursor,
             Pageable pageable
     );
+
+    void deleteByUserId(Long userId);
 }

@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
@@ -59,4 +61,10 @@ public interface CampaignProposalRepository extends JpaRepository<CampaignPropos
             "WHERE p.id IN :ids")
     List<CampaignProposal> findAllByIdWithDetails(@Param("ids") List<Long> ids);
 
+    // User가 연관된 Proposal 모두 삭제 (보낸/받은)
+    // 쿼리 최적화를 위해 @Modifying 어노테이션과 JPQL 사용
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM CampaignProposal cp WHERE cp.senderUserId = :userId OR cp.receiverUserId = :userId")
+    void deleteByUserId(@Param("userId") Long userId);
 }
