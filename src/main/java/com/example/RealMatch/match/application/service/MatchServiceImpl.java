@@ -279,6 +279,9 @@ public class MatchServiceImpl implements MatchService {
             if (dto.getContent().getTypeTags() != null) {
                 contentTags.addAll(dto.getContent().getTypeTags());
             }
+            if (dto.getContent().getCategoryTags() != null) {
+                contentTags.addAll(dto.getContent().getCategoryTags());
+            }
             if (dto.getContent().getToneTags() != null) {
                 contentTags.addAll(dto.getContent().getToneTags());
             }
@@ -789,6 +792,7 @@ public class MatchServiceImpl implements MatchService {
 
         if (dto.getContent() != null) {
             addAll(tagIds, dto.getContent().getTypeTags());
+            addAll(tagIds, dto.getContent().getCategoryTags());
             addAll(tagIds, dto.getContent().getToneTags());
             addAll(tagIds, dto.getContent().getPrefferedInvolvementTags());
             addAll(tagIds, dto.getContent().getPrefferedCoverageTags());
