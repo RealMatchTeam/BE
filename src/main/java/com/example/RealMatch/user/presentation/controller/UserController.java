@@ -20,6 +20,7 @@ import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.application.service.UserWithdrawService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteBrandListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteCampaignListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
@@ -164,6 +165,15 @@ public class UserController implements UserSwagger {
                         userId,
                         sort == null ? CampaignSortType.MATCH_SCORE : sort
                 )
+        );
+    }
+    @PatchMapping("/me/profile-image")
+    public CustomResponse<MyProfileCardResponseDto> updateMyProfileImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid MyProfileCardUpdateRequestDto request
+    ) {
+        return CustomResponse.ok(
+                userService.updateMyProfileImage(userDetails.getUserId(), request)
         );
     }
 }
