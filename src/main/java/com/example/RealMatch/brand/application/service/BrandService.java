@@ -57,8 +57,8 @@ import com.example.RealMatch.tag.domain.repository.TagBrandRepository;
 import com.example.RealMatch.tag.domain.repository.TagRepository;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 
+import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
