@@ -58,6 +58,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         )
                         .orElseGet(() -> registerNewUser(userInfo));
 
+        // 탈퇴한 유저인지 확인
+        User user = authMethod.getUser();
+        if (user.getRole() == Role.WITHDRAWN) {
+            throw new CustomException(OAuthErrorCode.WITHDRAWN_USER);
+        }
+
         return new CustomOAuth2User(
                 authMethod.getUser().getId(),
                 authMethod.getUser().getRole().name(),
