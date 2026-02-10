@@ -14,12 +14,6 @@ import lombok.Getter;
 @Schema(description = "협찬 가능 제품 리스트(상세 포함) 응답 DTO")
 public class SponsorProductListResponseDto {
 
-    @Schema(description = "협찬 제품 ID")
-    private Long id;
-
-    @Schema(description = "제품명")
-    private String name;
-
     @Schema(description = "제품 대표 이미지 URL")
     private String thumbnailImageUrl;
 
@@ -70,8 +64,6 @@ public class SponsorProductListResponseDto {
         }
 
         return SponsorProductListResponseDto.builder()
-                .id(product.getId())
-                .name(product.getName())
                 .thumbnailImageUrl(thumbnail)
                 .totalCount(product.getTotalCount())
                 .currentCount(product.getCurrentCount())
