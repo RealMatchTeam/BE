@@ -1,7 +1,6 @@
 package com.example.RealMatch.match.domain.repository;
 
 import static com.example.RealMatch.brand.domain.entity.QBrand.brand;
-import static com.example.RealMatch.brand.domain.entity.QBrandDescribeTag.brandDescribeTag;
 import static com.example.RealMatch.match.domain.entity.QMatchBrandHistory.matchBrandHistory;
 
 import java.util.List;
@@ -12,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import com.example.RealMatch.brand.domain.entity.QBrandDescribeTag;
 import com.example.RealMatch.brand.domain.entity.QBrandLike;
 import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
@@ -28,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 @Repository
 @RequiredArgsConstructor
 public class MatchBrandHistoryRepositoryCustomImpl implements MatchBrandHistoryRepositoryCustom {
+
+    private static final QBrandDescribeTag BRAND_DESCRIBE_TAG = QBrandDescribeTag.brandDescribeTag1;
 
     private final JPAQueryFactory queryFactory;
 
@@ -95,13 +97,13 @@ public class MatchBrandHistoryRepositoryCustomImpl implements MatchBrandHistoryR
                     .toList();
 
             if (!normalizedTags.isEmpty()) {
-                StringExpression tagLower = brandDescribeTag.brandDescribeTag.lower();
+                StringExpression tagLower = BRAND_DESCRIBE_TAG.brandDescribeTag.lower();
                 builder.and(
                         JPAExpressions
                                 .selectOne()
-                                .from(brandDescribeTag)
+                                .from(BRAND_DESCRIBE_TAG)
                                 .where(
-                                        brandDescribeTag.brand.id.eq(brand.id),
+                                        BRAND_DESCRIBE_TAG.brand.id.eq(brand.id),
                                         tagLower.in(normalizedTags)
                                 )
                                 .exists()
