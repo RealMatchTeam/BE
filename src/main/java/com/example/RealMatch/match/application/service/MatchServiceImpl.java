@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -506,9 +507,14 @@ public class MatchServiceImpl implements MatchService {
     ) {
         Long userIdLong = Long.parseLong(userId);
 
-        List<MatchBrandHistory> brandHistories = matchBrandHistoryRepository.findByUserIdAndIsDeprecatedFalse(userIdLong);
+        int safePage = Math.max(page, 0);
+        int safeSize = size <= 0 ? 20 : size;
+        PageRequest pageable = PageRequest.of(safePage, safeSize);
 
-        if (brandHistories.isEmpty()) {
+        Page<MatchBrandHistory> historyPage = matchBrandHistoryRepository
+                .searchBrands(userIdLong, title, category, sortBy, tags, pageable);
+
+        if (historyPage.isEmpty()) {
             LOG.warn("No match brand history found in DB. userId={}", userId);
             return MatchBrandResponseDto.builder()
                     .count(0)
@@ -521,36 +527,22 @@ public class MatchServiceImpl implements MatchService {
                 .collect(Collectors.toSet());
 
         Set<Long> recruitingBrandIds = getRecruitingBrandIds();
-        Map<Long, Long> brandLikeCountMap = getBrandLikeCountMap();
 
-        // BrandDescribeTag 조회하여 Map으로 변환
-        List<Long> brandIds = brandHistories.stream()
+        List<Long> pageBrandIds = historyPage.getContent().stream()
                 .map(h -> h.getBrand().getId())
                 .toList();
-        Map<Long, List<String>> brandDescribeTagMap = brandDescribeTagRepository.findAllByBrandIdIn(brandIds).stream()
+        Map<Long, List<String>> brandDescribeTagMap = brandDescribeTagRepository.findAllByBrandIdIn(pageBrandIds).stream()
                 .collect(Collectors.groupingBy(
                         tag -> tag.getBrand().getId(),
                         Collectors.mapping(BrandDescribeTag::getBrandDescribeTag, Collectors.toList())
                 ));
 
-        List<MatchBrandResponseDto.BrandDto> filteredBrands = brandHistories.stream()
-                .filter(history -> filterBrandByCategory(history.getBrand(), category))
-                .filter(history -> filterBrandByTitle(history.getBrand(), title))
-                .filter(history -> filterBrandByTags(history.getBrand().getId(), tags, brandDescribeTagMap))
-                .sorted(getBrandHistoryComparator(sortBy, brandLikeCountMap))
+        List<MatchBrandResponseDto.BrandDto> pagedBrands = historyPage.getContent().stream()
                 .map(history -> toMatchBrandDtoFromHistory(history, likedBrandIds, recruitingBrandIds, brandDescribeTagMap))
                 .toList();
 
-        int total = filteredBrands.size();
-        int safePage = Math.max(page, 0);
-        int safeSize = size <= 0 ? 20 : size;
-        int fromIndex = safePage * safeSize;
-        int toIndex = Math.min(fromIndex + safeSize, total);
-        List<MatchBrandResponseDto.BrandDto> pagedBrands =
-                fromIndex >= total ? List.of() : filteredBrands.subList(fromIndex, toIndex);
-
         return MatchBrandResponseDto.builder()
-                .count(total)
+                .count((int) historyPage.getTotalElements())
                 .brands(pagedBrands)
                 .build();
     }
