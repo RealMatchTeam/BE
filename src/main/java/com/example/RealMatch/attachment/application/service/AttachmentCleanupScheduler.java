@@ -123,7 +123,7 @@ public class AttachmentCleanupScheduler {
                 continue;
             }
             try {
-                s3FileUploadService.get().deleteFile(storageKey);
+                s3FileUploadService.get().deleteFile(storageKey, target.getUsage());
                 outcome.successIds.add(target.getId());
             } catch (Exception ex) {
                 LOG.error("Attachment storage delete failed. attachmentId={}, storageKey={}",

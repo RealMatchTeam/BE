@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.infrastructure.storage.S3Properties;
 import com.example.RealMatch.global.exception.CustomException;
@@ -24,6 +25,10 @@ public class AttachmentUrlService {
     private final S3FileUploadService s3FileUploadService;
     private final S3Properties s3Properties;
 
+    /**
+     * Attachment 엔티티 기반 URL 반환
+     * PUBLIC → CloudFront URL, CHAT → presigned URL.
+     */
     public String getAccessUrl(Attachment attachment) {
         if (attachment == null || attachment.getStatus() != AttachmentStatus.READY) {
             return null;
@@ -33,13 +38,42 @@ public class AttachmentUrlService {
             LOG.error("READY 상태인데 storageKey가 없습니다. attachmentId={}", attachment.getId());
             return null;
         }
-        return getAccessUrl(storageKey);
+        return getAccessUrl(storageKey, attachment.getUsage());
     }
 
+    /**
+     * storageKey + usage로 URL 반환
+     * PUBLIC → CloudFront URL, CHAT → presigned URL
+     */
+    public String getAccessUrl(String storageKey, AttachmentUsage usage) {
+        if (storageKey == null || storageKey.isBlank()) {
+            return null;
+        }
+        if (usage == AttachmentUsage.PUBLIC) {
+            return s3FileUploadService.buildPublicUrl(storageKey);
+        }
+        return generatePresignedUrl(storageKey);
+    }
+
+    /**
+     * storageKey만으로 URL 반환
+     * storageKey 경로에 /public/이 포함되면 PUBLIC으로 간주.
+     */
     public String getAccessUrl(String storageKey) {
         if (storageKey == null || storageKey.isBlank()) {
             return null;
         }
+        // 이미 CloudFront URL이 저장된 경우 그대로 반환
+        if (storageKey.startsWith("http://") || storageKey.startsWith("https://")) {
+            return storageKey;
+        }
+        AttachmentUsage inferred = storageKey.contains("/public/")
+                ? AttachmentUsage.PUBLIC
+                : AttachmentUsage.CHAT;
+        return getAccessUrl(storageKey, inferred);
+    }
+
+    private String generatePresignedUrl(String storageKey) {
         if (!s3FileUploadService.isAvailable()) {
             throw new CustomException(AttachmentErrorCode.STORAGE_UNAVAILABLE);
         }
