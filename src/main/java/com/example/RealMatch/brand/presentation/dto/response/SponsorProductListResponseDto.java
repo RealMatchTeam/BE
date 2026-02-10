@@ -17,12 +17,6 @@ public class SponsorProductListResponseDto {
     @Schema(description = "제품 대표 이미지 URL")
     private String thumbnailImageUrl;
 
-    @Schema(description = "총 모집 인원 (또는 제공 가능 수량)")
-    private Integer totalCount;
-
-    @Schema(description = "현재 신청 인원 (또는 소진 수량)")
-    private Integer currentCount;
-
     @Schema(description = "브랜드 ID")
     private Long brandId;
 
@@ -34,9 +28,6 @@ public class SponsorProductListResponseDto {
 
     @Schema(description = "제품명")
     private String productName;
-
-    @Schema(description = "제품 설명")
-    private String productDescription;
 
     @Schema(description = "제품 이미지 URL 목록")
     private List<String> productImageUrls;
@@ -65,13 +56,10 @@ public class SponsorProductListResponseDto {
 
         return SponsorProductListResponseDto.builder()
                 .thumbnailImageUrl(thumbnail)
-                .totalCount(product.getTotalCount())
-                .currentCount(product.getCurrentCount())
                 .brandId(brand.getId())
                 .brandName(brand.getBrandName())
                 .productId(product.getId())
                 .productName(product.getName())
-                .productDescription(product.getCampaign().getDescription())
                 .productImageUrls(productImageUrls)
                 .categories(categories)
                 .sponsorInfo(sponsorInfo)

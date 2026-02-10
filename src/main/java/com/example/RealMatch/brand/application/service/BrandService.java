@@ -232,7 +232,7 @@ public class BrandService {
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
 
-        List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithCampaignAndImages(brandId);
+        List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithImages(brandId);
         List<String> categories = buildCategories(brand);
         List<Long> sponsorIds = products.stream()
                 .map(BrandAvailableSponsor::getId)
@@ -263,7 +263,6 @@ public class BrandService {
                 .brandName(brand.getBrandName())
                 .productId(product.getId())
                 .productName(product.getName())
-                .productDescription(product.getCampaign().getDescription())
                 .productImageUrls(imageUrls)
                 .categories(categories)
                 .sponsorInfo(sponsorInfoDto)

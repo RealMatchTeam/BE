@@ -270,16 +270,11 @@ class BrandGenerator(BaseGenerator):
             brand_id = self.fake.random_element(brand_ids)
 
             for _ in range(num_sponsors):
-                total_count = self.fake.random_int(5, 20)
-                current_count = self.fake.random_int(0, total_count)
-
                 sponsors.append({
                     'campaign_id': campaign_id,
                     'brand_id': brand_id,
                     'name': random.choice(self.SPONSOR_NAMES),
                     'content': random.choice(self.SPONSOR_CONTENTS),
-                    'total_count': total_count,
-                    'current_count': current_count,
                     'is_deleted': False,
                     'created_at': datetime.now() - timedelta(days=self.fake.random_int(0, 30)),
                     'updated_at': datetime.now()
@@ -287,9 +282,9 @@ class BrandGenerator(BaseGenerator):
 
         sql = """
             INSERT INTO brand_available_sponsor (campaign_id, brand_id, name, content,
-                total_count, current_count, is_deleted, created_at, updated_at)
+                is_deleted, created_at, updated_at)
             VALUES (%(campaign_id)s, %(brand_id)s, %(name)s, %(content)s,
-                %(total_count)s, %(current_count)s, %(is_deleted)s, %(created_at)s, %(updated_at)s)
+                %(is_deleted)s, %(created_at)s, %(updated_at)s)
         """
         self.execute_many(sql, sponsors, "브랜드 협찬 상품")
 
