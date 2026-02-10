@@ -143,7 +143,7 @@ public interface BrandSwagger {
             @Parameter(description = "제품 ID", required = true) @PathVariable Long productId
     );
 
-    @Operation(summary = "브랜드 협찬 가능 제품 리스트 조회 by 이예림", description = "특정 브랜드의 협찬 가능 제품 목록을 조회합니다.")
+    @Operation(summary = "브랜드 협찬 가능 제품 리스트 조회 by 이예림", description = "특정 브랜드의 협찬 가능 제품 목록을 상세 정보까지 조회합니다.")
     CustomResponse<List<SponsorProductListResponseDto>> getSponsorProducts(
             @Parameter(description = "브랜드 ID", required = true) @PathVariable Long brandId
     );
