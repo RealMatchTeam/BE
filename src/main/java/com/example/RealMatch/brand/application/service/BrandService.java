@@ -233,6 +233,7 @@ public class BrandService {
                 .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
 
         List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithCampaignAndImages(brandId);
+        List<String> categories = buildCategories(brand);
         List<Long> sponsorIds = products.stream()
                 .map(BrandAvailableSponsor::getId)
                 .collect(Collectors.toList());
@@ -243,7 +244,7 @@ public class BrandService {
                         .collect(Collectors.toMap(info -> info.getSponsor().getId(), Function.identity()));
 
         return products.stream()
-                .map(product -> buildSponsorProductListResponse(brand, product, sponsorInfoBySponsorId.get(product.getId())))
+                .map(product -> buildSponsorProductListResponse(brand, product, sponsorInfoBySponsorId.get(product.getId()), categories))
                 .collect(Collectors.toList());
     }
 
@@ -273,10 +274,10 @@ public class BrandService {
     private SponsorProductListResponseDto buildSponsorProductListResponse(
             Brand brand,
             BrandAvailableSponsor product,
-            BrandSponsorInfo sponsorInfo
+            BrandSponsorInfo sponsorInfo,
+            List<String> categories
     ) {
         List<String> imageUrls = buildProductImageUrls(product);
-        List<String> categories = buildCategories(brand);
         SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand.getIndustryType(), sponsorInfo);
         ActionDto action = buildAction();
 
@@ -297,7 +298,15 @@ public class BrandService {
         if (brand.getIndustryType() == null) {
             return List.of();
         }
-        return List.of(brand.getIndustryType().name());
+        if (brand.getIndustryType() == IndustryType.BEAUTY) {
+            return tagBrandRepository.findTagNamesByBrandIdAndTagCategory(
+                    brand.getId(), TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
+        }
+        if (brand.getIndustryType() == IndustryType.FASHION) {
+            return tagBrandRepository.findTagNamesByBrandIdAndTagCategory(
+                    brand.getId(), TagCategory.FASHION_INTEREST_ITEM.getDescription());
+        }
+        return List.of();
     }
 
     private SponsorInfoDto buildSponsorInfo(IndustryType industryType, BrandSponsorInfo sponsorInfo) {
