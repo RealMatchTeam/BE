@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 
-public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHistory, Long> {
+public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHistory, Long>, MatchBrandHistoryRepositoryCustom {
 
     List<MatchBrandHistory> findByUserId(Long userId);
 
