@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
@@ -29,7 +30,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     );
 
     @Query("""
-            select a.id as id, a.storageKey as storageKey
+            select a.id as id, a.storageKey as storageKey, a.usage as usage
               from Attachment a
              where a.id in :ids
                and a.status = :status
@@ -117,5 +118,6 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     interface AttachmentCleanupTarget {
         Long getId();
         String getStorageKey();
+        AttachmentUsage getUsage();
     }
 }
