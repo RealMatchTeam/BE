@@ -129,6 +129,10 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
             LOG.warn("CloudFront base URL이 설정되지 않았습니다. storageKey={}", storageKey);
             return null;
         }
+        if (storageKey != null && storageKey.contains("..")) {
+            LOG.warn("storageKey contains path traversal sequence. storageKey={}", storageKey);
+            return null;
+        }
         return base.endsWith("/") ? base + storageKey : base + "/" + storageKey;
     }
 
@@ -140,8 +144,8 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
         if (usage == AttachmentUsage.PUBLIC) {
             String publicBucket = s3Properties.getPublicBucketName();
             if (publicBucket == null || publicBucket.isBlank()) {
-                LOG.warn("PUBLIC 버킷이 미설정. private 버킷으로 fallback합니다.");
-                return s3Properties.getBucketName();
+                LOG.error("PUBLIC usage attachment requires a public bucket, but 'app.s3.public-bucket-name' is not configured.");
+                throw new IllegalStateException("Public bucket is not configured for PUBLIC attachment usage.");
             }
             return publicBucket;
         }

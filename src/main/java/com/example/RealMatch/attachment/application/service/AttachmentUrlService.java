@@ -63,14 +63,30 @@ public class AttachmentUrlService {
         if (storageKey == null || storageKey.isBlank()) {
             return null;
         }
-        // 이미 CloudFront URL이 저장된 경우 그대로 반환
+        // 이미 CloudFront URL이 저장된 경우, 신뢰 도메인(cloudfrontBaseUrl)인 경우만 그대로 반환
         if (storageKey.startsWith("http://") || storageKey.startsWith("https://")) {
-            return storageKey;
+            return isTrustedRedirectUrl(storageKey) ? storageKey : null;
         }
         AttachmentUsage inferred = storageKey.contains("/public/")
                 ? AttachmentUsage.PUBLIC
                 : AttachmentUsage.CHAT;
         return getAccessUrl(storageKey, inferred);
+    }
+
+    /**
+     * DB에 저장된 URL이 우리 CloudFront 등 신뢰 도메인인지 검사. open redirect 방지.
+     */
+    private boolean isTrustedRedirectUrl(String url) {
+        String base = s3Properties.getCloudfrontBaseUrl();
+        if (base == null || base.isBlank()) {
+            return false;
+        }
+        String baseNormalized = base.trim().toLowerCase();
+        if (baseNormalized.endsWith("/")) {
+            baseNormalized = baseNormalized.substring(0, baseNormalized.length() - 1);
+        }
+        String urlLower = url.trim().toLowerCase();
+        return urlLower.equals(baseNormalized) || urlLower.startsWith(baseNormalized + "/");
     }
 
     private String generatePresignedUrl(String storageKey) {
