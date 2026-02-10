@@ -45,4 +45,6 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
         where b.brandName like %:keyword%
     """)
     List<Long> findIdsByBrandNameContaining(@Param("keyword") String keyword);
+
+    void deleteByUserId(Long userId);
 }

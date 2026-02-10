@@ -15,6 +15,7 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
 import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
+import com.example.RealMatch.user.application.service.UserDeleteService;
 import com.example.RealMatch.user.application.service.UserFavoriteService;
 import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
@@ -47,6 +48,7 @@ public class UserController implements UserSwagger {
     private final UserFeatureService userFeatureService;
     private final UserWithdrawService userWithdrawService;
     private final UserFavoriteService  userFavoriteService;
+    private final UserDeleteService userDeleteService;
 
     @Override
     @GetMapping("/me")
@@ -189,5 +191,14 @@ public class UserController implements UserSwagger {
         return CustomResponse.ok(
                 userService.updateSns(userDetails.getUserId(), request)
         );
+    }
+
+    @Override
+    @DeleteMapping("/me/delete-immediately")
+    public CustomResponse<Void> deleteUserImmediately(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        userDeleteService.deleteUserImmediately(userDetails.getUserId());
+        return CustomResponse.ok(null);
     }
 }

@@ -1,6 +1,7 @@
 package com.example.RealMatch.user.presentation.swagger;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -240,5 +241,28 @@ public interface UserSwagger {
     CustomResponse<MyProfileCardResponseDto> updateMySns(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody MyInstagramUpdateRequestDto request
+    );
+
+    @Operation(
+            summary = "회원 즉시 삭제 API By 고경수",
+            description = """
+                로그인한 사용자의 데이터를 즉시 물리 삭제합니다. (복구 불가)
+                
+                삭제 순서:
+                - 유저 관련 자식 데이터 삭제 후
+                - users 물리 삭제
+                
+                주의:
+                - 브랜드 오너/참조 FK가 존재하는 경우 DB 제약조건에 따라 실패할 수 있습니다.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "즉시 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND"),
+            @ApiResponse(responseCode = "500", description = "연관 데이터 FK 제약으로 삭제 실패 가능")
+    })
+    @DeleteMapping("/me/delete-immediately")
+    CustomResponse<Void> deleteUserImmediately(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }
