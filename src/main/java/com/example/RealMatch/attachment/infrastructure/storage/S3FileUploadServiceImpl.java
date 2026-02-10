@@ -38,23 +38,25 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     private final S3FileNameSanitizer fileNameSanitizer;
 
     @Override
-    public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize) {
+    public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize, AttachmentUsage usage) {
+        String bucket = resolveBucket(usage);
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(s3Properties.getBucketName())
+                    .bucket(bucket)
                     .key(key)
                     .contentType(contentType)
                     .contentLength(fileSize)
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, fileSize));
+            LOG.info("S3 업로드 완료. bucket={}, key={}, usage={}", bucket, key, usage);
             return null;
 
         } catch (S3Exception e) {
-            handleS3Exception("파일 업로드", key, e);
+            handleS3Exception("파일 업로드", key, bucket, e);
             throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         } catch (Exception e) {
-            LOG.error("S3 파일 업로드 중 예상치 못한 오류 발생. key={}", key, e);
+            LOG.error("S3 파일 업로드 중 예상치 못한 오류 발생. bucket={}, key={}", bucket, key, e);
             throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         }
     }
@@ -76,7 +78,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
             return presignedRequest.url().toString();
 
         } catch (S3Exception e) {
-            handleS3Exception("Presigned URL 생성", key, e);
+            handleS3Exception("Presigned URL 생성", key, s3Properties.getBucketName(), e);
             throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
         } catch (Exception e) {
             LOG.error("Presigned URL 생성 중 예상치 못한 오류 발생. key={}", key, e);
@@ -103,30 +105,61 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     }
 
     @Override
-    public void deleteFile(String key) {
+    public void deleteFile(String key, AttachmentUsage usage) {
+        String bucket = resolveBucket(usage);
         try {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                    .bucket(s3Properties.getBucketName())
+                    .bucket(bucket)
                     .key(key)
                     .build();
             s3Client.deleteObject(deleteObjectRequest);
         } catch (S3Exception e) {
-            handleS3Exception("파일 삭제", key, e);
+            handleS3Exception("파일 삭제", key, bucket, e);
             throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
         } catch (Exception e) {
-            LOG.error("S3 파일 삭제 중 예상치 못한 오류 발생. key={}", key, e);
+            LOG.error("S3 파일 삭제 중 예상치 못한 오류 발생. bucket={}, key={}", bucket, key, e);
             throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
         }
     }
 
-    private void handleS3Exception(String operation, String key, S3Exception e) {
-        LOG.error("S3 {} 실패. key={}, errorCode={}, statusCode={}, requestId={}, bucket={}",
+    @Override
+    public String buildPublicUrl(String storageKey) {
+        String base = s3Properties.getCloudfrontBaseUrl();
+        if (base == null || base.isBlank()) {
+            LOG.warn("CloudFront base URL이 설정되지 않았습니다. storageKey={}", storageKey);
+            return null;
+        }
+        if (storageKey != null && storageKey.contains("..")) {
+            LOG.warn("storageKey contains path traversal sequence. storageKey={}", storageKey);
+            return null;
+        }
+        return base.endsWith("/") ? base + storageKey : base + "/" + storageKey;
+    }
+
+    /**
+     * usage에 따라 대상 버킷 결정.
+     * PUBLIC → publicBucketName, CHAT → bucketName (private).
+     */
+    private String resolveBucket(AttachmentUsage usage) {
+        if (usage == AttachmentUsage.PUBLIC) {
+            String publicBucket = s3Properties.getPublicBucketName();
+            if (publicBucket == null || publicBucket.isBlank()) {
+                LOG.error("PUBLIC usage attachment requires a public bucket, but 'app.s3.public-bucket-name' is not configured.");
+                throw new IllegalStateException("Public bucket is not configured for PUBLIC attachment usage.");
+            }
+            return publicBucket;
+        }
+        return s3Properties.getBucketName();
+    }
+
+    private void handleS3Exception(String operation, String key, String bucket, S3Exception e) {
+        LOG.error("S3 {} 실패. key={}, bucket={}, errorCode={}, statusCode={}, requestId={}",
                 operation,
                 key,
+                bucket,
                 e.awsErrorDetails().errorCode(),
                 e.statusCode(),
                 e.requestId(),
-                s3Properties.getBucketName(),
                 e);
         
         if (e.statusCode() == 403 || e.statusCode() == 401) {

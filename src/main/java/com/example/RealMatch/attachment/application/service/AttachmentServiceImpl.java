@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
+import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.attachment.infrastructure.storage.S3CredentialsCondition;
 import com.example.RealMatch.attachment.infrastructure.storage.S3FileUploadService;
 import com.example.RealMatch.attachment.presentation.dto.request.AttachmentUploadRequest;
@@ -62,11 +63,13 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         try {
             // TX 밖: S3 업로드 (DB 커넥션 점유 없음)
+            // usage에 따라 PUBLIC → 퍼블릭 버킷, CHAT → 프라이빗 버킷
             s3FileUploadService.uploadFile(
                     fileInputStream,
                     s3Key,
                     normalizedContentType,
-                    fileSize
+                    fileSize,
+                    request.usage()
             );
 
             // TX#2: UPLOADED → READY (상태 전환만). markReady만 별도 catch → "S3 성공 + READY 전환 실패"일 때만 FAILED + S3 삭제 시도.
@@ -75,7 +78,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             } catch (CustomException readyEx) {
                 // S3 성공 + READY 전환 실패 (DB 경합/상태 이상) → 여기서만 FAILED + S3 삭제, 그 다음 rethrow로 종료
                 safeMarkFailed(attachment.getId());
-                safeDeleteS3(s3Key, attachment.getId());
+                safeDeleteS3(s3Key, attachment.getId(), request.usage());
                 throw readyEx;
             }
 
@@ -103,9 +106,9 @@ public class AttachmentServiceImpl implements AttachmentService {
         }
     }
 
-    private void safeDeleteS3(String s3Key, Long attachmentId) {
+    private void safeDeleteS3(String s3Key, Long attachmentId, AttachmentUsage usage) {
         try {
-            s3FileUploadService.deleteFile(s3Key);
+            s3FileUploadService.deleteFile(s3Key, usage);
         } catch (Exception ex) {
             LOG.warn("S3 즉시 삭제 실패. attachmentId={}, s3Key={} (배치에서 정리됨)", attachmentId, s3Key, ex);
         }
