@@ -53,12 +53,17 @@ public class UserMatchingDetail extends BaseEntity {
 
     // 인스타 아이디 업데이트 메서드
     public void updateSns(String snsAccount) {
-        if (snsAccount != null && !snsAccount.isBlank()) {
-            // URL 형식으로 저장 (기존 방식 유지)
-            String cleanAccount = snsAccount.trim().replace("@", "");
-            this.snsUrl = "https://www.instagram.com/" + cleanAccount + "/";
-        } else {
+        if (snsAccount == null || snsAccount.isBlank()) {
             this.snsUrl = null;
+            return;
         }
+
+        String cleanAccount = snsAccount.trim()
+                .replace("@", "")
+                .replaceAll("[^a-zA-Z0-9._]", ""); // 허용된 문자만 남김
+
+        this.snsUrl = cleanAccount.isEmpty()
+                ? null
+                : "https://www.instagram.com/" + cleanAccount + "/";
     }
 }
