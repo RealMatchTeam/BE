@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MyProfileCardUpdateRequestDto {
 
+    @jakarta.validation.constraints.NotBlank
     @Size(max = 255)
     private String profileImageUrl;
 }
