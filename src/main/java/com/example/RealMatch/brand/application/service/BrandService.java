@@ -313,9 +313,7 @@ public class BrandService {
         if (sponsorInfo == null) {
             return null;
         }
-        List<SponsorItemDto> items = sponsorInfo.getItems() == null
-                ? List.of()
-                : sponsorInfo.getItems().stream()
+        List<SponsorItemDto> items = sponsorInfo.getItems().stream()
                 .map(item -> {
                     SponsorItemDto.SponsorItemDtoBuilder builder = SponsorItemDto.builder()
                             .itemId(item.getId())
