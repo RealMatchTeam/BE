@@ -60,7 +60,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         // 탈퇴한 유저인지 확인
         User user = authMethod.getUser();
-        if (user.getRole() == Role.WITHDRAWN || user.isDeleted()) {
+        if (user.getRole() == Role.WITHDRAWN) {
             throw new CustomException(OAuthErrorCode.WITHDRAWN_USER);
         }
 
