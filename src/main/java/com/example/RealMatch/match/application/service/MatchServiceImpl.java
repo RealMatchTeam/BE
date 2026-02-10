@@ -474,12 +474,10 @@ public class MatchServiceImpl implements MatchService {
         List<Long> brandIds = brandHistories.stream()
                 .map(h -> h.getBrand().getId())
                 .toList();
-        Map<Long, List<String>> brandDescribeTagMap = brandIds.stream()
-                .collect(Collectors.toMap(
-                        brandId -> brandId,
-                        brandId -> brandDescribeTagRepository.findAllByBrandId(brandId).stream()
-                                .map(BrandDescribeTag::getBrandDescribeTag)
-                                .toList()
+        Map<Long, List<String>> brandDescribeTagMap = brandDescribeTagRepository.findAllByBrandIdIn(brandIds).stream()
+                .collect(Collectors.groupingBy(
+                        tag -> tag.getBrand().getId(),
+                        Collectors.mapping(BrandDescribeTag::getBrandDescribeTag, Collectors.toList())
                 ));
 
         List<MatchBrandResponseDto.BrandDto> matchedBrands = brandHistories.stream()
@@ -529,12 +527,10 @@ public class MatchServiceImpl implements MatchService {
         List<Long> brandIds = brandHistories.stream()
                 .map(h -> h.getBrand().getId())
                 .toList();
-        Map<Long, List<String>> brandDescribeTagMap = brandIds.stream()
-                .collect(Collectors.toMap(
-                        brandId -> brandId,
-                        brandId -> brandDescribeTagRepository.findAllByBrandId(brandId).stream()
-                                .map(BrandDescribeTag::getBrandDescribeTag)
-                                .toList()
+        Map<Long, List<String>> brandDescribeTagMap = brandDescribeTagRepository.findAllByBrandIdIn(brandIds).stream()
+                .collect(Collectors.groupingBy(
+                        tag -> tag.getBrand().getId(),
+                        Collectors.mapping(BrandDescribeTag::getBrandDescribeTag, Collectors.toList())
                 ));
 
         List<MatchBrandResponseDto.BrandDto> filteredBrands = brandHistories.stream()
