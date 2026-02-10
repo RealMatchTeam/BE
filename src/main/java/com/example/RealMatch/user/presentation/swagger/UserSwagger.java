@@ -11,6 +11,7 @@ import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
 import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyInstagramUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteBrandListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteCampaignListResponseDto;
@@ -209,10 +210,35 @@ public interface UserSwagger {
             CampaignSortType sort
     );
 
-    @Operation(summary = "프로필 이미지 수정 API By 고경수",
-            description = "Attachment API로 업로드된 이미지 URL을 받아 프로필 이미지를 변경합니다")
+    @Operation(
+            summary = "프로필 이미지 수정 API By 고경수",
+            description = """
+                    프로필 카드의 profileImageUrl을 변경합니다.
+                    - 이미 업로드된 이미지 URL을 전달받아 저장합니다.
+                    - 파일 업로드/용량 검증은 업로드 API에서 처리합니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "프로필 이미지 수정 성공"),
+            @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND / PROFILE_CARD_NOT_FOUND")
+    })
+    @PatchMapping("/me/profile-image")
     CustomResponse<MyProfileCardResponseDto> updateMyProfileImage(
-            @Parameter(hidden = true) CustomUserDetails userDetails,
-            @RequestBody MyProfileCardUpdateRequestDto request
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyProfileCardUpdateRequestDto request
+    );
+
+    @Operation(
+            summary = "인스타그램 아이디 수정 API By 고경수",
+            description = "인스타그램 계정 아이디를 변경합니다. (예: @myaccount -> https://www.instagram.com/myaccount/ 형태로 DB에 저장))"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "인스타 아이디 수정 성공"),
+            @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND / PROFILE_CARD_NOT_FOUND")
+    })
+    @PatchMapping("/me/instagram")
+    CustomResponse<MyProfileCardResponseDto> updateMySns(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyInstagramUpdateRequestDto request
     );
 }
