@@ -10,8 +10,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.notification.domain.entity.NotificationDelivery;
 import com.example.RealMatch.notification.domain.entity.NotificationOutbox;
+import com.example.RealMatch.notification.domain.entity.enums.DeliveryStatus;
 import com.example.RealMatch.notification.domain.entity.enums.OutboxStatus;
+import com.example.RealMatch.notification.domain.repository.NotificationDeliveryRepository;
 import com.example.RealMatch.notification.domain.repository.NotificationOutboxRepository;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 
@@ -27,7 +30,11 @@ public class NotificationOutboxService {
 
     private static final Logger LOG = LoggerFactory.getLogger(NotificationOutboxService.class);
 
+    private static final List<DeliveryStatus> RETRYABLE_DELIVERY_STATUSES =
+            List.of(DeliveryStatus.PENDING, DeliveryStatus.RETRY);
+
     private final NotificationOutboxRepository outboxRepository;
+    private final NotificationDeliveryRepository deliveryRepository;
 
     @Transactional(readOnly = true)
     public List<NotificationOutbox> findPendingOutbox(int limit) {
@@ -54,41 +61,35 @@ public class NotificationOutboxService {
         }
     }
 
-    /** 발행 실패 시 retryCount &lt; MAX → PENDING, else FAILED. */
+    /** 발행 실패: retryCount 증가 + status(PENDING/FAILED)를 DB에서 원자적으로 결정. */
     @Transactional
     public void markOutboxPublishFailed(UUID outboxId, String error) {
-        NotificationOutbox outbox = outboxRepository.findById(outboxId).orElse(null);
-        if (outbox == null) {
-            LOG.warn("[Outbox] Not found for failure recording. outboxId={}", outboxId);
-            return;
-        }
-
-        OutboxStatus newStatus;
-        if (outbox.getRetryCount() + 1 >= NotificationOutbox.MAX_PUBLISH_RETRY) {
-            newStatus = OutboxStatus.FAILED;
-            LOG.error("[Outbox] Max publish retries exceeded. outboxId={}, deliveryId={}",
-                    outboxId, outbox.getDeliveryId());
-        } else {
-            newStatus = OutboxStatus.PENDING;
-            LOG.warn("[Outbox] Publish failed, will retry. outboxId={}, retryCount={}",
-                    outboxId, outbox.getRetryCount() + 1);
-        }
-
         int updated = outboxRepository.markPublishFailed(
                 outboxId,
-                newStatus,
                 truncate(error, 500),
+                NotificationOutbox.MAX_PUBLISH_RETRY,
+                OutboxStatus.FAILED,
+                OutboxStatus.PENDING,
                 List.of(OutboxStatus.SENDING, OutboxStatus.PENDING));
         if (updated == 0) {
             LOG.warn("[Outbox] markPublishFailed affected 0 rows (concurrent update). outboxId={}",
                     outboxId);
+        } else {
+            LOG.info("[Outbox] Publish failed recorded. outboxId={}, retryCount incremented.", outboxId);
         }
     }
 
-    /** Retry용 Outbox 생성. 이미 PENDING/SENDING 있으면 skip(중복 방지). */
+    /** Retry용 Outbox 생성. delivery가 PENDING/RETRY일 때만 생성. 이미 PENDING/SENDING Outbox 있으면 skip. */
     @Transactional
     public void createRetryOutboxIfAbsent(UUID deliveryId, UUID notificationId,
                                            NotificationChannel channel) {
+        NotificationDelivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
+        if (delivery == null || !RETRYABLE_DELIVERY_STATUSES.contains(delivery.getStatus())) {
+            LOG.debug("[Outbox] Skip — delivery not found or not retryable. deliveryId={}, status={}",
+                    deliveryId, delivery != null ? delivery.getStatus() : null);
+            return;
+        }
+
         boolean alreadyPending = outboxRepository.existsByDeliveryIdAndStatusIn(
                 deliveryId,
                 List.of(OutboxStatus.PENDING, OutboxStatus.SENDING));

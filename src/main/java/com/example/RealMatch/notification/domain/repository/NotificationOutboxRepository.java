@@ -44,17 +44,19 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
             @Param("targetStatus") OutboxStatus targetStatus,
             @Param("sourceStatus") OutboxStatus sourceStatus);
 
-    /** 발행 실패: retryCount++ 및 상태 전이. */
+    /** 발행 실패: retryCount 증가 + status를 DB에서 원자적으로 결정 (레이스 방지). enum은 파라미터로 전달해 provider-agnostic. */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE NotificationOutbox o "
-            + "SET o.status = :newStatus, "
-            + "o.retryCount = o.retryCount + 1, "
-            + "o.lastError = :lastError "
+            + "SET o.retryCount = o.retryCount + 1, "
+            + "o.lastError = :lastError, "
+            + "o.status = CASE WHEN (o.retryCount + 1) >= :maxRetry THEN :statusFailed ELSE :statusPending END "
             + "WHERE o.id = :id AND o.status IN :sourceStatuses")
     int markPublishFailed(
             @Param("id") UUID id,
-            @Param("newStatus") OutboxStatus newStatus,
             @Param("lastError") String lastError,
+            @Param("maxRetry") int maxRetry,
+            @Param("statusFailed") OutboxStatus statusFailed,
+            @Param("statusPending") OutboxStatus statusPending,
             @Param("sourceStatuses") Collection<OutboxStatus> sourceStatuses);
 
     /** 미처리 Outbox(PENDING/SENDING) 존재 여부. 중복 생성 방지용. */
