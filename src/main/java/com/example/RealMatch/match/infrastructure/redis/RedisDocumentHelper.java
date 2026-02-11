@@ -52,9 +52,6 @@ public class RedisDocumentHelper {
         return searchWithFallback(CAMPAIGN_INDEX, query, CampaignTagDocument.class);
     }
 
-    /**
-     * 태그 기반 검색 후, 결과가 부족하면 전체 검색("*")으로 보충합니다.
-     */
     private <T> List<T> searchWithFallback(String indexName, String query, Class<T> clazz) {
         List<T> results = executeSearch(indexName, query, clazz);
 
