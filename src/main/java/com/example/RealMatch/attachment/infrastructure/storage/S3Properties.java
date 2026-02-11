@@ -12,9 +12,15 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "app.s3")
 public class S3Properties {
 
+    // private 버킷
     private String bucketName;
+    // PUBLIC 버킷 (CloudFront 원본)
+    private String publicBucketName;
+    // CloudFront 배포 도메인
+    private String cloudfrontBaseUrl;
+
     private String region;
-    private int presignedUrlExpirationSeconds = 604800;
+    private int presignedUrlExpirationSeconds = 86400;
     private long maxImageSizeBytes = 10485760L;
     private long maxFileSizeBytes = 52428800L;
     private String keyPrefix = "attachment";

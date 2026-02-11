@@ -104,9 +104,9 @@ class DummyDataOrchestrator:
     def generate_all(self, user_count=50, brand_count=20, campaign_count=30,
                      room_count=20, messages_per_room=10, applies_per_campaign=3,
                      reset=True):
-        if reset:
-            self._clear_existing_data()
-            self._create_master_account()
+        # if reset:
+        #     self._clear_existing_data()
+        #     self._create_master_account()
 
         print("[시작] 더미 데이터 생성 시작...\n")
         print(f"생성할 데이터:")
@@ -117,26 +117,26 @@ class DummyDataOrchestrator:
 
         try:
             # 시드 데이터 먼저 생성 (태그, 약관 등)
-            seed_gen = SeedGenerator(self.connection)
-            seed_gen.generate_all()
+            # seed_gen = SeedGenerator(self.connection)
+            # seed_gen.generate_all()
 
-            user_gen = UserGenerator(self.connection)
-            user_gen.generate_all(user_count)
+            # user_gen = UserGenerator(self.connection)
+            # user_gen.generate_all(user_count)
 
-            brand_gen = BrandGenerator(self.connection)
-            brand_gen.generate_all(brand_count)
+            # brand_gen = BrandGenerator(self.connection)
+            # brand_gen.generate_all(brand_count)
 
-            campaign_gen = CampaignGenerator(self.connection)
-            campaign_gen.generate_all(campaign_count)
+            # campaign_gen = CampaignGenerator(self.connection)
+            # campaign_gen.generate_all(campaign_count)
 
-            # 캠페인 생성 후 협찬 데이터 생성
-            brand_gen.generate_sponsors()
+            # # 캠페인 생성 후 협찬 데이터 생성
+            # brand_gen.generate_sponsors()
 
-            tag_gen = TagGenerator(self.connection)
-            tag_gen.generate_all()
+            # tag_gen = TagGenerator(self.connection)
+            # tag_gen.generate_all()
 
-            business_gen = BusinessGenerator(self.connection)
-            business_gen.generate_all(applies_per_campaign)
+            # business_gen = BusinessGenerator(self.connection)
+            # business_gen.generate_all(applies_per_campaign)
 
             #chat_gen = ChatGenerator(self.connection)
             #chat_gen.generate_all(room_count, messages_per_room)

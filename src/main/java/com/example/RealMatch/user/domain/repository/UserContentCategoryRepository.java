@@ -18,4 +18,6 @@ public interface UserContentCategoryRepository
         where ucc.user.id = :userId
     """)
     List<UserContentCategory> findByUserId(@Param("userId") Long userId);
+
+    void deleteByUserId(Long userId);
 }

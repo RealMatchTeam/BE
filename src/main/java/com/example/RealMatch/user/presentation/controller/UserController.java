@@ -4,7 +4,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,11 +14,13 @@ import com.example.RealMatch.global.presentation.CustomResponse;
 import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
 import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
+import com.example.RealMatch.user.application.service.UserDeleteService;
 import com.example.RealMatch.user.application.service.UserFavoriteService;
 import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.application.service.UserWithdrawService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyInstagramUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteBrandListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.FavoriteCampaignListResponseDto;
@@ -46,6 +47,7 @@ public class UserController implements UserSwagger {
     private final UserFeatureService userFeatureService;
     private final UserWithdrawService userWithdrawService;
     private final UserFavoriteService  userFavoriteService;
+    private final UserDeleteService userDeleteService;
 
     @Override
     @GetMapping("/me")
@@ -83,7 +85,7 @@ public class UserController implements UserSwagger {
         return CustomResponse.ok(userService.getMyEditInfo(userDetails.getUserId()));
     }
 
-    @PostMapping("/me/edit")
+    @PatchMapping("/me/edit")
     public CustomResponse<Void> updateMyInfo(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody MyEditInfoRequestDto request
@@ -167,6 +169,8 @@ public class UserController implements UserSwagger {
                 )
         );
     }
+
+    @Override
     @PatchMapping("/me/profile-image")
     public CustomResponse<MyProfileCardResponseDto> updateMyProfileImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -175,5 +179,25 @@ public class UserController implements UserSwagger {
         return CustomResponse.ok(
                 userService.updateMyProfileImage(userDetails.getUserId(), request)
         );
+    }
+
+    @Override
+    @PatchMapping("/me/instagram")
+    public CustomResponse<MyProfileCardResponseDto> updateMySns(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid MyInstagramUpdateRequestDto request
+    ) {
+        return CustomResponse.ok(
+                userService.updateSns(userDetails.getUserId(), request)
+        );
+    }
+
+    @Override
+    @DeleteMapping("/me/delete-immediately")
+    public CustomResponse<Void> deleteUserImmediately(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        userDeleteService.deleteUserImmediately(userDetails.getUserId());
+        return CustomResponse.ok(null);
     }
 }

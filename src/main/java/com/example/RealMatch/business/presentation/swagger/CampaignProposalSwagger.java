@@ -23,12 +23,15 @@ public interface CampaignProposalSwagger {
     @Operation(
             summary = "캠페인 제안 생성 API by 박지영",
             description = """
-                    크리에이터가 브랜드에 캠페인을 제안합니다.
+                    크리에이터가 브랜드에 캠페인을 제안합니다.   
+                    brandId, creatorId를 수정해서 보내야합니다.
                     
                     신규 캠페인인 경우 campaignId null 을 보내주세요.
                     기존 캠페인인 경우 campaignId을 보내주세요.
                     
                     기타인 경우 customValue를 포함해서 보내주세요.
+                    
+                    /api/v1/tag-contents/sort에서 태그 id를 확인해주세요.
                     """
     )
     @RequestBody(

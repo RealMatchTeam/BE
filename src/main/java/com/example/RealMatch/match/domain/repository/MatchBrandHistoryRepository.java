@@ -31,4 +31,6 @@ public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHis
     @Modifying
     @Query("UPDATE MatchBrandHistory h SET h.isDeprecated = true WHERE h.user.id = :userId AND h.isDeprecated = false")
     int bulkDeprecateByUserId(@Param("userId") Long userId);
+
+    void deleteByUserId(Long userId);
 }

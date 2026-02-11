@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
-import com.example.RealMatch.match.domain.repository.MatchCampaignHistoryRepository;
 import com.example.RealMatch.user.application.util.NicknameValidator;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
 import com.example.RealMatch.user.domain.entity.User;
@@ -20,6 +19,7 @@ import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.infrastructure.ScrapMockDataProvider;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyInstagramUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -35,7 +35,6 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final MatchCampaignHistoryRepository matchCampaignHistoryRepository;
     private final ScrapMockDataProvider scrapMockDataProvider;
     private final AuthenticationMethodRepository authenticationMethodRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
@@ -47,8 +46,8 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        // 매칭 검사 여부 확인 (캠페인 매칭 검사 기록 존재 여부)
-        boolean hasMatchingTest = matchCampaignHistoryRepository.existsByUserId(userId);
+        // 매칭 검사 여부 확인
+        boolean hasMatchingTest = userMatchingDetailRepository.existsByUserIdAndIsDeprecatedFalse(userId);
 
         // DTO 변환 및 반환
         return MyPageResponseDto.from(user, hasMatchingTest);
@@ -165,6 +164,27 @@ public class UserService {
         user.updateProfileImage(request.getProfileImageUrl());
 
         // 변경된 프로필 이미지로 프로필 카드 DTO 재생성
+        List<UserContentCategory> categories =
+                userContentCategoryRepository.findByUserId(userId);
+
+        return MyProfileCardResponseDto.from(user, detail, categories);
+    }
+
+    // 인스타 아이디 수정
+    @Transactional
+    public MyProfileCardResponseDto updateSns(
+            Long userId,
+            MyInstagramUpdateRequestDto request
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
+
+        UserMatchingDetail detail = userMatchingDetailRepository
+                .findByUserIdAndIsDeprecatedFalse(userId)
+                .orElseThrow(() -> new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND));
+
+        detail.updateSns(request.getSnsAccount());
+
         List<UserContentCategory> categories =
                 userContentCategoryRepository.findByUserId(userId);
 

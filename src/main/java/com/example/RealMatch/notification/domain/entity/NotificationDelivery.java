@@ -81,7 +81,7 @@ public class NotificationDelivery extends BaseEntity {
         this.attemptCount = 0;
     }
 
-    /** 발송 성공 */
+    /** 발송 성공. IN_PROGRESS → SENT. */
     public void markAsSent(String providerMessageId) {
         this.status = DeliveryStatus.SENT;
         this.sentAt = LocalDateTime.now();
@@ -89,16 +89,10 @@ public class NotificationDelivery extends BaseEntity {
         this.nextRetryAt = null;
     }
 
-    /** 발송 진행 중 (워커가 점유) */
-    public void markAsInProgress() {
-        this.status = DeliveryStatus.IN_PROGRESS;
-        this.attemptedAt = LocalDateTime.now();
-    }
-
     /**
      * 발송 실패 기록 + 재시도 스케줄링.
-     * attemptCount < MAX_RETRY_COUNT → PENDING + nextRetryAt 설정
-     * attemptCount ≥ MAX_RETRY_COUNT → FAILED (영구 보관)
+     * attemptCount &lt; MAX_RETRY_COUNT → RETRY + nextRetryAt 설정 (backoff)
+     * attemptCount ≥ MAX_RETRY_COUNT → FAILED (영구 보관, DLQ 대상)
      */
     public void recordFailure(String failReason) {
         this.failReason = truncate(failReason, 500);
@@ -108,21 +102,17 @@ public class NotificationDelivery extends BaseEntity {
             this.status = DeliveryStatus.FAILED;
             this.nextRetryAt = null;
         } else {
-            this.status = DeliveryStatus.PENDING;
+            this.status = DeliveryStatus.RETRY;
             int backoffIndex = Math.min(this.attemptCount - 1, BACKOFF_MINUTES.length - 1);
             this.nextRetryAt = LocalDateTime.now().plusMinutes(BACKOFF_MINUTES[backoffIndex]);
         }
     }
 
-    /** 영구 실패 처리 */
+    /** 영구 실패 처리. IN_PROGRESS → FAILED. */
     public void markAsPermanentlyFailed(String failReason) {
         this.status = DeliveryStatus.FAILED;
         this.failReason = truncate(failReason, 500);
         this.nextRetryAt = null;
-    }
-
-    public boolean isRetryable() {
-        return this.attemptCount < MAX_RETRY_COUNT;
     }
 
     private static String truncate(String value, int maxLength) {

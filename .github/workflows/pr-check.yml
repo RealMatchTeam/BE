@@ -84,9 +84,10 @@ jobs:
       RABBITMQ_PASSWORD: guest
       # S3
       S3_BUCKET_NAME: test-bucket-ci
+      S3_PUBLIC_BUCKET_NAME: test-public-bucket-ci
+      S3_CLOUDFRONT_BASE_URL: https://test.cloudfront.net
       S3_REGION: us-east-2
-      S3_PUBLIC_BUCKET: "false"
-      S3_PRESIGNED_URL_EXPIRATION: "604800"
+      S3_PRESIGNED_URL_EXPIRATION: "86400"
       S3_MAX_IMAGE_SIZE: "10485760"
       S3_MAX_FILE_SIZE: "52428800"
       S3_KEY_PREFIX: attachment
@@ -128,7 +129,7 @@ jobs:
       continue-on-error: true
 
     - name: Build with Gradle
-      run: ./gradlew build -x test
+      run: ./gradlew build -x test --refresh-dependencies
 
     - name: Run tests
       run: ./gradlew test

@@ -27,16 +27,18 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// Spring Boot starters
 	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
@@ -85,11 +87,12 @@ dependencies {
 	implementation 'org.springframework.retry:spring-retry'
 	implementation 'org.springframework:spring-aspects'
 
-	// Spring Mail
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
-
 	// Firebase Admin SDK (FCM 푸시 알림)
 	implementation 'com.google.firebase:firebase-admin:9.2.0'
+
+	// RabbitMQ
+	implementation 'com.rabbitmq:amqp-client'
+	testImplementation 'org.springframework.amqp:spring-rabbit-test'
 }
 
 tasks.named('test') {
