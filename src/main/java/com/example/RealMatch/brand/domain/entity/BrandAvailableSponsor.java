@@ -3,8 +3,6 @@ package com.example.RealMatch.brand.domain.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.BatchSize;
-
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.CascadeType;
@@ -43,10 +41,6 @@ public class BrandAvailableSponsor extends DeleteBaseEntity {
     @Column(length = 1000)
     private String content;
 
-    @Column(name = "shipping_type", length = 50)
-    private String shippingType;
-
-    @BatchSize(size = 50)
     @OneToMany(mappedBy = "sponsor", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BrandSponsorItem> items = new ArrayList<>();
 
@@ -57,12 +51,10 @@ public class BrandAvailableSponsor extends DeleteBaseEntity {
     public BrandAvailableSponsor(
             Brand brand,
             String name,
-            String content,
-            String shippingType
+            String content
     ) {
         this.brand = brand;
         this.name = name;
         this.content = content;
-        this.shippingType = shippingType;
     }
 }

@@ -39,8 +39,8 @@ public class BrandSponsorItem extends DeleteBaseEntity {
     @Column(name = "available_size")
     private Integer availableSize;
 
-    @Column(name = "size_unit", length = 20)
-    private String sizeUnit;
+    @Column(name = "shipping_type", length = 30)
+    private String shippingType;
 
     @Builder
     public BrandSponsorItem(
@@ -48,12 +48,12 @@ public class BrandSponsorItem extends DeleteBaseEntity {
             String availableType,
             Integer availableQuantity,
             Integer availableSize,
-            String sizeUnit
+            String shippingType
     ) {
         this.sponsor = sponsor;
         this.availableType = availableType;
         this.availableQuantity = availableQuantity;
         this.availableSize = availableSize;
-        this.sizeUnit = sizeUnit;
+        this.shippingType = shippingType;
     }
 }
