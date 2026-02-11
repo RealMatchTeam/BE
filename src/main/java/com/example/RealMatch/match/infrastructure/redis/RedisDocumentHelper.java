@@ -32,6 +32,7 @@ public class RedisDocumentHelper {
     private static final String CAMPAIGN_INDEX = "com.example.RealMatch.match.infrastructure.redis.document.CampaignTagDocumentIdx";
 
     private static final int SEARCH_LIMIT = 200;
+    private static final int TOP_MATCH_COUNT = 10;
 
     public List<BrandTagDocument> findCandidateBrands(UserTagDocument userDoc) {
         String query = buildTagOverlapQuery(
@@ -39,7 +40,7 @@ public class RedisDocumentHelper {
                 userDoc.getBeautyTags(), "preferredBeautyTags",
                 userDoc.getContentTags(), "preferredContentTags"
         );
-        return executeSearch(BRAND_INDEX, query, BrandTagDocument.class);
+        return searchWithFallback(BRAND_INDEX, query, BrandTagDocument.class);
     }
 
     public List<CampaignTagDocument> findCandidateCampaigns(UserTagDocument userDoc) {
@@ -48,7 +49,41 @@ public class RedisDocumentHelper {
                 userDoc.getBeautyTags(), "preferredBeautyTags",
                 userDoc.getContentTags(), "preferredContentTags"
         );
-        return executeSearch(CAMPAIGN_INDEX, query, CampaignTagDocument.class);
+        return searchWithFallback(CAMPAIGN_INDEX, query, CampaignTagDocument.class);
+    }
+
+    private <T> List<T> searchWithFallback(String indexName, String query, Class<T> clazz) {
+        List<T> results = executeSearch(indexName, query, clazz);
+
+        if (results.size() < TOP_MATCH_COUNT && !"*".equals(query)) {
+            log.info("Tag-based search returned only {} results, falling back to full search. index={}",
+                    results.size(), indexName);
+            List<T> allResults = executeSearch(indexName, "*", clazz);
+
+            // 태그 매칭된 결과의 key를 기억해서 중복 방지
+            Set<Object> existingIds = new java.util.HashSet<>(results.stream()
+                    .map(this::extractDocId)
+                    .toList());
+
+            for (T doc : allResults) {
+                Object docId = extractDocId(doc);
+                if (!existingIds.contains(docId)) {
+                    results.add(doc);
+                }
+            }
+        }
+
+        return results;
+    }
+
+    private Object extractDocId(Object doc) {
+        if (doc instanceof BrandTagDocument brandDoc) {
+            return brandDoc.getBrandId();
+        }
+        if (doc instanceof CampaignTagDocument campaignDoc) {
+            return campaignDoc.getCampaignId();
+        }
+        return doc;
     }
 
     @Deprecated
