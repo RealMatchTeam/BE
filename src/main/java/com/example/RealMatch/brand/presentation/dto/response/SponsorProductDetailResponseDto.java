@@ -19,5 +19,4 @@ public class SponsorProductDetailResponseDto {
     private List<String> productImageUrls;
     private List<String> categories;
     private SponsorInfoDto sponsorInfo;
-    private ActionDto action;
 }

@@ -4,6 +4,11 @@ cors:
 swagger:
   server-url: http://localhost:8080
 
+front:
+  domain-url: http://localhost:3000
+  domain-url-v2: http://localhost:3000
+  domain-url-local: http://localhost:3000
+
 server:
   timezone: Asia/Seoul
 
@@ -12,10 +17,10 @@ spring:
     name: Realmatch
 
   datasource:
-    url: jdbc:mysql://localhost:3306/test_db
-    username: test_user
-    password: test
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${TEST_DATASOURCE_URL:jdbc:h2:mem:test_db;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${TEST_DATASOURCE_USERNAME:sa}
+    password: ${TEST_DATASOURCE_PASSWORD:}
+    driver-class-name: ${TEST_DATASOURCE_DRIVER:org.h2.Driver}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -28,7 +33,7 @@ spring:
       ddl-auto: create-drop
     properties:
       hibernate:
-        dialect: ${JPA_HIBERNATE_DIALECT}
+        dialect: ${JPA_HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
         format_sql: true
     show-sql: false
 

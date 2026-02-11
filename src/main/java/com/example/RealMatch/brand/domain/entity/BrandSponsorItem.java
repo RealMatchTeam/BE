@@ -27,8 +27,8 @@ public class BrandSponsorItem extends DeleteBaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sponsor_info_id", nullable = false)
-    private BrandSponsorInfo sponsorInfo;
+    @JoinColumn(name = "sponsor_id", nullable = false)
+    private BrandAvailableSponsor sponsor;
 
     @Column(name = "available_type", length = 30)
     private String availableType;
@@ -44,13 +44,13 @@ public class BrandSponsorItem extends DeleteBaseEntity {
 
     @Builder
     public BrandSponsorItem(
-            BrandSponsorInfo sponsorInfo,
+            BrandAvailableSponsor sponsor,
             String availableType,
             Integer availableQuantity,
             Integer availableSize,
             String sizeUnit
     ) {
-        this.sponsorInfo = sponsorInfo;
+        this.sponsor = sponsor;
         this.availableType = availableType;
         this.availableQuantity = availableQuantity;
         this.availableSize = availableSize;

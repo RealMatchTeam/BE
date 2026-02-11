@@ -19,7 +19,6 @@ import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
 import com.example.RealMatch.brand.domain.entity.BrandImage;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
 import com.example.RealMatch.brand.domain.entity.BrandSponsorImage;
-import com.example.RealMatch.brand.domain.entity.BrandSponsorInfo;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
@@ -28,13 +27,11 @@ import com.example.RealMatch.brand.domain.repository.BrandDescribeTagRepository;
 import com.example.RealMatch.brand.domain.repository.BrandImageRepository;
 import com.example.RealMatch.brand.domain.repository.BrandLikeRepository;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
-import com.example.RealMatch.brand.domain.repository.BrandSponsorInfoRepository;
 import com.example.RealMatch.brand.exception.BrandErrorCode;
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
@@ -69,7 +66,6 @@ public class BrandService {
     private final BrandCategoryViewRepository brandCategoryViewRepository;
     private final BrandCategoryRepository brandCategoryRepository;
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
-    private final BrandSponsorInfoRepository brandSponsorInfoRepository;
     private final BrandDescribeTagRepository brandDescribeTagRepository;
     private final BrandImageRepository brandImageRepository;
 
@@ -222,9 +218,7 @@ public class BrandService {
             throw new IllegalArgumentException("해당 브랜드의 제품이 아닙니다.");
         }
 
-        BrandSponsorInfo sponsorInfo = brandSponsorInfoRepository.findBySponsorIdWithItems(product.getId())
-                .orElse(null);
-        return buildSponsorProductDetailResponse(brand, product, sponsorInfo);
+        return buildSponsorProductDetailResponse(brand, product);
     }
 
     @Transactional(readOnly = true)
@@ -234,29 +228,19 @@ public class BrandService {
 
         List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithImages(brandId);
         List<String> categories = buildCategories(brand);
-        List<Long> sponsorIds = products.stream()
-                .map(BrandAvailableSponsor::getId)
-                .collect(Collectors.toList());
-        Map<Long, BrandSponsorInfo> sponsorInfoBySponsorId = sponsorIds.isEmpty()
-                ? Map.of()
-                : brandSponsorInfoRepository.findBySponsorIdInWithItems(sponsorIds)
-                        .stream()
-                        .collect(Collectors.toMap(info -> info.getSponsor().getId(), Function.identity()));
 
         return products.stream()
-                .map(product -> buildSponsorProductListResponse(brand, product, sponsorInfoBySponsorId.get(product.getId()), categories))
+                .map(product -> buildSponsorProductListResponse(brand, product, categories))
                 .collect(Collectors.toList());
     }
 
     private SponsorProductDetailResponseDto buildSponsorProductDetailResponse(
             Brand brand,
-            BrandAvailableSponsor product,
-            BrandSponsorInfo sponsorInfo
+            BrandAvailableSponsor product
     ) {
         List<String> imageUrls = buildProductImageUrls(product);
         List<String> categories = buildCategories(brand);
-        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand.getIndustryType(), sponsorInfo);
-        ActionDto action = buildAction();
+        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand.getIndustryType(), product);
 
         return SponsorProductDetailResponseDto.builder()
                 .brandId(brand.getId())
@@ -266,21 +250,18 @@ public class BrandService {
                 .productImageUrls(imageUrls)
                 .categories(categories)
                 .sponsorInfo(sponsorInfoDto)
-                .action(action)
                 .build();
     }
 
     private SponsorProductListResponseDto buildSponsorProductListResponse(
             Brand brand,
             BrandAvailableSponsor product,
-            BrandSponsorInfo sponsorInfo,
             List<String> categories
     ) {
         List<String> imageUrls = buildProductImageUrls(product);
-        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand.getIndustryType(), sponsorInfo);
-        ActionDto action = buildAction();
+        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand.getIndustryType(), product);
 
-        return SponsorProductListResponseDto.from(brand, product, imageUrls, categories, sponsorInfoDto, action);
+        return SponsorProductListResponseDto.from(brand, product, imageUrls, categories, sponsorInfoDto);
     }
 
     private List<String> buildProductImageUrls(BrandAvailableSponsor product) {
@@ -308,11 +289,11 @@ public class BrandService {
         return List.of();
     }
 
-    private SponsorInfoDto buildSponsorInfo(IndustryType industryType, BrandSponsorInfo sponsorInfo) {
-        if (sponsorInfo == null) {
+    private SponsorInfoDto buildSponsorInfo(IndustryType industryType, BrandAvailableSponsor sponsor) {
+        if (sponsor.getItems().isEmpty() && sponsor.getShippingType() == null) {
             return null;
         }
-        List<SponsorItemDto> items = sponsorInfo.getItems().stream()
+        List<SponsorItemDto> items = sponsor.getItems().stream()
                 .map(item -> {
                     SponsorItemDto.SponsorItemDtoBuilder builder = SponsorItemDto.builder()
                             .itemId(item.getId())
@@ -328,14 +309,7 @@ public class BrandService {
 
         return SponsorInfoDto.builder()
                 .items(items)
-                .shippingType(sponsorInfo.getShippingType())
-                .build();
-    }
-
-    private ActionDto buildAction() {
-        return ActionDto.builder()
-                .canProposeCampaign(true)
-                .proposeCampaignCtaText("캠페인 제안하기")
+                .shippingType(sponsor.getShippingType())
                 .build();
     }
 

@@ -38,16 +38,12 @@ public class SponsorProductListResponseDto {
     @Schema(description = "협찬 정보")
     private SponsorInfoDto sponsorInfo;
 
-    @Schema(description = "액션 정보")
-    private ActionDto action;
-
     public static SponsorProductListResponseDto from(
             Brand brand,
             BrandAvailableSponsor product,
             List<String> productImageUrls,
             List<String> categories,
-            SponsorInfoDto sponsorInfo,
-            ActionDto action
+            SponsorInfoDto sponsorInfo
     ) {
         String thumbnail = null;
         if (productImageUrls != null && !productImageUrls.isEmpty()) {
@@ -63,7 +59,6 @@ public class SponsorProductListResponseDto {
                 .productImageUrls(productImageUrls)
                 .categories(categories)
                 .sponsorInfo(sponsorInfo)
-                .action(action)
                 .build();
     }
 }

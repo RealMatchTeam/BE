@@ -3,6 +3,8 @@ package com.example.RealMatch.brand.domain.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
@@ -46,16 +48,28 @@ public class BrandAvailableSponsor extends DeleteBaseEntity {
     @Column(length = 1000)
     private String content;
 
-    // 3. 이미지 리스트 (1:N 관계) 필드 추가
-    // mappedBy는 BrandSponsorImage 엔티티에 있는 변수명과 일치해야 합니다.
+    @Column(name = "shipping_type", length = 50)
+    private String shippingType;
+
+    @BatchSize(size = 50)
+    @OneToMany(mappedBy = "sponsor", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BrandSponsorItem> items = new ArrayList<>();
+
     @OneToMany(mappedBy = "sponsor", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BrandSponsorImage> images = new ArrayList<>();
 
     @Builder
-    public BrandAvailableSponsor(Campaign campaign, Brand brand, String name, String content) {
+    public BrandAvailableSponsor(
+            Campaign campaign,
+            Brand brand,
+            String name,
+            String content,
+            String shippingType
+    ) {
         this.campaign = campaign;
         this.brand = brand;
         this.name = name;
         this.content = content;
+        this.shippingType = shippingType;
     }
 }
