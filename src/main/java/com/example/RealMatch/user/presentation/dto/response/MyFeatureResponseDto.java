@@ -31,6 +31,7 @@ public record MyFeatureResponseDto(
             List<Integer> avgVideoLength,
             List<Integer> avgViews,
             List<Integer> contentFormats,
+            List<Integer> contentCategories,
             List<Integer> contentTones,
             List<Integer> desiredInvolvement,
             List<Integer> desiredUsageScope

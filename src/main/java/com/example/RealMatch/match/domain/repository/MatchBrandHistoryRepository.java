@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.RealMatch.match.domain.entity.MatchBrandHistory;
 
-public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHistory, Long> {
+public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHistory, Long>, MatchBrandHistoryRepositoryCustom {
 
     List<MatchBrandHistory> findByUserId(Long userId);
 
@@ -31,4 +31,6 @@ public interface MatchBrandHistoryRepository extends JpaRepository<MatchBrandHis
     @Modifying
     @Query("UPDATE MatchBrandHistory h SET h.isDeprecated = true WHERE h.user.id = :userId AND h.isDeprecated = false")
     int bulkDeprecateByUserId(@Param("userId") Long userId);
+
+    void deleteByUserId(Long userId);
 }

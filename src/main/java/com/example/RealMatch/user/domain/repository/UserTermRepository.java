@@ -17,4 +17,6 @@ public interface UserTermRepository extends JpaRepository<UserTerm, Long> {
     List<UserTerm> findByUserIdAndIsAgreed(Long userId, boolean isAgreed);
 
     Optional<UserTerm> findByUserIdAndTermName(Long userId, TermName termName);
+
+    void deleteByUserId(Long userId);
 }

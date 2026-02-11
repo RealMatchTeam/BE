@@ -101,6 +101,12 @@ public enum OAuthErrorCode implements BaseErrorCode {
             "콘텐츠 카테고리를 찾을 수 없습니다."
     ),
 
+    WITHDRAWN_USER(
+            HttpStatus.FORBIDDEN,
+            "AUTH403_1",
+            "탈퇴한 회원입니다."
+    ),
+
     DUPLICATE_NICKNAME(
             HttpStatus.CONFLICT,
             "AUTH409_1",

@@ -12,11 +12,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
+import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
+import com.example.RealMatch.user.application.service.UserDeleteService;
+import com.example.RealMatch.user.application.service.UserFavoriteService;
 import com.example.RealMatch.user.application.service.UserFeatureService;
 import com.example.RealMatch.user.application.service.UserService;
 import com.example.RealMatch.user.application.service.UserWithdrawService;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyInstagramUpdateRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
+import com.example.RealMatch.user.presentation.dto.response.FavoriteBrandListResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.FavoriteCampaignListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -39,6 +47,8 @@ public class UserController implements UserSwagger {
     private final UserService userService;
     private final UserFeatureService userFeatureService;
     private final UserWithdrawService userWithdrawService;
+    private final UserFavoriteService  userFavoriteService;
+    private final UserDeleteService userDeleteService;
 
     @Override
     @GetMapping("/me")
@@ -127,6 +137,68 @@ public class UserController implements UserSwagger {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         userWithdrawService.withdraw(userDetails.getUserId());
+        return CustomResponse.ok(null);
+    }
+
+    @Override
+    @GetMapping("/me/favorites/brand")
+    public CustomResponse<FavoriteBrandListResponseDto> getMyFavoriteBrands(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) BrandSortType sort
+    ) {
+        Long userId = userDetails.getUserId();
+        return CustomResponse.ok(
+                userFavoriteService.getMyFavoriteBrands(
+                        userId,
+                        sort == null ? BrandSortType.MATCH_SCORE : sort
+                )
+        );
+    }
+
+    @Override
+    @GetMapping("/me/favorites/campaign")
+    public CustomResponse<FavoriteCampaignListResponseDto> getMyFavoriteCampaigns(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) CampaignSortType sort
+    ) {
+        Long userId = userDetails.getUserId();
+
+        return CustomResponse.ok(
+                userFavoriteService.getMyFavoriteCampaigns(
+                        userId,
+                        sort == null ? CampaignSortType.MATCH_SCORE : sort
+                )
+        );
+    }
+
+    @Override
+    @PatchMapping("/me/profile-image")
+    public CustomResponse<MyProfileCardResponseDto> updateMyProfileImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid MyProfileCardUpdateRequestDto request
+    ) {
+        return CustomResponse.ok(
+                userService.updateMyProfileImage(userDetails.getUserId(), request)
+        );
+    }
+
+    @Override
+    @PatchMapping("/me/instagram")
+    public CustomResponse<MyProfileCardResponseDto> updateMySns(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid MyInstagramUpdateRequestDto request
+    ) {
+        return CustomResponse.ok(
+                userService.updateSns(userDetails.getUserId(), request)
+        );
+    }
+
+    @Override
+    @DeleteMapping("/me/delete-immediately")
+    public CustomResponse<Void> deleteUserImmediately(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        userDeleteService.deleteUserImmediately(userDetails.getUserId());
         return CustomResponse.ok(null);
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
@@ -66,6 +67,13 @@ public class MatchServiceImpl implements MatchService {
     private static final Logger LOG = LoggerFactory.getLogger(MatchServiceImpl.class);
     private static final int TOP_MATCH_COUNT = 10;
 
+    private static final Map<String, List<String>> USER_TYPE_TAG_MAP = Map.of(
+            "유연한 연출가", List.of("기획중심", "구조탄탄", "디테일중심"),
+            "섬세한 설계자", List.of("연출유연", "트렌드 적용", "브랜드 이해도"),
+            "재치있는 스토리텔러", List.of("스토리감각", "소통형콘텐츠", "일상공감"),
+            "도전적인 실험가", List.of("콘셉트실험", "포맷도전", "새로움 추구")
+    );
+
     private final RedisDocumentHelper redisDocumentHelper;
 
     private final BrandRepository brandRepository;
@@ -86,13 +94,9 @@ public class MatchServiceImpl implements MatchService {
     private final UserRepository userRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
 
-    /**
-     * 매칭 검사는 다음을 하나의 트랜잭션으로 처리한다.
-     * - 기존 UserMatchingDetail 폐기
-     * - 새 UserMatchingDetail 생성 (creatorType + snsUrl만)
-     * - TagUser 전량 교체 저장 (나머지 정보 전부 user_tag로)
-     * - 브랜드/캠페인 매칭 히스토리 갱신
-     */
+    // ******* //
+    // 매칭 검사 //
+    // ******* //
     @Override
     @Transactional
     public MatchResponseDto match(Long userId, MatchRequestDto requestDto) {
@@ -124,15 +128,18 @@ public class MatchServiceImpl implements MatchService {
         List<CampaignMatchResult> campaignResults = findMatchingCampaignResults(userDoc, userId);
         saveMatchHistory(userId, brandResults, campaignResults);
 
-        String username = userRepository.findById(userId)
-                .map(User::getName)
+        String userNickname = userRepository.findById(userId)
+                .map(User::getNickname)
                 .orElse("사용자");
 
+        List<String> userTypeTag = USER_TYPE_TAG_MAP.getOrDefault(userType, List.of());
+
         return MatchResponseDto.builder()
-                .username(username)
+                .username(userNickname)
                 .userType(userType)
                 .userTypeImage("https://ui-avatars.com/api/?name=" + userType + "&background=6366f1&color=fff&size=200")
                 .typeTag(typeTag)
+                .userTypeTag(userTypeTag)
                 .highMatchingBrandList(brandListDto)
                 .build();
     }
@@ -278,6 +285,9 @@ public class MatchServiceImpl implements MatchService {
             if (dto.getContent().getTypeTags() != null) {
                 contentTags.addAll(dto.getContent().getTypeTags());
             }
+            if (dto.getContent().getCategoryTags() != null) {
+                contentTags.addAll(dto.getContent().getCategoryTags());
+            }
             if (dto.getContent().getToneTags() != null) {
                 contentTags.addAll(dto.getContent().getToneTags());
             }
@@ -349,14 +359,63 @@ public class MatchServiceImpl implements MatchService {
         int fashionCount = safeSize(userDoc.getFashionTags());
         int beautyCount = safeSize(userDoc.getBeautyTags());
         int contentCount = safeSize(userDoc.getContentTags());
+        int total = fashionCount + beautyCount + contentCount;
 
-        if (fashionCount >= beautyCount && fashionCount >= contentCount) {
+        if (total == 0) {
             return "유연한 연출가";
-        } else if (beautyCount >= contentCount) {
-            return "트렌드 리더";
-        } else {
-            return "콘텐츠 크리에이터";
         }
+
+        // 체형/사이즈 디테일 입력 여부
+        boolean hasBodyDetail = userDoc.getHeightTag() != null
+                || userDoc.getBodyTypeTag() != null
+                || userDoc.getTopSizeTag() != null
+                || userDoc.getBottomSizeTag() != null;
+
+        // SNS 시청자 정보 입력 여부
+        boolean hasSnsAudience = safeSize(userDoc.getContentsAgeTags()) > 0
+                || safeSize(userDoc.getContentsGenderTags()) > 0
+                || safeSize(userDoc.getContentsLengthTags()) > 0
+                || safeSize(userDoc.getAverageContentsViewsTags()) > 0;
+
+        // 각 카테고리가 전체에서 차지하는 비율
+        double fashionRatio = (double) fashionCount / total;
+        double beautyRatio = (double) beautyCount / total;
+        double contentRatio = (double) contentCount / total;
+
+        // 3개 카테고리 중 비어있지 않은 카테고리 수
+        int filledCategories = (fashionCount > 0 ? 1 : 0)
+                + (beautyCount > 0 ? 1 : 0)
+                + (contentCount > 0 ? 1 : 0);
+
+        // 도전적인 실험가: 3개 카테고리 모두 보유 + 특정 카테고리 쏠림 없음 (최대 비율 50% 이하)
+        double maxRatio = Math.max(fashionRatio, Math.max(beautyRatio, contentRatio));
+        if (filledCategories == 3 && maxRatio <= 0.5) {
+            return "도전적인 실험가";
+        }
+
+        // 재치있는 스토리텔러: 콘텐츠 태그가 가장 많거나, SNS 시청자 정보가 있으면서 콘텐츠 비중이 높은 경우
+        if (contentRatio >= fashionRatio && contentRatio >= beautyRatio) {
+            if (hasSnsAudience || contentCount >= beautyCount + fashionCount) {
+                return "재치있는 스토리텔러";
+            }
+        }
+
+        // 유연한 연출가: 패션 태그가 가장 많고 체형 디테일까지 입력한 경우
+        if (fashionRatio >= beautyRatio && fashionRatio >= contentRatio && hasBodyDetail) {
+            return "유연한 연출가";
+        }
+
+        // 섬세한 설계자: 뷰티 비중이 높거나 패션+뷰티 균형
+        if (beautyRatio >= fashionRatio && beautyRatio >= contentRatio) {
+            return "섬세한 설계자";
+        }
+
+        // 패션이 높지만 체형 디테일 없음 → 섬세한 설계자 (트렌드/브랜드 중심)
+        if (fashionRatio >= contentRatio && !hasBodyDetail) {
+            return "섬세한 설계자";
+        }
+
+        return "유연한 연출가";
     }
 
     private List<String> determineTypeTags(UserTagDocument userDoc) {
@@ -381,10 +440,10 @@ public class MatchServiceImpl implements MatchService {
     // Redis에서 매칭 요청 //
     // **************** //
     private List<BrandMatchResult> findMatchingBrandResults(UserTagDocument userDoc, Long userId) {
-        List<BrandTagDocument> allBrandDocs = redisDocumentHelper.findAllBrandTagDocuments();
+        List<BrandTagDocument> candidateBrandDocs = redisDocumentHelper.findCandidateBrands(userDoc);
 
-        if (allBrandDocs.isEmpty()) {
-            LOG.info("No brand tag documents found in Redis");
+        if (candidateBrandDocs.isEmpty()) {
+            LOG.info("No candidate brand documents found via FT.SEARCH");
             return List.of();
         }
 
@@ -394,7 +453,7 @@ public class MatchServiceImpl implements MatchService {
 
         Set<Long> recruitingBrandIds = getRecruitingBrandIds();
 
-        return allBrandDocs.stream()
+        return candidateBrandDocs.stream()
                 .map(brandDoc -> new BrandMatchResult(
                         brandDoc,
                         MatchScoreCalculator.calculateBrandMatchScore(userDoc, brandDoc),
@@ -407,10 +466,10 @@ public class MatchServiceImpl implements MatchService {
     }
 
     private List<CampaignMatchResult> findMatchingCampaignResults(UserTagDocument userDoc, Long userId) {
-        List<CampaignTagDocument> allCampaignDocs = redisDocumentHelper.findAllCampaignTagDocuments();
+        List<CampaignTagDocument> candidateCampaignDocs = redisDocumentHelper.findCandidateCampaigns(userDoc);
 
-        if (allCampaignDocs.isEmpty()) {
-            LOG.info("No campaign tag documents found in Redis");
+        if (candidateCampaignDocs.isEmpty()) {
+            LOG.info("No candidate campaign documents found via FT.SEARCH");
             return List.of();
         }
 
@@ -418,12 +477,12 @@ public class MatchServiceImpl implements MatchService {
                 .map(like -> like.getCampaign().getId())
                 .collect(Collectors.toSet());
 
-        List<Long> campaignIds = allCampaignDocs.stream()
+        List<Long> campaignIds = candidateCampaignDocs.stream()
                 .map(CampaignTagDocument::getCampaignId)
                 .toList();
         Map<Long, Long> applyCountMap = getApplyCountMapForCampaignIds(campaignIds);
 
-        return allCampaignDocs.stream()
+        return candidateCampaignDocs.stream()
                 .filter(campaignDoc -> campaignDoc.getRecruitEndDate() == null
                         || campaignDoc.getRecruitEndDate().isAfter(LocalDateTime.now()))
                 .map(campaignDoc -> new CampaignMatchResult(
@@ -473,16 +532,15 @@ public class MatchServiceImpl implements MatchService {
         List<Long> brandIds = brandHistories.stream()
                 .map(h -> h.getBrand().getId())
                 .toList();
-        Map<Long, List<String>> brandDescribeTagMap = brandIds.stream()
-                .collect(Collectors.toMap(
-                        brandId -> brandId,
-                        brandId -> brandDescribeTagRepository.findAllByBrandId(brandId).stream()
-                                .map(BrandDescribeTag::getBrandDescribeTag)
-                                .toList()
+        Map<Long, List<String>> brandDescribeTagMap = brandDescribeTagRepository.findAllByBrandIdIn(brandIds).stream()
+                .collect(Collectors.groupingBy(
+                        tag -> tag.getBrand().getId(),
+                        Collectors.mapping(BrandDescribeTag::getBrandDescribeTag, Collectors.toList())
                 ));
 
         List<MatchBrandResponseDto.BrandDto> matchedBrands = brandHistories.stream()
                 .filter(history -> filterBrandByCategory(history.getBrand(), category))
+                .filter(history -> filterBrandByTags(history.getBrand().getId(), tags, brandDescribeTagMap))
                 .sorted(getBrandHistoryComparator(sortBy, brandLikeCountMap))
                 .limit(TOP_MATCH_COUNT)
                 .map(history -> toMatchBrandDtoFromHistory(history, likedBrandIds, recruitingBrandIds, brandDescribeTagMap))
@@ -491,6 +549,58 @@ public class MatchServiceImpl implements MatchService {
         return MatchBrandResponseDto.builder()
                 .count(matchedBrands.size())
                 .brands(matchedBrands)
+                .build();
+    }
+
+    @Override
+    public MatchBrandResponseDto searchMatchingBrands(
+            String userId,
+            String title,
+            BrandSortType sortBy,
+            CategoryType category,
+            List<String> tags,
+            int page,
+            int size
+    ) {
+        Long userIdLong = Long.parseLong(userId);
+
+        int safePage = Math.max(page, 0);
+        int safeSize = size <= 0 ? 20 : size;
+        PageRequest pageable = PageRequest.of(safePage, safeSize);
+
+        Page<MatchBrandHistory> historyPage = matchBrandHistoryRepository
+                .searchBrands(userIdLong, title, category, sortBy, tags, pageable);
+
+        if (historyPage.isEmpty()) {
+            LOG.warn("No match brand history found in DB. userId={}", userId);
+            return MatchBrandResponseDto.builder()
+                    .count(0)
+                    .brands(List.of())
+                    .build();
+        }
+
+        Set<Long> likedBrandIds = brandLikeRepository.findByUserId(userIdLong).stream()
+                .map(like -> like.getBrand().getId())
+                .collect(Collectors.toSet());
+
+        Set<Long> recruitingBrandIds = getRecruitingBrandIds();
+
+        List<Long> pageBrandIds = historyPage.getContent().stream()
+                .map(h -> h.getBrand().getId())
+                .toList();
+        Map<Long, List<String>> brandDescribeTagMap = brandDescribeTagRepository.findAllByBrandIdIn(pageBrandIds).stream()
+                .collect(Collectors.groupingBy(
+                        tag -> tag.getBrand().getId(),
+                        Collectors.mapping(BrandDescribeTag::getBrandDescribeTag, Collectors.toList())
+                ));
+
+        List<MatchBrandResponseDto.BrandDto> pagedBrands = historyPage.getContent().stream()
+                .map(history -> toMatchBrandDtoFromHistory(history, likedBrandIds, recruitingBrandIds, brandDescribeTagMap))
+                .toList();
+
+        return MatchBrandResponseDto.builder()
+                .count((int) historyPage.getTotalElements())
+                .brands(pagedBrands)
                 .build();
     }
 
@@ -607,6 +717,37 @@ public class MatchServiceImpl implements MatchService {
         };
     }
 
+    private boolean filterBrandByTitle(Brand brand, String title) {
+        if (!StringUtils.hasText(title)) {
+            return true;
+        }
+        String brandName = brand != null ? brand.getBrandName() : null;
+        if (!StringUtils.hasText(brandName)) {
+            return false;
+        }
+        return brandName.toLowerCase().contains(title.trim().toLowerCase());
+    }
+
+    private boolean filterBrandByTags(Long brandId, List<String> tags, Map<Long, List<String>> brandDescribeTagMap) {
+        if (tags == null || tags.isEmpty()) {
+            return true;
+        }
+        List<String> brandTags = brandDescribeTagMap.getOrDefault(brandId, List.of());
+        if (brandTags.isEmpty()) {
+            return false;
+        }
+
+        List<String> normalizedBrandTags = brandTags.stream()
+                .filter(StringUtils::hasText)
+                .map(tag -> tag.trim().toLowerCase())
+                .toList();
+
+        return tags.stream()
+                .filter(StringUtils::hasText)
+                .map(tag -> tag.trim().toLowerCase())
+                .anyMatch(normalizedBrandTags::contains);
+    }
+
     private MatchBrandResponseDto.BrandDto toMatchBrandDtoFromHistory(
             MatchBrandHistory history, Set<Long> likedBrandIds, Set<Long> recruitingBrandIds,
             Map<Long, List<String>> brandDescribeTagMap) {
@@ -706,6 +847,7 @@ public class MatchServiceImpl implements MatchService {
 
         if (dto.getContent() != null) {
             addAll(tagIds, dto.getContent().getTypeTags());
+            addAll(tagIds, dto.getContent().getCategoryTags());
             addAll(tagIds, dto.getContent().getToneTags());
             addAll(tagIds, dto.getContent().getPrefferedInvolvementTags());
             addAll(tagIds, dto.getContent().getPrefferedCoverageTags());

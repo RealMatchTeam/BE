@@ -16,7 +16,7 @@ import com.example.RealMatch.global.exception.CustomException;
 public class NoOpS3FileUploadService implements S3FileUploadService {
 
     @Override
-    public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize) {
+    public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize, AttachmentUsage usage) {
         throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, "S3 is not configured.");
     }
 
@@ -31,8 +31,13 @@ public class NoOpS3FileUploadService implements S3FileUploadService {
     }
 
     @Override
-    public void deleteFile(String key) {
+    public void deleteFile(String key, AttachmentUsage usage) {
         throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED, "S3 is not configured.");
+    }
+
+    @Override
+    public String buildPublicUrl(String storageKey) {
+        return null;
     }
 
     @Override

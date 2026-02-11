@@ -73,6 +73,7 @@ public class UserFeatureService {
                 get(grouped, TagType.CONTENT.getDescription(), ContentTagType.AVG_VIDEO_LENGTH.getKorName()),
                 get(grouped, TagType.CONTENT.getDescription(), ContentTagType.AVG_VIDEO_VIEWS.getKorName()),
                 get(grouped, TagType.CONTENT.getDescription(), ContentTagType.FORMAT.getKorName()),
+                get(grouped, TagType.CONTENT.getDescription(), ContentTagType.CATEGORY.getKorName()),
                 get(grouped, TagType.CONTENT.getDescription(), ContentTagType.TONE.getKorName()),
                 get(grouped, TagType.CONTENT.getDescription(), ContentTagType.INVOLVEMENT.getKorName()),
                 get(grouped, TagType.CONTENT.getDescription(), ContentTagType.USAGE_RANGE.getKorName())
@@ -150,6 +151,7 @@ public class UserFeatureService {
         List<Integer> videoLengthTags = new ArrayList<>();
         List<Integer> videoViewsTags = new ArrayList<>();
         List<Integer> typeTags = new ArrayList<>();
+        List<Integer> categoryTags = new ArrayList<>();
         List<Integer> toneTags = new ArrayList<>();
         List<Integer> preferredInvolvementTags = new ArrayList<>();
         List<Integer> preferredCoverageTags = new ArrayList<>();
@@ -213,6 +215,8 @@ public class UserFeatureService {
                         videoViewsTags.add(tagId);
                     } else if (ContentTagType.FORMAT.getKorName().equals(category)) {
                         typeTags.add(tagId);
+                    } else if (ContentTagType.CATEGORY.getKorName().equals(category)) {
+                        categoryTags.add(tagId);
                     } else if (ContentTagType.TONE.getKorName().equals(category)) {
                         toneTags.add(tagId);
                     } else if (ContentTagType.INVOLVEMENT.getKorName().equals(category)) {
@@ -264,6 +268,7 @@ public class UserFeatureService {
                 .content(MatchRequestDto.ContentDto.builder()
                         .sns(sns)
                         .typeTags(typeTags.isEmpty() ? null : typeTags)
+                        .categoryTags(categoryTags.isEmpty() ? null : categoryTags)
                         .toneTags(toneTags.isEmpty() ? null : toneTags)
                         .prefferedInvolvementTags(preferredInvolvementTags.isEmpty() ? null : preferredInvolvementTags)
                         .prefferedCoverageTags(preferredCoverageTags.isEmpty() ? null : preferredCoverageTags)
@@ -337,6 +342,7 @@ public class UserFeatureService {
         return MatchRequestDto.ContentDto.builder()
                 .sns(mergeSns(cur.getSns(), p.getSns()))
                 .typeTags(p.getTypeTags() != null ? p.getTypeTags() : cur.getTypeTags())
+                .categoryTags(p.getCategoryTags() != null ? p.getCategoryTags() : cur.getCategoryTags())
                 .toneTags(p.getToneTags() != null ? p.getToneTags() : cur.getToneTags())
                 .prefferedInvolvementTags(p.getPrefferedInvolvementTags() != null ? p.getPrefferedInvolvementTags() : cur.getPrefferedInvolvementTags())
                 .prefferedCoverageTags(p.getPrefferedCoverageTags() != null ? p.getPrefferedCoverageTags() : cur.getPrefferedCoverageTags())

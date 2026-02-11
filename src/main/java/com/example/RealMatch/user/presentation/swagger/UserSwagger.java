@@ -1,14 +1,21 @@
 package com.example.RealMatch.user.presentation.swagger;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.match.domain.entity.enums.BrandSortType;
+import com.example.RealMatch.match.domain.entity.enums.CampaignSortType;
 import com.example.RealMatch.match.presentation.dto.request.MatchRequestDto;
 import com.example.RealMatch.user.presentation.dto.request.MyEditInfoRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyInstagramUpdateRequestDto;
+import com.example.RealMatch.user.presentation.dto.request.MyProfileCardUpdateRequestDto;
+import com.example.RealMatch.user.presentation.dto.response.FavoriteBrandListResponseDto;
+import com.example.RealMatch.user.presentation.dto.response.FavoriteCampaignListResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyEditInfoResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyFeatureResponseDto;
 import com.example.RealMatch.user.presentation.dto.response.MyLoginResponseDto;
@@ -19,6 +26,7 @@ import com.example.RealMatch.user.presentation.dto.response.NicknameAvailableRes
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -120,15 +128,15 @@ public interface UserSwagger {
     @Operation(
             summary = "닉네임 중복 체크 API",
             description = """
-                회원가입 및 닉네임 변경 시 사용할 닉네임 중복 체크 API입니다.
-
-                user 테이블의 nickname 컬럼에서 닉네임이 있으면 "available": false 반환
-                없으면 "available": true 반환
-                
-                닉네임 형식 및 길이 조건
-                - 형식: 한글, 영문, 숫자만 허용 (특수문자 및 공백 불가)
-                - 길이: 2자 이상 10자 이하 허용 
-                """
+                    회원가입 및 닉네임 변경 시 사용할 닉네임 중복 체크 API입니다.
+                    
+                    user 테이블의 nickname 컬럼에서 닉네임이 있으면 "available": false 반환
+                    없으면 "available": true 반환
+                    
+                    닉네임 형식 및 길이 조건
+                    - 형식: 한글, 영문, 숫자만 허용 (특수문자 및 공백 불가)
+                    - 길이: 2자 이상 10자 이하 허용 
+                    """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "중복 체크 성공"),
@@ -143,8 +151,118 @@ public interface UserSwagger {
             @RequestParam String nickname
     );
 
-    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴(Soft Delete) 처리 후 role을 WITHDRAWN으로 변경합니다.")
+    @Operation(summary = "회원 탈퇴 API By 고경수 ", description = "회원 탈퇴(Soft Delete) 처리 후 role을 WITHDRAWN으로 변경합니다.")
     CustomResponse<Void> withdraw(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "내가 찜한 브랜드 조회 By 박지영",
+            description = """
+                        사용자가 찜한 브랜드 목록을 조회합니다.
+                    
+                        🔹 정렬 기준(sort)에 따라 결과가 정렬됩니다.
+                        - MATCH_SCORE : 사용자 맞춤 브랜드 매칭률 순
+                        - POPULARITY  : 브랜드 인기순 (좋아요 수 기준)
+                        - NEWEST      : 브랜드 최신순 (생성일 기준)
+                    
+                        🔹 sort 파라미터를 전달하지 않으면 기본값은 MATCH_SCORE 입니다.
+                    """
+    )
+    CustomResponse<FavoriteBrandListResponseDto> getMyFavoriteBrands(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+
+            @Parameter(
+                    description = "정렬 기준 (기본값: MATCH_SCORE)",
+                    required = false,
+                    schema = @Schema(implementation = BrandSortType.class)
+            )
+            @RequestParam(required = false)
+            BrandSortType sort
+    );
+
+
+    @Operation(
+            summary = "내가 찜한 캠페인 조회 By 박지영",
+            description = """
+                        사용자가 찜한 캠페인 목록을 조회합니다.
+                    
+                        🔹 정렬 기준(sort)에 따라 결과가 정렬됩니다.
+                        - MATCH_SCORE  : 사용자 맞춤 캠페인 매칭률 순
+                        - POPULARITY   : 캠페인 인기순 (좋아요 수 기준)
+                        - REWARD_AMOUNT: 원고료 높은 순
+                        - D_DAY        : 모집 마감 임박 순 (D-Day 기준)
+                    
+                        🔹 sort 파라미터를 전달하지 않으면 기본값은 MATCH_SCORE 입니다.
+                    """
+    )
+    CustomResponse<FavoriteCampaignListResponseDto> getMyFavoriteCampaigns(
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+
+            @Parameter(
+                    description = "정렬 기준 (기본값: MATCH_SCORE)",
+                    required = false,
+                    schema = @Schema(implementation = CampaignSortType.class)
+            )
+            @RequestParam(required = false)
+            CampaignSortType sort
+    );
+
+    @Operation(
+            summary = "프로필 이미지 수정 API By 고경수",
+            description = """
+                    프로필 카드의 profileImageUrl을 변경합니다.
+                    - 이미 업로드된 이미지 URL을 전달받아 저장합니다.
+                    - 파일 업로드/용량 검증은 업로드 API에서 처리합니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "프로필 이미지 수정 성공"),
+            @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND / PROFILE_CARD_NOT_FOUND")
+    })
+    @PatchMapping("/me/profile-image")
+    CustomResponse<MyProfileCardResponseDto> updateMyProfileImage(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyProfileCardUpdateRequestDto request
+    );
+
+    @Operation(
+            summary = "인스타그램 아이디 수정 API By 고경수",
+            description = "인스타그램 계정 아이디를 변경합니다. (예: @myaccount -> https://www.instagram.com/myaccount/ 형태로 DB에 저장))"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "인스타 아이디 수정 성공"),
+            @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND / PROFILE_CARD_NOT_FOUND")
+    })
+    @PatchMapping("/me/instagram")
+    CustomResponse<MyProfileCardResponseDto> updateMySns(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MyInstagramUpdateRequestDto request
+    );
+
+    @Operation(
+            summary = "회원 즉시 삭제 API By 고경수",
+            description = """
+                로그인한 사용자의 데이터를 즉시 물리 삭제합니다. (복구 불가)
+                
+                삭제 순서:
+                - 유저 관련 자식 데이터 삭제 후
+                - users 물리 삭제
+                
+                주의:
+                - 브랜드 오너/참조 FK가 존재하는 경우 DB 제약조건에 따라 실패할 수 있습니다.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "즉시 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "USER_NOT_FOUND"),
+            @ApiResponse(responseCode = "500", description = "연관 데이터 FK 제약으로 삭제 실패 가능")
+    })
+    @DeleteMapping("/me/delete-immediately")
+    CustomResponse<Void> deleteUserImmediately(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 }

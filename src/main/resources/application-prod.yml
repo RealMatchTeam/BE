@@ -155,8 +155,10 @@ app:
     url: ${FRONT_DOMAIN_URL:https://realmatch.co.kr}
   s3:
     bucket-name: ${S3_BUCKET_NAME:realmatch-s3}
+    public-bucket-name: ${S3_PUBLIC_BUCKET_NAME:realmatch-public-s3}
+    cloudfront-base-url: ${S3_CLOUDFRONT_BASE_URL:}
     region: ${S3_REGION:us-east-2}
-    presigned-url-expiration-seconds: ${S3_PRESIGNED_URL_EXPIRATION:604800}
+    presigned-url-expiration-seconds: ${S3_PRESIGNED_URL_EXPIRATION:86400}
     max-image-size-bytes: ${S3_MAX_IMAGE_SIZE:10485760}
     max-file-size-bytes: ${S3_MAX_FILE_SIZE:52428800}
     key-prefix: ${S3_KEY_PREFIX:attachment}
