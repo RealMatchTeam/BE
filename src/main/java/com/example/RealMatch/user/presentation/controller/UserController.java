@@ -86,7 +86,7 @@ public class UserController implements UserSwagger {
         return CustomResponse.ok(userService.getMyEditInfo(userDetails.getUserId()));
     }
 
-    @PostMapping("/me/edit")
+    @PatchMapping("/me/edit")
     public CustomResponse<Void> updateMyInfo(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody MyEditInfoRequestDto request
