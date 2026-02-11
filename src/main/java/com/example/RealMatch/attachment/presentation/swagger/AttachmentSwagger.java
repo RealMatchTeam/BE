@@ -30,6 +30,7 @@ public interface AttachmentSwagger {
                     첨부 파일을 업로드하고 메타 정보를 반환합니다.
                     - IMAGE: png, jpeg(jpg)만 허용
                     - FILE: pdf, doc, docx만 허용
+                    by 여채현
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "첨부파일 업로드 성공"),
