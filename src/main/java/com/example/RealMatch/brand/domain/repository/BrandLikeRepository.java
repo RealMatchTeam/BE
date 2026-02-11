@@ -24,4 +24,6 @@ public interface BrandLikeRepository extends JpaRepository<BrandLike, Long> {
     void deleteByUserIdAndBrandId(Long userId, Long brandId);
 
     long countByBrandId(Long brandId);
+
+    void deleteByUserId(Long userId);
 }

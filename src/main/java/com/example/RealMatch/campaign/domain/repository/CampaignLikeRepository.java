@@ -42,4 +42,6 @@ public interface CampaignLikeRepository extends JpaRepository<CampaignLike, Long
         group by cl.campaign.id
     """)
     List<Object[]> countByCampaignIdIn(@Param("campaignIds") List<Long> campaignIds);
+
+    void deleteByUserId(Long userId);
 }

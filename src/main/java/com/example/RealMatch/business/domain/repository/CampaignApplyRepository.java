@@ -81,5 +81,5 @@ public interface CampaignApplyRepository extends JpaRepository<CampaignApply, Lo
             @Param("brandIds") List<Long> brandIds
     );
 
-
+    void deleteByUserId(Long userId);
 }
