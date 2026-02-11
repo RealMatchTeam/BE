@@ -13,5 +13,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SponsorInfoDto {
     private List<SponsorItemDto> items;
-    private String shippingType;
 }

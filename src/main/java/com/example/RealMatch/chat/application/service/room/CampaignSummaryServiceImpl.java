@@ -77,9 +77,10 @@ public class CampaignSummaryServiceImpl implements CampaignSummaryService {
                 return null;
             }
 
-            // 캠페인 협찬 제품 조회 (요약 바용)
+            // 브랜드 협찬 제품 조회 (요약 바용)
+            Long brandId = campaign.getBrand().getId();
             List<CampaignSummarySponsorProductResponse> sponsorProducts = brandAvailableSponsorRepository
-                    .findByCampaignIdWithImages(campaignId)
+                    .findByBrandIdWithImages(brandId)
                     .stream()
                     .map(CampaignSummaryServiceImpl::toSummarySponsorProduct)
                     .collect(Collectors.toList());

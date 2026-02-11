@@ -14,5 +14,5 @@ public class SponsorItemDto {
     private String availableType;
     private Integer availableQuantity;
     private Integer availableSize;
-    private String sizeUnit;
+    private String shippingType;
 }

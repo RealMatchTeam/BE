@@ -253,43 +253,33 @@ class BrandGenerator(BaseGenerator):
         print(f"\n[브랜드 협찬] 브랜드 협찬 상품 생성 중...")
 
         with self.connection.cursor() as cursor:
-            cursor.execute("SELECT id FROM campaign")
-            campaign_ids = [row['id'] for row in cursor.fetchall()]
-
             cursor.execute("SELECT id FROM brand")
             brand_ids = [row['id'] for row in cursor.fetchall()]
 
-        if not campaign_ids or not brand_ids:
-            print("[경고] 캠페인 또는 브랜드가 없습니다.")
+        if not brand_ids:
+            print("[경고] 브랜드가 없습니다.")
             return
 
         sponsors = []
-        for campaign_id in campaign_ids:
-            # 각 캠페인당 1~3개의 협찬 상품 생성
+        for brand_id in brand_ids:
+            # 각 브랜드당 1~3개의 협찬 상품 생성
             num_sponsors = self.fake.random_int(1, 3)
-            brand_id = self.fake.random_element(brand_ids)
 
             for _ in range(num_sponsors):
-                total_count = self.fake.random_int(5, 20)
-                current_count = self.fake.random_int(0, total_count)
-
                 sponsors.append({
-                    'campaign_id': campaign_id,
                     'brand_id': brand_id,
                     'name': random.choice(self.SPONSOR_NAMES),
                     'content': random.choice(self.SPONSOR_CONTENTS),
-                    'total_count': total_count,
-                    'current_count': current_count,
                     'is_deleted': False,
                     'created_at': datetime.now() - timedelta(days=self.fake.random_int(0, 30)),
                     'updated_at': datetime.now()
                 })
 
         sql = """
-            INSERT INTO brand_available_sponsor (campaign_id, brand_id, name, content,
-                total_count, current_count, is_deleted, created_at, updated_at)
-            VALUES (%(campaign_id)s, %(brand_id)s, %(name)s, %(content)s,
-                %(total_count)s, %(current_count)s, %(is_deleted)s, %(created_at)s, %(updated_at)s)
+            INSERT INTO brand_available_sponsor (brand_id, name, content,
+                is_deleted, created_at, updated_at)
+            VALUES (%(brand_id)s, %(name)s, %(content)s,
+                %(is_deleted)s, %(created_at)s, %(updated_at)s)
         """
         self.execute_many(sql, sponsors, "브랜드 협찬 상품")
 

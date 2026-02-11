@@ -2,8 +2,8 @@ package com.example.RealMatch.brand.presentation.dto.response;
 
 import java.util.List;
 
+import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
-import com.example.RealMatch.brand.domain.entity.BrandSponsorImage;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -11,38 +11,54 @@ import lombok.Getter;
 
 @Getter
 @Builder
-@Schema(description = "협찬 가능 제품 리스트 응답 DTO")
+@Schema(description = "협찬 가능 제품 리스트(상세 포함) 응답 DTO")
 public class SponsorProductListResponseDto {
-
-    @Schema(description = "협찬 제품 ID")
-    private Long id;
-
-    @Schema(description = "제품명")
-    private String name;
 
     @Schema(description = "제품 대표 이미지 URL")
     private String thumbnailImageUrl;
 
-    @Schema(description = "총 모집 인원 (또는 제공 가능 수량)")
-    private Integer totalCount;
+    @Schema(description = "브랜드 ID")
+    private Long brandId;
 
-    @Schema(description = "현재 신청 인원 (또는 소진 수량)")
-    private Integer currentCount;
+    @Schema(description = "브랜드명")
+    private String brandName;
 
-    public static SponsorProductListResponseDto from(BrandAvailableSponsor sponsor) {
-        // 이미지가 있다면 첫 번째 이미지를 썸네일로 사용
+    @Schema(description = "제품 ID")
+    private Long productId;
+
+    @Schema(description = "제품명")
+    private String productName;
+
+    @Schema(description = "제품 이미지 URL 목록")
+    private List<String> productImageUrls;
+
+    @Schema(description = "카테고리 목록")
+    private List<String> categories;
+
+    @Schema(description = "협찬 정보")
+    private SponsorInfoDto sponsorInfo;
+
+    public static SponsorProductListResponseDto from(
+            Brand brand,
+            BrandAvailableSponsor product,
+            List<String> productImageUrls,
+            List<String> categories,
+            SponsorInfoDto sponsorInfo
+    ) {
         String thumbnail = null;
-        List<BrandSponsorImage> images = sponsor.getImages();
-        if (images != null && !images.isEmpty()) {
-            thumbnail = images.get(0).getImageUrl();
+        if (productImageUrls != null && !productImageUrls.isEmpty()) {
+            thumbnail = productImageUrls.get(0);
         }
 
         return SponsorProductListResponseDto.builder()
-                .id(sponsor.getId())
-                .name(sponsor.getName())
                 .thumbnailImageUrl(thumbnail)
-                .totalCount(sponsor.getTotalCount()) // 엔티티 필드명에 맞춰 조정 필요 (예: quantity, capacity 등)
-                .currentCount(sponsor.getCurrentCount()) // 엔티티 필드명에 맞춰 조정 필요
+                .brandId(brand.getId())
+                .brandName(brand.getBrandName())
+                .productId(product.getId())
+                .productName(product.getName())
+                .productImageUrls(productImageUrls)
+                .categories(categories)
+                .sponsorInfo(sponsorInfo)
                 .build();
     }
 }

@@ -18,6 +18,7 @@ import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
 import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
 import com.example.RealMatch.brand.domain.entity.BrandImage;
 import com.example.RealMatch.brand.domain.entity.BrandLike;
+import com.example.RealMatch.brand.domain.entity.BrandSponsorImage;
 import com.example.RealMatch.brand.domain.entity.enums.IndustryType;
 import com.example.RealMatch.brand.domain.repository.BrandAvailableSponsorRepository;
 import com.example.RealMatch.brand.domain.repository.BrandCategoryRepository;
@@ -31,7 +32,6 @@ import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyCreateReq
 import com.example.RealMatch.brand.presentation.dto.request.BrandBeautyUpdateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionCreateRequestDto;
 import com.example.RealMatch.brand.presentation.dto.request.BrandFashionUpdateRequestDto;
-import com.example.RealMatch.brand.presentation.dto.response.ActionDto;
 import com.example.RealMatch.brand.presentation.dto.response.BeautyFilterDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandCreateResponseDto;
 import com.example.RealMatch.brand.presentation.dto.response.BrandDetailResponseDto;
@@ -56,12 +56,9 @@ import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@Slf4j
 public class BrandService {
 
     private final BrandRepository brandRepository;
@@ -78,7 +75,6 @@ public class BrandService {
     private final TagRepository tagRepository;
 
     private final UserRepository userRepository;
-
     private static final Pattern URL_PATTERN = Pattern.compile("^https?://([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?$");
 
     // ******** //
@@ -222,52 +218,98 @@ public class BrandService {
             throw new IllegalArgumentException("해당 브랜드의 제품이 아닙니다.");
         }
 
-        List<String> mockImageUrls = List.of(
-                "https://cdn.example.com/products/100/1.png",
-                "https://cdn.example.com/products/100/2.png",
-                "https://cdn.example.com/products/100/3.png"
-        );
+        return buildSponsorProductDetailResponse(brand, product);
+    }
 
-        List<String> mockCategories = List.of("스킨케어", "메이크업");
+    @Transactional(readOnly = true)
+    public List<SponsorProductListResponseDto> getSponsorProducts(Long brandId) {
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
 
-        List<SponsorItemDto> mockItems = List.of(
-                SponsorItemDto.builder().itemId(1L).availableType("SAMPLE").availableQuantity(1).availableSize(50).sizeUnit("ml").build(),
-                SponsorItemDto.builder().itemId(2L).availableType("FULL").availableQuantity(1).availableSize(100).sizeUnit("ml").build()
-        );
+        List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithImages(brandId);
+        List<String> categories = buildCategories(brand);
 
-        SponsorInfoDto sponsorInfo = SponsorInfoDto.builder()
-                .items(mockItems)
-                .shippingType("CREATOR_PAY")
-                .build();
+        return products.stream()
+                .map(product -> buildSponsorProductListResponse(brand, product, categories))
+                .collect(Collectors.toList());
+    }
 
-        ActionDto action = ActionDto.builder()
-                .canProposeCampaign(true)
-                .proposeCampaignCtaText("캠페인 제안하기")
-                .build();
+    private SponsorProductDetailResponseDto buildSponsorProductDetailResponse(
+            Brand brand,
+            BrandAvailableSponsor product
+    ) {
+        List<String> imageUrls = buildProductImageUrls(product);
+        List<String> categories = buildCategories(brand);
+        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand, product);
 
         return SponsorProductDetailResponseDto.builder()
                 .brandId(brand.getId())
                 .brandName(brand.getBrandName())
                 .productId(product.getId())
                 .productName(product.getName())
-                .productDescription(product.getCampaign().getDescription())
-                .productImageUrls(mockImageUrls)
-                .categories(mockCategories)
-                .sponsorInfo(sponsorInfo)
-                .action(action)
+                .productImageUrls(imageUrls)
+                .categories(categories)
+                .sponsorInfo(sponsorInfoDto)
                 .build();
     }
 
-    @Transactional(readOnly = true)
-    public List<SponsorProductListResponseDto> getSponsorProducts(Long brandId) {
-        brandRepository.findById(brandId)
-                .orElseThrow(() -> new ResourceNotFoundException("브랜드 정보를 찾을 수 없습니다."));
+    private SponsorProductListResponseDto buildSponsorProductListResponse(
+            Brand brand,
+            BrandAvailableSponsor product,
+            List<String> categories
+    ) {
+        List<String> imageUrls = buildProductImageUrls(product);
+        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand, product);
 
-        List<BrandAvailableSponsor> products = brandAvailableSponsorRepository.findByBrandIdWithImages(brandId);
+        return SponsorProductListResponseDto.from(brand, product, imageUrls, categories, sponsorInfoDto);
+    }
 
-        return products.stream()
-                .map(SponsorProductListResponseDto::from)
+    private List<String> buildProductImageUrls(BrandAvailableSponsor product) {
+        List<BrandSponsorImage> images = product.getImages();
+        if (images == null || images.isEmpty()) {
+            return List.of();
+        }
+        return images.stream()
+                .map(BrandSponsorImage::getImageUrl)
                 .collect(Collectors.toList());
+    }
+
+    private List<String> buildCategories(Brand brand) {
+        if (brand.getIndustryType() == null) {
+            return List.of();
+        }
+        if (brand.getIndustryType() == IndustryType.BEAUTY) {
+            return tagBrandRepository.findTagNamesByBrandIdAndTagCategory(
+                    brand.getId(), TagCategory.BEAUTY_INTEREST_STYLE.getDescription());
+        }
+        if (brand.getIndustryType() == IndustryType.FASHION) {
+            return tagBrandRepository.findTagNamesByBrandIdAndTagCategory(
+                    brand.getId(), TagCategory.FASHION_INTEREST_ITEM.getDescription());
+        }
+        return List.of();
+    }
+
+    private SponsorInfoDto buildSponsorInfo(Brand brand, BrandAvailableSponsor sponsor) {
+        if (sponsor.getItems().isEmpty()) {
+            return null;
+        }
+        List<SponsorItemDto> items = sponsor.getItems().stream()
+                .map(item -> {
+                    SponsorItemDto.SponsorItemDtoBuilder builder = SponsorItemDto.builder()
+                            .availableQuantity(item.getAvailableQuantity());
+                    if (brand.getIndustryType() == IndustryType.BEAUTY) {
+                        builder.itemId(item.getId())
+                                .availableType(item.getAvailableType())
+                                .availableSize(item.getAvailableSize())
+                                .shippingType(item.getShippingType());
+                    }
+                    return builder.build();
+                })
+                .collect(Collectors.toList());
+
+        return SponsorInfoDto.builder()
+                .items(items)
+                .build();
     }
 
     // ******** //
