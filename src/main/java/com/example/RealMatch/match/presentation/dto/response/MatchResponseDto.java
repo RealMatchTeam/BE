@@ -17,6 +17,7 @@ public class MatchResponseDto {
     private String userType;
     private String userTypeImage;
     private List<String> typeTag;
+    private List<String> userTypeTag;
     private HighMatchingBrandListDto highMatchingBrandList;
 
     @Getter
