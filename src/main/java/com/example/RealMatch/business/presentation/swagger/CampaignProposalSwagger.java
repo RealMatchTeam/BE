@@ -138,6 +138,9 @@ public interface CampaignProposalSwagger {
             summary = "캠페인 제안 상세 조회 API by 박지영",
             description = """
                     한 건의 캠페인 제안 상세 정보를 조회합니다.
+                    
+                    * 기존 캠페인 제안일 경우 campaignId와 campaignName 값이 있습니다. 제목을 campaignName을 사용해주세요.      
+                    * 신규 캠페인 제안일 경우 campaignId와 campaignName 값이 null 입니다. 제목을 title을 사용해주세요.      
 
                     campaignProposalId는 /api/v1/campaigns/collaborations/me에서 확인해주세요.
                     (masterJWT로 조회 불가능 API, 크리에이터/브랜드 계정으로 로그인 필요)
