@@ -15,7 +15,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.dao.DataAccessException;
 import org.springframework.messaging.handler.annotation.Header;
-
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.notification.application.service.NotificationDeliveryClaimService;
