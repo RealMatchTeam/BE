@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.example.RealMatch.business.domain.entity.CampaignProposal;
+import com.example.RealMatch.campaign.domain.entity.Campaign;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +14,8 @@ import lombok.Getter;
 public class CampaignProposalDetailResponse {
 
     private Long proposalId;
+    private Long campaignId;
+    private String campaignName;
 
     private Long brandId;
     private Long creatorId;
@@ -34,8 +37,12 @@ public class CampaignProposalDetailResponse {
     private CampaignContentTagResponse contentTags;
 
     public static CampaignProposalDetailResponse from(CampaignProposal proposal) {
+        Campaign campaign = proposal.getCampaign();
+
         return CampaignProposalDetailResponse.builder()
                 .proposalId(proposal.getId())
+                .campaignId(campaign != null ? campaign.getId() : null)
+                .campaignName(campaign != null ? campaign.getTitle() : null)
                 .brandId(proposal.getBrand().getId())
                 .creatorId(proposal.getCreator().getId())
                 .title(proposal.getTitle())
