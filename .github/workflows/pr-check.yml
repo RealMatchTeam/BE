@@ -129,7 +129,7 @@ jobs:
       continue-on-error: true
 
     - name: Build with Gradle
-      run: ./gradlew build -x test
+      run: ./gradlew build -x test --refresh-dependencies
 
     - name: Run tests
       run: ./gradlew test
