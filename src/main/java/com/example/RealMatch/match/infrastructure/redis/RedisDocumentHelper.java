@@ -1,10 +1,8 @@
 package com.example.RealMatch.match.infrastructure.redis;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import org.springframework.data.redis.connection.RedisConnection;
@@ -71,13 +69,19 @@ public class RedisDocumentHelper {
         List<String> clauses = new ArrayList<>();
 
         String fashionClause = buildTagClause(fashionTags, fashionField);
-        if (fashionClause != null) clauses.add(fashionClause);
+        if (fashionClause != null) {
+            clauses.add(fashionClause);
+        }
 
         String beautyClause = buildTagClause(beautyTags, beautyField);
-        if (beautyClause != null) clauses.add(beautyClause);
+        if (beautyClause != null) {
+            clauses.add(beautyClause);
+        }
 
         String contentClause = buildTagClause(contentTags, contentField);
-        if (contentClause != null) clauses.add(contentClause);
+        if (contentClause != null) {
+            clauses.add(contentClause);
+        }
 
         if (clauses.isEmpty()) {
             return "*";
@@ -146,10 +150,14 @@ public class RedisDocumentHelper {
         // 첫 번째 요소는 총 결과 수 (Long)
         // 이후 [docKey, [fields...]] 쌍으로 반복
         for (int i = 1; i < resultList.size(); i += 2) {
-            if (i + 1 >= resultList.size()) break;
+            if (i + 1 >= resultList.size()) {
+                break;
+            }
 
             Object fieldsObj = resultList.get(i + 1);
-            if (!(fieldsObj instanceof List<?> fields)) continue;
+            if (!(fieldsObj instanceof List<?> fields)) {
+                continue;
+            }
 
             // JSON 인덱스: fields = ["$", "{...json...}"]
             for (int j = 0; j < fields.size() - 1; j += 2) {
