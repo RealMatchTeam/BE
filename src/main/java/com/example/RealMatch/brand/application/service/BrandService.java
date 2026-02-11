@@ -240,7 +240,7 @@ public class BrandService {
     ) {
         List<String> imageUrls = buildProductImageUrls(product);
         List<String> categories = buildCategories(brand);
-        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(product);
+        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand, product);
 
         return SponsorProductDetailResponseDto.builder()
                 .brandId(brand.getId())
@@ -259,7 +259,7 @@ public class BrandService {
             List<String> categories
     ) {
         List<String> imageUrls = buildProductImageUrls(product);
-        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(product);
+        SponsorInfoDto sponsorInfoDto = buildSponsorInfo(brand, product);
 
         return SponsorProductListResponseDto.from(brand, product, imageUrls, categories, sponsorInfoDto);
     }
@@ -289,18 +289,20 @@ public class BrandService {
         return List.of();
     }
 
-    private SponsorInfoDto buildSponsorInfo(BrandAvailableSponsor sponsor) {
+    private SponsorInfoDto buildSponsorInfo(Brand brand, BrandAvailableSponsor sponsor) {
         if (sponsor.getItems().isEmpty()) {
             return null;
         }
         List<SponsorItemDto> items = sponsor.getItems().stream()
                 .map(item -> {
                     SponsorItemDto.SponsorItemDtoBuilder builder = SponsorItemDto.builder()
-                            .itemId(item.getId())
-                            .availableType(item.getAvailableType())
-                            .availableQuantity(item.getAvailableQuantity())
-                            .availableSize(item.getAvailableSize())
-                            .shippingType(item.getShippingType());
+                            .availableQuantity(item.getAvailableQuantity());
+                    if (brand.getIndustryType() == IndustryType.BEAUTY) {
+                        builder.itemId(item.getId())
+                                .availableType(item.getAvailableType())
+                                .availableSize(item.getAvailableSize())
+                                .shippingType(item.getShippingType());
+                    }
                     return builder.build();
                 })
                 .collect(Collectors.toList());
