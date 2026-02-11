@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.hibernate.annotations.BatchSize;
 
-import com.example.RealMatch.campaign.domain.entity.Campaign;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
 import jakarta.persistence.CascadeType;
@@ -35,10 +34,6 @@ public class BrandAvailableSponsor extends DeleteBaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "campaign_id", nullable = false)
-    private Campaign campaign;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
@@ -60,13 +55,11 @@ public class BrandAvailableSponsor extends DeleteBaseEntity {
 
     @Builder
     public BrandAvailableSponsor(
-            Campaign campaign,
             Brand brand,
             String name,
             String content,
             String shippingType
     ) {
-        this.campaign = campaign;
         this.brand = brand;
         this.name = name;
         this.content = content;
