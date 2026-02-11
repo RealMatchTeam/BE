@@ -371,9 +371,20 @@ class RedisDataGenerator:
                     NumericField('$.brandId', as_name='brandId'),
                     TagField('$.brandName', as_name='brandName'),
                     TagField('$.categories[*]', as_name='categories'),
+                    # 이산형 태그
                     TagField('$.preferredFashionTags[*]', as_name='preferredFashionTags'),
                     TagField('$.preferredBeautyTags[*]', as_name='preferredBeautyTags'),
                     TagField('$.preferredContentTags[*]', as_name='preferredContentTags'),
+                    # 연속형 태그
+                    NumericField('$.minCreatorHeight', as_name='minCreatorHeight'),
+                    NumericField('$.maxCreatorHeight', as_name='maxCreatorHeight'),
+                    TagField('$.preferredBodyTypeTags[*]', as_name='preferredBodyTypeTags'),
+                    TagField('$.preferredTopSizeTags[*]', as_name='preferredTopSizeTags'),
+                    TagField('$.preferredBottomSizeTags[*]', as_name='preferredBottomSizeTags'),
+                    TagField('$.preferredContentsAverageViewsTags[*]', as_name='preferredContentsAverageViewsTags'),
+                    TagField('$.preferredContentsAgeTags[*]', as_name='preferredContentsAgeTags'),
+                    TagField('$.preferredContentsGenderTags[*]', as_name='preferredContentsGenderTags'),
+                    TagField('$.preferredContentsLengthTags[*]', as_name='preferredContentsLengthTags'),
                 )
             },
             {
@@ -382,9 +393,20 @@ class RedisDataGenerator:
                 'schema': (
                     NumericField('$.campaignId', as_name='campaignId'),
                     TagField('$.categories[*]', as_name='categories'),
+                    # 이산형 태그
                     TagField('$.preferredFashionTags[*]', as_name='preferredFashionTags'),
                     TagField('$.preferredBeautyTags[*]', as_name='preferredBeautyTags'),
                     TagField('$.preferredContentTags[*]', as_name='preferredContentTags'),
+                    # 연속형 태그
+                    NumericField('$.minCreatorHeight', as_name='minCreatorHeight'),
+                    NumericField('$.maxCreatorHeight', as_name='maxCreatorHeight'),
+                    TagField('$.preferredBodyTypeTags[*]', as_name='preferredBodyTypeTags'),
+                    TagField('$.preferredTopSizeTags[*]', as_name='preferredTopSizeTags'),
+                    TagField('$.preferredBottomSizeTags[*]', as_name='preferredBottomSizeTags'),
+                    TagField('$.preferredContentsAverageViewsTags[*]', as_name='preferredContentsAverageViewsTags'),
+                    TagField('$.preferredContentsAgeTags[*]', as_name='preferredContentsAgeTags'),
+                    TagField('$.preferredContentsGenderTags[*]', as_name='preferredContentsGenderTags'),
+                    TagField('$.preferredContentsLengthTags[*]', as_name='preferredContentsLengthTags'),
                 )
             },
             {
