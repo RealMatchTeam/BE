@@ -49,7 +49,11 @@ public record MyProfileCardResponseDto(
         if (snsUrl == null || snsUrl.isBlank()) {
             return "";
         }
-        return snsUrl.replace("https://www.instagram.com/", "")
-                .replace("/", "");
+
+        return snsUrl
+                .replaceAll("https?://(www\\.)?instagram\\.com/", "")
+                .replaceAll("instagram\\.com", "")
+                .replaceAll("/", "")
+                .trim();
     }
 }
