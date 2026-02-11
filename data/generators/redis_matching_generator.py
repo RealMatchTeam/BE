@@ -104,6 +104,11 @@ class RedisDataGenerator:
         count = random.randint(min_count, min(max_count, len(available_ids)))
         return random.sample(available_ids, count)
 
+    @staticmethod
+    def _to_str_list(int_list):
+        """RediSearch TAG 필드는 문자열만 허용하므로 정수 리스트를 문자열 리스트로 변환"""
+        return [str(v) for v in int_list] if int_list else []
+
     def generate_brand_documents(self):
         print("\n[브랜드] Redis 브랜드 태그 문서 생성 중...")
 
@@ -165,19 +170,19 @@ class RedisDataGenerator:
                 'brandId': brand_id,
                 'brandName': brand['brand_name'],
                 'categories': categories,
-                'preferredFashionTags': fashion_tags,
-                'preferredBeautyTags': beauty_tags,
-                'preferredContentTags': content_tags,
+                'preferredFashionTags': self._to_str_list(fashion_tags),
+                'preferredBeautyTags': self._to_str_list(beauty_tags),
+                'preferredContentTags': self._to_str_list(content_tags),
                 'minCreatorHeight': random.choice([None, 150, 155, 160]),
                 'maxCreatorHeight': random.choice([None, 175, 180, 185]),
-                'preferredBodyTypeTags': body_type_tags,
-                'preferredTopSizeTags': [s for s in random.sample(range(44, 110, 2), 3)],
-                'preferredBottomSizeTags': [s for s in random.sample(range(24, 36), 3)],
+                'preferredBodyTypeTags': self._to_str_list(body_type_tags),
+                'preferredTopSizeTags': self._to_str_list(random.sample(range(44, 110, 2), 3)),
+                'preferredBottomSizeTags': self._to_str_list(random.sample(range(24, 36), 3)),
                 'minContentsAverageViews': random.choice([None, 10000, 50000, 100000]),
                 'maxContentsAverageViews': random.choice([None, 500000, 1000000]),
-                'preferredContentsAgeTags': audience_age_tags,
-                'preferredContentsGenderTags': audience_gender_tags,
-                'preferredContentsLengthTags': video_length_tags,
+                'preferredContentsAgeTags': self._to_str_list(audience_age_tags),
+                'preferredContentsGenderTags': self._to_str_list(audience_gender_tags),
+                'preferredContentsLengthTags': self._to_str_list(video_length_tags),
             }
 
             key = f"com.example.RealMatch.match.infrastructure.redis.document.BrandTagDocument:brand:{brand_id}"
@@ -225,21 +230,21 @@ class RedisDataGenerator:
                 'rewardAmount': float(campaign['reward_amount']) if campaign['reward_amount'] else None,
                 'recruitEndDate': campaign['recruit_end_date'].isoformat() if campaign['recruit_end_date'] else None,
                 'categories': categories,
-                'preferredFashionTags': fashion_tags,
-                'preferredBeautyTags': beauty_tags,
-                'preferredContentTags': content_tags,
+                'preferredFashionTags': self._to_str_list(fashion_tags),
+                'preferredBeautyTags': self._to_str_list(beauty_tags),
+                'preferredContentTags': self._to_str_list(content_tags),
                 'minCreatorHeight': random.choice([None, 150, 155, 160]),
                 'maxCreatorHeight': random.choice([None, 175, 180, 185]),
-                'preferredBodyTypeTags': body_type_tags,
+                'preferredBodyTypeTags': self._to_str_list(body_type_tags),
                 'minCreatorTopSizes': random.choice([None, 44, 50, 55]),
                 'maxCreatorTopSizes': random.choice([None, 100, 105, 110]),
                 'minCreatorBottomSizes': random.choice([None, 24, 26, 28]),
                 'maxCreatorBottomSizes': random.choice([None, 32, 34, 36]),
                 'minContentsAverageViews': random.choice([None, 10000, 50000, 100000]),
                 'maxContentsAverageViews': random.choice([None, 500000, 1000000]),
-                'preferredContentsAgeTags': audience_age_tags,
-                'preferredContentsGenderTags': audience_gender_tags,
-                'preferredContentsLengthTags': video_length_tags,
+                'preferredContentsAgeTags': self._to_str_list(audience_age_tags),
+                'preferredContentsGenderTags': self._to_str_list(audience_gender_tags),
+                'preferredContentsLengthTags': self._to_str_list(video_length_tags),
                 'startDate': campaign['start_date'].isoformat() if campaign['start_date'] else None,
                 'endDate': campaign['end_date'].isoformat() if campaign['end_date'] else None,
                 'quota': campaign['quota'],
