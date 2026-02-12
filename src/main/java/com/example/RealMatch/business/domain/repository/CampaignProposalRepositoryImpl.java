@@ -56,6 +56,7 @@ public class CampaignProposalRepositoryImpl
                         campaign.id,
                         campaignProposal.id,
                         brand.id,
+                        brand.user.id,
                         brand.brandName,
                         brand.logoUrl,
                         campaignProposal.title,
