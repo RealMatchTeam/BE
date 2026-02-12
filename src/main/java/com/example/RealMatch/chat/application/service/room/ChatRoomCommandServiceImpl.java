@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
@@ -35,9 +36,34 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
 
     @Override
     @Transactional
-    public ChatRoomCreateResponse createOrGetRoom(Long userId, Long brandId, Long creatorId) {
-        validateRequest(userId, brandId, creatorId);
+    public ChatRoomCreateResponse createOrGetRoomAsMember(Long userId, Long brandId, Long creatorId) {
+        validateMemberRequest(userId, brandId, creatorId);
+        return findOrCreateRoom(brandId, creatorId);
+    }
 
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ChatRoomCreateResponse createOrGetRoomSystem(Long brandId, Long creatorId) {
+        validateSystemRequest(brandId, creatorId);
+        return findOrCreateRoom(brandId, creatorId);
+    }
+
+    private void validateMemberRequest(Long userId, Long brandId, Long creatorId) {
+        if (brandId == null || creatorId == null || brandId.equals(creatorId)) {
+            throw new CustomException(ChatErrorCode.INVALID_ROOM_REQUEST);
+        }
+        if (!userId.equals(brandId) && !userId.equals(creatorId)) {
+            throw new CustomException(ChatErrorCode.NOT_ROOM_MEMBER);
+        }
+    }
+
+    private void validateSystemRequest(Long brandId, Long creatorId) {
+        if (brandId == null || creatorId == null || brandId.equals(creatorId)) {
+            throw new CustomException(ChatErrorCode.INVALID_ROOM_REQUEST);
+        }
+    }
+
+    private ChatRoomCreateResponse findOrCreateRoom(Long brandId, Long creatorId) {
         String roomKey = ChatRoomKeyGenerator.createDirectRoomKey(brandId, creatorId);
 
         ChatRoom room = chatRoomRepository.findByRoomKey(roomKey).orElse(null);
@@ -50,15 +76,6 @@ public class ChatRoomCommandServiceImpl implements ChatRoomCommandService {
                 room.getRoomKey(),
                 room.getCreatedAt()
         );
-    }
-
-    private void validateRequest(Long userId, Long brandId, Long creatorId) {
-        if (brandId == null || creatorId == null || brandId.equals(creatorId)) {
-            throw new CustomException(ChatErrorCode.INVALID_ROOM_REQUEST);
-        }
-        if (!userId.equals(brandId) && !userId.equals(creatorId)) {
-            throw new CustomException(ChatErrorCode.NOT_ROOM_MEMBER);
-        }
     }
 
     private ChatRoom createRoomWithMembers(

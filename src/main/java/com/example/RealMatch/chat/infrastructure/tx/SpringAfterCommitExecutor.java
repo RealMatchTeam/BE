@@ -39,9 +39,12 @@ public class SpringAfterCommitExecutor implements AfterCommitExecutor {
             return;
         }
 
-        String message = "AfterCommitExecutor must be used within an active transaction. " +
-                "hasTransaction=%s, hasSynchronization=%s".formatted(hasTransaction, hasSynchronization);
-        LOG.error(message);
-        throw new IllegalStateException(message);
+        LOG.warn("[AfterCommitExecutor] No active transaction. Executing immediately. hasTransaction={}, hasSynchronization={}",
+                hasTransaction, hasSynchronization);
+        try {
+            task.run();
+        } catch (Exception ex) {
+            LOG.error("Exception occurred in fallback task execution (no transaction).", ex);
+        }
     }
 }

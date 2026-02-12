@@ -336,6 +336,7 @@ public class CampaignProposalService {
 
         CampaignProposalSentEvent event = new CampaignProposalSentEvent(
                 proposal.getId(),
+                proposal.getSenderUserId(),
                 brandUserId,
                 creatorUserId,
                 campaignId,

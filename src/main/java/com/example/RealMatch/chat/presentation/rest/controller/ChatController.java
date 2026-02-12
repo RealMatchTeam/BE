@@ -44,7 +44,7 @@ public class ChatController implements ChatSwagger {
         Long userId = user.getUserId();
         Long brandId = request.brandId();
         Long creatorId = request.creatorId();
-        return CustomResponse.ok(chatRoomCommandService.createOrGetRoom(userId, brandId, creatorId));
+        return CustomResponse.ok(chatRoomCommandService.createOrGetRoomAsMember(userId, brandId, creatorId));
     }
 
     @GetMapping("/rooms")
