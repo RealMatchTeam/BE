@@ -106,6 +106,7 @@ public class BrandService {
         BrandDetailResponseDto.BrandDetailResponseDtoBuilder responseBuilder = BrandDetailResponseDto.builder()
                 .userId(currentUserId)
                 .brandName(brand.getBrandName())
+                .brandUserId(String.valueOf(brand.getUser().getId()))
                 .brandImages(brandImages)
                 .logoUrl(brand.getLogoUrl())
                 .simpleIntro(brand.getSimpleIntro())
