@@ -69,7 +69,7 @@ public class EmailNotificationSender implements NotificationChannelSender {
     }
 
     private String buildHtmlContent(Notification notification) {
-        String notificationUrl = frontendUrl + "/notifications";
+        String notificationUrl = frontendUrl + "/notification";
         // HTML Injection 방지를 위해 사용자 입력값 이스케이프 처리
         String escapedTitle = HtmlUtils.htmlEscape(notification.getTitle());
         String escapedBody = HtmlUtils.htmlEscape(notification.getBody());
