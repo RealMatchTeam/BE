@@ -12,6 +12,7 @@ public record CollaborationProjection(
         Long campaignId,
         Long proposalId,
         Long brandId,
+        Long brandUserId,
 
         String brandName,
         String thumbnailS3Key,   // 내부 전용

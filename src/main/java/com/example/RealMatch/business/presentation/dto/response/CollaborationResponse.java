@@ -9,6 +9,7 @@ public record CollaborationResponse(
         Long campaignId,           // 캠페인 기반일 때만 채움
         Long proposalId,           // 제안 기반일 때만 채움
         Long brandId,
+        Long brandUserId,
 
         String brandName,
         String thumbnailUrl,
