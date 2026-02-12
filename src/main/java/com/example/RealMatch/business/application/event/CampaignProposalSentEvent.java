@@ -8,6 +8,7 @@ import com.example.RealMatch.business.domain.enums.ProposalStatus;
  */
 public record CampaignProposalSentEvent(
         Long proposalId,
+        Long actorUserId,
         Long brandUserId,
         Long creatorUserId,
         Long campaignId,

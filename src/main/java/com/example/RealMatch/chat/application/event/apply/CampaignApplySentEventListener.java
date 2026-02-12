@@ -50,11 +50,11 @@ public class CampaignApplySentEventListener {
 
     /**
      * 채팅방이 없으면 생성하고, roomId를 반환합니다.
-     * 이 리스너는 AFTER_COMMIT 컨텍스트에서 실행되므로 createOrGetRoom이 별도 트랜잭션으로 처리됩니다.
+     * 이벤트 기반 자동 생성이므로 createOrGetRoomSystem 사용 (권한 검증 없음).
      */
     private Long ensureRoomAndGetId(Long brandUserId, Long creatorUserId) {
         return chatRoomCommandService
-                .createOrGetRoom(brandUserId, brandUserId, creatorUserId)
+                .createOrGetRoomSystem(brandUserId, creatorUserId)
                 .roomId();
     }
 
