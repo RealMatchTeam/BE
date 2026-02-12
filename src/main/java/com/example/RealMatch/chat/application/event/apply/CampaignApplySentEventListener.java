@@ -1,7 +1,5 @@
 package com.example.RealMatch.chat.application.event.apply;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -10,7 +8,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.example.RealMatch.business.application.event.CampaignApplySentEvent;
-import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.presentation.dto.response.ChatApplyCardPayloadResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +23,7 @@ public class CampaignApplySentEventListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(CampaignApplySentEventListener.class);
 
-    private final ChatRoomQueryService chatRoomQueryService;
+    private final ChatRoomCommandService chatRoomCommandService;
     private final ApplicationEventPublisher eventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -38,16 +36,8 @@ public class CampaignApplySentEventListener {
         LOG.info("[ApplyBoundary] Received business event. applyId={}, campaignId={}, creatorUserId={}, brandUserId={}",
                 event.applyId(), event.campaignId(), event.creatorUserId(), event.brandUserId());
 
-        Optional<Long> roomIdOpt = chatRoomQueryService.getRoomIdByUserPair(
-                event.brandUserId(), event.creatorUserId());
-
-        if (roomIdOpt.isEmpty()) {
-            LOG.debug("[ApplyBoundary] Chat room not found. brandUserId={}, creatorUserId={}",
-                    event.brandUserId(), event.creatorUserId());
-            return;
-        }
-
-        Long roomId = roomIdOpt.get();
+        // 채팅방이 없으면 생성
+        Long roomId = ensureRoomAndGetId(event.brandUserId(), event.creatorUserId());
         ChatApplyCardPayloadResponse payload = createPayload(event);
         String eventId = ApplySentEvent.generateEventId(event.applyId());
 
@@ -56,6 +46,16 @@ public class CampaignApplySentEventListener {
 
         LOG.info("[ApplyBoundary] Published internal event. eventId={}, roomId={}, applyId={}",
                 eventId, roomId, event.applyId());
+    }
+
+    /**
+     * 채팅방이 없으면 생성하고, roomId를 반환합니다.
+     * 이 리스너는 AFTER_COMMIT 컨텍스트에서 실행되므로 createOrGetRoom이 별도 트랜잭션으로 처리됩니다.
+     */
+    private Long ensureRoomAndGetId(Long brandUserId, Long creatorUserId) {
+        return chatRoomCommandService
+                .createOrGetRoom(brandUserId, brandUserId, creatorUserId)
+                .roomId();
     }
 
     private ChatApplyCardPayloadResponse createPayload(CampaignApplySentEvent event) {
