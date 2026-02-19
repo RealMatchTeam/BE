@@ -22,6 +22,7 @@ import com.example.RealMatch.notification.domain.repository.NotificationDelivery
 import com.example.RealMatch.notification.domain.repository.NotificationOutboxRepository;
 import com.example.RealMatch.notification.domain.repository.NotificationRepository;
 import com.example.RealMatch.notification.exception.NotificationErrorCode;
+import com.example.RealMatch.notification.infrastructure.redis.NotificationUnreadCountCache;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class NotificationService {
     private final NotificationDeliveryRepository notificationDeliveryRepository;
     private final NotificationOutboxRepository notificationOutboxRepository;
     private final NotificationChannelResolver channelResolver;
+    private final NotificationUnreadCountCache unreadCountCache;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification create(CreateNotificationCommand command) {
@@ -63,6 +65,8 @@ public class NotificationService {
                 command.getKind(),
                 command.getEventId(),
                 command.getUserId());
+
+        unreadCountCache.invalidateAfterCommit(command.getUserId());
 
         return savedNotification;
     }
@@ -112,15 +116,19 @@ public class NotificationService {
     public void markAsRead(Long userId, UUID notificationId) {
         Notification notification = findNotificationForUser(userId, notificationId);
         notification.markAsRead();
+        unreadCountCache.invalidateAfterCommit(userId);
     }
 
     public int markAllAsRead(Long userId) {
-        return notificationRepository.markAllAsRead(userId);
+        int count = notificationRepository.markAllAsRead(userId);
+        unreadCountCache.invalidateAfterCommit(userId);
+        return count;
     }
 
     public void softDelete(Long userId, UUID notificationId) {
         Notification notification = findNotificationForUser(userId, notificationId);
         notification.softDelete();
+        unreadCountCache.invalidateAfterCommit(userId);
     }
 
     private Notification findNotificationForUser(Long userId, UUID notificationId) {
