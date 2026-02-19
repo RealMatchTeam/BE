@@ -139,10 +139,13 @@ jwt:
   master-jwt: ${JWT_MASTER_SECRET}
 
 management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health, prometheus
   endpoint:
     health:
       show-details: never
