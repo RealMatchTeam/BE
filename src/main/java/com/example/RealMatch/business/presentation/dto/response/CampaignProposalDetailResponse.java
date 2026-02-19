@@ -25,6 +25,7 @@ public class CampaignProposalDetailResponse {
 
     private Long rewardAmount;
     private Long productId;
+    private String productName;
 
     private LocalDate startDate;
     private LocalDate endDate;
@@ -36,7 +37,7 @@ public class CampaignProposalDetailResponse {
 
     private CampaignContentTagResponse contentTags;
 
-    public static CampaignProposalDetailResponse from(CampaignProposal proposal) {
+    public static CampaignProposalDetailResponse from(CampaignProposal proposal, String productName) {
         Campaign campaign = proposal.getCampaign();
 
         return CampaignProposalDetailResponse.builder()
@@ -49,6 +50,7 @@ public class CampaignProposalDetailResponse {
                 .description(proposal.getCampaignDescription())
                 .rewardAmount(Long.valueOf(proposal.getRewardAmount()))
                 .productId(proposal.getProductId())
+                .productName(productName)
                 .startDate(proposal.getStartDate())
                 .endDate(proposal.getEndDate())
                 .status(proposal.getStatus().name())
