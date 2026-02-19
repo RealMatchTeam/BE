@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import lombok.RequiredArgsConstructor;
 
@@ -65,6 +67,29 @@ public class NotificationUnreadCountCache {
             redisTemplate.delete(KEY_PREFIX + userId);
         } catch (Exception e) {
             LOG.warn("[UnreadCountCache] Redis invalidate failed. userId={}", userId, e);
+        }
+    }
+
+    /**
+     * 트랜잭션 커밋 완료 후 캐시를 무효화합니다.
+     * <p>커밋 이전 무효화 시 다른 스레드가 아직 커밋되지 않은 DB 값을 읽어
+     * 캐시에 저장하는 레이스 컨디션을 방지합니다.
+     */
+    public void invalidateAfterCommit(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            invalidate(userId);
+                        }
+                    }
+            );
+        } else {
+            invalidate(userId);
         }
     }
 }

@@ -60,13 +60,13 @@ public class NotificationService {
 
         Notification savedNotification = notificationRepository.save(notification);
 
-        unreadCountCache.invalidate(command.getUserId());
-
         createPendingDeliveriesWithOutbox(
                 savedNotification.getId(),
                 command.getKind(),
                 command.getEventId(),
                 command.getUserId());
+
+        unreadCountCache.invalidateAfterCommit(command.getUserId());
 
         return savedNotification;
     }
@@ -116,19 +116,19 @@ public class NotificationService {
     public void markAsRead(Long userId, UUID notificationId) {
         Notification notification = findNotificationForUser(userId, notificationId);
         notification.markAsRead();
-        unreadCountCache.invalidate(userId);
+        unreadCountCache.invalidateAfterCommit(userId);
     }
 
     public int markAllAsRead(Long userId) {
         int count = notificationRepository.markAllAsRead(userId);
-        unreadCountCache.invalidate(userId);
+        unreadCountCache.invalidateAfterCommit(userId);
         return count;
     }
 
     public void softDelete(Long userId, UUID notificationId) {
         Notification notification = findNotificationForUser(userId, notificationId);
         notification.softDelete();
-        unreadCountCache.invalidate(userId);
+        unreadCountCache.invalidateAfterCommit(userId);
     }
 
     private Notification findNotificationForUser(Long userId, UUID notificationId) {
