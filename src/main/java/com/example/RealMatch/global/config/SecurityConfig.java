@@ -45,6 +45,7 @@ public class SecurityConfig {
             "/api/test",
             "/api/v1/tags/**",
             "/actuator/health",
+            "/actuator/prometheus",
             "/api/v1/auth/signup",
             "/api/v1/auth/refresh"
     };
