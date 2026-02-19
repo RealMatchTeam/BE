@@ -16,6 +16,5 @@ public interface BrandAvailableSponsorRepository extends JpaRepository<BrandAvai
     @Query("SELECT s FROM BrandAvailableSponsor s LEFT JOIN FETCH s.images WHERE s.brand.id = :brandId")
     List<BrandAvailableSponsor> findByBrandIdWithImages(@Param("brandId") Long brandId);
 
-    Optional<BrandAvailableSponsor>
-    findByBrandIdAndId(Long brandId, Long id);
+    Optional<BrandAvailableSponsor> findByBrandIdAndId(Long brandId, Long id);
 }
