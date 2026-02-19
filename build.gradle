@@ -93,6 +93,9 @@ dependencies {
 	// RabbitMQ
 	implementation 'com.rabbitmq:amqp-client'
 	testImplementation 'org.springframework.amqp:spring-rabbit-test'
+
+	// Prometheus
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

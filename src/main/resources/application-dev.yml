@@ -135,7 +135,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,env,beans
+        include: health,info,metrics,env,beans,prometheus
   endpoint:
     health:
       show-details: always
