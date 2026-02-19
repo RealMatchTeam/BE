@@ -1,6 +1,7 @@
 package com.example.RealMatch.brand.domain.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,4 +15,6 @@ public interface BrandAvailableSponsorRepository extends JpaRepository<BrandAvai
 
     @Query("SELECT s FROM BrandAvailableSponsor s LEFT JOIN FETCH s.images WHERE s.brand.id = :brandId")
     List<BrandAvailableSponsor> findByBrandIdWithImages(@Param("brandId") Long brandId);
+
+    Optional<BrandAvailableSponsor> findByBrandIdAndId(Long brandId, Long id);
 }
