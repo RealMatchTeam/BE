@@ -1,0 +1,12 @@
+[Unit]
+Description=Stream HAProxy Docker logs to file
+After=docker.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/usr/bin/docker logs -f --timestamps --tail=0 haproxy 2>&1 | sed -u "s/\([0-9]\{3\}\)[0-9]*Z/\1Z/" >> /var/log/haproxy/access.log'
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
