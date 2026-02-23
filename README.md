@@ -1,6 +1,6 @@
-![img.png](img.png)
+![img.png](docs/images/img.png)
 
-![img_2.png](img_2.png)
+![img_2.png](docs/images/img_2.png)
 
 # 📖 프로젝트 소개
 
@@ -47,7 +47,7 @@ Real Match는 위 기능을 통합 제공하여 브랜드와 인플루언서 간
 
 ## 🏛 아키텍쳐 구조
 
-![img_3.png](img_3.png)
+![img_3.png](docs/images/img_3.png)
 
 
 ---
