@@ -3,7 +3,6 @@ package com.example.RealMatch.chat.application.service.message;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
+import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
@@ -22,6 +22,7 @@ import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
 import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
+import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
@@ -34,6 +35,8 @@ import lombok.RequiredArgsConstructor;
 public class ChatMessageCommandServiceImpl implements ChatMessageCommandService {
 
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageEventPublisher eventPublisher;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatRoomMemberService chatRoomMemberService;
     private final ChatRoomUpdateService chatRoomUpdateService;
@@ -49,6 +52,10 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     public ChatMessageResponse saveMessage(ChatSendMessageCommand command, Long senderId) {
         // Room 존재 여부 및 멤버 권한 검증
         validateRoomId(command.roomId());
+        if (command.clientMessageId() == null || command.clientMessageId().isBlank()
+                || command.clientMessageId().length() > 36) {
+            throw new CustomException(ChatErrorCode.IDEMPOTENCY_CONFLICT);
+        }
         chatRoomMemberService.getActiveMemberOrThrow(command.roomId(), senderId);
 
         // 멱등성 처리: 이미 저장된 메시지가 있는지 확인
@@ -107,37 +114,16 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         }
 
         // 메시지 저장 (동시성 처리 포함)
-        ChatMessage saved = saveMessageWithIdempotencyCheck(message, command, senderId);
+        ChatMessage saved = chatMessageRepository.saveAndFlush(message);
 
         // 채팅방 마지막 메시지 업데이트
         updateChatRoomLastMessage(saved);
         invalidateCachesAfterMessage(command.roomId(), null);
 
         // 응답 생성
-        AttachmentDto savedAttachment = attachment != null
-                ? attachment
-                : (saved.getAttachmentId() == null
-                        ? null
-                        : attachmentQueryService.findByIdOrThrow(saved.getAttachmentId()));
-        return responseMapper.toResponse(saved, savedAttachment);
-    }
-
-    private ChatMessage saveMessageWithIdempotencyCheck(
-            ChatMessage message,
-            ChatSendMessageCommand command,
-            Long senderId
-    ) {
-        try {
-            return chatMessageRepository.save(message);
-        } catch (DataIntegrityViolationException ex) {
-            // 다른 트랜잭션에서 이미 저장된 경우, 기존 메시지를 반환
-            ChatMessage duplicateMessage = chatMessageRepository
-                    .findByClientMessageIdAndSenderId(command.clientMessageId(), senderId)
-                    .orElseThrow(() -> ex);
-
-            validateIdempotentConsistency(duplicateMessage, command);
-            return duplicateMessage;
-        }
+        ChatMessageResponse response = responseMapper.toResponse(saved, attachment);
+        publishAfterCommit(response);
+        return response;
     }
 
     @Override
@@ -145,17 +131,31 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
     @NonNull
     public ChatMessageResponse saveSystemMessage(
             Long roomId,
+            String eventId,
             ChatSystemMessageKind kind,
             ChatSystemMessagePayload payload
     ) {
         // 방 존재 여부 검증
         validateRoomId(roomId);
+        if (eventId == null || eventId.isBlank() || eventId.length() > 100) {
+            throw new IllegalArgumentException("System event id must contain 1 to 100 characters.");
+        }
+        chatRoomRepository.findByIdForUpdate(roomId)
+                .orElseThrow(() -> new CustomException(ChatErrorCode.ROOM_NOT_FOUND));
+        ChatMessage existing = chatMessageRepository.findByRoomIdAndSystemEventId(roomId, eventId).orElse(null);
+        if (existing != null) {
+            if (existing.getSystemKind() != kind) {
+                throw new CustomException(ChatErrorCode.IDEMPOTENCY_CONFLICT);
+            }
+            return responseMapper.toResponse(existing, null);
+        }
 
         // 시스템 메시지 생성
         ChatMessage message;
         try {
             message = ChatMessage.createSystemMessage(
                     roomId,
+                    eventId,
                     kind,
                     payloadSerializer.serialize(payload)
             );
@@ -164,11 +164,13 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
         }
 
         // 메시지 저장
-        ChatMessage saved = chatMessageRepository.save(message);
+        ChatMessage saved = chatMessageRepository.saveAndFlush(message);
         updateChatRoomLastMessage(saved);
         invalidateCachesAfterMessage(roomId, kind);
 
-        return responseMapper.toResponse(saved, null);
+        ChatMessageResponse response = responseMapper.toResponse(saved, null);
+        publishAfterCommit(response);
+        return response;
     }
 
     private AttachmentDto getAndValidateAttachment(Long attachmentId, Long userId) {
@@ -199,6 +201,13 @@ public class ChatMessageCommandServiceImpl implements ChatMessageCommandService 
                 preview,
                 message.getMessageType()
         );
+    }
+
+    private void publishAfterCommit(ChatMessageResponse response) {
+        afterCommitExecutor.execute(() -> {
+            eventPublisher.publishMessageCreated(response.roomId(), response);
+            eventPublisher.publishRoomListUpdated(response.roomId());
+        });
     }
 
     private void invalidateCachesAfterMessage(Long roomId, ChatSystemMessageKind kind) {

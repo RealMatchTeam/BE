@@ -3,6 +3,7 @@ package com.example.RealMatch.chat.application.event.proposal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -30,7 +31,8 @@ public class CampaignProposalSentEventListener {
     private final ChatRoomCommandService chatRoomCommandService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(0)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleCampaignProposalSent(CampaignProposalSentEvent event) {
         if (event == null) {
             LOG.warn("[ProposalBoundary] Invalid CampaignProposalSentEvent: event is null");
@@ -43,7 +45,7 @@ public class CampaignProposalSentEventListener {
         // 채팅방이 없으면 생성
         Long roomId = ensureRoomAndGetId(event);
         ChatProposalCardPayloadResponse payload = createPayload(event);
-        String eventId = ProposalSentEvent.generateEventId(event.proposalId(), event.isReProposal());
+        String eventId = event.eventId();
 
         ProposalSentEvent chatEvent = new ProposalSentEvent(eventId, roomId, payload, event.isReProposal());
         eventPublisher.publishEvent(chatEvent);
@@ -80,7 +82,7 @@ public class CampaignProposalSentEventListener {
 
     /**
      * 채팅방이 없으면 생성하고, roomId를 반환합니다.
-     * 이벤트 기반 자동 생성이므로 createOrGetRoomSystem 사용 (권한 검증 없음).
+     * 이벤트 기반 자동 생성이므로 createOrGetRoomSystem 사용 (참여자 역할 검증 포함).
      */
     private Long ensureRoomAndGetId(CampaignProposalSentEvent event) {
         return chatRoomCommandService

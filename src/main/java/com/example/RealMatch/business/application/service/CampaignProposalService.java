@@ -335,6 +335,7 @@ public class CampaignProposalService {
         }
 
         CampaignProposalSentEvent event = new CampaignProposalSentEvent(
+                java.util.UUID.randomUUID().toString(),
                 proposal.getId(),
                 proposal.getSenderUserId(),
                 brandUserId,

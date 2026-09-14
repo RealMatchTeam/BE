@@ -1,6 +1,7 @@
 package com.example.RealMatch.notification.domain.repository;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -14,6 +15,10 @@ import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+
+    // Include deleted inbox entries: replay must never recreate a notification the user deleted.
+    @Query(value = "SELECT * FROM notification WHERE idempotency_key = :key FOR UPDATE", nativeQuery = true)
+    Optional<Notification> findByIdempotencyKeyIncludingDeleted(@Param("key") String key);
 
     Page<Notification> findByUserId(Long userId, Pageable pageable);
 

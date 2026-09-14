@@ -17,46 +17,44 @@ import lombok.RequiredArgsConstructor;
 public class ChatCacheStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatCacheStore.class);
-
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
     public <T> Optional<T> get(String key, Class<T> type) {
-        Object cached = redisTemplate.opsForValue().get(key);
-        if (cached == null) {
-            return Optional.empty();
-        }
         try {
-            return Optional.of(objectMapper.convertValue(cached, type));
-        } catch (IllegalArgumentException ex) {
-            LOG.warn("Failed to convert cached value. key={}", key, ex);
-            redisTemplate.delete(key);
+            Object value = redisTemplate.opsForValue().get(key);
+            return value == null ? Optional.empty() : Optional.of(objectMapper.convertValue(value, type));
+        } catch (RuntimeException ex) {
+            LOG.warn("Cache read failed; using DB. key={}", key, ex);
             return Optional.empty();
         }
     }
 
     public void set(String key, Object value, Duration ttl) {
-        redisTemplate.opsForValue().set(key, value, ttl);
+        try {
+            redisTemplate.opsForValue().set(key, value, ttl);
+        } catch (RuntimeException ex) {
+            LOG.warn("Cache write failed. key={}", key, ex);
+        }
     }
 
     public long getVersion(String key) {
-        Object value = redisTemplate.opsForValue().get(key);
-        if (value == null) {
-            return 1L;
-        }
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
         try {
-            return Long.parseLong(value.toString());
-        } catch (NumberFormatException ex) {
-            LOG.warn("Failed to parse version key. key={}, value={}", key, value);
-            return 1L;
+            Object value = redisTemplate.opsForValue().get(key);
+            return value == null ? 0L : Long.parseLong(value.toString());
+        } catch (RuntimeException ex) {
+            LOG.warn("Cache version unavailable; bypassing cache. key={}", key, ex);
+            return -1L;
         }
     }
 
     public long bumpVersion(String key) {
-        Long newVersion = redisTemplate.opsForValue().increment(key);
-        return newVersion != null ? newVersion : 1L;
+        try {
+            Long version = redisTemplate.opsForValue().increment(key);
+            return version != null ? version : -1L;
+        } catch (RuntimeException ex) {
+            LOG.warn("Cache invalidation failed; existing entries expire by TTL. key={}", key, ex);
+            return -1L;
+        }
     }
 }

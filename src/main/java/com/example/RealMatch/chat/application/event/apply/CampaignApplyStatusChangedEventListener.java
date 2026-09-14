@@ -3,6 +3,7 @@ package com.example.RealMatch.chat.application.event.apply;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -25,7 +26,8 @@ public class CampaignApplyStatusChangedEventListener {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(0)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleCampaignApplyStatusChanged(CampaignApplyStatusChangedEvent event) {
         if (event == null) {
             LOG.warn("[ApplyBoundary] Invalid CampaignApplyStatusChangedEvent: event is null");

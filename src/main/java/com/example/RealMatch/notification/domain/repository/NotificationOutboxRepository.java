@@ -27,7 +27,7 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
     /** PENDING → SENDING claim. 1이면 성공. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE NotificationOutbox o "
-            + "SET o.status = :targetStatus "
+            + "SET o.status = :targetStatus, o.updatedAt = CURRENT_TIMESTAMP "
             + "WHERE o.id = :id AND o.status = :sourceStatus")
     int claimOutbox(
             @Param("id") UUID id,
@@ -37,7 +37,7 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
     /** SENDING → SENT. */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE NotificationOutbox o "
-            + "SET o.status = :targetStatus "
+            + "SET o.status = :targetStatus, o.updatedAt = CURRENT_TIMESTAMP "
             + "WHERE o.id = :id AND o.status = :sourceStatus")
     int markAsSent(
             @Param("id") UUID id,
@@ -48,6 +48,7 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
     @Modifying(clearAutomatically = true)
     @Query("UPDATE NotificationOutbox o "
             + "SET o.retryCount = o.retryCount + 1, "
+            + "o.updatedAt = CURRENT_TIMESTAMP, "
             + "o.lastError = :lastError, "
             + "o.status = CASE WHEN (o.retryCount + 1) >= :maxRetry THEN :statusFailed ELSE :statusPending END "
             + "WHERE o.id = :id AND o.status IN :sourceStatuses")
@@ -65,7 +66,7 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
     /** stuck SENDING → PENDING 복구. */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE NotificationOutbox o "
-            + "SET o.status = :newStatus "
+            + "SET o.status = :newStatus, o.updatedAt = CURRENT_TIMESTAMP "
             + "WHERE o.status = :stuckStatus AND o.updatedAt <= :stuckBefore")
     int recoverStuckOutbox(
             @Param("stuckStatus") OutboxStatus stuckStatus,

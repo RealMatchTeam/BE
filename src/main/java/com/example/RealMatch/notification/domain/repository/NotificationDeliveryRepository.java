@@ -16,18 +16,17 @@ import com.example.RealMatch.notification.domain.entity.enums.DeliveryStatus;
 
 public interface NotificationDeliveryRepository extends JpaRepository<NotificationDelivery, UUID> {
 
-    /** 조건절 UPDATE로 claim. 1이면 성공, 0이면 이미 처리 중/완료. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE NotificationDelivery nd "
             + "SET nd.status = :targetStatus, nd.attemptedAt = :now "
-            + "WHERE nd.id = :id AND nd.status IN :sourceStatuses")
+            + "WHERE nd.id = :id AND nd.status IN :sourceStatuses "
+            + "AND (nd.nextRetryAt IS NULL OR nd.nextRetryAt <= :now)")
     int claimDelivery(
             @Param("id") UUID id,
             @Param("targetStatus") DeliveryStatus targetStatus,
             @Param("now") LocalDateTime now,
             @Param("sourceStatuses") Collection<DeliveryStatus> sourceStatuses);
 
-    /** RETRY + backoff 만료된 delivery 조회. RecoveryScheduler용. */
     @Query("SELECT nd FROM NotificationDelivery nd "
             + "WHERE nd.status = :status "
             + "AND (nd.nextRetryAt IS NULL OR nd.nextRetryAt <= :now) "
@@ -37,7 +36,6 @@ public interface NotificationDeliveryRepository extends JpaRepository<Notificati
             @Param("now") LocalDateTime now,
             Pageable pageable);
 
-    /** stuck IN_PROGRESS → RETRY 복구. Consumer crash 대비. */
     @Modifying(clearAutomatically = true)
     @Query("UPDATE NotificationDelivery nd "
             + "SET nd.status = :newStatus, nd.nextRetryAt = null "
@@ -47,7 +45,6 @@ public interface NotificationDeliveryRepository extends JpaRepository<Notificati
             @Param("newStatus") DeliveryStatus newStatus,
             @Param("stuckBefore") LocalDateTime stuckBefore);
 
-    /** 활성 Outbox 없는 고아 PENDING delivery 조회. Outbox FAILED 후 복구용. */
     @Query("SELECT nd FROM NotificationDelivery nd "
             + "WHERE nd.status = :status "
             + "AND nd.createdAt <= :orphanBefore "

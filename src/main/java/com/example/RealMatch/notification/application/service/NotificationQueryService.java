@@ -18,7 +18,6 @@ import com.example.RealMatch.notification.domain.entity.enums.NotificationCatego
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
 import com.example.RealMatch.notification.domain.repository.NotificationRepository;
 import com.example.RealMatch.notification.exception.NotificationErrorCode;
-import com.example.RealMatch.notification.infrastructure.redis.NotificationUnreadCountCache;
 import com.example.RealMatch.notification.presentation.dto.response.NotificationDateGroup;
 import com.example.RealMatch.notification.presentation.dto.response.NotificationListResponse;
 import com.example.RealMatch.notification.presentation.dto.response.NotificationResponse;
@@ -31,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 public class NotificationQueryService {
 
     private final NotificationRepository notificationRepository;
-    private final NotificationUnreadCountCache unreadCountCache;
 
     private static final DateTimeFormatter DATE_LABEL_FORMATTER =
             DateTimeFormatter.ofPattern("yy.MM.dd (E)", Locale.KOREAN);
@@ -68,12 +66,7 @@ public class NotificationQueryService {
     }
 
     public long getUnreadCount(Long userId) {
-        return unreadCountCache.get(userId)
-                .orElseGet(() -> {
-                    long count = notificationRepository.countUnreadByUserId(userId);
-                    unreadCountCache.set(userId, count);
-                    return count;
-                });
+        return notificationRepository.countUnreadByUserId(userId);
     }
 
     private List<NotificationKind> resolveKinds(String filter) {

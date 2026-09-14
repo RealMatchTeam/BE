@@ -14,10 +14,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ChatCacheKeys {
 
-    private static final String ROOM_LIST_PREFIX = "chat:room-list:";
-    private static final String ROOM_LIST_VERSION_PREFIX = "chat:room-list:version:";
-    private static final String ROOM_DETAIL_PREFIX = "chat:room-detail:";
-    private static final String ROOM_DETAIL_VERSION_PREFIX = "chat:room-detail:version:";
+    private static final String ROOM_LIST_PREFIX = "chat:v2:room-list:";
+    private static final String ROOM_LIST_VERSION_PREFIX = "chat:v2:room-list:version:";
+    private static final String ROOM_DETAIL_PREFIX = "chat:v2:room-detail:";
+    private static final String ROOM_DETAIL_VERSION_PREFIX = "chat:v2:room-detail:version:";
 
     public static String roomListKey(
             Long userId,

@@ -11,6 +11,6 @@ public record ChatSendMessageCommand(
         @NotNull ChatMessageType messageType,
         @Size(max = 5000) String content,
         Long attachmentId,
-        @NotBlank String clientMessageId
+        @NotBlank @Size(max = 36) String clientMessageId
 ) {
 }

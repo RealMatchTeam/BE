@@ -1,6 +1,7 @@
 package com.example.RealMatch.user.domain.entity;
 
 import com.example.RealMatch.global.common.BaseEntity;
+import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,5 +51,12 @@ public class NotificationSetting extends BaseEntity {
     public void update(boolean appPushEnabled, boolean emailEnabled) {
         this.appPushEnabled = appPushEnabled;
         this.emailEnabled = emailEnabled;
+    }
+
+    public boolean allows(NotificationChannel channel) {
+        return switch (channel) {
+            case PUSH -> appPushEnabled;
+            case EMAIL -> emailEnabled;
+        };
     }
 }

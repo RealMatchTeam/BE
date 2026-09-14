@@ -8,6 +8,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.HtmlUtils;
 
+import com.example.RealMatch.notification.application.exception.PermanentSendFailureException;
+import com.example.RealMatch.notification.application.port.NotificationChannelSender;
 import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;

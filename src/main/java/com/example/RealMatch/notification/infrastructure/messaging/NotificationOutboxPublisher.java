@@ -1,10 +1,13 @@
 package com.example.RealMatch.notification.infrastructure.messaging;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +31,9 @@ public class NotificationOutboxPublisher {
     private final NotificationOutboxService outboxService;
     private final RabbitTemplate rabbitTemplate;
 
+    @Value("${notification.publisher.confirm-timeout-ms:5000}")
+    private long confirmTimeoutMs = 5000;
+
     @Scheduled(fixedDelay = 5_000, initialDelay = 5_000)
     public void publishPendingOutbox() {
         List<NotificationOutbox> pendingList = outboxService.findPendingOutbox(BATCH_SIZE);
@@ -40,6 +46,9 @@ public class NotificationOutboxPublisher {
 
         for (NotificationOutbox outbox : pendingList) {
             publishWithClaimGuard(outbox);
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
         }
     }
 
@@ -57,11 +66,17 @@ public class NotificationOutboxPublisher {
                     outbox.getNotificationId().toString(),
                     outbox.getChannel().name());
 
-            // MQ 발행 — TX 밖에서 실행
+            CorrelationData correlation = new CorrelationData();
+            // A publish is successful only after broker confirmation and successful routing.
             rabbitTemplate.convertAndSend(
                     RabbitMqConfig.NOTIFICATION_EXCHANGE,
                     RabbitMqConfig.NOTIFICATION_ROUTING_KEY,
-                    message);
+                    message, correlation);
+
+            CorrelationData.Confirm confirm = correlation.getFuture().get(confirmTimeoutMs, TimeUnit.MILLISECONDS);
+            if (!confirm.isAck() || correlation.getReturned() != null) {
+                throw new IllegalStateException("Broker rejected or returned publish: " + confirm.getReason());
+            }
 
             // 성공 → SENDING → SENT
             outboxService.markOutboxSent(outbox.getId());
@@ -70,6 +85,9 @@ public class NotificationOutboxPublisher {
                     outbox.getId(), outbox.getDeliveryId());
 
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             // 실패 → retryCount++ / PENDING 또는 FAILED
             outboxService.markOutboxPublishFailed(outbox.getId(), e.getMessage());
             LOG.error("[OutboxPublisher] Publish failed. outboxId={}, deliveryId={}, error={}",

@@ -15,11 +15,6 @@ import com.example.RealMatch.notification.domain.repository.NotificationDelivery
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Delivery 상태 전이 서비스. Consumer에서 호출.
- * 각 메서드가 독립 TX → 외부 API(FCM/SMTP)가 TX 밖에서 실행됨을 보장.
- * 흐름: claimDelivery() → (외부 발송) → markSent() / recordFailure()
- */
 @Service
 @RequiredArgsConstructor
 public class NotificationDeliveryClaimService {
@@ -31,7 +26,6 @@ public class NotificationDeliveryClaimService {
 
     private final NotificationDeliveryRepository deliveryRepository;
 
-    /** PENDING/RETRY → IN_PROGRESS 조건절 UPDATE. 1 row면 성공. */
     @Transactional
     public boolean claimDelivery(UUID deliveryId) {
         int updated = deliveryRepository.claimDelivery(
@@ -46,7 +40,6 @@ public class NotificationDeliveryClaimService {
         return updated > 0;
     }
 
-    /** IN_PROGRESS → SENT. */
     @Transactional
     public void markSent(UUID deliveryId, String providerMessageId) {
         NotificationDelivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
@@ -58,7 +51,6 @@ public class NotificationDeliveryClaimService {
         LOG.debug("[DeliveryClaim] Marked SENT. deliveryId={}, providerId={}", deliveryId, providerMessageId);
     }
 
-    /** 일시적 실패. attemptCount 기준 RETRY(backoff) 또는 FAILED. */
     @Transactional
     public void recordFailure(UUID deliveryId, String reason) {
         NotificationDelivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
@@ -71,7 +63,6 @@ public class NotificationDeliveryClaimService {
                 deliveryId, delivery.getAttemptCount(), delivery.getStatus());
     }
 
-    /** 영구 실패(잘못된 토큰, 미존재 이메일 등). 재시도 불가. */
     @Transactional
     public void markPermanentlyFailed(UUID deliveryId, String reason) {
         NotificationDelivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
@@ -81,5 +72,10 @@ public class NotificationDeliveryClaimService {
         }
         delivery.markAsPermanentlyFailed(reason);
         LOG.warn("[DeliveryClaim] Marked PERMANENTLY FAILED. deliveryId={}, reason={}", deliveryId, reason);
+    }
+
+    @Transactional
+    public void skipDelivery(UUID deliveryId) {
+        deliveryRepository.findById(deliveryId).ifPresent(NotificationDelivery::skip);
     }
 }

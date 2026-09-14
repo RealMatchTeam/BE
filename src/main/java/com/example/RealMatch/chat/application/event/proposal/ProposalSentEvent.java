@@ -12,14 +12,4 @@ public record ProposalSentEvent(
         ChatProposalCardPayloadResponse payload,
         boolean isReProposal
 ) {
-    /**
-     * 같은 proposalId와 isReProposal 조합이면 항상 같은 ID가 생성됩니다.
-     */
-    public static String generateEventId(Long proposalId, boolean isReProposal) {
-        if (proposalId == null) {
-            throw new IllegalArgumentException("proposalId cannot be null");
-        }
-        String type = isReProposal ? "RE_PROPOSAL_SENT" : "PROPOSAL_SENT";
-        return String.format("%s:%d", type, proposalId);
-    }
 }

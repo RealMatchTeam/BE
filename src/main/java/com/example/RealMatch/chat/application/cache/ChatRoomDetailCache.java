@@ -14,20 +14,22 @@ public class ChatRoomDetailCache {
 
     private final ChatCacheStore chatCacheStore;
 
-    public Optional<ChatRoomDetailResponse> get(Long roomId, Long userId) {
-        if (roomId == null || userId == null) {
+    public long currentVersion(Long roomId) {
+        return chatCacheStore.getVersion(ChatCacheKeys.roomDetailVersionKey(roomId));
+    }
+
+    public Optional<ChatRoomDetailResponse> get(Long roomId, Long userId, long version) {
+        if (roomId == null || userId == null || version < 0) {
             return Optional.empty();
         }
-        long version = chatCacheStore.getVersion(ChatCacheKeys.roomDetailVersionKey(roomId));
         String key = ChatCacheKeys.roomDetailKey(roomId, version, userId);
         return chatCacheStore.get(key, ChatRoomDetailResponse.class);
     }
 
-    public void put(Long roomId, Long userId, ChatRoomDetailResponse response) {
-        if (roomId == null || userId == null || response == null) {
+    public void put(Long roomId, Long userId, long version, ChatRoomDetailResponse response) {
+        if (roomId == null || userId == null || response == null || version < 0) {
             return;
         }
-        long version = chatCacheStore.getVersion(ChatCacheKeys.roomDetailVersionKey(roomId));
         String key = ChatCacheKeys.roomDetailKey(roomId, version, userId);
         chatCacheStore.set(key, response, ChatCachePolicy.ROOM_DETAIL_TTL);
     }

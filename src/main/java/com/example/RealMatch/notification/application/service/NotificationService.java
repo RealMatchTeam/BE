@@ -3,12 +3,9 @@ package com.example.RealMatch.notification.application.service;
 import java.util.Set;
 import java.util.UUID;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
@@ -22,16 +19,11 @@ import com.example.RealMatch.notification.domain.repository.NotificationDelivery
 import com.example.RealMatch.notification.domain.repository.NotificationOutboxRepository;
 import com.example.RealMatch.notification.domain.repository.NotificationRepository;
 import com.example.RealMatch.notification.exception.NotificationErrorCode;
-import com.example.RealMatch.notification.infrastructure.redis.NotificationUnreadCountCache;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
+import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 알림 생성 서비스 (Outbox 패턴).
- * Notification + Delivery(PENDING) + Outbox(PENDING)를 한 트랜잭션에 원자적 저장.
- * MQ 발행은 이 서비스에서 금지 — OutboxPublisher가 별도로 처리.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -43,11 +35,23 @@ public class NotificationService {
     private final NotificationDeliveryRepository notificationDeliveryRepository;
     private final NotificationOutboxRepository notificationOutboxRepository;
     private final NotificationChannelResolver channelResolver;
-    private final NotificationUnreadCountCache unreadCountCache;
+    private final UserRepository userRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification create(CreateNotificationCommand command) {
+        if (command == null || command.getEventId() == null || command.getEventId().isBlank()
+                || command.getEventId().length() > 100 || command.getUserId() == null || command.getKind() == null) {
+            throw new IllegalArgumentException("A valid eventId, userId and kind are required");
+        }
+        // ponytail: serialize inbox creation per recipient; use an atomic upsert if contention matters.
+        userRepository.findByIdForUpdate(command.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("Notification recipient does not exist"));
+        String key = command.getEventId() + ":" + command.getKind() + ":" + command.getUserId();
+        Notification existing = notificationRepository.findByIdempotencyKeyIncludingDeleted(key).orElse(null);
+        if (existing != null) {
+            return existing;
+        }
         Notification notification = Notification.builder()
+                .idempotencyKey(key)
                 .userId(command.getUserId())
                 .kind(command.getKind())
                 .title(command.getTitle())
@@ -65,46 +69,32 @@ public class NotificationService {
                 command.getKind(),
                 command.getEventId(),
                 command.getUserId());
-
-        unreadCountCache.invalidateAfterCommit(command.getUserId());
-
         return savedNotification;
     }
 
     private void createPendingDeliveriesWithOutbox(UUID notificationId, NotificationKind kind,
                                                     String eventId, Long receiverId) {
-        Set<NotificationChannel> channels = channelResolver.resolveChannels(kind);
+        Set<NotificationChannel> channels = channelResolver.resolveChannels(kind, receiverId);
 
         for (NotificationChannel channel : channels) {
             String idempotencyKey = generateIdempotencyKey(eventId, kind, receiverId, channel);
-            try {
-                // Delivery(PENDING) 생성
-                NotificationDelivery delivery = NotificationDelivery.builder()
-                        .notificationId(notificationId)
-                        .channel(channel)
-                        .status(DeliveryStatus.PENDING)
-                        .idempotencyKey(idempotencyKey)
-                        .build();
-                NotificationDelivery savedDelivery = notificationDeliveryRepository.save(delivery);
+            NotificationDelivery delivery = NotificationDelivery.builder()
+                    .notificationId(notificationId)
+                    .channel(channel)
+                    .status(DeliveryStatus.PENDING)
+                    .idempotencyKey(idempotencyKey)
+                    .build();
+            NotificationDelivery savedDelivery = notificationDeliveryRepository.save(delivery);
 
-                // Outbox(PENDING) 생성 — 같은 TX
-                NotificationOutbox outbox = NotificationOutbox.builder()
-                        .deliveryId(savedDelivery.getId())
-                        .notificationId(notificationId)
-                        .channel(channel)
-                        .build();
-                notificationOutboxRepository.save(outbox);
+            NotificationOutbox outbox = NotificationOutbox.builder()
+                    .deliveryId(savedDelivery.getId())
+                    .notificationId(notificationId)
+                    .channel(channel)
+                    .build();
+            notificationOutboxRepository.save(outbox);
 
-                LOG.debug("[Notification] Created delivery + outbox. idempotencyKey={}, channel={}",
-                        idempotencyKey, channel);
-            } catch (DataIntegrityViolationException e) {
-                if (e.getCause() instanceof ConstraintViolationException) {
-                    LOG.debug("[Notification] Delivery already exists (idempotent). idempotencyKey={}, channel={}",
-                            idempotencyKey, channel);
-                } else {
-                    throw e;
-                }
-            }
+            LOG.debug("[Notification] Created delivery + outbox. idempotencyKey={}, channel={}",
+                    idempotencyKey, channel);
         }
     }
 
@@ -116,19 +106,15 @@ public class NotificationService {
     public void markAsRead(Long userId, UUID notificationId) {
         Notification notification = findNotificationForUser(userId, notificationId);
         notification.markAsRead();
-        unreadCountCache.invalidateAfterCommit(userId);
     }
 
     public int markAllAsRead(Long userId) {
-        int count = notificationRepository.markAllAsRead(userId);
-        unreadCountCache.invalidateAfterCommit(userId);
-        return count;
+        return notificationRepository.markAllAsRead(userId);
     }
 
     public void softDelete(Long userId, UUID notificationId) {
         Notification notification = findNotificationForUser(userId, notificationId);
         notification.softDelete();
-        unreadCountCache.invalidateAfterCommit(userId);
     }
 
     private Notification findNotificationForUser(Long userId, UUID notificationId) {

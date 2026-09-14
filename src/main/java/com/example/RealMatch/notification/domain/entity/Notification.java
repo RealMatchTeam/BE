@@ -35,6 +35,9 @@ public class Notification extends DeleteBaseEntity {
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
+    @Column(name = "idempotency_key", length = 200, unique = true)
+    private String idempotencyKey;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
@@ -67,7 +70,8 @@ public class Notification extends DeleteBaseEntity {
     @Builder
     protected Notification(Long userId, NotificationKind kind, String title, String body,
                            ReferenceType referenceType, String referenceId,
-                           Long campaignId, Long proposalId) {
+                           Long campaignId, Long proposalId, String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
         this.userId = userId;
         this.kind = kind;
         this.title = title;

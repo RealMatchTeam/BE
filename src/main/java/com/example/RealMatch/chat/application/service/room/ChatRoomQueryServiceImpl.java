@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -41,7 +42,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
 public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatRoomQueryServiceImpl.class);
@@ -74,12 +75,13 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
             int size,
             String search
     ) {
-        return chatRoomListCache.get(userId, filterStatus, roomCursor, size, search)
+        long version = roomCursor == null ? chatRoomListCache.currentVersion(userId) : -1L;
+        return chatRoomListCache.get(userId, version, filterStatus, roomCursor, size, search)
                 .orElseGet(() -> {
                     ChatRoomListResponse response = loadChatRoomList(
                             userId, filterStatus, roomCursor, size, search
                     );
-                    chatRoomListCache.put(userId, filterStatus, roomCursor, size, search, response);
+                    chatRoomListCache.put(userId, version, filterStatus, roomCursor, size, search, response);
                     return response;
                 });
     }
@@ -152,12 +154,13 @@ public class ChatRoomQueryServiceImpl implements ChatRoomQueryService {
 
     @Override
     public ChatRoomDetailResponse getChatRoomDetailWithOpponent(Long userId, Long roomId) {
+        long version = chatRoomDetailCache.currentVersion(roomId);
         ChatRoomMember myMember = chatRoomMemberService.getActiveMemberOrThrow(roomId, userId);
 
-        return chatRoomDetailCache.get(roomId, userId)
+        return chatRoomDetailCache.get(roomId, userId, version)
                 .orElseGet(() -> {
                     ChatRoomDetailResponse response = loadChatRoomDetail(userId, roomId, myMember.getRole());
-                    chatRoomDetailCache.put(roomId, userId, response);
+                    chatRoomDetailCache.put(roomId, userId, version, response);
                     return response;
                 });
     }

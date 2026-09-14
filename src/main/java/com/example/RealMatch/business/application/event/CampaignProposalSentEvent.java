@@ -7,6 +7,7 @@ import com.example.RealMatch.business.domain.enums.ProposalStatus;
  * 캠페인 제안이 생성되거나 재제안 되었을 때 발행되는 이벤트
  */
 public record CampaignProposalSentEvent(
+        String eventId,
         Long proposalId,
         Long actorUserId,
         Long brandUserId,

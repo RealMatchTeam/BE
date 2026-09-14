@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 채팅 내부 이벤트(ProposalStatusChangedEvent)를 수신하여
- * 비동기 핸들러(ProposalSystemMessageHandler)로 위임합니다.
+ * 업무 트랜잭션 안에서 ProposalSystemMessageHandler로 위임합니다.
  */
 @Component
 @RequiredArgsConstructor

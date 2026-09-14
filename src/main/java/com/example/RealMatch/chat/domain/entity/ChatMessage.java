@@ -27,6 +27,10 @@ import lombok.NoArgsConstructor;
         },
         uniqueConstraints = {
                 @UniqueConstraint(
+                        name = "uk_chat_message_system_event",
+                        columnNames = {"room_id", "system_event_id"}
+                ),
+                @UniqueConstraint(
                         name = "uk_chat_message_sender_client",
                         columnNames = {"sender_id", "client_message_id"}
                 )
@@ -64,6 +68,9 @@ public class ChatMessage extends BaseEntity {
 
     @Column(name = "client_message_id", length = 36)
     private String clientMessageId;
+
+    @Column(name = "system_event_id", length = 100)
+    private String systemEventId;
 
     private ChatMessage(
             Long roomId,
@@ -150,9 +157,15 @@ public class ChatMessage extends BaseEntity {
 
     public static ChatMessage createSystemMessage(
             Long roomId,
+            String eventId,
             ChatSystemMessageKind systemKind,
             String systemPayload
     ) {
-        return new ChatMessage(roomId, systemKind, systemPayload);
+        if (eventId == null || eventId.isBlank() || eventId.length() > 100) {
+            throw new IllegalArgumentException("System event id must contain 1 to 100 characters.");
+        }
+        ChatMessage message = new ChatMessage(roomId, systemKind, systemPayload);
+        message.systemEventId = eventId;
+        return message;
     }
 }

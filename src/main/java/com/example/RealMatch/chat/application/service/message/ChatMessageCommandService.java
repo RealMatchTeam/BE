@@ -14,6 +14,7 @@ public interface ChatMessageCommandService {
     @NonNull
     ChatMessageResponse saveSystemMessage(
             Long roomId,
+            String eventId,
             ChatSystemMessageKind kind,
             ChatSystemMessagePayload payload
     );

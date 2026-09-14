@@ -2,6 +2,7 @@ package com.example.RealMatch.notification.application.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -44,7 +45,8 @@ public class NotificationEventListener {
      * CampaignProposalSentEvent 구독.
      * proposalDirection=BRAND_TO_CREATOR일 때 PROPOSAL_RECEIVED 알림 생성.
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(100)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleCampaignProposalSent(CampaignProposalSentEvent event) {
         if (event == null) {
             LOG.warn("[Notification] Invalid CampaignProposalSentEvent: event is null");
@@ -57,32 +59,27 @@ public class NotificationEventListener {
             return;
         }
 
-        try {
-            String eventId = generateProposalSentEventId(event.proposalId(), event.isReProposal());
-            String brandName = findBrandNameByUserId(event.brandUserId());
+        String eventId = event.eventId();
+        String brandName = findBrandNameByUserId(event.brandUserId());
 
-            MessageTemplate template = messageTemplateService.createProposalReceivedMessage(brandName);
+        MessageTemplate template = messageTemplateService.createProposalReceivedMessage(brandName);
 
-            CreateNotificationCommand command = CreateNotificationCommand.builder()
-                    .eventId(eventId)
-                    .userId(event.creatorUserId())
-                    .kind(NotificationKind.PROPOSAL_RECEIVED)
-                    .title(template.title())
-                    .body(template.body())
-                    .referenceType(ReferenceType.CAMPAIGN_PROPOSAL)
-                    .referenceId(String.valueOf(event.proposalId()))
-                    .campaignId(event.campaignId())
-                    .proposalId(event.proposalId())
-                    .build();
+        CreateNotificationCommand command = CreateNotificationCommand.builder()
+                .eventId(eventId)
+                .userId(event.creatorUserId())
+                .kind(NotificationKind.PROPOSAL_RECEIVED)
+                .title(template.title())
+                .body(template.body())
+                .referenceType(ReferenceType.CAMPAIGN_PROPOSAL)
+                .referenceId(String.valueOf(event.proposalId()))
+                .campaignId(event.campaignId())
+                .proposalId(event.proposalId())
+                .build();
 
-            notificationService.create(command);
+        notificationService.create(command);
 
-            LOG.info("[Notification] Created PROPOSAL_RECEIVED. eventId={}, proposalId={}, userId={}",
-                    eventId, event.proposalId(), event.creatorUserId());
-        } catch (Exception e) {
-            LOG.error("[Notification] Failed to create PROPOSAL_RECEIVED. proposalId={}, userId={}",
-                    event.proposalId(), event.creatorUserId(), e);
-        }
+        LOG.info("[Notification] Created PROPOSAL_RECEIVED. eventId={}, proposalId={}, userId={}",
+                eventId, event.proposalId(), event.creatorUserId());
     }
 
     // ==================== CampaignProposalStatusChangedEvent ====================
@@ -93,9 +90,10 @@ public class NotificationEventListener {
      *   <li>MATCHED → 크리에이터에게 CAMPAIGN_MATCHED + 제안 보낸 사람에게 PROPOSAL_SENT(수락)</li>
      *   <li>REJECTED → 제안 보낸 사람에게 PROPOSAL_SENT(거절)</li>
      * </ul>
-     * 각 알림 생성은 독립적으로 예외 처리한다.
+     * 모든 알림 생성은 업무 트랜잭션에 참여하며 실패 시 함께 롤백한다.
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(100)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleCampaignProposalStatusChanged(CampaignProposalStatusChangedEvent event) {
         if (event == null) {
             LOG.warn("[Notification] Invalid CampaignProposalStatusChangedEvent: event is null");
@@ -105,7 +103,7 @@ public class NotificationEventListener {
         if (event.newStatus() == ProposalStatus.MATCHED) {
             // 1) 크리에이터에게 CAMPAIGN_MATCHED
             createCampaignMatchedNotification(event);
-            // 2) 제안 보낸 사람에게 PROPOSAL_SENT (수락) — 독립 try-catch
+            // 2) 제안 보낸 사람에게 PROPOSAL_SENT (수락)
             createProposalSentNotification(event, true);
         } else if (event.newStatus() == ProposalStatus.REJECTED) {
             createProposalSentNotification(event, false);
@@ -116,70 +114,60 @@ public class NotificationEventListener {
      * CAMPAIGN_MATCHED 알림 생성 (크리에이터에게)
      */
     private void createCampaignMatchedNotification(CampaignProposalStatusChangedEvent event) {
-        try {
-            String eventId = generateProposalStatusChangedEventId(event.proposalId(), event.newStatus());
-            String brandName = findBrandNameByUserId(event.brandUserId());
+        String eventId = generateProposalStatusChangedEventId(event.proposalId(), event.newStatus());
+        String brandName = findBrandNameByUserId(event.brandUserId());
 
-            MessageTemplate template = messageTemplateService.createCampaignMatchedMessage(brandName);
+        MessageTemplate template = messageTemplateService.createCampaignMatchedMessage(brandName);
 
-            CreateNotificationCommand command = CreateNotificationCommand.builder()
-                    .eventId(eventId)
-                    .userId(event.creatorUserId())
-                    .kind(NotificationKind.CAMPAIGN_MATCHED)
-                    .title(template.title())
-                    .body(template.body())
-                    .referenceType(ReferenceType.CAMPAIGN_PROPOSAL)
-                    .referenceId(String.valueOf(event.proposalId()))
-                    .campaignId(event.campaignId())
-                    .proposalId(event.proposalId())
-                    .build();
+        CreateNotificationCommand command = CreateNotificationCommand.builder()
+                .eventId(eventId)
+                .userId(event.creatorUserId())
+                .kind(NotificationKind.CAMPAIGN_MATCHED)
+                .title(template.title())
+                .body(template.body())
+                .referenceType(ReferenceType.CAMPAIGN_PROPOSAL)
+                .referenceId(String.valueOf(event.proposalId()))
+                .campaignId(event.campaignId())
+                .proposalId(event.proposalId())
+                .build();
 
-            notificationService.create(command);
+        notificationService.create(command);
 
-            LOG.info("[Notification] Created CAMPAIGN_MATCHED. eventId={}, proposalId={}, userId={}",
-                    eventId, event.proposalId(), event.creatorUserId());
-        } catch (Exception e) {
-            LOG.error("[Notification] Failed to create CAMPAIGN_MATCHED. proposalId={}, userId={}",
-                    event.proposalId(), event.creatorUserId(), e);
-        }
+        LOG.info("[Notification] Created CAMPAIGN_MATCHED. eventId={}, proposalId={}, userId={}",
+                eventId, event.proposalId(), event.creatorUserId());
     }
 
     /**
      * PROPOSAL_SENT 알림 생성 (제안 보낸 사람에게, 수락/거절 공통)
      */
     private void createProposalSentNotification(CampaignProposalStatusChangedEvent event, boolean isAccepted) {
-        try {
-            String eventId = generateProposalStatusChangedEventId(event.proposalId(), event.newStatus());
-            // proposalDirection을 이용해 senderUserId 결정 (DB 조회 불필요)
-            Long senderUserId = event.proposalDirection() == ProposalDirection.BRAND_TO_CREATOR
-                    ? event.brandUserId()
-                    : event.creatorUserId();
+        String eventId = generateProposalStatusChangedEventId(event.proposalId(), event.newStatus());
+        // proposalDirection을 이용해 senderUserId 결정 (DB 조회 불필요)
+        Long senderUserId = event.proposalDirection() == ProposalDirection.BRAND_TO_CREATOR
+                ? event.brandUserId()
+                : event.creatorUserId();
 
-            String brandName = findBrandNameByUserId(event.brandUserId());
+        String brandName = findBrandNameByUserId(event.brandUserId());
 
-            MessageTemplate template = messageTemplateService.createProposalSentMessage(brandName, isAccepted);
+        MessageTemplate template = messageTemplateService.createProposalSentMessage(brandName, isAccepted);
 
-            CreateNotificationCommand command = CreateNotificationCommand.builder()
-                    .eventId(eventId)
-                    .userId(senderUserId)
-                    .kind(NotificationKind.PROPOSAL_SENT)
-                    .title(template.title())
-                    .body(template.body())
-                    .referenceType(ReferenceType.CAMPAIGN_PROPOSAL)
-                    .referenceId(String.valueOf(event.proposalId()))
-                    .campaignId(event.campaignId())
-                    .proposalId(event.proposalId())
-                    .build();
+        CreateNotificationCommand command = CreateNotificationCommand.builder()
+                .eventId(eventId)
+                .userId(senderUserId)
+                .kind(NotificationKind.PROPOSAL_SENT)
+                .title(template.title())
+                .body(template.body())
+                .referenceType(ReferenceType.CAMPAIGN_PROPOSAL)
+                .referenceId(String.valueOf(event.proposalId()))
+                .campaignId(event.campaignId())
+                .proposalId(event.proposalId())
+                .build();
 
-            notificationService.create(command);
+        notificationService.create(command);
 
-            String resultLabel = isAccepted ? "accepted" : "rejected";
-            LOG.info("[Notification] Created PROPOSAL_SENT ({}). eventId={}, proposalId={}, userId={}",
-                    resultLabel, eventId, event.proposalId(), senderUserId);
-        } catch (Exception e) {
-            LOG.error("[Notification] Failed to create PROPOSAL_SENT. proposalId={}, newStatus={}",
-                    event.proposalId(), event.newStatus(), e);
-        }
+        String resultLabel = isAccepted ? "accepted" : "rejected";
+        LOG.info("[Notification] Created PROPOSAL_SENT ({}). eventId={}, proposalId={}, userId={}",
+                resultLabel, eventId, event.proposalId(), senderUserId);
     }
 
     // ==================== CampaignApplySentEvent ====================
@@ -188,41 +176,37 @@ public class NotificationEventListener {
      * CampaignApplySentEvent 구독.
      * 브랜드에게 CAMPAIGN_APPLIED 알림 생성.
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(100)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleCampaignApplySent(CampaignApplySentEvent event) {
         if (event == null) {
             LOG.warn("[Notification] Invalid CampaignApplySentEvent: event is null");
             return;
         }
 
-        try {
-            String eventId = generateApplySentEventId(event.applyId());
-            User creator = userRepository.findById(event.creatorUserId())
-                    .orElseThrow(() -> new IllegalStateException(
-                            "User not found: " + event.creatorUserId()));
-            String creatorName = resolveDisplayName(creator);
+        String eventId = generateApplySentEventId(event.applyId());
+        User creator = userRepository.findById(event.creatorUserId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "User not found: " + event.creatorUserId()));
+        String creatorName = resolveDisplayName(creator);
 
-            MessageTemplate template = messageTemplateService.createCampaignAppliedMessage(creatorName);
+        MessageTemplate template = messageTemplateService.createCampaignAppliedMessage(creatorName);
 
-            CreateNotificationCommand command = CreateNotificationCommand.builder()
-                    .eventId(eventId)
-                    .userId(event.brandUserId())
-                    .kind(NotificationKind.CAMPAIGN_APPLIED)
-                    .title(template.title())
-                    .body(template.body())
-                    .referenceType(ReferenceType.CAMPAIGN_APPLY)
-                    .referenceId(String.valueOf(event.applyId()))
-                    .campaignId(event.campaignId())
-                    .build();
+        CreateNotificationCommand command = CreateNotificationCommand.builder()
+                .eventId(eventId)
+                .userId(event.brandUserId())
+                .kind(NotificationKind.CAMPAIGN_APPLIED)
+                .title(template.title())
+                .body(template.body())
+                .referenceType(ReferenceType.CAMPAIGN_APPLY)
+                .referenceId(String.valueOf(event.applyId()))
+                .campaignId(event.campaignId())
+                .build();
 
-            notificationService.create(command);
+        notificationService.create(command);
 
-            LOG.info("[Notification] Created CAMPAIGN_APPLIED. eventId={}, applyId={}, userId={}",
-                    eventId, event.applyId(), event.brandUserId());
-        } catch (Exception e) {
-            LOG.error("[Notification] Failed to create CAMPAIGN_APPLIED. applyId={}, userId={}",
-                    event.applyId(), event.brandUserId(), e);
-        }
+        LOG.info("[Notification] Created CAMPAIGN_APPLIED. eventId={}, applyId={}, userId={}",
+                eventId, event.applyId(), event.brandUserId());
     }
 
     // ==================== 데모데이 이후용: CampaignCompletedEvent ====================
@@ -232,38 +216,34 @@ public class NotificationEventListener {
      * 크리에이터에게 CAMPAIGN_COMPLETED 알림 생성.
      * (데모데이 이후 해당 플로우에서 이벤트 발행만 추가하면 동작)
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(100)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleCampaignCompleted(CampaignCompletedEvent event) {
         if (event == null) {
             LOG.warn("[Notification] Invalid CampaignCompletedEvent: event is null");
             return;
         }
 
-        try {
-            String eventId = String.format("CAMPAIGN_COMPLETED:%d", event.campaignId());
-            String brandName = findBrandNameByUserId(event.brandUserId());
+        String eventId = String.format("CAMPAIGN_COMPLETED:%d", event.campaignId());
+        String brandName = findBrandNameByUserId(event.brandUserId());
 
-            MessageTemplate template = messageTemplateService.createCampaignCompletedMessage(brandName);
+        MessageTemplate template = messageTemplateService.createCampaignCompletedMessage(brandName);
 
-            CreateNotificationCommand command = CreateNotificationCommand.builder()
-                    .eventId(eventId)
-                    .userId(event.creatorUserId())
-                    .kind(NotificationKind.CAMPAIGN_COMPLETED)
-                    .title(template.title())
-                    .body(template.body())
-                    .referenceType(ReferenceType.CAMPAIGN)
-                    .referenceId(String.valueOf(event.campaignId()))
-                    .campaignId(event.campaignId())
-                    .build();
+        CreateNotificationCommand command = CreateNotificationCommand.builder()
+                .eventId(eventId)
+                .userId(event.creatorUserId())
+                .kind(NotificationKind.CAMPAIGN_COMPLETED)
+                .title(template.title())
+                .body(template.body())
+                .referenceType(ReferenceType.CAMPAIGN)
+                .referenceId(String.valueOf(event.campaignId()))
+                .campaignId(event.campaignId())
+                .build();
 
-            notificationService.create(command);
+        notificationService.create(command);
 
-            LOG.info("[Notification] Created CAMPAIGN_COMPLETED. eventId={}, campaignId={}, userId={}",
-                    eventId, event.campaignId(), event.creatorUserId());
-        } catch (Exception e) {
-            LOG.error("[Notification] Failed to create CAMPAIGN_COMPLETED. campaignId={}, userId={}",
-                    event.campaignId(), event.creatorUserId(), e);
-        }
+        LOG.info("[Notification] Created CAMPAIGN_COMPLETED. eventId={}, campaignId={}, userId={}",
+                eventId, event.campaignId(), event.creatorUserId());
     }
 
     // ==================== 데모데이 이후용: SettlementReadyEvent ====================
@@ -273,38 +253,34 @@ public class NotificationEventListener {
      * 크리에이터에게 SETTLEMENT_READY 알림 생성.
      * (데모데이 이후 해당 플로우에서 이벤트 발행만 추가하면 동작)
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(100)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleSettlementReady(SettlementReadyEvent event) {
         if (event == null) {
             LOG.warn("[Notification] Invalid SettlementReadyEvent: event is null");
             return;
         }
 
-        try {
-            String eventId = String.format("SETTLEMENT_READY:%d", event.campaignId());
-            String brandName = findBrandNameByUserId(event.brandUserId());
+        String eventId = String.format("SETTLEMENT_READY:%d", event.campaignId());
+        String brandName = findBrandNameByUserId(event.brandUserId());
 
-            MessageTemplate template = messageTemplateService.createSettlementReadyMessage(brandName);
+        MessageTemplate template = messageTemplateService.createSettlementReadyMessage(brandName);
 
-            CreateNotificationCommand command = CreateNotificationCommand.builder()
-                    .eventId(eventId)
-                    .userId(event.creatorUserId())
-                    .kind(NotificationKind.SETTLEMENT_READY)
-                    .title(template.title())
-                    .body(template.body())
-                    .referenceType(ReferenceType.CAMPAIGN)
-                    .referenceId(String.valueOf(event.campaignId()))
-                    .campaignId(event.campaignId())
-                    .build();
+        CreateNotificationCommand command = CreateNotificationCommand.builder()
+                .eventId(eventId)
+                .userId(event.creatorUserId())
+                .kind(NotificationKind.SETTLEMENT_READY)
+                .title(template.title())
+                .body(template.body())
+                .referenceType(ReferenceType.CAMPAIGN)
+                .referenceId(String.valueOf(event.campaignId()))
+                .campaignId(event.campaignId())
+                .build();
 
-            notificationService.create(command);
+        notificationService.create(command);
 
-            LOG.info("[Notification] Created SETTLEMENT_READY. eventId={}, campaignId={}, userId={}",
-                    eventId, event.campaignId(), event.creatorUserId());
-        } catch (Exception e) {
-            LOG.error("[Notification] Failed to create SETTLEMENT_READY. campaignId={}, userId={}",
-                    event.campaignId(), event.creatorUserId(), e);
-        }
+        LOG.info("[Notification] Created SETTLEMENT_READY. eventId={}, campaignId={}, userId={}",
+                eventId, event.campaignId(), event.creatorUserId());
     }
 
     // ==================== 데모데이 이후용: AutoConfirmedEvent ====================
@@ -314,38 +290,34 @@ public class NotificationEventListener {
      * 브랜드에게 AUTO_CONFIRMED 알림 생성.
      * (데모데이 이후 해당 플로우에서 이벤트 발행만 추가하면 동작)
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Order(100)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleAutoConfirmed(AutoConfirmedEvent event) {
         if (event == null) {
             LOG.warn("[Notification] Invalid AutoConfirmedEvent: event is null");
             return;
         }
 
-        try {
-            String eventId = String.format("AUTO_CONFIRMED:%d", event.campaignId());
-            String brandName = findBrandNameByUserId(event.brandUserId());
+        String eventId = String.format("AUTO_CONFIRMED:%d", event.campaignId());
+        String brandName = findBrandNameByUserId(event.brandUserId());
 
-            MessageTemplate template = messageTemplateService.createAutoConfirmedMessage(brandName);
+        MessageTemplate template = messageTemplateService.createAutoConfirmedMessage(brandName);
 
-            CreateNotificationCommand command = CreateNotificationCommand.builder()
-                    .eventId(eventId)
-                    .userId(event.brandUserId())
-                    .kind(NotificationKind.AUTO_CONFIRMED)
-                    .title(template.title())
-                    .body(template.body())
-                    .referenceType(ReferenceType.CAMPAIGN)
-                    .referenceId(String.valueOf(event.campaignId()))
-                    .campaignId(event.campaignId())
-                    .build();
+        CreateNotificationCommand command = CreateNotificationCommand.builder()
+                .eventId(eventId)
+                .userId(event.brandUserId())
+                .kind(NotificationKind.AUTO_CONFIRMED)
+                .title(template.title())
+                .body(template.body())
+                .referenceType(ReferenceType.CAMPAIGN)
+                .referenceId(String.valueOf(event.campaignId()))
+                .campaignId(event.campaignId())
+                .build();
 
-            notificationService.create(command);
+        notificationService.create(command);
 
-            LOG.info("[Notification] Created AUTO_CONFIRMED. eventId={}, campaignId={}, userId={}",
-                    eventId, event.campaignId(), event.brandUserId());
-        } catch (Exception e) {
-            LOG.error("[Notification] Failed to create AUTO_CONFIRMED. campaignId={}, userId={}",
-                    event.campaignId(), event.brandUserId(), e);
-        }
+        LOG.info("[Notification] Created AUTO_CONFIRMED. eventId={}, campaignId={}, userId={}",
+                eventId, event.campaignId(), event.brandUserId());
     }
 
     // ==================== 공통 헬퍼 ====================
@@ -371,14 +343,6 @@ public class NotificationEventListener {
     }
 
     // ==================== EventId 생성 (멱등성 보장용) ====================
-
-    /**
-     * CampaignProposalSentEvent의 결정적 eventId 생성
-     */
-    private String generateProposalSentEventId(Long proposalId, boolean isReProposal) {
-        String type = isReProposal ? "RE_PROPOSAL_SENT" : "PROPOSAL_SENT";
-        return String.format("%s:%d", type, proposalId);
-    }
 
     /**
      * CampaignProposalStatusChangedEvent의 결정적 eventId 생성

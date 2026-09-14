@@ -46,7 +46,7 @@ public class NotificationDelivery extends BaseEntity {
     private NotificationChannel channel;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20, columnDefinition = "varchar(20)")
     private DeliveryStatus status;
 
     @Column(name = "fail_reason", length = 500)
@@ -64,7 +64,7 @@ public class NotificationDelivery extends BaseEntity {
     @Column(name = "provider_message_id", length = 255)
     private String providerMessageId;
 
-    @Column(name = "idempotency_key", length = 100, unique = true)
+    @Column(name = "idempotency_key", length = 200, unique = true)
     private String idempotencyKey;
 
     @Column(name = "attempt_count", nullable = false)
@@ -81,7 +81,6 @@ public class NotificationDelivery extends BaseEntity {
         this.attemptCount = 0;
     }
 
-    /** 발송 성공. IN_PROGRESS → SENT. */
     public void markAsSent(String providerMessageId) {
         this.status = DeliveryStatus.SENT;
         this.sentAt = LocalDateTime.now();
@@ -89,11 +88,6 @@ public class NotificationDelivery extends BaseEntity {
         this.nextRetryAt = null;
     }
 
-    /**
-     * 발송 실패 기록 + 재시도 스케줄링.
-     * attemptCount &lt; MAX_RETRY_COUNT → RETRY + nextRetryAt 설정 (backoff)
-     * attemptCount ≥ MAX_RETRY_COUNT → FAILED (영구 보관, DLQ 대상)
-     */
     public void recordFailure(String failReason) {
         this.failReason = truncate(failReason, 500);
         this.attemptCount++;
@@ -108,10 +102,15 @@ public class NotificationDelivery extends BaseEntity {
         }
     }
 
-    /** 영구 실패 처리. IN_PROGRESS → FAILED. */
     public void markAsPermanentlyFailed(String failReason) {
         this.status = DeliveryStatus.FAILED;
         this.failReason = truncate(failReason, 500);
+        this.nextRetryAt = null;
+    }
+
+    public void skip() {
+        this.status = DeliveryStatus.SKIPPED;
+        this.failReason = "Notification channel disabled by recipient";
         this.nextRetryAt = null;
     }
 

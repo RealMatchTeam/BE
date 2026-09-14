@@ -7,37 +7,26 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
+import com.example.RealMatch.user.domain.repository.NotificationSettingRepository;
 
-/**
- * NotificationKind별 즉시 발송 채널을 결정한다.
- *
- * <p>PRD §5.2 기준:
- * <ul>
- *   <li>PROPOSAL_RECEIVED : PUSH + EMAIL (현재는 즉시 발송. 데모데이 이후에는 이메일만 1일 후 스케줄러로 변경 예정)</li>
- *   <li>PROPOSAL_SENT     : PUSH만</li>
- *   <li>CAMPAIGN_APPLIED  : PUSH만</li>
- *   <li>CAMPAIGN_MATCHED  : PUSH + EMAIL (매칭 직후 즉시 이메일)</li>
- *   <li>CAMPAIGN_COMPLETED: PUSH + EMAIL (데모데이 이후)</li>
- *   <li>SETTLEMENT_READY  : PUSH만</li>
- *   <li>AUTO_CONFIRMED    : EMAIL만 (데모데이 이후)</li>
- *   <li>CHAT_MESSAGE      : PUSH만</li>
- * </ul>
- *
- * TODO(데모데이 이후): PROPOSAL_RECEIVED 이메일은 즉시 발송 대신, 1일 경과 + 미읽음(isRead=false)인 건만
- * 스케줄러에서 조회 후 이메일 발송하도록 변경. (PRD §5.2 이메일 ①)
- */
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NotificationChannelResolver {
+
+    private final NotificationSettingRepository notificationSettingRepository;
 
     private static final Map<NotificationKind, Set<NotificationChannel>> CHANNEL_MAP;
 
     static {
         Map<NotificationKind, Set<NotificationChannel>> map = new EnumMap<>(NotificationKind.class);
 
-        // 현재: 제안 수신 시 푸시 + 이메일 즉시 발송. 데모데이 이후 이메일은 1일 후 스케줄러로 전환 예정(TODO)
         map.put(NotificationKind.PROPOSAL_RECEIVED,
                 EnumSet.of(NotificationChannel.PUSH, NotificationChannel.EMAIL));
         map.put(NotificationKind.PROPOSAL_SENT,
@@ -58,7 +47,21 @@ public class NotificationChannelResolver {
         CHANNEL_MAP = Collections.unmodifiableMap(map);
     }
 
-    public Set<NotificationChannel> resolveChannels(NotificationKind kind) {
-        return CHANNEL_MAP.getOrDefault(kind, Collections.emptySet());
+    public Set<NotificationChannel> resolveChannels(NotificationKind kind, Long userId) {
+        Set<NotificationChannel> channels = EnumSet.noneOf(NotificationChannel.class);
+        notificationSettingRepository.findByUserId(userId).ifPresent(setting -> {
+            for (NotificationChannel channel : CHANNEL_MAP.getOrDefault(kind, Collections.emptySet())) {
+                if (setting.allows(channel)) {
+                    channels.add(channel);
+                }
+            }
+        });
+        return channels;
+    }
+
+    public boolean isEnabled(Long userId, NotificationChannel channel) {
+        return notificationSettingRepository.findByUserId(userId)
+                .map(setting -> setting.allows(channel))
+                .orElse(false);
     }
 }

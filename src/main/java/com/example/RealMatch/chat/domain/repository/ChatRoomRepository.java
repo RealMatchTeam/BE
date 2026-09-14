@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,8 +12,18 @@ import org.springframework.data.repository.query.Param;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 
+import jakarta.persistence.LockModeType;
+
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>, ChatRoomRepositoryCustom {
     Optional<ChatRoom> findByRoomKey(String roomKey);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from ChatRoom r where r.id = :id")
+    Optional<ChatRoom> findByIdForUpdate(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from ChatRoom r where r.roomKey = :roomKey")
+    Optional<ChatRoom> findByRoomKeyForUpdate(@Param("roomKey") String roomKey);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

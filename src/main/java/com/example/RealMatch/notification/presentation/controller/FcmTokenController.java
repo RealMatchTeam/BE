@@ -42,7 +42,7 @@ public class FcmTokenController implements FcmTokenSwagger {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody FcmTokenRemoveRequest request
     ) {
-        fcmTokenService.removeToken(request.token());
+        fcmTokenService.removeToken(userDetails.getUserId(), request.token());
         return CustomResponse.ok(null);
     }
 }
