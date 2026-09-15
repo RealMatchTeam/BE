@@ -3,6 +3,7 @@ package com.example.RealMatch.attachment.application.service;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.attachment.application.port.AttachmentStorage;
@@ -46,6 +47,11 @@ public class AttachmentUploadTxService {
             throw new CustomException(AttachmentErrorCode.ATTACHMENT_INVALID_STATUS, ex);
         }
         return attachment;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markAttachmentAsFailed(Long id) {
+        repository.findForUpdate(id).ifPresent(attachment -> attachment.failUpload(LocalDateTime.now()));
     }
 
     public record CreateResult(Attachment attachment, String s3Key) {

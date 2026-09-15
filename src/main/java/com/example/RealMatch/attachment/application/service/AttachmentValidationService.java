@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Set;
 import java.util.zip.ZipFile;
 
 import javax.imageio.ImageIO;
@@ -15,7 +16,6 @@ import javax.imageio.ImageIO;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.attachment.application.policy.AttachmentUploadPolicy;
-import com.example.RealMatch.attachment.application.util.FileValidator;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
 import com.example.RealMatch.global.exception.CustomException;
@@ -27,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 public class AttachmentValidationService {
 
     private final AttachmentUploadPolicy uploadPolicy;
-    private final FileValidator fileValidator;
 
     public String validateUploadRequest(
             String originalFilename,
@@ -47,26 +46,28 @@ public class AttachmentValidationService {
             throw new CustomException(AttachmentErrorCode.INVALID_CONTENT_TYPE);
         }
 
-        fileValidator.validateFileName(originalFilename);
+        validateFileName(originalFilename);
 
         long maxSize = attachmentType == AttachmentType.IMAGE
                 ? uploadPolicy.getMaxImageSizeBytes()
                 : uploadPolicy.getMaxFileSizeBytes();
-        fileValidator.validateFileSize(fileSize, maxSize);
+        validateFileSize(fileSize, maxSize);
 
         if (attachmentType == AttachmentType.IMAGE) {
-            fileValidator.validateImageFile(
+            validateFileFormat(
                     normalizedContentType,
                     originalFilename,
                     uploadPolicy.getAllowedImageContentTypes(),
-                    uploadPolicy.getAllowedImageExtensions()
+                    uploadPolicy.getAllowedImageExtensions(),
+                    AttachmentErrorCode.INVALID_IMAGE_TYPE
             );
         } else if (attachmentType == AttachmentType.FILE) {
-            fileValidator.validateAttachmentFile(
+            validateFileFormat(
                     normalizedContentType,
                     originalFilename,
                     uploadPolicy.getAllowedFileContentTypes(),
-                    uploadPolicy.getAllowedFileExtensions()
+                    uploadPolicy.getAllowedFileExtensions(),
+                    AttachmentErrorCode.INVALID_FILE_TYPE
             );
         }
         return normalizedContentType;
@@ -77,6 +78,40 @@ public class AttachmentValidationService {
             return null;
         }
         return contentType.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
+    }
+
+    private void validateFileName(String filename) {
+        if (filename.chars().anyMatch(Character::isISOControl)
+                || filename.contains("..")
+                || filename.contains("/")
+                || filename.contains("\\")
+                || filename.length() > 255) {
+            throw new CustomException(AttachmentErrorCode.INVALID_FILE_NAME);
+        }
+    }
+
+    private void validateFileSize(long fileSize, long maxSizeBytes) {
+        if (fileSize <= 0) {
+            throw new CustomException(AttachmentErrorCode.INVALID_FILE_SIZE);
+        }
+        if (fileSize > maxSizeBytes) {
+            throw new CustomException(AttachmentErrorCode.FILE_SIZE_EXCEEDED);
+        }
+    }
+
+    private void validateFileFormat(
+            String contentType,
+            String filename,
+            Set<String> allowedContentTypes,
+            Set<String> allowedExtensions,
+            AttachmentErrorCode errorCode
+    ) {
+        Set<String> contentTypes = allowedContentTypes == null ? Set.of() : allowedContentTypes;
+        Set<String> extensions = allowedExtensions == null ? Set.of() : allowedExtensions;
+        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        if (!contentTypes.contains(contentType) || !extensions.contains(extension)) {
+            throw new CustomException(errorCode);
+        }
     }
 
     public Path stage(InputStream input, String name, String contentType, long size) throws IOException {

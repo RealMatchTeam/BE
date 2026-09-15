@@ -12,7 +12,7 @@ import com.example.RealMatch.chat.application.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.application.dto.websocket.ChatMessageCreatedEvent;
 import com.example.RealMatch.chat.application.dto.websocket.ChatRoomListUpdatedEvent;
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
-import com.example.RealMatch.chat.application.service.room.ChatRoomMemberQueryService;
+import com.example.RealMatch.chat.application.repository.ChatRoomMemberRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +25,7 @@ public class WebSocketChatMessageEventPublisher implements ChatMessageEventPubli
     private static final String USER_ROOM_LIST_TOPIC_PREFIX = "/topic/v1/user/";
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final ChatRoomMemberQueryService chatRoomMemberQueryService;
+    private final ChatRoomMemberRepository chatRoomMembers;
 
     @Override
     public void publishMessageCreated(Long roomId, ChatMessageResponse message) {
@@ -46,7 +46,9 @@ public class WebSocketChatMessageEventPublisher implements ChatMessageEventPubli
         Objects.requireNonNull(roomId, "roomId must not be null");
 
         try {
-            List<Long> userIds = chatRoomMemberQueryService.findActiveMemberUserIds(roomId);
+            List<Long> userIds = chatRoomMembers.findActiveMembersByRoomId(roomId).stream()
+                    .map(member -> member.getUserId())
+                    .toList();
             ChatRoomListUpdatedEvent event = new ChatRoomListUpdatedEvent(roomId);
 
             for (Long userId : userIds) {

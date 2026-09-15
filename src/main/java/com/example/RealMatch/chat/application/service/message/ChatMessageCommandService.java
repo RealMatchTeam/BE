@@ -7,6 +7,8 @@ import static com.example.RealMatch.chat.domain.enums.ChatMessageType.IMAGE;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +24,7 @@ import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.application.repository.ChatRoomRepository;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
-import com.example.RealMatch.chat.application.util.ChatExceptionConverter;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.code.ChatErrorCode;
@@ -39,12 +39,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChatMessageCommandService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ChatMessageCommandService.class);
+
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageEventPublisher eventPublisher;
     private final AttachmentQueryService attachmentQueryService;
     private final ChatRoomMemberService chatRoomMemberService;
-    private final ChatRoomUpdateService chatRoomUpdateService;
     private final MessagePreviewGenerator messagePreviewGenerator;
     private final ChatMessageResponseMapper responseMapper;
     private final SystemMessagePayloadSerializer payloadSerializer;
@@ -115,7 +116,7 @@ public class ChatMessageCommandService {
                     command.clientMessageId()
             );
         } catch (IllegalArgumentException ex) {
-            throw ChatExceptionConverter.convert(ex);
+            throw new CustomException(ChatErrorCode.INVALID_MESSAGE_FORMAT, ex.getMessage(), ex);
         }
 
         // 메시지 저장 (동시성 처리 포함)
@@ -163,7 +164,7 @@ public class ChatMessageCommandService {
                     payloadSerializer.serialize(payload)
             );
         } catch (IllegalArgumentException ex) {
-            throw ChatExceptionConverter.convert(ex);
+            throw new CustomException(ChatErrorCode.INVALID_MESSAGE_FORMAT, ex.getMessage(), ex);
         }
 
         // 메시지 저장
@@ -199,13 +200,20 @@ public class ChatMessageCommandService {
 
     private void updateChatRoomLastMessage(ChatMessage message) {
         String preview = messagePreviewGenerator.generate(message.getMessageType(), message.getContent());
-        chatRoomUpdateService.updateLastMessage(
+        int updatedRows = chatRoomRepository.updateLastMessageIfNewer(
                 message.getRoomId(),
                 message.getId(),
                 message.getCreatedAt(),
                 preview,
                 message.getMessageType()
         );
+        if (updatedRows == 0 && !chatRoomRepository.existsById(message.getRoomId())) {
+            throw new CustomException(ChatErrorCode.ROOM_NOT_FOUND);
+        }
+        if (updatedRows > 1) {
+            LOG.warn("Unexpected chat room update count. roomId={}, messageId={}, rows={}",
+                    message.getRoomId(), message.getId(), updatedRows);
+        }
     }
 
     private void publishAfterCommit(ChatMessageResponse response) {

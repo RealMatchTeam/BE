@@ -16,7 +16,8 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class ChatRoomMemberCommandService {
+public class ChatRoomReadService {
+
     private final ChatRoomMemberRepository members;
     private final ChatRoomMemberService membership;
     private final ChatMessageRepository messages;
@@ -29,7 +30,8 @@ public class ChatRoomMemberCommandService {
         if (messageId == null || !messages.existsByIdAndRoomId(messageId, roomId)) {
             throw new CustomException(ChatErrorCode.INVALID_ROOM_FOR_MESSAGE);
         }
-        if (members.updateLastReadMessageIfNewer(member.getId(), messageId, LocalDateTime.now()) == 1) {
+        if (members.updateLastReadMessageIfNewer(
+                member.getId(), messageId, LocalDateTime.now()) == 1) {
             afterCommit.execute(() -> publisher.publishRoomListUpdated(roomId));
         }
     }

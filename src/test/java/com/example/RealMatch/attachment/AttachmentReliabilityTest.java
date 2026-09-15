@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -33,13 +34,11 @@ import com.example.RealMatch.attachment.application.port.AttachmentStorage;
 import com.example.RealMatch.attachment.application.repository.AttachmentRepository;
 import com.example.RealMatch.attachment.application.service.AttachmentCleanupScheduler;
 import com.example.RealMatch.attachment.application.service.AttachmentCleanupService;
-import com.example.RealMatch.attachment.application.service.AttachmentCommandService;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.attachment.application.service.AttachmentService;
 import com.example.RealMatch.attachment.application.service.AttachmentUploadTxService;
 import com.example.RealMatch.attachment.application.service.AttachmentUrlService;
 import com.example.RealMatch.attachment.application.service.AttachmentValidationService;
-import com.example.RealMatch.attachment.application.util.FileValidator;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
 import com.example.RealMatch.attachment.domain.enums.AttachmentStatus;
@@ -82,6 +81,10 @@ class AttachmentReliabilityTest {
         when(storage.isAvailable()).thenReturn(true);
         when(upload.createAttachmentAndSetStorageKey(anyLong(), any(), anyString(), anyString(), anyLong(), any()))
                 .thenReturn(new AttachmentUploadTxService.CreateResult(value, value.getStorageKey()));
+        doAnswer(invocation -> {
+            value.failUpload(now);
+            return null;
+        }).when(upload).markAttachmentAsFailed(1L);
         if (failureStage.equals("storage")) {
             doThrow(new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED))
                     .when(storage).uploadFile(any(), anyString(), anyString(), anyLong(), any());
@@ -95,8 +98,7 @@ class AttachmentReliabilityTest {
             });
             when(urls.getAccessUrl(value)).thenThrow(new CustomException(AttachmentErrorCode.STORAGE_UNAVAILABLE));
         }
-        var service = new AttachmentService(upload, storage, new AttachmentCommandService(repository),
-                validation, urls, new AttachmentResponseMapper());
+        var service = new AttachmentService(upload, storage, validation, urls, new AttachmentResponseMapper());
         try {
             assertThrows(CustomException.class, () -> service.uploadAttachment(1L,
                     new AttachmentUploadRequest(AttachmentType.IMAGE, AttachmentUsage.CHAT),
@@ -202,7 +204,7 @@ class AttachmentReliabilityTest {
 
     @Test
     void bytesAndMetadataMustAgreeAndStagingIsBounded() throws Exception {
-        var validator = new AttachmentValidationService(new S3AttachmentUploadPolicy(new S3Properties()), new FileValidator());
+        var validator = new AttachmentValidationService(new S3AttachmentUploadPolicy(new S3Properties()));
         byte[] png;
         try (var output = new java.io.ByteArrayOutputStream()) {
             javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(1, 1, java.awt.image.BufferedImage.TYPE_INT_RGB), "png", output);

@@ -48,18 +48,12 @@ import com.example.RealMatch.business.domain.enums.ProposalStatus;
 import com.example.RealMatch.chat.application.dto.response.ChatMatchedCampaignPayloadResponse;
 import com.example.RealMatch.chat.application.dto.websocket.ChatSendMessageCommand;
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
-import com.example.RealMatch.chat.application.event.apply.ApplySystemMessageHandler;
-import com.example.RealMatch.chat.application.event.apply.CampaignApplySentEventListener;
-import com.example.RealMatch.chat.application.event.apply.CampaignApplyStatusChangedEventListener;
-import com.example.RealMatch.chat.application.event.proposal.CampaignProposalSentEventListener;
-import com.example.RealMatch.chat.application.event.proposal.CampaignProposalStatusChangedEventListener;
-import com.example.RealMatch.chat.application.event.proposal.ProposalSystemMessageHandler;
+import com.example.RealMatch.chat.application.event.CollaborationChatEventListener;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
 import com.example.RealMatch.chat.application.service.message.ChatMessageCommandService;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.application.service.room.MatchedCampaignPayloadProvider;
 import com.example.RealMatch.chat.application.util.JacksonSystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
@@ -108,12 +102,10 @@ class ChatNotificationTransactionTest {
     @EnableJpaAuditing
     @EnableJpaRepositories(basePackageClasses = {JpaChatRoomRepository.class, JpaNotificationRepository.class, UserRepository.class})
     @EntityScan(basePackageClasses = {ChatMessage.class, Notification.class, User.class})
-    @Import({ChatRoomCommandService.class, ChatRoomMemberService.class, ChatRoomUpdateService.class,
+    @Import({ChatRoomCommandService.class, ChatRoomMemberService.class,
             ChatMessageCommandService.class, ChatMessageSocketService.class, ChatMessageResponseMapper.class,
             JacksonSystemMessagePayloadSerializer.class, MessagePreviewGenerator.class, SpringAfterCommitExecutor.class,
-            CampaignProposalSentEventListener.class, ProposalSystemMessageHandler.class,
-            CampaignProposalStatusChangedEventListener.class,
-            CampaignApplySentEventListener.class, CampaignApplyStatusChangedEventListener.class, ApplySystemMessageHandler.class,
+            CollaborationChatEventListener.class,
             NotificationEventListener.class, NotificationService.class, NotificationChannelResolver.class,
             NotificationMessageTemplateService.class})
     static class JpaConfig {

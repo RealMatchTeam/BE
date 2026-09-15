@@ -29,7 +29,6 @@ public class AttachmentService {
 
     private final AttachmentUploadTxService uploadTxService;
     private final AttachmentStorage s3FileUploadService;
-    private final AttachmentCommandService attachmentCommandService;
     private final AttachmentValidationService attachmentValidationService;
     private final AttachmentUrlService attachmentUrlService;
     private final AttachmentResponseMapper responseMapper;
@@ -92,7 +91,7 @@ public class AttachmentService {
 
     private void safeMarkFailed(Long attachmentId) {
         try {
-            attachmentCommandService.markAttachmentAsFailed(attachmentId);
+            uploadTxService.markAttachmentAsFailed(attachmentId);
         } catch (Exception ex) {
             LOG.error("FAILED 처리 실패. attachmentId={}", attachmentId, ex);
         }

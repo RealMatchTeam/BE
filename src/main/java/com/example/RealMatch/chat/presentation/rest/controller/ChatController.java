@@ -19,8 +19,8 @@ import com.example.RealMatch.chat.application.dto.response.ChatRoomDetailRespons
 import com.example.RealMatch.chat.application.dto.response.ChatRoomListResponse;
 import com.example.RealMatch.chat.application.service.message.ChatMessageQueryService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomReadService;
 import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
 import com.example.RealMatch.chat.presentation.rest.swagger.ChatSwagger;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
@@ -37,7 +37,7 @@ public class ChatController implements ChatSwagger {
     private final ChatRoomCommandService chatRoomCommandService;
     private final ChatRoomQueryService chatRoomQueryService;
     private final ChatMessageQueryService chatMessageQueryService;
-    private final ChatRoomMemberCommandService readService;
+    private final ChatRoomReadService readService;
 
     @PatchMapping("/rooms/{roomId}/read")
     public CustomResponse<Void> markRead(@AuthenticationPrincipal CustomUserDetails user,

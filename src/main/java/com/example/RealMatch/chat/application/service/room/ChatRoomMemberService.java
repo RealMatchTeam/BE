@@ -4,7 +4,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.example.RealMatch.chat.application.repository.ChatRoomMemberRepository;
-import com.example.RealMatch.chat.application.util.ChatRoomMemberValidator;
 import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.global.exception.CustomException;
@@ -28,7 +27,9 @@ public class ChatRoomMemberService {
                 .findMemberByRoomIdAndUserIdWithRoomCheck(roomId, userId)
                 .orElseThrow(() -> new CustomException(ChatErrorCode.NOT_ROOM_MEMBER));
 
-        ChatRoomMemberValidator.validateActiveMember(member);
+        if (member.isDeleted() || member.getLeftAt() != null) {
+            throw new CustomException(ChatErrorCode.USER_LEFT_ROOM);
+        }
         return member;
     }
 }

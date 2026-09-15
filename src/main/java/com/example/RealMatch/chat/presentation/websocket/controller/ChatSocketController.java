@@ -16,7 +16,7 @@ import com.example.RealMatch.chat.application.dto.response.ChatMessageResponse;
 import com.example.RealMatch.chat.application.dto.websocket.ChatSendMessageAck;
 import com.example.RealMatch.chat.application.dto.websocket.ChatSendMessageCommand;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomReadService;
 import com.example.RealMatch.chat.presentation.resolver.ChatUserIdResolver;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.global.presentation.code.GeneralErrorCode;
@@ -34,7 +34,7 @@ public class ChatSocketController {
 
     private final ChatMessageSocketService chatMessageSocketService;
     private final ChatUserIdResolver chatUserIdResolver;
-    private final ChatRoomMemberCommandService reads;
+    private final ChatRoomReadService reads;
 
     @MessageMapping("/v1/chat.send")
     @SendToUser(value = "/queue/v1/chat.ack", broadcast = false)

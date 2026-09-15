@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -26,8 +28,8 @@ import com.example.RealMatch.chat.application.repository.ChatMessageRepository;
 import com.example.RealMatch.chat.application.repository.ChatRoomMemberRepository;
 import com.example.RealMatch.chat.application.service.message.ChatMessageQueryService;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomReadService;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.application.util.JacksonSystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.code.ChatErrorCode;
@@ -39,12 +41,14 @@ import com.example.RealMatch.chat.presentation.resolver.ChatUserIdResolver;
 import com.example.RealMatch.chat.presentation.websocket.controller.ChatSocketController;
 import com.example.RealMatch.global.common.QueryLimits;
 import com.example.RealMatch.global.exception.CustomException;
+import com.example.RealMatch.user.domain.entity.User;
+import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class ChatReadAndPayloadTest {
     @Test
     void socketReadFailureReturnsAnAcknowledgementInsteadOfDisappearing() {
-        var reads = mock(ChatRoomMemberCommandService.class);
+        var reads = mock(ChatRoomReadService.class);
         var resolver = mock(ChatUserIdResolver.class);
         java.security.Principal principal = () -> "2";
         when(resolver.resolve(principal)).thenReturn(2L);
@@ -72,16 +76,19 @@ class ChatReadAndPayloadTest {
     @Test
     void readCommandRejectsAnotherRoomsMessageAndPublishesOnlyAfterCommit() {
         var members = mock(ChatRoomMemberRepository.class);
-        var membership = mock(ChatRoomMemberService.class);
+        var users = mock(UserRepository.class);
         var messages = mock(ChatMessageRepository.class);
         var publisher = mock(ChatMessageEventPublisher.class);
         var afterCommit = mock(AfterCommitExecutor.class);
         var member = ChatRoomMember.create(1L, 2L, ChatRoomMemberRole.CREATOR);
         ReflectionTestUtils.setField(member, "id", 3L);
-        when(membership.getActiveMemberOrThrow(1L, 2L)).thenReturn(member);
-        var service = new ChatRoomMemberCommandService(members, membership, messages, publisher, afterCommit);
+        when(users.findById(2L)).thenReturn(Optional.of(mock(User.class)));
+        when(members.findMemberByRoomIdAndUserIdWithRoomCheck(1L, 2L)).thenReturn(Optional.of(member));
+        var membership = new ChatRoomMemberService(members, users);
+        var service = new ChatRoomReadService(members, membership, messages, publisher, afterCommit);
         assertThrows(CustomException.class, () -> service.markRead(1L, 2L, 99L));
-        verifyNoInteractions(members, afterCommit, publisher);
+        verify(members, never()).updateLastReadMessageIfNewer(eq(3L), eq(99L), any());
+        verifyNoInteractions(afterCommit, publisher);
         when(messages.existsByIdAndRoomId(4L, 1L)).thenReturn(true);
         when(members.updateLastReadMessageIfNewer(eq(3L), eq(4L), any())).thenReturn(1);
         service.markRead(1L, 2L, 4L);
