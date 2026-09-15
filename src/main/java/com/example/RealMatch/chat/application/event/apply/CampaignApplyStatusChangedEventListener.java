@@ -2,7 +2,6 @@ package com.example.RealMatch.chat.application.event.apply;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -24,7 +23,7 @@ public class CampaignApplyStatusChangedEventListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(CampaignApplyStatusChangedEventListener.class);
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplySystemMessageHandler handler;
 
     @Order(0)
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
@@ -38,7 +37,7 @@ public class CampaignApplyStatusChangedEventListener {
                 event.applyId(), event.newStatus());
 
         ChatProposalStatus chatStatus = toChatProposalStatus(event.newStatus());
-        String eventId = ApplyStatusChangedEvent.generateEventId(event.applyId(), chatStatus);
+        String eventId = event.eventId();
 
         ApplyStatusChangedEvent chatEvent = new ApplyStatusChangedEvent(
                 eventId,
@@ -49,9 +48,9 @@ public class CampaignApplyStatusChangedEventListener {
                 chatStatus,
                 event.actorUserId()
         );
-        eventPublisher.publishEvent(chatEvent);
+        handler.handleApplyStatusChanged(chatEvent);
 
-        LOG.info("[ApplyBoundary] Published internal event. eventId={}, applyId={}, newStatus={}",
+        LOG.info("[ApplyBoundary] Handled business event. eventId={}, applyId={}, newStatus={}",
                 eventId, event.applyId(), chatStatus);
     }
 
@@ -59,12 +58,6 @@ public class CampaignApplyStatusChangedEventListener {
         if (status == null) {
             return ChatProposalStatus.NONE;
         }
-        return switch (status) {
-            case CANCELED -> ChatProposalStatus.CANCELED;
-            case NONE -> ChatProposalStatus.NONE;
-            case REVIEWING -> ChatProposalStatus.REVIEWING;
-            case MATCHED -> ChatProposalStatus.MATCHED;
-            case REJECTED -> ChatProposalStatus.REJECTED;
-        };
+        return ChatProposalStatus.valueOf(status.name());
     }
 }

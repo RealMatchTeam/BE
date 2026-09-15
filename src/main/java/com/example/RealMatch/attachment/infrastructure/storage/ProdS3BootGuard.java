@@ -6,12 +6,14 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.attachment.application.port.AttachmentStorage;
+
 @Component
 @Profile("prod")
 public class ProdS3BootGuard implements ApplicationRunner {
 
     @Autowired(required = false)
-    private S3FileUploadService s3FileUploadService;
+    private AttachmentStorage s3FileUploadService;
 
     @Override
     public void run(ApplicationArguments args) {

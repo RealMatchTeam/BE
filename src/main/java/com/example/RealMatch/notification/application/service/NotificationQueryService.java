@@ -12,15 +12,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.global.common.QueryLimits;
 import com.example.RealMatch.global.exception.CustomException;
+import com.example.RealMatch.notification.application.dto.response.NotificationDateGroup;
+import com.example.RealMatch.notification.application.dto.response.NotificationListResponse;
+import com.example.RealMatch.notification.application.dto.response.NotificationResponse;
+import com.example.RealMatch.notification.application.repository.NotificationRepository;
 import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationCategory;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
-import com.example.RealMatch.notification.domain.repository.NotificationRepository;
 import com.example.RealMatch.notification.exception.NotificationErrorCode;
-import com.example.RealMatch.notification.presentation.dto.response.NotificationDateGroup;
-import com.example.RealMatch.notification.presentation.dto.response.NotificationListResponse;
-import com.example.RealMatch.notification.presentation.dto.response.NotificationResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,7 +36,9 @@ public class NotificationQueryService {
             DateTimeFormatter.ofPattern("yy.MM.dd (E)", Locale.KOREAN);
 
     public NotificationListResponse getNotifications(Long userId, String filter, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        QueryLimits.page(page, size);
+        QueryLimits.text(filter, 30);
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
 
         List<NotificationKind> kinds = resolveKinds(filter);
 
@@ -75,7 +78,7 @@ public class NotificationQueryService {
         }
 
         try {
-            NotificationCategory category = NotificationCategory.valueOf(filter.toUpperCase());
+            NotificationCategory category = NotificationCategory.valueOf(filter.toUpperCase(Locale.ROOT));
             return category.getKinds();
         } catch (IllegalArgumentException e) {
             throw new CustomException(NotificationErrorCode.NOTIFICATION_INVALID_FILTER);

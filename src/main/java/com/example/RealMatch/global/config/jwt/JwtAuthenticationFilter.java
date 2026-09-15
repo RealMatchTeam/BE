@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final UserRepository users;
+    private final Environment environment;
 
     // JWT 검증을 건너뛸 경로들
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
@@ -62,7 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         // 마스터 JWT 체크 (개발/테스트용)
-        if (jwtProvider.isMasterJwt(token)) {
+        if (!environment.matchesProfiles("prod") && jwtProvider.isMasterJwt(token)) {
             CustomUserDetails masterUser = new CustomUserDetails(
                     0L,              // 마스터 사용자 ID
                     "master",        // providerId
@@ -82,15 +87,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (!jwtProvider.validateToken(token)) {
+        io.jsonwebtoken.Claims claims;
+        Long userId;
+        try {
+            claims = jwtProvider.getClaims(token);
+            if (!"access".equals(claims.get("type", String.class))) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Access token required");
+                return;
+            }
+            userId = Long.valueOf(claims.getSubject());
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException ex) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
             return;
         }
-
-        Long userId = jwtProvider.getUserId(token);
-        String providerId = jwtProvider.getProviderId(token);
-        String role = jwtProvider.getRole(token);
-        String email = jwtProvider.getEmail(token);
+        if (users.findById(userId).isEmpty()) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Inactive user");
+            return;
+        }
+        String providerId = claims.get("providerId", String.class);
+        String role = claims.get("role", String.class);
+        String email = claims.get("email", String.class);
 
         CustomUserDetails userDetails =
                 new CustomUserDetails(userId, providerId, role, email);

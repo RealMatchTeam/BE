@@ -1,6 +1,6 @@
 package com.example.RealMatch.chat.application.event.apply;
 
-import com.example.RealMatch.chat.presentation.dto.response.ChatApplyCardPayloadResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatApplyCardPayloadResponse;
 
 /**
  * 채팅 모듈 내부에서 사용되는 지원 전송 이벤트.
@@ -11,13 +11,4 @@ public record ApplySentEvent(
         Long roomId,
         ChatApplyCardPayloadResponse payload
 ) {
-    /**
-     * 같은 applyId면 항상 같은 ID가 생성됩니다.
-     */
-    public static String generateEventId(Long applyId) {
-        if (applyId == null) {
-            throw new IllegalArgumentException("applyId cannot be null");
-        }
-        return String.format("APPLY_SENT:%d", applyId);
-    }
 }

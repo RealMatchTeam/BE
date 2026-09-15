@@ -6,10 +6,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.chat.application.dto.response.ChatApplyStatusNoticePayloadResponse;
 import com.example.RealMatch.chat.application.service.message.ChatMessageCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
-import com.example.RealMatch.chat.presentation.dto.response.ChatApplyStatusNoticePayloadResponse;
 
 import lombok.RequiredArgsConstructor;
 

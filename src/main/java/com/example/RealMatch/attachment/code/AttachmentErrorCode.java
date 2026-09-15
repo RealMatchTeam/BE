@@ -10,6 +10,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum AttachmentErrorCode implements BaseErrorCode {
+    UPLOAD_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "ATTACHMENT429_1", "일일 업로드 한도를 초과했습니다."),
     ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND,
             "ATTACHMENT404_1",
             "첨부 파일을 찾을 수 없습니다."),

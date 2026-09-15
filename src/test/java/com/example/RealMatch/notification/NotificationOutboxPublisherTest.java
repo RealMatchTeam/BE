@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentMatchers;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
@@ -38,10 +39,11 @@ class NotificationOutboxPublisherTest {
         UUID outboxId = UUID.randomUUID();
         ReflectionTestUtils.setField(outbox, "id", outboxId);
         when(store.findPendingOutbox(50)).thenReturn(List.of(outbox));
-        when(store.claimOutbox(outboxId)).thenReturn(true);
+        UUID token = UUID.randomUUID();
+        when(store.claimOutbox(outboxId)).thenReturn(token);
 
         doAnswer(call -> {
-            verify(store, never()).markOutboxSent(any());
+            verify(store, never()).complete(any(), any(), ArgumentMatchers.isNull());
             CorrelationData correlation = call.getArgument(3);
             if ("connection-error".equals(outcome)) {
                 throw new IllegalStateException("Connection closed");
@@ -59,11 +61,11 @@ class NotificationOutboxPublisherTest {
         publisher.publishPendingOutbox();
 
         if ("ack".equals(outcome)) {
-            verify(store).markOutboxSent(outboxId);
-            verify(store, never()).markOutboxPublishFailed(any(), any());
+            verify(store).complete(outboxId, token, null);
+            verify(store, never()).complete(any(), any(), ArgumentMatchers.isNotNull());
         } else {
-            verify(store, never()).markOutboxSent(any());
-            verify(store).markOutboxPublishFailed(eq(outboxId), any());
+            verify(store, never()).complete(any(), any(), ArgumentMatchers.isNull());
+            verify(store).complete(eq(outboxId), eq(token), ArgumentMatchers.isNotNull());
         }
     }
 }

@@ -10,6 +10,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 
+import io.micrometer.core.instrument.Metrics;
+
 @Component
 public class SpringAfterCommitExecutor implements AfterCommitExecutor {
 
@@ -31,6 +33,7 @@ public class SpringAfterCommitExecutor implements AfterCommitExecutor {
                                 task.run();
                             } catch (Exception ex) {
                                 // afterCommit 내부 예외는 트랜잭션에 영향을 주지 않도록 로깅만 수행
+                                Metrics.counter("chat.after.commit.failures").increment();
                                 LOG.error("Exception occurred in afterCommit task execution.", ex);
                             }
                         }
@@ -44,6 +47,7 @@ public class SpringAfterCommitExecutor implements AfterCommitExecutor {
         try {
             task.run();
         } catch (Exception ex) {
+            Metrics.counter("chat.after.commit.failures").increment();
             LOG.error("Exception occurred in fallback task execution (no transaction).", ex);
         }
     }

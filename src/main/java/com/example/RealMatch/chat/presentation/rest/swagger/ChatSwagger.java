@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
+import com.example.RealMatch.chat.application.dto.request.ChatRoomCreateRequest;
+import com.example.RealMatch.chat.application.dto.response.ChatMessageListResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatRoomCreateResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatRoomDetailResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatRoomListResponse;
 import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 

@@ -1,145 +1,95 @@
 package com.example.RealMatch.notification.infrastructure.messaging;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.notification.application.repository.NotificationDeliveryRepository;
+import com.example.RealMatch.notification.application.repository.NotificationOutboxRepository;
+import com.example.RealMatch.notification.application.repository.PushReceiptRepository;
+import com.example.RealMatch.notification.application.service.NotificationDeliveryClaimService;
 import com.example.RealMatch.notification.application.service.NotificationOutboxService;
-import com.example.RealMatch.notification.domain.entity.NotificationDelivery;
 import com.example.RealMatch.notification.domain.entity.enums.DeliveryStatus;
 import com.example.RealMatch.notification.domain.entity.enums.OutboxStatus;
-import com.example.RealMatch.notification.domain.repository.NotificationDeliveryRepository;
-import com.example.RealMatch.notification.domain.repository.NotificationOutboxRepository;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- * 장애 복구 스케줄러.
- *
- * <p>복구 대상:
- * 1. Stuck IN_PROGRESS Delivery → RETRY (10분 임계)
- * 2. Due RETRY Delivery → 새 Outbox 생성 (중복 방지)
- * 3. Stuck SENDING Outbox → PENDING (5분 임계)
- * 4. Orphaned PENDING Delivery → 새 Outbox 생성 (활성 Outbox 없는 고아)
- * 5. Completed Outbox Cleanup (7일 보관)
- */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NotificationRecoveryScheduler {
-
-    private static final Logger LOG = LoggerFactory.getLogger(NotificationRecoveryScheduler.class);
-
-    private static final int DELIVERY_STUCK_THRESHOLD_MINUTES = 10;
-    private static final int OUTBOX_STUCK_THRESHOLD_MINUTES = 5;
-    private static final int ORPHAN_THRESHOLD_MINUTES = 30;
-    private static final int RETRY_BATCH_SIZE = 50;
-    private static final int OUTBOX_RETENTION_DAYS = 7;
-
-    private final NotificationDeliveryRepository deliveryRepository;
-    private final NotificationOutboxRepository outboxRepository;
+    private final NotificationDeliveryRepository deliveries;
+    private final NotificationOutboxRepository outboxes;
     private final NotificationOutboxService outboxService;
+    private final NotificationDeliveryClaimService claims;
+    private final MeterRegistry metrics;
+    private final PushReceiptRepository receipts;
+    private final Map<String, AtomicLong> gauges = new ConcurrentHashMap<>();
 
-    /** Consumer crash 복구: 10분 이상 IN_PROGRESS → RETRY */
-    @Transactional
-    @Scheduled(fixedDelay = 300_000, initialDelay = 60_000)
-    public void recoverStuckDeliveries() {
-        LocalDateTime stuckBefore = LocalDateTime.now()
-                .minusMinutes(DELIVERY_STUCK_THRESHOLD_MINUTES);
-
-        int recovered = deliveryRepository.recoverStuckDeliveries(
-                DeliveryStatus.IN_PROGRESS,
-                DeliveryStatus.RETRY,
-                stuckBefore);
-
-        if (recovered > 0) {
-            LOG.warn("[Recovery] Recovered {} stuck IN_PROGRESS deliveries → RETRY.", recovered);
+    @Scheduled(fixedDelay = 60_000, initialDelay = 30_000, scheduler = "notificationRecoveryExecutor")
+    public void recover() {
+        var now = LocalDateTime.now();
+        var page = PageRequest.of(0, 100);
+        for (var id : deliveries.findStuck(now.minusMinutes(10), page)) {
+            safely(() -> claims.recover(id, now.minusMinutes(10)));
+        }
+        for (var id : outboxes.findStuck(now.minusMinutes(5), page)) {
+            safely(() -> outboxService.recover(id, now.minusMinutes(5)));
+        }
+        for (var delivery : deliveries.findDispatchable(now, now.minusMinutes(30), page)) {
+            safely(() -> outboxService.createRetryOutboxIfAbsent(delivery.getId()));
+        }
+        age("notification.delivery.oldest.seconds", deliveries.oldestPending(), now);
+        age("notification.outbox.oldest.seconds", outboxes.oldestPending(), now);
+        for (var status : DeliveryStatus.values()) {
+            gauge("notification.delivery.backlog", status.name(), deliveries.countByStatus(status));
+        }
+        for (var status : OutboxStatus.values()) {
+            gauge("notification.outbox.backlog", status.name(), outboxes.countByStatus(status));
         }
     }
 
-    /** backoff 만료된 RETRY delivery → 새 Outbox 생성하여 MQ 재발행 */
-    @Scheduled(fixedDelay = 60_000, initialDelay = 30_000)
-    public void reprocessRetryDeliveries() {
-        List<NotificationDelivery> retryList = deliveryRepository.findRetryableDeliveries(
-                DeliveryStatus.RETRY,
-                LocalDateTime.now(),
-                PageRequest.of(0, RETRY_BATCH_SIZE));
-
-        if (retryList.isEmpty()) {
-            return;
-        }
-
-        LOG.info("[Recovery] Found {} RETRY deliveries due for reprocessing.", retryList.size());
-
-        for (NotificationDelivery delivery : retryList) {
-            try {
-                outboxService.createRetryOutboxIfAbsent(
-                        delivery.getId(),
-                        delivery.getNotificationId(),
-                        delivery.getChannel());
-            } catch (Exception e) {
-                LOG.error("[Recovery] Failed to create retry outbox. deliveryId={}",
-                        delivery.getId(), e);
-            }
-        }
-    }
-
-    /** Publisher crash 복구: 5분 이상 SENDING → PENDING */
-    @Transactional
-    @Scheduled(fixedDelay = 300_000, initialDelay = 90_000)
-    public void recoverStuckOutbox() {
-        LocalDateTime stuckBefore = LocalDateTime.now()
-                .minusMinutes(OUTBOX_STUCK_THRESHOLD_MINUTES);
-
-        int recovered = outboxRepository.recoverStuckOutbox(
-                OutboxStatus.SENDING,
-                OutboxStatus.PENDING,
-                stuckBefore);
-
-        if (recovered > 0) {
-            LOG.warn("[Recovery] Recovered {} stuck SENDING outbox → PENDING.", recovered);
-        }
-    }
-
-    /** Outbox FAILED 후 PENDING으로 남은 고아 delivery 복구 (30분 threshold) */
-    @Scheduled(fixedDelay = 600_000, initialDelay = 180_000)
-    public void recoverOrphanedPendingDeliveries() {
-        LocalDateTime orphanBefore = LocalDateTime.now()
-                .minusMinutes(ORPHAN_THRESHOLD_MINUTES);
-
-        List<NotificationDelivery> orphanList = deliveryRepository.findOrphanedPendingDeliveries(
-                DeliveryStatus.PENDING,
-                orphanBefore,
-                PageRequest.of(0, RETRY_BATCH_SIZE));
-
-        if (orphanList.isEmpty()) {
-            return;
-        }
-
-        LOG.warn("[Recovery] Found {} orphaned PENDING deliveries (no active outbox).",
-                orphanList.size());
-
-        for (NotificationDelivery delivery : orphanList) {
-            try {
-                outboxService.createRetryOutboxIfAbsent(
-                        delivery.getId(),
-                        delivery.getNotificationId(),
-                        delivery.getChannel());
-            } catch (Exception e) {
-                LOG.error("[Recovery] Failed to create outbox for orphaned delivery. deliveryId={}",
-                        delivery.getId(), e);
-            }
-        }
-    }
-
-    /** 7일 지난 SENT/FAILED Outbox 삭제 — 테이블 무한 성장 방지 */
-    @Scheduled(fixedDelay = 3_600_000, initialDelay = 120_000)
+    @Scheduled(fixedDelay = 60_000, initialDelay = 120_000, scheduler = "notificationRecoveryExecutor")
     public void cleanupCompletedOutbox() {
-        outboxService.cleanupCompletedOutbox(OUTBOX_RETENTION_DAYS);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        // Bounded transactions and a time budget keep recovery responsive during a cleanup backlog.
+        for (int batch = 0; batch < 20 && System.nanoTime() < deadline; batch++) {
+            int deleted = outboxService.cleanupCompletedOutbox(7);
+            var ids = receipts.findCompleted(LocalDateTime.now().minusDays(30), PageRequest.of(0, 200));
+            receipts.deleteAllByIdInBatch(ids);
+            if (deleted < 200 && ids.size() < 200) {
+                break;
+            }
+        }
+    }
+
+    private void age(String name, LocalDateTime oldest, LocalDateTime now) {
+        gauge(name, "pending", oldest == null ? 0 : Math.max(0, Duration.between(oldest, now).getSeconds()));
+    }
+
+    private void gauge(String name, String status, long count) {
+        gauges.computeIfAbsent(name + status, key -> metrics.gauge(name,
+                List.of(Tag.of("status", status)),
+                new AtomicLong())).set(count);
+    }
+
+    private void safely(Runnable work) {
+        try {
+            work.run();
+        } catch (RuntimeException ex) {
+            metrics.counter("notification.recovery.failures").increment();
+            log.error("Notification recovery failed", ex);
+        }
     }
 }

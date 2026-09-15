@@ -2,6 +2,7 @@ package com.example.RealMatch.business.application.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -96,7 +97,7 @@ public class CampaignProposalService {
         userRepository.findById(userDetails.getUserId())
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        CampaignProposal proposal = campaignProposalRepository.findById(campaignProposalId)
+        CampaignProposal proposal = campaignProposalRepository.findForUpdate(campaignProposalId)
                 .orElseThrow(() -> new CustomException(
                         BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND
                 ));
@@ -122,10 +123,9 @@ public class CampaignProposalService {
         publishProposalSentEvent(proposal, true);
     }
 
-
     public void approveCampaignProposal(Long userId, Long campaignProposalId) {
         CampaignProposal proposal = campaignProposalRepository
-                .findById(campaignProposalId)
+                .findForUpdate(campaignProposalId)
                 .orElseThrow(() ->
                         new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
                 );
@@ -147,7 +147,7 @@ public class CampaignProposalService {
             String rejectReason
     ) {
         CampaignProposal proposal = campaignProposalRepository
-                .findById(campaignProposalId)
+                .findForUpdate(campaignProposalId)
                 .orElseThrow(() ->
                         new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
                 );
@@ -171,7 +171,6 @@ public class CampaignProposalService {
         saveContentTags(proposal, request.getInvolvements());
         saveContentTags(proposal, request.getUsageRanges());
     }
-
 
     private void saveContentTags(
             CampaignProposal proposal,
@@ -225,11 +224,10 @@ public class CampaignProposalService {
 
     public void cancelCampaignProposal(Long userId, Long campaignProposalId) {
         CampaignProposal proposal = campaignProposalRepository
-                .findById(campaignProposalId)
+                .findForUpdate(campaignProposalId)
                 .orElseThrow(() ->
                         new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_FOUND)
                 );
-
 
         proposal.validateCancelable(userId);
         proposal.cancel();
@@ -237,13 +235,11 @@ public class CampaignProposalService {
         publishProposalStatusChangedEvent(proposal, ProposalStatus.CANCELED, userId);
     }
 
-
     private void validateReceiver(CampaignProposal proposal, Long userId) {
         if (!proposal.getReceiverUserId().equals(userId)) {
             throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_FORBIDDEN);
         }
     }
-
 
     private static void validateModifyAvailable(CustomUserDetails userDetails, CampaignProposal proposal) {
         if (!proposal.isModifiable()) {
@@ -335,7 +331,7 @@ public class CampaignProposalService {
         }
 
         CampaignProposalSentEvent event = new CampaignProposalSentEvent(
-                java.util.UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
                 proposal.getId(),
                 proposal.getSenderUserId(),
                 brandUserId,
@@ -366,5 +362,4 @@ public class CampaignProposalService {
         );
         eventPublisher.publishEvent(event);
     }
-
 }

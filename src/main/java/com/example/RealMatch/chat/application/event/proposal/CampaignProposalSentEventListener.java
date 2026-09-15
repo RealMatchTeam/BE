@@ -2,7 +2,6 @@ package com.example.RealMatch.chat.application.event.proposal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -11,10 +10,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import com.example.RealMatch.business.application.event.CampaignProposalSentEvent;
 import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
+import com.example.RealMatch.chat.application.dto.enums.ChatProposalDecisionStatus;
+import com.example.RealMatch.chat.application.dto.response.ChatProposalCardPayloadResponse;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatProposalDecisionStatus;
-import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +28,7 @@ public class CampaignProposalSentEventListener {
     private static final Logger LOG = LoggerFactory.getLogger(CampaignProposalSentEventListener.class);
 
     private final ChatRoomCommandService chatRoomCommandService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ProposalSystemMessageHandler handler;
 
     @Order(0)
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
@@ -48,9 +47,9 @@ public class CampaignProposalSentEventListener {
         String eventId = event.eventId();
 
         ProposalSentEvent chatEvent = new ProposalSentEvent(eventId, roomId, payload, event.isReProposal());
-        eventPublisher.publishEvent(chatEvent);
+        handler.handleProposalSent(chatEvent);
 
-        LOG.info("[ProposalBoundary] Published internal event. eventId={}, roomId={}, proposalId={}",
+        LOG.info("[ProposalBoundary] Handled business event. eventId={}, roomId={}, proposalId={}",
                 eventId, roomId, event.proposalId());
     }
 
@@ -94,9 +93,6 @@ public class CampaignProposalSentEventListener {
         if (direction == null) {
             return ChatProposalDirection.NONE;
         }
-        return switch (direction) {
-            case BRAND_TO_CREATOR -> ChatProposalDirection.BRAND_TO_CREATOR;
-            case CREATOR_TO_BRAND -> ChatProposalDirection.CREATOR_TO_BRAND;
-        };
+        return ChatProposalDirection.valueOf(direction.name());
     }
 }

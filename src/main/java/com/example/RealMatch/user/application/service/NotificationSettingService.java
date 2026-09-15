@@ -1,5 +1,7 @@
 package com.example.RealMatch.user.application.service;
 
+import static com.example.RealMatch.global.presentation.code.GeneralErrorCode.NOT_FOUND;
+
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import com.example.RealMatch.user.domain.entity.UserTerm;
 import com.example.RealMatch.user.domain.entity.enums.TermName;
 import com.example.RealMatch.user.domain.repository.NotificationSettingRepository;
 import com.example.RealMatch.user.domain.repository.TermRepository;
+import com.example.RealMatch.user.domain.repository.UserRepository;
 import com.example.RealMatch.user.domain.repository.UserTermRepository;
 import com.example.RealMatch.user.presentation.code.UserErrorCode;
 import com.example.RealMatch.user.presentation.dto.request.NotificationSettingUpdateRequest;
@@ -29,18 +32,14 @@ public class NotificationSettingService {
     private final NotificationSettingRepository notificationSettingRepository;
     private final UserTermRepository userTermRepository;
     private final TermRepository termRepository;
+    private final UserRepository users;
 
     /**
      * 내 알림 설정 조회
      */
-    @Transactional(readOnly = true)
     public NotificationSettingResponse getMySetting(Long userId) {
 
-        NotificationSetting setting = notificationSettingRepository
-                .findOneByUserId(userId)
-                .orElseThrow(() ->
-                        new CustomException(UserErrorCode.USER_NOTIFICATION_SETTING_NOT_FOUND)
-                );
+        NotificationSetting setting = getOrCreate(userId);
 
         boolean marketingConsent = userTermRepository
                 .findByUserIdAndTermName(userId, MARKETING_TERM_NAME)
@@ -59,11 +58,7 @@ public class NotificationSettingService {
     public void updateSetting(Long userId, NotificationSettingUpdateRequest request) {
 
         // 1️⃣ 알림 설정 업데이트
-        NotificationSetting setting = notificationSettingRepository
-                .findOneByUserId(userId)
-                .orElseThrow(() ->
-                        new CustomException(UserErrorCode.USER_NOTIFICATION_SETTING_NOT_FOUND)
-                );
+        NotificationSetting setting = getOrCreate(userId);
 
         setting.update(
                 request.isAppPushEnabled(),
@@ -99,4 +94,11 @@ public class NotificationSettingService {
         }
     }
 
+    private NotificationSetting getOrCreate(Long userId) {
+        var user = users.findByIdForUpdate(userId).orElseThrow(() -> new CustomException(
+                NOT_FOUND));
+        return notificationSettingRepository.findOneByUserId(userId).orElseGet(() ->
+                notificationSettingRepository.save(NotificationSetting.builder().user(user)
+                        .appPushEnabled(false).emailEnabled(false).build()));
+    }
 }

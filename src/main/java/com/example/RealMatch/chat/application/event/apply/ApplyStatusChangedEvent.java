@@ -15,16 +15,4 @@ public record ApplyStatusChangedEvent(
         ChatProposalStatus newStatus,
         Long actorUserId     // 상태 변경을 수행한 사용자 ID (취소/수락/거절한 사용자)
 ) {
-    /**
-     * 같은 applyId와 newStatus 조합이면 항상 같은 ID가 생성됩니다.
-     */
-    public static String generateEventId(Long applyId, ChatProposalStatus newStatus) {
-        if (applyId == null) {
-            throw new IllegalArgumentException("applyId cannot be null");
-        }
-        if (newStatus == null) {
-            throw new IllegalArgumentException("newStatus cannot be null");
-        }
-        return String.format("APPLY_STATUS_CHANGED:%d:%s", applyId, newStatus);
-    }
 }

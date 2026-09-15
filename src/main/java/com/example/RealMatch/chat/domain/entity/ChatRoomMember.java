@@ -2,6 +2,8 @@ package com.example.RealMatch.chat.domain.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.SQLRestriction;
+
 import com.example.RealMatch.chat.domain.enums.ChatRoomMemberRole;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
@@ -22,17 +24,18 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@SQLRestriction("is_deleted = false")
 @Table(
         name = "chat_room_member",
         indexes = {
-                @Index(name = "idx_member_user_deleted_room", columnList = "user_id, is_deleted, room_id")
-        },
+                @Index(name = "idx_member_user_deleted_room", columnList = "user_id,is_deleted,left_at,room_id")
+},
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_chat_room_member_room_user",
                         columnNames = {"room_id", "user_id"}
                 )
-        }
+}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomMember extends DeleteBaseEntity {
@@ -86,10 +89,5 @@ public class ChatRoomMember extends DeleteBaseEntity {
         if (joinedAt == null) {
             joinedAt = LocalDateTime.now();
         }
-    }
-
-    public void updateLastReadMessage(Long messageId, LocalDateTime readAt) {
-        this.lastReadMessageId = messageId;
-        this.lastReadAt = readAt;
     }
 }

@@ -3,10 +3,16 @@ package com.example.RealMatch.chat.application.conversion;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.example.RealMatch.global.common.QueryLimits;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public record RoomCursor(LocalDateTime lastMessageAt, Long roomId) {
+    public RoomCursor {
+        if (lastMessageAt == null || roomId == null || roomId <= 0) {
+            throw new IllegalArgumentException("Valid timestamp and positive roomId required");
+        }
+    }
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
     public static RoomCursor of(LocalDateTime lastMessageAt, Long roomId) {
@@ -15,6 +21,7 @@ public record RoomCursor(LocalDateTime lastMessageAt, Long roomId) {
 
     @JsonCreator
     public static RoomCursor decode(String value) {
+        QueryLimits.text(value, 100);
         if (value == null || value.isBlank()) {
             return null;
         }

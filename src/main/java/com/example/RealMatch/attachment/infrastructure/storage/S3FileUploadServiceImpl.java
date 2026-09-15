@@ -1,8 +1,11 @@
 package com.example.RealMatch.attachment.infrastructure.storage;
 
 import java.io.InputStream;
+import java.net.URI;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -10,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import com.example.RealMatch.attachment.application.port.AttachmentStorage;
 import com.example.RealMatch.attachment.code.AttachmentErrorCode;
 import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
 import com.example.RealMatch.global.exception.CustomException;
@@ -27,7 +31,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 @Service
 @RequiredArgsConstructor
 @Conditional(S3CredentialsCondition.class)
-public class S3FileUploadServiceImpl implements S3FileUploadService {
+public class S3FileUploadServiceImpl implements AttachmentStorage {
 
     private static final Logger LOG = LoggerFactory.getLogger(S3FileUploadServiceImpl.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
@@ -38,7 +42,7 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
     private final S3FileNameSanitizer fileNameSanitizer;
 
     @Override
-    public String uploadFile(InputStream inputStream, String key, String contentType, long fileSize, AttachmentUsage usage) {
+    public void uploadFile(InputStream inputStream, String key, String contentType, long fileSize, AttachmentUsage usage) {
         String bucket = resolveBucket(usage);
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -46,23 +50,22 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
                     .key(key)
                     .contentType(contentType)
                     .contentLength(fileSize)
+                    .contentDisposition(contentType.startsWith("image/") ? "inline" : "attachment")
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, fileSize));
             LOG.info("S3 업로드 완료. bucket={}, key={}, usage={}", bucket, key, usage);
-            return null;
-
         } catch (S3Exception e) {
             handleS3Exception("파일 업로드", key, bucket, e);
-            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, e);
         } catch (Exception e) {
             LOG.error("S3 파일 업로드 중 예상치 못한 오류 발생. bucket={}, key={}", bucket, key, e);
-            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, e);
         }
     }
 
     @Override
-    public String generatePresignedUrl(String key, int expirationSeconds) {
+    public String generatePresignedUrl(String key) {
         try {
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(s3Properties.getBucketName())
@@ -71,23 +74,22 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
 
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(
                     presigner -> presigner
-                            .signatureDuration(java.time.Duration.ofSeconds(expirationSeconds))
+                            .signatureDuration(Duration.ofSeconds(Math.max(30, Math.min(900, s3Properties.getPresignedUrlExpirationSeconds()))))
                             .getObjectRequest(getObjectRequest)
             );
 
             return presignedRequest.url().toString();
-
         } catch (S3Exception e) {
             handleS3Exception("Presigned URL 생성", key, s3Properties.getBucketName(), e);
-            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, e);
         } catch (Exception e) {
             LOG.error("Presigned URL 생성 중 예상치 못한 오류 발생. key={}", key, e);
-            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_UPLOAD_FAILED, e);
         }
     }
 
     @Override
-    public String generateS3Key(AttachmentUsage usage, Long userId, Long attachmentId, String originalFilename) {
+    public String generateStorageKey(AttachmentUsage usage, Long userId, String originalFilename) {
         String sanitizedFilename = fileNameSanitizer.sanitizeFileName(originalFilename);
         String extension = fileNameSanitizer.getFileExtension(originalFilename);
         String filename = sanitizedFilename;
@@ -115,10 +117,10 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
             s3Client.deleteObject(deleteObjectRequest);
         } catch (S3Exception e) {
             handleS3Exception("파일 삭제", key, bucket, e);
-            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED, e);
         } catch (Exception e) {
             LOG.error("S3 파일 삭제 중 예상치 못한 오류 발생. bucket={}, key={}", bucket, key, e);
-            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED);
+            throw new CustomException(AttachmentErrorCode.S3_DELETE_FAILED, e);
         }
     }
 
@@ -136,11 +138,53 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
         return base.endsWith("/") ? base + storageKey : base + "/" + storageKey;
     }
 
+    @Override
+    public String publicStorageKey(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        if (!value.contains("://")) {
+            return value;
+        }
+        String baseUrl = s3Properties.getCloudfrontBaseUrl();
+        if (baseUrl == null || baseUrl.isBlank()) {
+            return null;
+        }
+        try {
+            var base = URI.create(baseUrl);
+            var url = URI.create(value);
+            if (!allowedScheme(base, url) || !Objects.equals(base.getHost(), url.getHost())
+                    || base.getPort() != url.getPort() || url.getUserInfo() != null || url.getQuery() != null
+                    || url.getFragment() != null || !url.normalize().equals(url)) {
+                return null;
+            }
+            String prefix = base.getPath().replaceAll("/+$", "") + "/";
+            return url.getPath().startsWith(prefix) ? url.getPath().substring(prefix.length()) : null;
+        } catch (IllegalArgumentException ex) {
+            throw new CustomException(AttachmentErrorCode.INVALID_FILE, ex);
+        }
+    }
+
+    private boolean allowedScheme(URI base, URI url) {
+        if (!Objects.equals(base.getScheme(), url.getScheme())) {
+            return false;
+        }
+        if ("https".equals(url.getScheme())) {
+            return true;
+        }
+        String host = base.getHost();
+        return "http".equals(url.getScheme())
+                && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host) || "::1".equals(host));
+    }
+
     /**
      * usage에 따라 대상 버킷 결정.
      * PUBLIC → publicBucketName, CHAT → bucketName (private).
      */
     private String resolveBucket(AttachmentUsage usage) {
+        if (usage == null) {
+            throw new IllegalArgumentException("Attachment usage required");
+        }
         if (usage == AttachmentUsage.PUBLIC) {
             String publicBucket = s3Properties.getPublicBucketName();
             if (publicBucket == null || publicBucket.isBlank()) {
@@ -157,13 +201,13 @@ public class S3FileUploadServiceImpl implements S3FileUploadService {
                 operation,
                 key,
                 bucket,
-                e.awsErrorDetails().errorCode(),
+                e.awsErrorDetails() != null ? e.awsErrorDetails().errorCode() : "unknown",
                 e.statusCode(),
                 e.requestId(),
                 e);
-        
+
         if (e.statusCode() == 403 || e.statusCode() == 401) {
-            throw new CustomException(AttachmentErrorCode.S3_ACCESS_DENIED);
+            throw new CustomException(AttachmentErrorCode.S3_ACCESS_DENIED, e);
         }
     }
 }

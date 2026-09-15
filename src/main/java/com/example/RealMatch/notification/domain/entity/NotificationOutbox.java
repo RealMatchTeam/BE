@@ -1,5 +1,7 @@
 package com.example.RealMatch.notification.domain.entity;
 
+import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.example.RealMatch.global.common.BaseEntity;
@@ -31,7 +33,9 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "notification_outbox", indexes = {
-    @Index(name = "idx_outbox_status_created", columnList = "status, created_at")
+    @Index(name = "idx_outbox_due", columnList = "status,next_attempt_at,created_at,id"),
+    @Index(name = "idx_outbox_stuck", columnList = "status,attempted_at"),
+    @Index(name = "idx_outbox_cleanup", columnList = "status,updated_at")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -44,7 +48,7 @@ public class NotificationOutbox extends BaseEntity {
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = "delivery_id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "delivery_id", nullable = false, columnDefinition = "BINARY(16)", unique = true)
     private UUID deliveryId;
 
     @Column(name = "notification_id", nullable = false, columnDefinition = "BINARY(16)")
@@ -55,7 +59,7 @@ public class NotificationOutbox extends BaseEntity {
     private NotificationChannel channel;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(20)")
     private OutboxStatus status;
 
     @Column(name = "retry_count", nullable = false)
@@ -63,6 +67,45 @@ public class NotificationOutbox extends BaseEntity {
 
     @Column(name = "last_error", length = 500)
     private String lastError;
+    private LocalDateTime attemptedAt;
+    private LocalDateTime nextAttemptAt;
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID claimToken;
+
+    public UUID claim(LocalDateTime now) {
+        if (status != OutboxStatus.PENDING || nextAttemptAt != null && nextAttemptAt.isAfter(now)) {
+            return null;
+        }
+        status = OutboxStatus.SENDING;
+        attemptedAt = now;
+        claimToken = UUID.randomUUID();
+        retryCount++;
+        return claimToken;
+    }
+
+    public void complete(UUID token, String error, LocalDateTime now) {
+        if (status != OutboxStatus.SENDING || !Objects.equals(claimToken, token)) {
+            return;
+        }
+        claimToken = null;
+        if (error == null) {
+            status = OutboxStatus.SENT;
+            nextAttemptAt = null;
+        } else {
+            lastError = error.substring(0, Math.min(error.length(), 500));
+            status = retryCount >= MAX_PUBLISH_RETRY ? OutboxStatus.FAILED : OutboxStatus.PENDING;
+            nextAttemptAt = now.plusSeconds(Math.min(1L << Math.min(retryCount, 10), 900));
+        }
+    }
+
+    public void requeue() {
+        if (status == OutboxStatus.SENT || status == OutboxStatus.FAILED) {
+            status = OutboxStatus.PENDING;
+            retryCount = 0;
+            nextAttemptAt = LocalDateTime.now();
+            claimToken = null;
+        }
+    }
 
     @Builder
     protected NotificationOutbox(UUID deliveryId, UUID notificationId,
@@ -72,5 +115,6 @@ public class NotificationOutbox extends BaseEntity {
         this.channel = channel;
         this.status = OutboxStatus.PENDING;
         this.retryCount = 0;
+        this.nextAttemptAt = LocalDateTime.now();
     }
 }

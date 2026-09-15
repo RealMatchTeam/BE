@@ -1,5 +1,6 @@
 package com.example.RealMatch.notification.infrastructure.messaging;
 
+import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
@@ -126,7 +127,7 @@ public class RabbitMqConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(jackson2JsonMessageConverter);
-        factory.setAcknowledgeMode(org.springframework.amqp.core.AcknowledgeMode.MANUAL);
+        factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
         factory.setPrefetchCount(10);
         factory.setDefaultRequeueRejected(false);
         return factory;

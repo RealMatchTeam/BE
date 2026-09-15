@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.application.util.NicknameValidator;
 import com.example.RealMatch.user.domain.entity.AuthenticationMethod;
@@ -35,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AttachmentQueryService attachmentReferences;
     private final ScrapMockDataProvider scrapMockDataProvider;
     private final AuthenticationMethodRepository authenticationMethodRepository;
     private final UserMatchingDetailRepository userMatchingDetailRepository;
@@ -161,6 +163,7 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(UserErrorCode.PROFILE_CARD_NOT_FOUND));
 
         // 이미지 URL만 교체
+        attachmentReferences.retainPublicUrl(userId, request.getProfileImageUrl());
         user.updateProfileImage(request.getProfileImageUrl());
 
         // 변경된 프로필 이미지로 프로필 카드 DTO 재생성

@@ -1,81 +1,51 @@
 package com.example.RealMatch.notification.application.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.RealMatch.notification.domain.entity.NotificationDelivery;
+import com.example.RealMatch.notification.application.repository.NotificationDeliveryRepository;
 import com.example.RealMatch.notification.domain.entity.enums.DeliveryStatus;
-import com.example.RealMatch.notification.domain.repository.NotificationDeliveryRepository;
+import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationDeliveryClaimService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(NotificationDeliveryClaimService.class);
-
-    private static final List<DeliveryStatus> CLAIMABLE_STATUSES =
-            List.of(DeliveryStatus.PENDING, DeliveryStatus.RETRY);
-
-    private final NotificationDeliveryRepository deliveryRepository;
+    private final NotificationDeliveryRepository repository;
 
     @Transactional
-    public boolean claimDelivery(UUID deliveryId) {
-        int updated = deliveryRepository.claimDelivery(
-                deliveryId,
-                DeliveryStatus.IN_PROGRESS,
-                LocalDateTime.now(),
-                CLAIMABLE_STATUSES);
-
-        if (updated == 0) {
-            LOG.debug("[DeliveryClaim] Claim failed (already processed). deliveryId={}", deliveryId);
-        }
-        return updated > 0;
+    public Claim claim(UUID id) {
+        return repository.findForUpdate(id).filter(d -> d.claim(LocalDateTime.now()))
+                .map(d -> new Claim(d.getId(), d.getNotificationId(), d.getChannel(), d.getAttemptCount()))
+                .orElse(null);
     }
 
     @Transactional
-    public void markSent(UUID deliveryId, String providerMessageId) {
-        NotificationDelivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
-        if (delivery == null) {
-            LOG.warn("[DeliveryClaim] Delivery not found for markSent. deliveryId={}", deliveryId);
+    public void complete(Claim claim, DeliveryStatus result, String detail) {
+        var delivery = repository.findForUpdate(claim.id()).orElse(null);
+        if (delivery == null || delivery.getStatus() != DeliveryStatus.IN_PROGRESS
+                || delivery.getAttemptCount() != claim.attempt()) {
             return;
         }
-        delivery.markAsSent(providerMessageId);
-        LOG.debug("[DeliveryClaim] Marked SENT. deliveryId={}, providerId={}", deliveryId, providerMessageId);
-    }
-
-    @Transactional
-    public void recordFailure(UUID deliveryId, String reason) {
-        NotificationDelivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
-        if (delivery == null) {
-            LOG.warn("[DeliveryClaim] Delivery not found for recordFailure. deliveryId={}", deliveryId);
-            return;
+        switch (result) {
+            case SENT -> delivery.markAsSent(detail);
+            case RETRY -> delivery.recordFailure(detail);
+            case FAILED -> delivery.markAsPermanentlyFailed(detail);
+            case SKIPPED -> delivery.skip();
+            default -> throw new IllegalArgumentException("Invalid delivery outcome");
         }
-        delivery.recordFailure(reason);
-        LOG.warn("[DeliveryClaim] Recorded failure. deliveryId={}, attempt={}, newStatus={}",
-                deliveryId, delivery.getAttemptCount(), delivery.getStatus());
     }
 
     @Transactional
-    public void markPermanentlyFailed(UUID deliveryId, String reason) {
-        NotificationDelivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
-        if (delivery == null) {
-            LOG.warn("[DeliveryClaim] Delivery not found for permanent failure. deliveryId={}", deliveryId);
-            return;
-        }
-        delivery.markAsPermanentlyFailed(reason);
-        LOG.warn("[DeliveryClaim] Marked PERMANENTLY FAILED. deliveryId={}, reason={}", deliveryId, reason);
+    public void recover(UUID id, LocalDateTime before) {
+        repository.findForUpdate(id).filter(d -> d.getStatus() == DeliveryStatus.IN_PROGRESS
+                && d.getAttemptedAt().isBefore(before)).ifPresent(d -> d.recordFailure("Worker lease expired"));
     }
 
-    @Transactional
-    public void skipDelivery(UUID deliveryId) {
-        deliveryRepository.findById(deliveryId).ifPresent(NotificationDelivery::skip);
+    public record Claim(UUID id, UUID notificationId, NotificationChannel channel, int attempt) {
     }
 }

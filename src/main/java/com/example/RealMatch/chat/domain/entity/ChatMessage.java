@@ -23,8 +23,9 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "chat_message",
         indexes = {
-                @Index(name = "idx_message_room_sender_id", columnList = "room_id, sender_id, id")
-        },
+                @Index(name = "idx_message_room_sender_id", columnList = "room_id, sender_id, id"),
+                @Index(name = "idx_message_room_id", columnList = "room_id, id")
+},
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_chat_message_system_event",
@@ -34,7 +35,7 @@ import lombok.NoArgsConstructor;
                         name = "uk_chat_message_sender_client",
                         columnNames = {"sender_id", "client_message_id"}
                 )
-        }
+}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessage extends BaseEntity {
@@ -66,10 +67,12 @@ public class ChatMessage extends BaseEntity {
     @Column(name = "system_payload", columnDefinition = "json")
     private String systemPayload;
 
-    @Column(name = "client_message_id", length = 36)
+    @Column(name = "client_message_id", length = 36,
+            columnDefinition = "varchar(36) character set utf8mb4 collate utf8mb4_0900_bin")
     private String clientMessageId;
 
-    @Column(name = "system_event_id", length = 100)
+    @Column(name = "system_event_id", length = 100,
+            columnDefinition = "varchar(100) character set utf8mb4 collate utf8mb4_0900_bin")
     private String systemEventId;
 
     private ChatMessage(
@@ -119,6 +122,12 @@ public class ChatMessage extends BaseEntity {
         }
         if (messageType == null) {
             throw new IllegalArgumentException("Message type must not be null.");
+        }
+        if (content != null && content.length() > 5000) {
+            throw new IllegalArgumentException("Message is too long");
+        }
+        if (messageType == ChatMessageType.TEXT && attachmentId != null) {
+            throw new IllegalArgumentException("TEXT cannot contain an attachment");
         }
         if (messageType == ChatMessageType.SYSTEM) {
             throw new IllegalArgumentException("Use createSystemMessage for SYSTEM messages.");

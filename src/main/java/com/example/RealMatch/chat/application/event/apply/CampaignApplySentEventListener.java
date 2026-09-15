@@ -2,15 +2,14 @@ package com.example.RealMatch.chat.application.event.apply;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.example.RealMatch.business.application.event.CampaignApplySentEvent;
+import com.example.RealMatch.chat.application.dto.response.ChatApplyCardPayloadResponse;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
-import com.example.RealMatch.chat.presentation.dto.response.ChatApplyCardPayloadResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +24,7 @@ public class CampaignApplySentEventListener {
     private static final Logger LOG = LoggerFactory.getLogger(CampaignApplySentEventListener.class);
 
     private final ChatRoomCommandService chatRoomCommandService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplySystemMessageHandler handler;
 
     @Order(0)
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
@@ -41,12 +40,12 @@ public class CampaignApplySentEventListener {
         // 채팅방이 없으면 생성
         Long roomId = ensureRoomAndGetId(event.brandUserId(), event.creatorUserId());
         ChatApplyCardPayloadResponse payload = createPayload(event);
-        String eventId = ApplySentEvent.generateEventId(event.applyId());
+        String eventId = event.eventId();
 
         ApplySentEvent chatEvent = new ApplySentEvent(eventId, roomId, payload);
-        eventPublisher.publishEvent(chatEvent);
+        handler.handleApplySent(chatEvent);
 
-        LOG.info("[ApplyBoundary] Published internal event. eventId={}, roomId={}, applyId={}",
+        LOG.info("[ApplyBoundary] Handled business event. eventId={}, roomId={}, applyId={}",
                 eventId, roomId, event.applyId());
     }
 

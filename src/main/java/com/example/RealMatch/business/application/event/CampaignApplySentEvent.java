@@ -9,4 +9,7 @@ public record CampaignApplySentEvent(
         String campaignDescription,
         String applyReason   // 지원 사유
 ) {
+    public String eventId() {
+        return "APPLY_SENT:" + applyId;
+    }
 }

@@ -17,16 +17,4 @@ public record ProposalStatusChangedEvent(
         Long actorUserId,    // 상태 변경을 수행한 사용자 ID (수락/거절/취소한 사용자)
         ChatProposalDirection proposalDirection
 ) {
-    /**
-     * 같은 proposalId와 newStatus 조합이면 항상 같은 ID가 생성됩니다.
-     */
-    public static String generateEventId(Long proposalId, ChatProposalStatus newStatus) {
-        if (proposalId == null) {
-            throw new IllegalArgumentException("proposalId cannot be null");
-        }
-        if (newStatus == null) {
-            throw new IllegalArgumentException("newStatus cannot be null");
-        }
-        return String.format("PROPOSAL_STATUS_CHANGED:%d:%s", proposalId, newStatus);
-    }
 }

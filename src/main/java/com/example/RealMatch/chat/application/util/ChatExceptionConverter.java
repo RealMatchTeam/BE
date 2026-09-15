@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 public class ChatExceptionConverter {
 
     public static CustomException convert(IllegalArgumentException ex) {
-        return new CustomException(ChatErrorCode.INVALID_MESSAGE_FORMAT, ex.getMessage());
+        return new CustomException(ChatErrorCode.INVALID_MESSAGE_FORMAT, ex.getMessage(), ex);
     }
 
     public static CustomException convert(IllegalArgumentException ex, String customMessage) {
-        return new CustomException(ChatErrorCode.INVALID_MESSAGE_FORMAT, customMessage);
+        return new CustomException(ChatErrorCode.INVALID_MESSAGE_FORMAT, customMessage, ex);
     }
 }

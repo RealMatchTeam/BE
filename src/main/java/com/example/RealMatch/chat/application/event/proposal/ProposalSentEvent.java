@@ -1,6 +1,6 @@
 package com.example.RealMatch.chat.application.event.proposal;
 
-import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatProposalCardPayloadResponse;
 
 /**
  * 채팅 모듈 내부에서 사용되는 제안 전송 이벤트.

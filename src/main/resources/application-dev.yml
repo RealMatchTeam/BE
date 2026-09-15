@@ -31,7 +31,8 @@ spring:
       maximum-pool-size: 10
       minimum-idle: 5
       idle-timeout: 30000
-      connection-timeout: 10000
+      connection-timeout: 5000
+      connection-init-sql: SET SESSION innodb_lock_wait_timeout=5
       max-lifetime: 600000
 
   jpa:
@@ -151,7 +152,7 @@ app:
     public-bucket-name: ${S3_PUBLIC_BUCKET_NAME:realmatch-public-s3}
     cloudfront-base-url: ${S3_CLOUDFRONT_BASE_URL:}
     region: ${S3_REGION:us-east-2}
-    presigned-url-expiration-seconds: ${S3_PRESIGNED_URL_EXPIRATION:86400}
+    presigned-url-expiration-seconds: ${S3_PRESIGNED_URL_EXPIRATION:300}
     max-image-size-bytes: ${S3_MAX_IMAGE_SIZE:10485760}
     max-file-size-bytes: ${S3_MAX_FILE_SIZE:52428800}
     key-prefix: ${S3_KEY_PREFIX:attachment}

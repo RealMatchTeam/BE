@@ -1,9 +1,15 @@
 package com.example.RealMatch.chat.application.conversion;
 
+import com.example.RealMatch.global.common.QueryLimits;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public record MessageCursor(Long messageId) {
+    public MessageCursor {
+        if (messageId == null || messageId <= 0) {
+            throw new IllegalArgumentException("Positive messageId required");
+        }
+    }
 
     public static MessageCursor of(Long messageId) {
         return new MessageCursor(messageId);
@@ -11,6 +17,7 @@ public record MessageCursor(Long messageId) {
 
     @JsonCreator
     public static MessageCursor decode(String value) {
+        QueryLimits.text(value, 100);
         if (value == null || value.isBlank()) {
             return null;
         }

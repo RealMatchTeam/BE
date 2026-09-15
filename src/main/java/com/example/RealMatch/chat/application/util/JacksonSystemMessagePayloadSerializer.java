@@ -1,14 +1,16 @@
 package com.example.RealMatch.chat.application.util;
 
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.chat.application.dto.response.ChatApplyCardPayloadResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatApplyStatusNoticePayloadResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatMatchedCampaignPayloadResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatProposalCardPayloadResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatProposalStatusNoticePayloadResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatSystemMessagePayload;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
-import com.example.RealMatch.chat.presentation.dto.response.ChatApplyCardPayloadResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatApplyStatusNoticePayloadResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatProposalCardPayloadResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatProposalStatusNoticePayloadResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,7 +28,7 @@ public class JacksonSystemMessagePayloadSerializer implements SystemMessagePaylo
             throw new IllegalArgumentException("System message payload is required.");
         }
         try {
-            return objectMapper.writeValueAsString(payload);
+            return objectMapper.writeValueAsString(Map.of("schemaVersion", 1, "payload", payload));
         } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException("Failed to serialize system message payload.", ex);
         }
@@ -41,7 +43,20 @@ public class JacksonSystemMessagePayloadSerializer implements SystemMessagePaylo
             throw new IllegalArgumentException("System message payload is required.");
         }
         try {
-            return objectMapper.readValue(rawPayload, resolvePayloadType(kind));
+            var root = objectMapper.readTree(rawPayload);
+            if (root == null || !root.isObject()) {
+                throw new IllegalArgumentException("System payload must be a JSON object");
+            }
+            if (root.has("schemaVersion")) {
+                if (root.path("schemaVersion").asInt(-1) != 1 || !root.has("payload")) {
+                    throw new IllegalArgumentException("Unsupported system payload schema");
+                }
+                root = root.get("payload");
+            }
+            if (!root.isObject()) {
+                throw new IllegalArgumentException("System payload must be a JSON object");
+            }
+            return objectMapper.treeToValue(root, resolvePayloadType(kind));
         } catch (JsonProcessingException ex) {
             throw new IllegalArgumentException("Failed to deserialize system message payload.", ex);
         }

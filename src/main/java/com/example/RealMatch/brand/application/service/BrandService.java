@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.entity.BrandAvailableSponsor;
 import com.example.RealMatch.brand.domain.entity.BrandDescribeTag;
@@ -56,6 +57,7 @@ import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -68,6 +70,7 @@ public class BrandService {
     private final BrandAvailableSponsorRepository brandAvailableSponsorRepository;
     private final BrandDescribeTagRepository brandDescribeTagRepository;
     private final BrandImageRepository brandImageRepository;
+    private final AttachmentQueryService attachmentReferences;
 
     private final MatchBrandHistoryRepository matchBrandHistoryRepository;
 
@@ -146,7 +149,7 @@ public class BrandService {
                     .makeUpStyle(brandMakeUpStyle)      // 메이크업 태그: 메이크업 스타일
                     .build());
 
-        // **** 브랜드가 패션 카테고리인 경우 **** //
+            // **** 브랜드가 패션 카테고리인 경우 **** //
         } else if (brand.getIndustryType() == IndustryType.FASHION) {
 
             // 매칭: 관심 아이템/분야 <-> 카테고리
@@ -323,6 +326,7 @@ public class BrandService {
     public BrandCreateResponseDto createBeautyBrand(BrandBeautyCreateRequestDto requestDto, Long currentUserId) {
 
         validateHomepageUrl(requestDto.getHomepageUrl());
+        attachmentReferences.retainPublicUrl(currentUserId, requestDto.getLogoUrl());
 
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
@@ -351,6 +355,7 @@ public class BrandService {
 
         // 브랜드 이미지 저장
         if (requestDto.getBrandImages() != null && !requestDto.getBrandImages().isEmpty()) {
+            requestDto.getBrandImages().forEach(url -> attachmentReferences.retainPublicUrl(currentUserId, url));
             List<BrandImage> brandImages = requestDto.getBrandImages().stream()
                     .map(imageUrl -> BrandImage.builder()
                             .brand(savedBrand)
@@ -386,6 +391,7 @@ public class BrandService {
     public BrandCreateResponseDto createFashionBrand(BrandFashionCreateRequestDto requestDto, Long currentUserId) {
 
         validateHomepageUrl(requestDto.getHomepageUrl());
+        attachmentReferences.retainPublicUrl(currentUserId, requestDto.getLogoUrl());
 
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUserId));
@@ -414,6 +420,7 @@ public class BrandService {
 
         // 브랜드 이미지 저장
         if (requestDto.getBrandImages() != null && !requestDto.getBrandImages().isEmpty()) {
+            requestDto.getBrandImages().forEach(url -> attachmentReferences.retainPublicUrl(currentUserId, url));
             List<BrandImage> brandImages = requestDto.getBrandImages().stream()
                     .map(imageUrl -> BrandImage.builder()
                             .brand(savedBrand)
@@ -449,6 +456,7 @@ public class BrandService {
     public void updateBeautyBrand(Long brandId, BrandBeautyUpdateRequestDto requestDto, Long currentUserId) {
 
         validateHomepageUrl(requestDto.getHomepageUrl());
+        attachmentReferences.retainPublicUrl(currentUserId, requestDto.getLogoUrl());
 
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
@@ -496,6 +504,7 @@ public class BrandService {
     public void updateFashionBrand(Long brandId, BrandFashionUpdateRequestDto requestDto, Long currentUserId) {
 
         validateHomepageUrl(requestDto.getHomepageUrl());
+        attachmentReferences.retainPublicUrl(currentUserId, requestDto.getLogoUrl());
 
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
@@ -535,7 +544,6 @@ public class BrandService {
             addTagsToBrandByIds(brand, brandTags.getInterestBrand(), TagCategory.FASHION_INTEREST_TYPE.getDescription());
         }
     }
-
 
     private void addTagsToBrand(Brand brand, List<String> tagNames, TagType type, String category) {
         if (tagNames == null || tagNames.isEmpty()) {

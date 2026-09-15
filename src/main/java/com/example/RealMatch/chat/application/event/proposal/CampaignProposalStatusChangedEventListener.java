@@ -2,7 +2,6 @@ package com.example.RealMatch.chat.application.event.proposal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -26,7 +25,7 @@ public class CampaignProposalStatusChangedEventListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(CampaignProposalStatusChangedEventListener.class);
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final ProposalSystemMessageHandler handler;
 
     @Order(0)
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
@@ -41,7 +40,7 @@ public class CampaignProposalStatusChangedEventListener {
 
         ChatProposalStatus chatStatus = toChatProposalStatus(event.newStatus());
         ChatProposalDirection direction = toChatProposalDirection(event.proposalDirection());
-        String eventId = ProposalStatusChangedEvent.generateEventId(event.proposalId(), chatStatus);
+        String eventId = event.eventId();
 
         ProposalStatusChangedEvent chatEvent = new ProposalStatusChangedEvent(
                 eventId,
@@ -53,9 +52,9 @@ public class CampaignProposalStatusChangedEventListener {
                 event.actorUserId(),
                 direction
         );
-        eventPublisher.publishEvent(chatEvent);
+        handler.handleProposalStatusChanged(chatEvent);
 
-        LOG.info("[ProposalBoundary] Published internal event. eventId={}, proposalId={}, newStatus={}",
+        LOG.info("[ProposalBoundary] Handled business event. eventId={}, proposalId={}, newStatus={}",
                 eventId, event.proposalId(), chatStatus);
     }
 
@@ -63,22 +62,13 @@ public class CampaignProposalStatusChangedEventListener {
         if (status == null) {
             return ChatProposalStatus.NONE;
         }
-        return switch (status) {
-            case CANCELED -> ChatProposalStatus.CANCELED;
-            case NONE -> ChatProposalStatus.NONE;
-            case REVIEWING -> ChatProposalStatus.REVIEWING;
-            case MATCHED -> ChatProposalStatus.MATCHED;
-            case REJECTED -> ChatProposalStatus.REJECTED;
-        };
+        return ChatProposalStatus.valueOf(status.name());
     }
 
     private static ChatProposalDirection toChatProposalDirection(ProposalDirection direction) {
         if (direction == null) {
             return ChatProposalDirection.NONE;
         }
-        return switch (direction) {
-            case BRAND_TO_CREATOR -> ChatProposalDirection.BRAND_TO_CREATOR;
-            case CREATOR_TO_BRAND -> ChatProposalDirection.CREATOR_TO_BRAND;
-        };
+        return ChatProposalDirection.valueOf(direction.name());
     }
 }

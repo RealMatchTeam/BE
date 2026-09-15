@@ -2,6 +2,7 @@ package com.example.RealMatch.chat.presentation.rest.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,15 +12,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.chat.application.conversion.MessageCursor;
 import com.example.RealMatch.chat.application.conversion.RoomCursor;
+import com.example.RealMatch.chat.application.dto.request.ChatRoomCreateRequest;
+import com.example.RealMatch.chat.application.dto.response.ChatMessageListResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatRoomCreateResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatRoomDetailResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatRoomListResponse;
 import com.example.RealMatch.chat.application.service.message.ChatMessageQueryService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
+import com.example.RealMatch.chat.application.service.room.ChatRoomMemberCommandService;
 import com.example.RealMatch.chat.application.service.room.ChatRoomQueryService;
 import com.example.RealMatch.chat.domain.enums.ChatRoomFilterStatus;
-import com.example.RealMatch.chat.presentation.dto.request.ChatRoomCreateRequest;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMessageListResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCreateResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatRoomDetailResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatRoomListResponse;
 import com.example.RealMatch.chat.presentation.rest.swagger.ChatSwagger;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
@@ -35,6 +37,15 @@ public class ChatController implements ChatSwagger {
     private final ChatRoomCommandService chatRoomCommandService;
     private final ChatRoomQueryService chatRoomQueryService;
     private final ChatMessageQueryService chatMessageQueryService;
+    private final ChatRoomMemberCommandService readService;
+
+    @PatchMapping("/rooms/{roomId}/read")
+    public CustomResponse<Void> markRead(@AuthenticationPrincipal CustomUserDetails user,
+                                         @PathVariable Long roomId,
+                                         @RequestParam Long messageId) {
+        readService.markRead(roomId, user.getUserId(), messageId);
+        return CustomResponse.ok(null);
+    }
 
     @PostMapping("/rooms")
     public CustomResponse<ChatRoomCreateResponse> createOrGetRoom(

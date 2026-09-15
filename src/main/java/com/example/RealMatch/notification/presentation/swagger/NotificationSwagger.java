@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
-import com.example.RealMatch.notification.presentation.dto.response.NotificationListResponse;
-import com.example.RealMatch.notification.presentation.dto.response.ReadAllResponse;
-import com.example.RealMatch.notification.presentation.dto.response.UnreadCountResponse;
+import com.example.RealMatch.notification.application.dto.response.NotificationListResponse;
+import com.example.RealMatch.notification.application.dto.response.ReadAllResponse;
+import com.example.RealMatch.notification.application.dto.response.UnreadCountResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +23,7 @@ public interface NotificationSwagger {
             summary = "알림 목록 조회 API by 여채현",
             description = """
                     로그인한 유저의 알림 목록을 조회합니다.
-                    
+
                     - filter: ALL(전체), PROPOSAL(받은 제안), MATCHING(캠페인 매칭) 중 선택. 기본값 ALL.
                     - 날짜별 그룹(groups)과 미읽음 개수(unreadCount)가 함께 반환됩니다.
                     - 최신순(createdAt DESC) 정렬, offset 기반 페이징.
@@ -43,7 +43,7 @@ public interface NotificationSwagger {
             summary = "알림 단건 읽음 처리 API by 여채현",
             description = """
                     특정 알림을 읽음 처리합니다.
-                    
+
                     - 본인의 알림만 읽음 처리 가능합니다.
                     - 이미 읽은 경우에도 멱등하게 200을 반환합니다.
                     """

@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.RealMatch.attachment.application.dto.response.AttachmentUploadResponse;
 import com.example.RealMatch.attachment.domain.enums.AttachmentType;
 import com.example.RealMatch.attachment.domain.enums.AttachmentUsage;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
 

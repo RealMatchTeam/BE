@@ -99,7 +99,6 @@ public class CampaignProposal extends BaseEntity {
     )
     private List<CampaignProposalContentTag> tags = new ArrayList<>();
 
-
     @Builder
     protected CampaignProposal(
             User creator,
@@ -148,7 +147,6 @@ public class CampaignProposal extends BaseEntity {
         this.endDate = endDate;
     }
 
-
     /* ===== 도메인 메서드 ===== */
 
     public boolean isModifiable() {
@@ -164,15 +162,18 @@ public class CampaignProposal extends BaseEntity {
     }
 
     public void match() {
+        requireReviewing();
         this.status = ProposalStatus.MATCHED;
     }
 
     public void reject(String refusalReason) {
+        requireReviewing();
         this.status = ProposalStatus.REJECTED;
         this.refusalReason = refusalReason;
     }
 
     public void cancel() {
+        requireReviewing();
         this.status = ProposalStatus.CANCELED;
     }
 
@@ -190,21 +191,12 @@ public class CampaignProposal extends BaseEntity {
         }
     }
 
-
     public void addTag(CampaignProposalContentTag tag) {
         this.tags.add(tag);
     }
-    /**
-     * MATCHED 시 Campaign 생성용 변환 (추가 확인 필요, 태그 관리 필요)
-     */
-//    public Campaign toCampaign(Long createdBy) {
-//        return Campaign.builder()
-//                .title(this.title)
-//                .description(this.campaignDescription)
-//                .rewardAmount(this.rewardAmount)
-//                .startDate(this.startDate)
-//                .endDate(this.endDate)
-//                .createdBy(createdBy)
-//                .build();
-//    }
+    private void requireReviewing() {
+        if (status != ProposalStatus.REVIEWING) {
+            throw new CustomException(BusinessErrorCode.CAMPAIGN_PROPOSAL_NOT_REVIEWING);
+        }
+    }
 }

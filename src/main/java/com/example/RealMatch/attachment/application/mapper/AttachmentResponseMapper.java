@@ -3,9 +3,9 @@ package com.example.RealMatch.attachment.application.mapper;
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
+import com.example.RealMatch.attachment.application.dto.response.AttachmentInfoResponse;
+import com.example.RealMatch.attachment.application.dto.response.AttachmentUploadResponse;
 import com.example.RealMatch.attachment.domain.entity.Attachment;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentUploadResponse;
 
 @Component
 public class AttachmentResponseMapper {
@@ -44,7 +44,7 @@ public class AttachmentResponseMapper {
         );
     }
 
-    public AttachmentInfoResponse toInfoResponse(AttachmentDto dto) {
+    public static AttachmentInfoResponse toInfoResponse(AttachmentDto dto) {
         if (dto == null) {
             return null;
         }

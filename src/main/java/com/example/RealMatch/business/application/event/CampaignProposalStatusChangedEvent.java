@@ -15,4 +15,7 @@ public record CampaignProposalStatusChangedEvent(
         Long actorUserId,  // 상태 변경을 수행한 사용자 ID (수락/거절한 사용자)
         ProposalDirection proposalDirection  // 누가 제안했는지 방향 (BRAND_TO_CREATOR / CREATOR_TO_BRAND)
 ) {
+    public String eventId() {
+        return "PROPOSAL_STATUS_CHANGED:" + proposalId + ":" + newStatus;
+    }
 }

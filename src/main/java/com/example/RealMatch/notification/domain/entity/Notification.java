@@ -2,6 +2,8 @@ package com.example.RealMatch.notification.domain.entity;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.SQLRestriction;
+
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
 import com.example.RealMatch.notification.domain.entity.enums.ReferenceType;
@@ -21,10 +23,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@SQLRestriction("is_deleted = false")
 @Table(name = "notification", indexes = {
-        @Index(name = "idx_notification_user_read_created", columnList = "user_id, is_read, created_at"),
-        @Index(name = "idx_notification_user_created", columnList = "user_id, created_at"),
-        @Index(name = "idx_notification_user_kind", columnList = "user_id, kind")
+        @Index(name = "idx_notification_user_unread", columnList = "user_id,is_deleted,is_read,created_at"),
+        @Index(name = "idx_notification_user_created", columnList = "user_id,is_deleted,created_at,id"),
+        @Index(name = "idx_notification_user_kind", columnList = "user_id,is_deleted,kind,created_at,id")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,7 +38,8 @@ public class Notification extends DeleteBaseEntity {
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = "idempotency_key", length = 200, unique = true)
+    @Column(name = "idempotency_key", length = 200, unique = true,
+            columnDefinition = "varchar(200) character set utf8mb4 collate utf8mb4_0900_bin")
     private String idempotencyKey;
 
     @Column(name = "user_id", nullable = false)

@@ -1,6 +1,7 @@
 package com.example.RealMatch.chat.presentation.websocket.config;
 
 import java.security.Principal;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,7 +86,7 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
             return;
         }
 
-        if (destination.startsWith(USER_QUEUE_PREFIX)) {
+        if (Set.of("/user/queue/v1/chat.ack", "/user/queue/v1/chat.read", "/user/queue/errors").contains(destination)) {
             return;
         }
 
@@ -119,7 +120,7 @@ public class ChatWebSocketAuthorizationInterceptor implements ChannelInterceptor
     private void authorizeSend(StompHeaderAccessor accessor) {
         getPrincipalOrThrow(accessor);
         String destination = accessor.getDestination();
-        if (destination != null && !destination.startsWith(APPLICATION_DESTINATION_PREFIX)) {
+        if (destination == null || !Set.of("/app/v1/chat.send", "/app/v1/chat.read").contains(destination)) {
             LOG.warn("SEND to non-application destination rejected. destination={}", destination);
             throw new MessageDeliveryException("SEND only allowed to application destination: " + APPLICATION_DESTINATION_PREFIX);
         }

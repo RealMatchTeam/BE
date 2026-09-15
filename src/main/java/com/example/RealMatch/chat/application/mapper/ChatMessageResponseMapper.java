@@ -5,16 +5,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.attachment.application.dto.AttachmentDto;
-import com.example.RealMatch.attachment.presentation.dto.response.AttachmentInfoResponse;
+import com.example.RealMatch.attachment.application.dto.response.AttachmentInfoResponse;
+import com.example.RealMatch.attachment.application.mapper.AttachmentResponseMapper;
+import com.example.RealMatch.chat.application.dto.enums.ChatSenderType;
+import com.example.RealMatch.chat.application.dto.response.ChatMessageResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatSystemMessagePayload;
+import com.example.RealMatch.chat.application.dto.response.ChatSystemMessageResponse;
 import com.example.RealMatch.chat.application.util.ChatConstants;
 import com.example.RealMatch.chat.application.util.SystemMessagePayloadSerializer;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatSystemMessageKind;
-import com.example.RealMatch.chat.presentation.dto.enums.ChatSenderType;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
-import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessagePayload;
-import com.example.RealMatch.chat.presentation.dto.response.ChatSystemMessageResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,10 +28,10 @@ public class ChatMessageResponseMapper {
     private final SystemMessagePayloadSerializer payloadSerializer;
 
     public ChatMessageResponse toResponse(ChatMessage message, AttachmentDto attachment) {
-        AttachmentInfoResponse attachmentResponse = attachment != null 
-                ? toAttachmentInfoResponse(attachment) 
+        AttachmentInfoResponse attachmentResponse = attachment != null
+                ? AttachmentResponseMapper.toInfoResponse(attachment)
                 : null;
-        
+
         ChatMessageType messageType = message.getMessageType();
         return new ChatMessageResponse(
                 message.getId(),
@@ -46,18 +47,6 @@ public class ChatMessageResponseMapper {
         );
     }
 
-    private AttachmentInfoResponse toAttachmentInfoResponse(AttachmentDto attachment) {
-        return new AttachmentInfoResponse(
-                attachment.attachmentId(),
-                attachment.attachmentType(),
-                attachment.contentType(),
-                attachment.originalName(),
-                attachment.fileSize(),
-                attachment.accessUrl(),
-                attachment.status()
-        );
-    }
-
     private ChatSystemMessageResponse toSystemMessageResponse(ChatMessage message) {
         ChatSystemMessageKind kind = message.getSystemKind();
         String rawPayload = message.getSystemPayload();
@@ -69,9 +58,9 @@ public class ChatMessageResponseMapper {
                     kind,
                     payload
             );
-        } catch (Exception ex) {
+        } catch (IllegalArgumentException ex) {
             logDeserializationError(message.getId(), kind, rawPayload, ex);
-            return null;
+            return new ChatSystemMessageResponse(0, kind, null);
         }
     }
 

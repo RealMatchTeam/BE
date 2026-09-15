@@ -16,7 +16,8 @@ import com.redis.om.spring.annotations.EnableRedisDocumentRepositories;
 public class RealMatchApplication {
 
     public static void main(String[] args) {
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(java.time.ZoneId.of(
+                System.getenv().getOrDefault("APP_TIME_ZONE", "Asia/Seoul"))));
         SpringApplication.run(RealMatchApplication.class, args);
     }
-
 }

@@ -15,14 +15,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
-import com.example.RealMatch.chat.application.service.room.ChatRoomCommandServiceImpl;
+import com.example.RealMatch.chat.application.repository.ChatRoomMemberRepository;
+import com.example.RealMatch.chat.application.repository.ChatRoomRepository;
+import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
 import com.example.RealMatch.chat.application.tx.AfterCommitExecutor;
 import com.example.RealMatch.chat.code.ChatErrorCode;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
-import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
-import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
@@ -33,14 +32,14 @@ class ChatRoomAuthorizationTest {
     private final UserRepository users = mock(UserRepository.class);
     private final ChatRoomRepository rooms = mock(ChatRoomRepository.class);
     private final ChatRoomMemberRepository members = mock(ChatRoomMemberRepository.class);
-    private final ChatRoomCommandServiceImpl service = new ChatRoomCommandServiceImpl(
+    private final ChatRoomCommandService service = new ChatRoomCommandService(
             rooms, members, mock(ChatMessageEventPublisher.class), mock(AfterCommitExecutor.class),
-            mock(ChatCacheInvalidationService.class), users);
+            users);
 
     @ParameterizedTest
     @CsvSource({"CREATOR,BRAND", "GUEST,CREATOR", "BRAND,ADMIN", "WITHDRAWN,CREATOR", "BRAND,BRAND"})
     void rejectsInvalidRolesForBothEntryPoints(Role brandRole, Role creatorRole) {
-        when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(User.builder().role(brandRole).build()));
+        when(users.findById(1L)).thenReturn(Optional.of(User.builder().role(brandRole).build()));
         when(users.findById(2L)).thenReturn(Optional.of(User.builder().role(creatorRole).build()));
 
         assertEquals(ChatErrorCode.INVALID_ROOM_REQUEST,
@@ -54,7 +53,7 @@ class ChatRoomAuthorizationTest {
         assertThrows(CustomException.class, () -> service.createOrGetRoomSystem(1L, 2L));
         User deleted = User.builder().role(Role.BRAND).build();
         deleted.withdraw(1L);
-        when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(deleted));
+        when(users.findById(1L)).thenReturn(Optional.of(deleted));
         assertThrows(CustomException.class, () -> service.createOrGetRoomSystem(1L, 2L));
         verifyNoInteractions(rooms, members);
     }
@@ -81,7 +80,7 @@ class ChatRoomAuthorizationTest {
         validUsers();
         ChatRoom room = ChatRoom.createDirectRoom("direct:1:2");
         ReflectionTestUtils.setField(room, "id", 10L);
-        when(rooms.findByRoomKeyForUpdate("direct:1:2")).thenReturn(Optional.of(room));
+        when(rooms.findByRoomKey("direct:1:2")).thenReturn(Optional.of(room));
 
         assertEquals(10L, service.createOrGetRoomAsMember(2L, 1L, 2L).roomId());
         assertEquals(10L, service.createOrGetRoomSystem(1L, 2L).roomId());
@@ -104,6 +103,7 @@ class ChatRoomAuthorizationTest {
 
     private void validUsers() {
         when(users.findByIdForUpdate(1L)).thenReturn(Optional.of(User.builder().role(Role.BRAND).build()));
+        when(users.findById(1L)).thenReturn(Optional.of(User.builder().role(Role.BRAND).build()));
         when(users.findById(2L)).thenReturn(Optional.of(User.builder().role(Role.CREATOR).build()));
     }
 }

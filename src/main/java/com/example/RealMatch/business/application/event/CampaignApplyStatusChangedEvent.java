@@ -13,4 +13,7 @@ public record CampaignApplyStatusChangedEvent(
         ProposalStatus newStatus,
         Long actorUserId     // 상태 변경을 수행한 사용자 ID (취소/수락/거절한 사용자)
 ) {
+    public String eventId() {
+        return "APPLY_STATUS_CHANGED:" + applyId + ":" + newStatus;
+    }
 }

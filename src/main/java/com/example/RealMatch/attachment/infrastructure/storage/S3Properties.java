@@ -20,7 +20,9 @@ public class S3Properties {
     private String cloudfrontBaseUrl;
 
     private String region;
-    private int presignedUrlExpirationSeconds = 86400;
+    private String endpoint;
+    private boolean pathStyleAccessEnabled;
+    private int presignedUrlExpirationSeconds = 300;
     private long maxImageSizeBytes = 10485760L;
     private long maxFileSizeBytes = 52428800L;
     private String keyPrefix = "attachment";

@@ -1,6 +1,7 @@
 package com.example.RealMatch.notification.infrastructure.messaging;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import com.example.RealMatch.notification.domain.entity.NotificationOutbox;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Outbox Publisher. 5초마다 PENDING Outbox를 claim → MQ 발행.
+ * Outbox Publisher. PENDING Outbox를 claim → MQ 발행.
  * - @Transactional 없음 — MQ 발행이 TX 밖에서 실행됨을 구조적으로 보장
  * - DB 연산은 NotificationOutboxService를 통해 메서드별 독립 TX
  */
@@ -34,7 +35,7 @@ public class NotificationOutboxPublisher {
     @Value("${notification.publisher.confirm-timeout-ms:5000}")
     private long confirmTimeoutMs = 5000;
 
-    @Scheduled(fixedDelay = 5_000, initialDelay = 5_000)
+    @Scheduled(fixedDelayString = "${notification.publisher.interval-ms:1000}", initialDelay = 5_000, scheduler = "notificationPublisherScheduler")
     public void publishPendingOutbox() {
         List<NotificationOutbox> pendingList = outboxService.findPendingOutbox(BATCH_SIZE);
 
@@ -44,8 +45,16 @@ public class NotificationOutboxPublisher {
 
         LOG.info("[OutboxPublisher] Found {} pending outbox entries.", pendingList.size());
 
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
         for (NotificationOutbox outbox : pendingList) {
-            publishWithClaimGuard(outbox);
+            if (System.nanoTime() >= deadline) {
+                break;
+            }
+            try {
+                io.micrometer.core.instrument.Metrics.timer("notification.publish.duration").record(() -> publishWithClaimGuard(outbox));
+            } catch (RuntimeException ex) {
+                LOG.error("Outbox processing failed. outboxId={}", outbox.getId(), ex);
+            }
             if (Thread.currentThread().isInterrupted()) {
                 break;
             }
@@ -54,8 +63,8 @@ public class NotificationOutboxPublisher {
 
     private void publishWithClaimGuard(NotificationOutbox outbox) {
         // PENDING → SENDING claim (조건절 UPDATE)
-        boolean claimed = outboxService.claimOutbox(outbox.getId());
-        if (!claimed) {
+        UUID claimed = outboxService.claimOutbox(outbox.getId());
+        if (claimed == null) {
             LOG.debug("[OutboxPublisher] Claim failed (already processing). outboxId={}", outbox.getId());
             return;
         }
@@ -79,17 +88,18 @@ public class NotificationOutboxPublisher {
             }
 
             // 성공 → SENDING → SENT
-            outboxService.markOutboxSent(outbox.getId());
+            outboxService.complete(outbox.getId(), claimed, null);
+            io.micrometer.core.instrument.Metrics.counter("notification.publish", "result", "confirmed").increment();
 
             LOG.debug("[OutboxPublisher] Published. outboxId={}, deliveryId={}",
                     outbox.getId(), outbox.getDeliveryId());
-
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
             // 실패 → retryCount++ / PENDING 또는 FAILED
-            outboxService.markOutboxPublishFailed(outbox.getId(), e.getMessage());
+            io.micrometer.core.instrument.Metrics.counter("notification.publish", "result", "failed").increment();
+            outboxService.complete(outbox.getId(), claimed, e.toString());
             LOG.error("[OutboxPublisher] Publish failed. outboxId={}, deliveryId={}, error={}",
                     outbox.getId(), outbox.getDeliveryId(), e.getMessage());
         }

@@ -1,13 +1,16 @@
 package com.example.RealMatch.chat.application.mapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.chat.application.dto.response.ChatRoomCardResponse;
 import com.example.RealMatch.chat.application.service.room.OpponentInfoService.OpponentInfo;
 import com.example.RealMatch.chat.application.util.ChatConstants;
 import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
@@ -15,7 +18,6 @@ import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.entity.ChatRoom;
 import com.example.RealMatch.chat.domain.entity.ChatRoomMember;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
-import com.example.RealMatch.chat.presentation.dto.response.ChatRoomCardResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,21 +34,12 @@ public class ChatRoomCardAssembler {
             Long userId,
             Map<Long, ChatRoomMember> myMemberMap,
             Map<Long, Long> unreadCountMap,
-            Map<Long, OpponentInfo> opponentInfoMap
-    ) {
-        return assemble(rooms, userId, myMemberMap, unreadCountMap, opponentInfoMap, null);
-    }
-
-    public List<ChatRoomCardResponse> assemble(
-            List<ChatRoom> rooms,
-            Long userId,
-            Map<Long, ChatRoomMember> myMemberMap,
-            Map<Long, Long> unreadCountMap,
             Map<Long, OpponentInfo> opponentInfoMap,
-            Map<Long, ChatMessage> searchMatchByRoom
+            Map<Long, ChatMessage> searchMatchByRoom,
+            Set<Long> collaboratingRoomIds
     ) {
         return rooms.stream()
-                .map(room -> assembleCard(room, userId, myMemberMap, unreadCountMap, opponentInfoMap, searchMatchByRoom))
+                .map(room -> assembleCard(room, userId, myMemberMap, unreadCountMap, opponentInfoMap, searchMatchByRoom, collaboratingRoomIds))
                 .filter(Objects::nonNull)
                 .toList();
     }
@@ -57,7 +50,8 @@ public class ChatRoomCardAssembler {
             Map<Long, ChatRoomMember> myMemberMap,
             Map<Long, Long> unreadCountMap,
             Map<Long, OpponentInfo> opponentInfoMap,
-            Map<Long, ChatMessage> searchMatchByRoom
+            Map<Long, ChatMessage> searchMatchByRoom,
+            Set<Long> collaboratingRoomIds
     ) {
         ChatRoomMember member = myMemberMap.get(room.getId());
         if (member == null) {
@@ -71,11 +65,11 @@ public class ChatRoomCardAssembler {
                 new OpponentInfo(null, ChatConstants.UNKNOWN_OPPONENT_NAME, null)
         );
 
-        boolean isCollaborating = room.isCollaborating();
+        boolean isCollaborating = collaboratingRoomIds.contains(room.getId());
 
         String preview;
         ChatMessageType messageType;
-        java.time.LocalDateTime messageAt;
+        LocalDateTime messageAt;
 
         if (searchMatchByRoom != null && searchMatchByRoom.containsKey(room.getId())) {
             ChatMessage matchMsg = searchMatchByRoom.get(room.getId());

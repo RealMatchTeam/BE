@@ -10,14 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.notification.application.dto.CreateNotificationCommand;
+import com.example.RealMatch.notification.application.repository.NotificationDeliveryRepository;
+import com.example.RealMatch.notification.application.repository.NotificationOutboxRepository;
+import com.example.RealMatch.notification.application.repository.NotificationRepository;
 import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.notification.domain.entity.NotificationDelivery;
 import com.example.RealMatch.notification.domain.entity.NotificationOutbox;
 import com.example.RealMatch.notification.domain.entity.enums.DeliveryStatus;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
-import com.example.RealMatch.notification.domain.repository.NotificationDeliveryRepository;
-import com.example.RealMatch.notification.domain.repository.NotificationOutboxRepository;
-import com.example.RealMatch.notification.domain.repository.NotificationRepository;
 import com.example.RealMatch.notification.exception.NotificationErrorCode;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 import com.example.RealMatch.user.domain.repository.UserRepository;
@@ -43,8 +43,12 @@ public class NotificationService {
             throw new IllegalArgumentException("A valid eventId, userId and kind are required");
         }
         // ponytail: serialize inbox creation per recipient; use an atomic upsert if contention matters.
+        long lockStarted = System.nanoTime();
         userRepository.findByIdForUpdate(command.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("Notification recipient does not exist"));
+        if (System.nanoTime() - lockStarted > 500_000_000L) {
+            LOG.warn("Notification recipient lock exceeded 500 ms. userId={}", command.getUserId());
+        }
         String key = command.getEventId() + ":" + command.getKind() + ":" + command.getUserId();
         Notification existing = notificationRepository.findByIdempotencyKeyIncludingDeleted(key).orElse(null);
         if (existing != null) {

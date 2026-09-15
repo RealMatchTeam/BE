@@ -2,8 +2,9 @@ package com.example.RealMatch.chat.domain.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.SQLRestriction;
+
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
-import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
 import com.example.RealMatch.chat.domain.enums.ChatRoomType;
 import com.example.RealMatch.global.common.DeleteBaseEntity;
 
@@ -22,11 +23,12 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@SQLRestriction("is_deleted = false")
 @Table(
         name = "chat_room",
         indexes = {
                 @Index(name = "idx_room_deleted_lastmsg", columnList = "is_deleted, last_message_at")
-        }
+}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoom extends DeleteBaseEntity {
@@ -55,10 +57,6 @@ public class ChatRoom extends DeleteBaseEntity {
     @Column(name = "last_message_type", length = 20)
     private ChatMessageType lastMessageType;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "proposal_status", length = 20)
-    private ChatProposalStatus proposalStatus;
-
     private ChatRoom(
             String roomKey,
             ChatRoomType roomType
@@ -69,25 +67,5 @@ public class ChatRoom extends DeleteBaseEntity {
 
     public static ChatRoom createDirectRoom(String roomKey) {
         return new ChatRoom(roomKey, ChatRoomType.DIRECT);
-    }
-
-    public void updateLastMessage(
-            Long messageId,
-            LocalDateTime messageAt,
-            String preview,
-            ChatMessageType messageType
-    ) {
-        this.lastMessageId = messageId;
-        this.lastMessageAt = messageAt;
-        this.lastMessagePreview = preview;
-        this.lastMessageType = messageType;
-    }
-
-    public void updateProposalStatus(ChatProposalStatus status) {
-        this.proposalStatus = status;
-    }
-
-    public boolean isCollaborating() {
-        return this.proposalStatus == ChatProposalStatus.MATCHED;
     }
 }

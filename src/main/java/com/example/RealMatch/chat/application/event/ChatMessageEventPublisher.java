@@ -1,6 +1,6 @@
 package com.example.RealMatch.chat.application.event;
 
-import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
+import com.example.RealMatch.chat.application.dto.response.ChatMessageResponse;
 
 public interface ChatMessageEventPublisher {
 

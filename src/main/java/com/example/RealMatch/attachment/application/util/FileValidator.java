@@ -1,5 +1,7 @@
 package com.example.RealMatch.attachment.application.util;
 
+import static java.util.Locale.ROOT;
+
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -15,7 +17,7 @@ public class FileValidator {
             throw new CustomException(AttachmentErrorCode.INVALID_FILE_NAME);
         }
 
-        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+        if (filename.chars().anyMatch(Character::isISOControl) || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
             throw new CustomException(AttachmentErrorCode.INVALID_FILE_NAME);
         }
 
@@ -74,7 +76,7 @@ public class FileValidator {
         }
 
         if (filename != null && !filename.isBlank()) {
-            String extension = getFileExtension(filename).toLowerCase();
+            String extension = getFileExtension(filename).toLowerCase(ROOT);
             Set<String> extensions = allowedExtensions == null ? Set.of() : allowedExtensions;
             if (!extensions.contains(extension)) {
                 throw new CustomException(errorCode);
@@ -88,7 +90,7 @@ public class FileValidator {
         }
         int semicolon = contentType.indexOf(';');
         String main = semicolon < 0 ? contentType.trim() : contentType.substring(0, semicolon).trim();
-        return main.isEmpty() ? null : main.toLowerCase(java.util.Locale.ROOT);
+        return main.isEmpty() ? null : main.toLowerCase(ROOT);
     }
 
     private String getFileExtension(String filename) {

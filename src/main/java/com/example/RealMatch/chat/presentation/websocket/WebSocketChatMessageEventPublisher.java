@@ -8,11 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
+import com.example.RealMatch.chat.application.dto.response.ChatMessageResponse;
+import com.example.RealMatch.chat.application.dto.websocket.ChatMessageCreatedEvent;
+import com.example.RealMatch.chat.application.dto.websocket.ChatRoomListUpdatedEvent;
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberQueryService;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMessageResponse;
-import com.example.RealMatch.chat.presentation.dto.websocket.ChatMessageCreatedEvent;
-import com.example.RealMatch.chat.presentation.dto.websocket.ChatRoomListUpdatedEvent;
 
 import lombok.RequiredArgsConstructor;
 

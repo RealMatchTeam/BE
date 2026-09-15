@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.notification.application.dto.response.NotificationListResponse;
+import com.example.RealMatch.notification.application.dto.response.ReadAllResponse;
+import com.example.RealMatch.notification.application.dto.response.UnreadCountResponse;
 import com.example.RealMatch.notification.application.service.NotificationQueryService;
 import com.example.RealMatch.notification.application.service.NotificationService;
-import com.example.RealMatch.notification.presentation.dto.response.NotificationListResponse;
-import com.example.RealMatch.notification.presentation.dto.response.ReadAllResponse;
-import com.example.RealMatch.notification.presentation.dto.response.UnreadCountResponse;
 import com.example.RealMatch.notification.presentation.swagger.NotificationSwagger;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

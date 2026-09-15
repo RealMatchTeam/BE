@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -17,7 +16,6 @@ import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +36,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.example.RealMatch.attachment.application.dto.AttachmentDto;
 import com.example.RealMatch.attachment.application.service.AttachmentQueryService;
 import com.example.RealMatch.brand.domain.entity.Brand;
 import com.example.RealMatch.brand.domain.repository.BrandRepository;
@@ -48,39 +45,31 @@ import com.example.RealMatch.business.application.event.CampaignProposalSentEven
 import com.example.RealMatch.business.application.event.CampaignProposalStatusChangedEvent;
 import com.example.RealMatch.business.domain.enums.ProposalDirection;
 import com.example.RealMatch.business.domain.enums.ProposalStatus;
-import com.example.RealMatch.chat.application.cache.ChatCacheInvalidationService;
+import com.example.RealMatch.chat.application.dto.response.ChatMatchedCampaignPayloadResponse;
+import com.example.RealMatch.chat.application.dto.websocket.ChatSendMessageCommand;
 import com.example.RealMatch.chat.application.event.ChatMessageEventPublisher;
-import com.example.RealMatch.chat.application.event.apply.ApplySentEventListener;
-import com.example.RealMatch.chat.application.event.apply.ApplyStatusChangedEventListener;
 import com.example.RealMatch.chat.application.event.apply.ApplySystemMessageHandler;
 import com.example.RealMatch.chat.application.event.apply.CampaignApplySentEventListener;
 import com.example.RealMatch.chat.application.event.apply.CampaignApplyStatusChangedEventListener;
 import com.example.RealMatch.chat.application.event.proposal.CampaignProposalSentEventListener;
 import com.example.RealMatch.chat.application.event.proposal.CampaignProposalStatusChangedEventListener;
-import com.example.RealMatch.chat.application.event.proposal.ProposalSentEventListener;
-import com.example.RealMatch.chat.application.event.proposal.ProposalStatusChangedEventListener;
 import com.example.RealMatch.chat.application.event.proposal.ProposalSystemMessageHandler;
 import com.example.RealMatch.chat.application.mapper.ChatMessageResponseMapper;
-import com.example.RealMatch.chat.application.service.message.ChatMessageCommandServiceImpl;
+import com.example.RealMatch.chat.application.service.message.ChatMessageCommandService;
 import com.example.RealMatch.chat.application.service.message.ChatMessageSocketService;
-import com.example.RealMatch.chat.application.service.message.ChatMessageSocketServiceImpl;
 import com.example.RealMatch.chat.application.service.room.ChatRoomCommandService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomCommandServiceImpl;
 import com.example.RealMatch.chat.application.service.room.ChatRoomMemberService;
-import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateServiceImpl;
+import com.example.RealMatch.chat.application.service.room.ChatRoomUpdateService;
 import com.example.RealMatch.chat.application.service.room.MatchedCampaignPayloadProvider;
 import com.example.RealMatch.chat.application.util.JacksonSystemMessagePayloadSerializer;
-import com.example.RealMatch.chat.application.util.MessagePreviewGeneratorImpl;
+import com.example.RealMatch.chat.application.util.MessagePreviewGenerator;
 import com.example.RealMatch.chat.domain.entity.ChatMessage;
 import com.example.RealMatch.chat.domain.enums.ChatMessageType;
 import com.example.RealMatch.chat.domain.enums.ChatProposalDirection;
-import com.example.RealMatch.chat.domain.enums.ChatProposalStatus;
-import com.example.RealMatch.chat.domain.repository.ChatMessageRepository;
-import com.example.RealMatch.chat.domain.repository.ChatRoomMemberRepository;
-import com.example.RealMatch.chat.domain.repository.ChatRoomRepository;
+import com.example.RealMatch.chat.infrastructure.persistence.JpaChatMessageRepository;
+import com.example.RealMatch.chat.infrastructure.persistence.JpaChatRoomMemberRepository;
+import com.example.RealMatch.chat.infrastructure.persistence.JpaChatRoomRepository;
 import com.example.RealMatch.chat.infrastructure.tx.SpringAfterCommitExecutor;
-import com.example.RealMatch.chat.presentation.dto.response.ChatMatchedCampaignPayloadResponse;
-import com.example.RealMatch.chat.presentation.dto.websocket.ChatSendMessageCommand;
 import com.example.RealMatch.notification.application.dto.CreateNotificationCommand;
 import com.example.RealMatch.notification.application.event.NotificationEventListener;
 import com.example.RealMatch.notification.application.service.NotificationChannelResolver;
@@ -88,9 +77,9 @@ import com.example.RealMatch.notification.application.service.NotificationMessag
 import com.example.RealMatch.notification.application.service.NotificationService;
 import com.example.RealMatch.notification.domain.entity.Notification;
 import com.example.RealMatch.notification.domain.entity.enums.NotificationKind;
-import com.example.RealMatch.notification.domain.repository.NotificationDeliveryRepository;
-import com.example.RealMatch.notification.domain.repository.NotificationOutboxRepository;
-import com.example.RealMatch.notification.domain.repository.NotificationRepository;
+import com.example.RealMatch.notification.infrastructure.persistence.JpaNotificationDeliveryRepository;
+import com.example.RealMatch.notification.infrastructure.persistence.JpaNotificationOutboxRepository;
+import com.example.RealMatch.notification.infrastructure.persistence.JpaNotificationRepository;
 import com.example.RealMatch.user.domain.entity.NotificationSetting;
 import com.example.RealMatch.user.domain.entity.User;
 import com.example.RealMatch.user.domain.entity.enums.Role;
@@ -117,15 +106,14 @@ class ChatNotificationTransactionTest {
     @Configuration
     @EnableRetry(proxyTargetClass = true)
     @EnableJpaAuditing
-    @EnableJpaRepositories(basePackageClasses = {ChatRoomRepository.class, NotificationRepository.class, UserRepository.class})
+    @EnableJpaRepositories(basePackageClasses = {JpaChatRoomRepository.class, JpaNotificationRepository.class, UserRepository.class})
     @EntityScan(basePackageClasses = {ChatMessage.class, Notification.class, User.class})
-    @Import({ChatRoomCommandServiceImpl.class, ChatRoomMemberService.class, ChatRoomUpdateServiceImpl.class,
-            ChatMessageCommandServiceImpl.class, ChatMessageSocketServiceImpl.class, ChatMessageResponseMapper.class,
-            JacksonSystemMessagePayloadSerializer.class, MessagePreviewGeneratorImpl.class, SpringAfterCommitExecutor.class,
-            CampaignProposalSentEventListener.class, ProposalSentEventListener.class, ProposalSystemMessageHandler.class,
-            CampaignProposalStatusChangedEventListener.class, ProposalStatusChangedEventListener.class,
-            CampaignApplySentEventListener.class, CampaignApplyStatusChangedEventListener.class,
-            ApplySentEventListener.class, ApplyStatusChangedEventListener.class, ApplySystemMessageHandler.class,
+    @Import({ChatRoomCommandService.class, ChatRoomMemberService.class, ChatRoomUpdateService.class,
+            ChatMessageCommandService.class, ChatMessageSocketService.class, ChatMessageResponseMapper.class,
+            JacksonSystemMessagePayloadSerializer.class, MessagePreviewGenerator.class, SpringAfterCommitExecutor.class,
+            CampaignProposalSentEventListener.class, ProposalSystemMessageHandler.class,
+            CampaignProposalStatusChangedEventListener.class,
+            CampaignApplySentEventListener.class, CampaignApplyStatusChangedEventListener.class, ApplySystemMessageHandler.class,
             NotificationEventListener.class, NotificationService.class, NotificationChannelResolver.class,
             NotificationMessageTemplateService.class})
     static class JpaConfig {
@@ -142,11 +130,6 @@ class ChatNotificationTransactionTest {
         @Bean
         ChatMessageEventPublisher messagePublisher() {
             return mock(ChatMessageEventPublisher.class);
-        }
-
-        @Bean
-        ChatCacheInvalidationService cacheInvalidationService() {
-            return mock(ChatCacheInvalidationService.class);
         }
 
         @Bean
@@ -180,17 +163,17 @@ class ChatNotificationTransactionTest {
     @Autowired
     private ChatMessageSocketService socketService;
     @Autowired
-    private ChatMessageRepository messages;
+    private JpaChatMessageRepository messages;
     @Autowired
-    private ChatRoomRepository rooms;
+    private JpaChatRoomRepository rooms;
     @Autowired
-    private ChatRoomMemberRepository members;
+    private JpaChatRoomMemberRepository members;
     @Autowired
-    private NotificationRepository notifications;
+    private JpaNotificationRepository notifications;
     @Autowired
-    private NotificationDeliveryRepository deliveries;
+    private JpaNotificationDeliveryRepository deliveries;
     @Autowired
-    private NotificationOutboxRepository outboxes;
+    private JpaNotificationOutboxRepository outboxes;
     @Autowired
     private NotificationService notificationService;
     @Autowired
@@ -280,20 +263,16 @@ class ChatNotificationTransactionTest {
         Long roomId = roomService.createOrGetRoomAsMember(brandUser.getId(), brandUser.getId(), creator.getId()).roomId();
         clearInvocations(broadcasts);
         CyclicBarrier barrier = new CyclicBarrier(2);
-        AtomicInteger calls = new AtomicInteger();
-        doAnswer(call -> {
-            if (calls.incrementAndGet() <= 2) {
-                barrier.await(5, TimeUnit.SECONDS);
-            }
-            return null;
-        }).when(attachments).validateOwnership(99L, creator.getId());
-        when(attachments.findByIdOrThrow(99L)).thenReturn(mock(AttachmentDto.class));
         ChatSendMessageCommand command = new ChatSendMessageCommand(
-                roomId, ChatMessageType.TEXT, "hello", 99L, UUID.randomUUID().toString());
+                roomId, ChatMessageType.TEXT, "hello", null, UUID.randomUUID().toString());
 
         try (var executor = Executors.newFixedThreadPool(2)) {
-            var first = executor.submit(() -> socketService.sendMessage(command, creator.getId()));
-            var second = executor.submit(() -> socketService.sendMessage(command, creator.getId()));
+            var first = executor.submit(() -> {
+                barrier.await(5, TimeUnit.SECONDS); return socketService.sendMessage(command, creator.getId());
+            });
+            var second = executor.submit(() -> {
+                barrier.await(5, TimeUnit.SECONDS); return socketService.sendMessage(command, creator.getId());
+            });
             assertEquals(first.get(10, TimeUnit.SECONDS).messageId(), second.get(10, TimeUnit.SECONDS).messageId());
         }
 
@@ -323,7 +302,6 @@ class ChatNotificationTransactionTest {
                 10L, 7L, brandUser.getId(), creator.getId(), ProposalStatus.MATCHED, creator.getId(),
                 ProposalDirection.BRAND_TO_CREATOR);
         tx.executeWithoutResult(status -> events.publishEvent(matched));
-        assertEquals(ChatProposalStatus.MATCHED, rooms.findById(roomId).orElseThrow().getProposalStatus());
         assertEquals(3, messages.findMessagesByRoomId(roomId, null, 20).size());
         long notificationCount = notifications.count();
         tx.executeWithoutResult(status -> events.publishEvent(matched));

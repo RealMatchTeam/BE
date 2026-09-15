@@ -1,5 +1,6 @@
 package com.example.RealMatch.notification.infrastructure.sender;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -10,9 +11,11 @@ import org.springframework.stereotype.Component;
 
 import com.example.RealMatch.notification.application.exception.PermanentSendFailureException;
 import com.example.RealMatch.notification.application.port.NotificationChannelSender;
+import com.example.RealMatch.notification.application.repository.FcmTokenRepository;
+import com.example.RealMatch.notification.application.repository.PushReceiptRepository;
 import com.example.RealMatch.notification.domain.entity.FcmToken;
 import com.example.RealMatch.notification.domain.entity.Notification;
-import com.example.RealMatch.notification.domain.repository.FcmTokenRepository;
+import com.example.RealMatch.notification.domain.entity.PushReceipt;
 import com.example.RealMatch.user.domain.entity.enums.NotificationChannel;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -27,12 +30,14 @@ public class FcmNotificationSender implements NotificationChannelSender {
     @Nullable
     private final FirebaseMessaging firebaseMessaging;
     private final FcmTokenRepository fcmTokenRepository;
+    private final PushReceiptRepository receipts;
 
     public FcmNotificationSender(
             @Autowired(required = false) @Nullable FirebaseMessaging firebaseMessaging,
-            FcmTokenRepository fcmTokenRepository) {
+            FcmTokenRepository fcmTokenRepository, PushReceiptRepository receipts) {
         this.firebaseMessaging = firebaseMessaging;
         this.fcmTokenRepository = fcmTokenRepository;
+        this.receipts = receipts;
     }
 
     @Override
@@ -51,7 +56,7 @@ public class FcmNotificationSender implements NotificationChannelSender {
             throw new PermanentSendFailureException("Firebase is not initialized. FCM push disabled.");
         }
 
-        List<FcmToken> tokens = fcmTokenRepository.findByUserId(notification.getUserId());
+        List<FcmToken> tokens = fcmTokenRepository.findTop10ByUserIdAndLastSeenAtAfterOrderByLastSeenAtDesc(notification.getUserId(), LocalDateTime.now().minusDays(90));
         if (tokens.isEmpty()) {
             throw new PermanentSendFailureException(
                     "No FCM tokens found for userId=" + notification.getUserId());
@@ -63,8 +68,16 @@ public class FcmNotificationSender implements NotificationChannelSender {
         FirebaseMessagingException permanentFailure = null;
 
         for (FcmToken fcmToken : tokens) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException("FCM send cancelled");
+            }
+            if (receipts.existsByNotificationIdAndTokenId(notification.getId(), fcmToken.getId())) {
+                successCount++;
+                continue;
+            }
             try {
                 String messageId = sendToToken(notification, fcmToken.getToken());
+                receipts.saveAndFlush(new PushReceipt(notification.getId(), fcmToken.getId()));
                 providerMessageId = messageId;
                 successCount++;
             } catch (FirebaseMessagingException e) {

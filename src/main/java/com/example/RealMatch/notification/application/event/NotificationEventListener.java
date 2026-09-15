@@ -114,7 +114,7 @@ public class NotificationEventListener {
      * CAMPAIGN_MATCHED 알림 생성 (크리에이터에게)
      */
     private void createCampaignMatchedNotification(CampaignProposalStatusChangedEvent event) {
-        String eventId = generateProposalStatusChangedEventId(event.proposalId(), event.newStatus());
+        String eventId = event.eventId();
         String brandName = findBrandNameByUserId(event.brandUserId());
 
         MessageTemplate template = messageTemplateService.createCampaignMatchedMessage(brandName);
@@ -141,7 +141,7 @@ public class NotificationEventListener {
      * PROPOSAL_SENT 알림 생성 (제안 보낸 사람에게, 수락/거절 공통)
      */
     private void createProposalSentNotification(CampaignProposalStatusChangedEvent event, boolean isAccepted) {
-        String eventId = generateProposalStatusChangedEventId(event.proposalId(), event.newStatus());
+        String eventId = event.eventId();
         // proposalDirection을 이용해 senderUserId 결정 (DB 조회 불필요)
         Long senderUserId = event.proposalDirection() == ProposalDirection.BRAND_TO_CREATOR
                 ? event.brandUserId()
@@ -184,7 +184,7 @@ public class NotificationEventListener {
             return;
         }
 
-        String eventId = generateApplySentEventId(event.applyId());
+        String eventId = event.eventId();
         User creator = userRepository.findById(event.creatorUserId())
                 .orElseThrow(() -> new IllegalStateException(
                         "User not found: " + event.creatorUserId()));
@@ -340,21 +340,5 @@ public class NotificationEventListener {
             return user.getNickname();
         }
         return user.getName();
-    }
-
-    // ==================== EventId 생성 (멱등성 보장용) ====================
-
-    /**
-     * CampaignProposalStatusChangedEvent의 결정적 eventId 생성
-     */
-    private String generateProposalStatusChangedEventId(Long proposalId, ProposalStatus newStatus) {
-        return String.format("PROPOSAL_STATUS_CHANGED:%d:%s", proposalId, newStatus);
-    }
-
-    /**
-     * CampaignApplySentEvent의 결정적 eventId 생성
-     */
-    private String generateApplySentEventId(Long applyId) {
-        return String.format("APPLY_SENT:%d", applyId);
     }
 }

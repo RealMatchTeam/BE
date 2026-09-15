@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.RealMatch.global.config.jwt.CustomUserDetails;
 import com.example.RealMatch.global.presentation.CustomResponse;
+import com.example.RealMatch.notification.application.dto.request.FcmTokenRegisterRequest;
+import com.example.RealMatch.notification.application.dto.request.FcmTokenRemoveRequest;
 import com.example.RealMatch.notification.application.service.FcmTokenService;
-import com.example.RealMatch.notification.presentation.dto.request.FcmTokenRegisterRequest;
-import com.example.RealMatch.notification.presentation.dto.request.FcmTokenRemoveRequest;
 import com.example.RealMatch.notification.presentation.swagger.FcmTokenSwagger;
 
 import io.swagger.v3.oas.annotations.tags.Tag;

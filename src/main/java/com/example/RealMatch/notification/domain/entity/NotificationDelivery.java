@@ -16,14 +16,16 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "notification_delivery", indexes = {
-        @Index(name = "idx_delivery_notification", columnList = "notification_id, channel"),
+@Table(name = "notification_delivery", uniqueConstraints =
+        @UniqueConstraint(name = "uk_delivery_notification_channel", columnNames = {"notification_id", "channel"}), indexes = {
+        @Index(name = "idx_delivery_stuck", columnList = "status,attempted_at"),
         @Index(name = "idx_delivery_status_retry", columnList = "status, next_retry_at, created_at")
 })
 @Getter
@@ -31,7 +33,7 @@ import lombok.NoArgsConstructor;
 public class NotificationDelivery extends BaseEntity {
 
     public static final int MAX_RETRY_COUNT = 5;
-    private static final long[] BACKOFF_MINUTES = {1, 5, 30, 120, 720};
+    private static final long[] BACKOFF_MINUTES = {1, 5, 30, 120};
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -64,11 +66,14 @@ public class NotificationDelivery extends BaseEntity {
     @Column(name = "provider_message_id", length = 255)
     private String providerMessageId;
 
-    @Column(name = "idempotency_key", length = 200, unique = true)
+    @Column(name = "idempotency_key", length = 200, unique = true,
+            columnDefinition = "varchar(200) character set utf8mb4 collate utf8mb4_0900_bin")
     private String idempotencyKey;
 
     @Column(name = "attempt_count", nullable = false)
     private int attemptCount = 0;
+
+    private LocalDateTime lastEnqueuedAt;
 
     @Builder
     protected NotificationDelivery(UUID notificationId, NotificationChannel channel,
@@ -78,26 +83,45 @@ public class NotificationDelivery extends BaseEntity {
         this.status = status;
         this.idempotencyKey = idempotencyKey;
         this.attemptedAt = LocalDateTime.now();
+        this.lastEnqueuedAt = this.attemptedAt;
         this.attemptCount = 0;
+    }
+
+    public boolean claim(LocalDateTime now) {
+        if (status != DeliveryStatus.PENDING && status != DeliveryStatus.RETRY
+                || nextRetryAt != null && nextRetryAt.isAfter(now)) {
+            return false;
+        }
+        if (attemptCount >= MAX_RETRY_COUNT) {
+            markAsPermanentlyFailed("Attempt limit exhausted");
+            return false;
+        }
+        status = DeliveryStatus.IN_PROGRESS;
+        attemptedAt = now;
+        attemptCount++;
+        return true;
+    }
+
+    public void enqueued(LocalDateTime now) {
+        lastEnqueuedAt = now;
     }
 
     public void markAsSent(String providerMessageId) {
         this.status = DeliveryStatus.SENT;
         this.sentAt = LocalDateTime.now();
-        this.providerMessageId = providerMessageId;
+        this.providerMessageId = truncate(providerMessageId, 255);
         this.nextRetryAt = null;
     }
 
     public void recordFailure(String failReason) {
         this.failReason = truncate(failReason, 500);
-        this.attemptCount++;
 
         if (this.attemptCount >= MAX_RETRY_COUNT) {
             this.status = DeliveryStatus.FAILED;
             this.nextRetryAt = null;
         } else {
             this.status = DeliveryStatus.RETRY;
-            int backoffIndex = Math.min(this.attemptCount - 1, BACKOFF_MINUTES.length - 1);
+            int backoffIndex = Math.max(0, Math.min(this.attemptCount - 1, BACKOFF_MINUTES.length - 1));
             this.nextRetryAt = LocalDateTime.now().plusMinutes(BACKOFF_MINUTES[backoffIndex]);
         }
     }
