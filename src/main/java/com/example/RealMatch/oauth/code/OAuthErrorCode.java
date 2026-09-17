@@ -77,6 +77,12 @@ public enum OAuthErrorCode implements BaseErrorCode {
             "토큰이 만료되었습니다."
     ),
 
+    REFRESH_TOKEN_NOT_FOUND(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH401_3",
+            "리프레시 토큰 쿠키가 없습니다. 다시 로그인해주세요."
+    ),
+
     USER_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "AUTH404_1",

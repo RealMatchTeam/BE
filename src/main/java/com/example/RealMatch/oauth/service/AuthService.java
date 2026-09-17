@@ -1,6 +1,8 @@
 package com.example.RealMatch.oauth.service;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,8 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.RealMatch.global.config.jwt.JwtProvider;
 import com.example.RealMatch.global.exception.CustomException;
 import com.example.RealMatch.oauth.code.OAuthErrorCode;
-import com.example.RealMatch.oauth.dto.OAuthTokenResponse;
+import com.example.RealMatch.oauth.dto.IssuedTokens;
 import com.example.RealMatch.oauth.dto.request.SignupCompleteRequest;
+import com.example.RealMatch.oauth.token.RefreshTokenStore;
 import com.example.RealMatch.user.application.util.NicknameValidator;
 import com.example.RealMatch.user.domain.entity.ContentCategory;
 import com.example.RealMatch.user.domain.entity.NotificationSetting;
@@ -47,8 +50,14 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final NicknameValidator nicknameValidator;
     private final NotificationSettingRepository notificationSettingRepository;
+    private final RefreshTokenStore refreshTokenStore;
 
-    public OAuthTokenResponse completeSignup(Long userId, String providerId, SignupCompleteRequest request) {
+    public IssuedTokens completeSignup(
+            Long userId,
+            String providerId,
+            SignupCompleteRequest request,
+            Optional<String> currentRefreshToken
+    ) {
         // 유저 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(OAuthErrorCode.USER_NOT_FOUND));
@@ -81,17 +90,36 @@ public class AuthService {
         // 마케팅 알림 동의 시 알림 설정 처리
         handleNotificationSettings(user, request.terms());
 
-        String currentRole = user.getRole().name();
+        // 역할이 GUEST -> CREATOR/BRAND 로 바뀌었으므로 GUEST 리프레시 토큰은 폐기하고 새로 발급
+        currentRefreshToken.ifPresent(this::revoke);
 
-        String accessToken = jwtProvider.createAccessToken(user.getId(), providerId, currentRole, user.getEmail());
-        String refreshToken = jwtProvider.createRefreshToken(user.getId(), providerId, currentRole, user.getEmail());
-
-        return new OAuthTokenResponse(accessToken, refreshToken);
+        return issueTokens(user, providerId);
     }
 
-    public OAuthTokenResponse refreshAccessToken(String refreshTokenHeader) {
-        String refreshToken = extractToken(refreshTokenHeader);
+    /**
+     * 소셜 로그인 성공 직후 토큰 발급. 리프레시 토큰의 jti 를 Redis 에 등록한다.
+     */
+    public IssuedTokens issueTokens(Long userId, String providerId, String role, String email) {
+        String accessToken = jwtProvider.createAccessToken(userId, providerId, role, email);
+        String refreshToken = jwtProvider.createRefreshToken(userId, providerId, role, email);
 
+        refreshTokenStore.save(
+                userId,
+                jwtProvider.getJti(refreshToken),
+                Duration.ofMillis(jwtProvider.getRefreshTokenExpireMillis())
+        );
+        return new IssuedTokens(accessToken, refreshToken);
+    }
+
+    private IssuedTokens issueTokens(User user, String providerId) {
+        return issueTokens(user.getId(), providerId, user.getRole().name(), user.getEmail());
+    }
+
+    /**
+     * 리프레시 토큰 로테이션: 기존 토큰을 소비(삭제)하고 액세스/리프레시 토큰을 모두 새로 발급한다.
+     * 이미 소비된(혹은 로그아웃된) 토큰이면 탈취/재사용으로 간주하고 거부한다.
+     */
+    public IssuedTokens refresh(String refreshToken) {
         // 토큰 유효성 검증
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new CustomException(OAuthErrorCode.INVALID_TOKEN);
@@ -104,22 +132,27 @@ public class AuthService {
 
         Long userId = jwtProvider.getUserId(refreshToken);
         String providerId = jwtProvider.getProviderId(refreshToken);
-        String role = jwtProvider.getRole(refreshToken);
+
+        if (!refreshTokenStore.consume(userId, jwtProvider.getJti(refreshToken))) {
+            throw new CustomException(OAuthErrorCode.INVALID_TOKEN);
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(OAuthErrorCode.USER_NOT_FOUND));
 
-        // 3. 토큰 갱신
-        String newAccessToken = jwtProvider.createAccessToken(user.getId(), providerId, role, user.getEmail());
-
-        return new OAuthTokenResponse(newAccessToken, refreshToken);
+        // role 은 토큰이 아니라 DB 기준으로 다시 읽어 최신 권한을 반영한다
+        return issueTokens(user, providerId);
     }
 
-    private String extractToken(String header) {
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
+    /**
+     * 로그아웃: 저장된 jti 를 지워 해당 리프레시 토큰을 즉시 무효화한다.
+     * 토큰이 이미 만료/변조된 경우에도 예외 없이 조용히 넘어간다 (로그아웃은 항상 성공해야 함).
+     */
+    public void revoke(String refreshToken) {
+        if (!jwtProvider.validateToken(refreshToken) || !"refresh".equals(jwtProvider.getType(refreshToken))) {
+            return;
         }
-        return header;
+        refreshTokenStore.consume(jwtProvider.getUserId(refreshToken), jwtProvider.getJti(refreshToken));
     }
 
     private void saveTermAgreements(User user, List<SignupCompleteRequest.TermAgreementDto> terms) {

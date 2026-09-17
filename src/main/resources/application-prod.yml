@@ -9,6 +9,15 @@ front:
   domain-url-v2: ${FRONT_DOMAIN_URL_V2}
   domain-url-local: ${FRONT_DOMAIN_URL_LOCAL}
 
+# 리프레시 토큰 HttpOnly 쿠키 설정
+# FE(realmatch.co.kr) 와 BE(api.realmatch.co.kr) 는 same-site 이므로 SameSite=Lax 로 CSRF 방어 가능.
+# domain 은 비워두면 api.realmatch.co.kr 전용(host-only) 쿠키가 된다.
+auth:
+  refresh-cookie:
+    secure: ${AUTH_COOKIE_SECURE:true}
+    same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
+    domain: ${AUTH_COOKIE_DOMAIN:}
+
 server:
   timezone: Asia/Seoul
 

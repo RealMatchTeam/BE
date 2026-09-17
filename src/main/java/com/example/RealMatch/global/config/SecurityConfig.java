@@ -39,7 +39,6 @@ public class SecurityConfig {
             "/", "/error", "/favicon.ico",
             "/css/**", "/js/**", "/images/**",
             "/login/**", "/oauth2/**",
-            "/api/login/success",
             "/api/v1/ws/**",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**",
             "/api/test",
@@ -47,7 +46,8 @@ public class SecurityConfig {
             "/actuator/health",
             "/actuator/prometheus",
             "/api/v1/auth/signup",
-            "/api/v1/auth/refresh"
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/logout"
     };
 
     private static final String[] REQUEST_AUTHENTICATED_ARRAY = {

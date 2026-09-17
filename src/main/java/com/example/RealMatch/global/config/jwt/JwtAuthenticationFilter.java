@@ -40,6 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/swagger-resources",
             "/actuator",
             "/api/v1/auth/refresh",
+            "/api/v1/auth/logout",
             "/api/test"
     );
 

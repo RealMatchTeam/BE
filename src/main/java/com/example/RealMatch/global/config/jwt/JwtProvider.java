@@ -2,6 +2,7 @@ package com.example.RealMatch.global.config.jwt;
 
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -54,10 +55,15 @@ public class JwtProvider {
         return createToken(userId, providerId, role, email, "refresh", refreshTokenExpireMillis);
     }
 
+    public long getRefreshTokenExpireMillis() {
+        return refreshTokenExpireMillis;
+    }
+
     private String createToken(Long userId, String providerId, String role, String email, String type, long expireMillis) {
         long now = System.currentTimeMillis();
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString()) // jti: 리프레시 토큰 로테이션/폐기 식별자
                 .subject(String.valueOf(userId))
                 .claim("providerId", providerId)
                 .claim("role", role)
@@ -108,6 +114,10 @@ public class JwtProvider {
 
     public String getType(String token) {
         return getClaims(token).get("type", String.class);
+    }
+
+    public String getJti(String token) {
+        return getClaims(token).getId();
     }
 
     private Jws<Claims> parseClaims(String token) {
